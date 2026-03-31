@@ -8,10 +8,10 @@
   <div class="hl-card mb-4">
     <form method="POST" action="/recover" class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_username">Usuario</label>
         <input type="text" name="username" placeholder="admin" class="hl-input" />
       </div>
-      <button type="submit" class="btn-primary">Continue</button>
+      <button type="submit" class="btn-primary" data-i18n="insec_btn_continue">Continuar</button>
     </form>
     {% if error %}<div class="alert-error mt-3 text-xs font-mono">{{ error }}</div>{% endif %}
   </div>
@@ -24,10 +24,10 @@
     <form method="POST" action="/recover/answer" class="space-y-4">
       <input type="hidden" name="username" value="{{ username }}" />
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Answer</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="insec_lbl_answer">Respuesta</label>
         <input type="text" name="answer" placeholder="..." class="hl-input" />
       </div>
-      <button type="submit" class="btn-primary">Verify</button>
+      <button type="submit" class="btn-primary" data-i18n="insec_btn_verify">Verificar</button>
     </form>
     {% if error %}<div class="alert-error mt-3 text-xs font-mono">{{ error }}</div>{% endif %}
   </div>
@@ -35,9 +35,9 @@
 
   {% if success %}
   <div class="hl-card border-l-4 mb-4" style="border-left-color:#22c55e">
-    <div class="alert-success mb-2 font-semibold">Account compromised!</div>
-    <div class="text-sm text-gray-700 dark:text-gray-300">User: <code>{{ username }}</code></div>
-    <div class="text-sm mt-1">Plaintext password: <span class="font-bold font-mono text-lg" style="color:var(--hl-primary)">{{ password }}</span></div>
+    <div class="alert-success mb-2 font-semibold" data-i18n="insec_compromised">¡Cuenta comprometida!</div>
+    <div class="text-sm text-gray-700 dark:text-gray-300"><span data-i18n="insec_user_inline">Usuario:</span> <code>{{ username }}</code></div>
+    <div class="text-sm mt-1"><span data-i18n="insec_pw_label">Contraseña en texto plano:</span> <span class="font-bold font-mono text-lg" style="color:var(--hl-primary)">{{ password }}</span></div>
   </div>
   {% endif %}
 </div>

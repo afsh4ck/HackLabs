@@ -7,14 +7,14 @@
   <div class="hl-card mb-4">
     <form method="POST" action="/logging/login" class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_username">Usuario</label>
         <input type="text" name="username" placeholder="admin" class="hl-input" />
       </div>
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Password</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_password">Contraseña</label>
         <input type="password" name="password" placeholder="••••••••" class="hl-input" />
       </div>
-      <button type="submit" class="btn-primary w-full justify-center">Login</button>
+      <button type="submit" class="btn-primary w-full justify-center" data-i18n="btn_login">Iniciar sesión</button>
     </form>
     {% if message %}
     <div class="{% if success %}alert-success{% else %}alert-error{% endif %} mt-4 text-xs font-mono">{{ message }}</div>
@@ -27,7 +27,7 @@
       {% if log_content %}
         <pre class="text-green-500 whitespace-pre-wrap">{{ log_content }}</pre>
       {% else %}
-        <span class="text-gray-500 italic">(empty — no security events are ever logged)</span>
+        <span class="text-gray-500 italic" data-i18n="log_empty">(vacío — ningún evento de seguridad es registrado)</span>
       {% endif %}
     </div>
   </div>

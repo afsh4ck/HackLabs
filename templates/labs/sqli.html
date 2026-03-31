@@ -7,16 +7,16 @@
   <div class="hl-card mb-4">
     <form method="GET" action="/sqli/search" class="flex gap-3 items-end">
       <div class="flex-1">
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Search products</label>
-        <input type="text" name="q" value="{{ query | e }}" placeholder="Search..." class="hl-input font-mono" />
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_search_products">Buscar productos</label>
+        <input type="text" name="q" value="{{ query | e }}" placeholder="Search..." class="hl-input font-mono" data-i18n-placeholder="ph_search_products" />
       </div>
-      <button type="submit" class="btn-primary flex-shrink-0">Search</button>
+      <button type="submit" class="btn-primary flex-shrink-0" data-i18n="btn_search">Buscar</button>
     </form>
   </div>
 
   {% if executed_query %}
   <div class="hl-code mb-3 text-xs text-gray-500 dark:text-gray-500">
-    <span class="text-gray-400">Query:</span> <span class="text-yellow-500">{{ executed_query }}</span>
+    <span class="text-gray-400" data-i18n="sqli_query">Consulta:</span> <span class="text-yellow-500">{{ executed_query }}</span>
   </div>
   {% endif %}
   {% if sql_error %}
@@ -35,7 +35,7 @@
     </table>
   </div>
   {% elif query and not sql_error %}
-  <div class="hl-card mb-4 text-sm text-gray-400">No results for "{{ query | e }}"</div>
+  <div class="hl-card mb-4 text-sm text-gray-400" data-i18n="sqli_no_results">Sin resultados para "{{ query | e }}"</div>
   {% endif %}
 </div>
 

@@ -8,12 +8,12 @@
     <form method="POST" action="/upload" enctype="multipart/form-data" class="space-y-4">
       <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary rounded-xl p-8 text-center transition cursor-pointer"
            onclick="document.getElementById('file-input').click()">
-        <div class="text-gray-400 text-sm">Click or drag file here</div>
-        <div class="text-xs text-gray-300 dark:text-gray-500 mt-1">No file type restrictions</div>
+        <div class="text-gray-400 text-sm" data-i18n="upload_dropzone">Haz clic o arrastra un archivo aquí</div>
+        <div class="text-xs text-gray-300 dark:text-gray-500 mt-1" data-i18n="upload_no_restrict">Sin restricciones de tipo de archivo</div>
         <input type="file" id="file-input" name="file" class="hidden" onchange="updateLabel(this)" />
         <div id="file-label" class="mt-3 text-xs font-mono" style="color:var(--hl-primary)"></div>
       </div>
-      <button type="submit" class="btn-primary w-full justify-center">Upload</button>
+      <button type="submit" class="btn-primary w-full justify-center" data-i18n="upload_btn">Subir archivo</button>
     </form>
   </div>
 
@@ -21,19 +21,19 @@
   <div class="alert-success mb-4 text-sm font-mono">
     {{ message }}
     {% if uploaded_path %}
-    &nbsp;— <a href="{{ uploaded_path }}" target="_blank" class="underline font-bold" style="color:var(--hl-primary)">Open file</a>
+    &nbsp;— <a href="{{ uploaded_path }}" target="_blank" class="underline font-bold" style="color:var(--hl-primary)" data-i18n="upload_open">Abrir archivo</a>
     {% endif %}
   </div>
   {% endif %}
 
   {% if uploaded_files %}
   <div class="hl-card mb-4">
-    <div class="text-xs text-gray-400 font-medium mb-3">Uploaded files (/uploads/)</div>
+    <div class="text-xs text-gray-400 font-medium mb-3" data-i18n="upload_list">Archivos subidos (/uploads/)</div>
     <ul class="space-y-1.5 font-mono text-xs">
       {% for f in uploaded_files %}
       <li class="flex items-center justify-between">
         <span class="text-gray-700 dark:text-gray-300">{{ f }}</span>
-        <a href="/uploads/{{ f }}" target="_blank" class="transition hover:opacity-70" style="color:var(--hl-primary)">Access →</a>
+        <a href="/uploads/{{ f }}" target="_blank" class="transition hover:opacity-70" style="color:var(--hl-primary)" data-i18n="upload_access">Acceder →</a>
       </li>
       {% endfor %}
     </ul>
