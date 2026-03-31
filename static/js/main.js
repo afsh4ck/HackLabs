@@ -272,6 +272,97 @@ function initCodeHighlight() {
   });
 }
 
+// ── Custom Select Dropdown ────────────────────────────────────────
+function initCustomSelects() {
+  document.querySelectorAll('select.hl-input').forEach(native => {
+    // Build wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'hl-select';
+
+    // Trigger button
+    const trigger = document.createElement('div');
+    trigger.className = 'hl-select-trigger';
+    trigger.setAttribute('tabindex', '0');
+
+    const label = document.createElement('span');
+    label.className = 'hl-select-label';
+    const selectedOpt = native.options[native.selectedIndex];
+    label.textContent = selectedOpt ? selectedOpt.text : '';
+
+    // Caret SVG
+    const caret = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    caret.setAttribute('viewBox', '0 0 24 24');
+    caret.setAttribute('fill', 'none');
+    caret.setAttribute('stroke', 'currentColor');
+    caret.setAttribute('stroke-width', '2');
+    caret.setAttribute('stroke-linecap', 'round');
+    caret.setAttribute('stroke-linejoin', 'round');
+    caret.classList.add('hl-select-caret');
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', '6 9 12 15 18 9');
+    caret.appendChild(poly);
+
+    trigger.appendChild(label);
+    trigger.appendChild(caret);
+
+    // Menu
+    const menu = document.createElement('div');
+    menu.className = 'hl-select-menu';
+    menu.style.display = 'none';
+
+    Array.from(native.options).forEach((opt, i) => {
+      const item = document.createElement('div');
+      item.className = 'hl-select-option' + (i === native.selectedIndex ? ' selected' : '');
+      item.textContent = opt.text;
+      item.dataset.value = opt.value;
+      item.addEventListener('click', () => {
+        native.value = opt.value;
+        label.textContent = opt.text;
+        menu.querySelectorAll('.hl-select-option').forEach(o => o.classList.remove('selected'));
+        item.classList.add('selected');
+        closeMenu();
+        // Dispatch change event so any listeners on native select fire
+        native.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      menu.appendChild(item);
+    });
+
+    function openMenu() {
+      menu.style.display = '';
+      trigger.classList.add('open');
+    }
+    function closeMenu() {
+      menu.style.display = 'none';
+      trigger.classList.remove('open');
+    }
+    function toggleMenu(e) {
+      e.stopPropagation();
+      menu.style.display === 'none' ? openMenu() : closeMenu();
+    }
+
+    trigger.addEventListener('click', toggleMenu);
+    trigger.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu(e); }
+      if (e.key === 'Escape') closeMenu();
+    });
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(menu);
+
+    // Insert wrapper before native select, native stays hidden via CSS
+    native.parentNode.insertBefore(wrapper, native);
+  });
+
+  // Close all menus when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.hl-select-menu').forEach(m => {
+      m.style.display = 'none';
+      const trigger = m.previousElementSibling;
+      if (trigger) trigger.classList.remove('open');
+    });
+  });
+}
+
 // ── Toast ─────────────────────────────────────────────────────────
 function showToast(msg) {
   const el = document.createElement('div');
@@ -289,6 +380,7 @@ function showToast(msg) {
   initCategories();
   applyTranslations();
   initCodeHighlight();
+  initCustomSelects();
 
   // Dynamic footer year
   const fy = document.getElementById('footer-year');
