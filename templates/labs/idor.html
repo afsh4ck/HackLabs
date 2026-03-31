@@ -6,32 +6,34 @@
 
   <!-- Vulnerable app -->
   <div class="hl-card mb-4">
-    <form method="GET" action="/profile" class="flex gap-3 items-end">
+    <div class="flex gap-3 items-end">
       <div class="flex-1">
         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">User ID</label>
-        <input type="number" name="id" value="{{ queried_id or '1' }}" min="1" class="hl-input font-mono" />
+        <input type="number" id="idor-id" value="{{ queried_id or '1' }}" min="1" class="hl-input font-mono" />
       </div>
-      <button type="submit" class="btn-primary">View Profile</button>
-    </form>
-  </div>
-
-  {% if profile %}
-  <div class="hl-card border-l-4 mb-4" style="border-left-color:var(--hl-primary)">
-    <div class="text-xs font-semibold mb-3" style="color:var(--hl-primary)">Profile — ID: {{ profile['id'] }}</div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-      {% for key in profile.keys() %}
-      <div class="bg-gray-50 dark:bg-dark-900 rounded-lg p-2.5">
-        <div class="text-xs text-gray-400 mb-0.5">{{ key }}</div>
-        <div class="text-sm font-mono text-gray-800 dark:text-gray-200 truncate">{{ profile[key] or '—' }}</div>
-      </div>
-      {% endfor %}
+      <button onclick="fetchProfile()" class="btn-primary">View Profile</button>
     </div>
   </div>
-  {% elif error %}
-  <div class="alert-error mb-4 font-mono text-xs">{{ error }}</div>
-  {% elif queried_id %}
-  <div class="hl-card mb-4 text-sm text-gray-400">No user found with ID={{ queried_id }}</div>
-  {% endif %}
+
+  <div id="idor-result" class="hidden">
+    {% if profile %}
+    <div class="hl-card border-l-4 mb-4" style="border-left-color:var(--hl-primary)">
+      <div class="text-xs font-semibold mb-3" style="color:var(--hl-primary)">Profile — ID: {{ profile['id'] }}</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {% for key in profile.keys() %}
+        <div class="bg-gray-50 dark:bg-dark-900 rounded-lg p-2.5">
+          <div class="text-xs text-gray-400 mb-0.5">{{ key }}</div>
+          <div class="text-sm font-mono text-gray-800 dark:text-gray-200 truncate">{{ profile[key] or '—' }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% elif error %}
+    <div class="alert-error mb-4 font-mono text-xs">{{ error }}</div>
+    {% elif queried_id %}
+    <div class="hl-card mb-4 text-sm text-gray-400">No user found with ID={{ queried_id }}</div>
+    {% endif %}
+  </div>
 
   <!-- Resolution trigger -->
 </div>
@@ -69,4 +71,24 @@ curl "http://localhost:5000/profile?id=3"</pre>
 curl "http://localhost:5000/profile?id=3"</pre>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function fetchProfile() {
+  const id = document.getElementById('idor-id').value;
+  const res = await fetch('/profile?id=' + encodeURIComponent(id));
+  const html = await res.text();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const inner = doc.getElementById('idor-result');
+  const result = document.getElementById('idor-result');
+  if (inner) {
+    result.innerHTML = inner.innerHTML;
+  } else {
+    result.innerHTML = '<div class="hl-card mb-4 text-sm text-gray-400">No response.</div>';
+  }
+  result.classList.remove('hidden');
+}
+</script>
 {% endblock %}

