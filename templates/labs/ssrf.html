@@ -7,11 +7,11 @@
   <div class="hl-card mb-4">
     <form method="GET" action="/ssrf" class="space-y-3">
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Target URL</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="ssrf_label">URL destino</label>
         <input type="text" name="url" value="{{ url | e }}" placeholder="http://..."
                class="hl-input font-mono" />
       </div>
-      <button type="submit" class="btn-primary">Fetch</button>
+      <button type="submit" class="btn-primary" data-i18n="btn_fetch">Obtener</button>
     </form>
   </div>
 
@@ -20,7 +20,7 @@
   {% endif %}
   {% if content %}
   <div class="hl-card mb-4">
-    <div class="text-xs font-mono mb-2" style="color:var(--hl-primary)">Response from: {{ url }}</div>
+    <div class="text-xs font-mono mb-2" style="color:var(--hl-primary)"><span data-i18n="ssrf_response">Respuesta de:</span> {{ url }}</div>
     <pre class="text-gray-700 dark:text-gray-300 text-xs whitespace-pre-wrap max-h-80 overflow-y-auto">{{ content }}</pre>
   </div>
   {% endif %}

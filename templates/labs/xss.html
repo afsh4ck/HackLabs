@@ -6,12 +6,18 @@
 
   <!-- Tabs -->
   <div class="flex gap-1 mb-5 bg-gray-100 dark:bg-dark-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700 w-fit">
-    {% for tid, label in [('reflected','Reflected'), ('stored','Stored'), ('dom','DOM-based')] %}
-    <a href="/xss/{{ tid }}"
+    <a href="/xss/reflected"
        class="px-4 py-1.5 rounded text-sm font-medium transition
-              {% if tab == tid %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
-       {% if tab == tid %}style="background:var(--hl-primary)"{% endif %}>{{ label }}</a>
-    {% endfor %}
+              {% if tab == 'reflected' %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
+       {% if tab == 'reflected' %}style="background:var(--hl-primary)"{% endif %} data-i18n="xss_tab_reflected">Reflejado</a>
+    <a href="/xss/stored"
+       class="px-4 py-1.5 rounded text-sm font-medium transition
+              {% if tab == 'stored' %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
+       {% if tab == 'stored' %}style="background:var(--hl-primary)"{% endif %} data-i18n="xss_tab_stored">Almacenado</a>
+    <a href="/xss/dom"
+       class="px-4 py-1.5 rounded text-sm font-medium transition
+              {% if tab == 'dom' %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
+       {% if tab == 'dom' %}style="background:var(--hl-primary)"{% endif %} data-i18n="xss_tab_dom">DOM-based</a>
   </div>
 
   <!-- Reflected -->
@@ -20,11 +26,11 @@
     <form method="GET" action="/xss/reflected" class="flex gap-3 mb-4">
       <input type="text" name="q" value="{{ query }}" placeholder='&lt;script&gt;alert(1)&lt;/script&gt;'
              class="flex-1 hl-input font-mono" />
-      <button type="submit" class="btn-primary flex-shrink-0">Search</button>
+      <button type="submit" class="btn-primary flex-shrink-0" data-i18n="btn_search">Buscar</button>
     </form>
     {% if query %}
     <div class="hl-code text-sm text-gray-700 dark:text-gray-300">
-      Results for: <span>{{ query | safe }}</span>
+      <span data-i18n="xss_results_for">Resultados para:</span> <span>{{ query | safe }}</span>
     </div>
     {% endif %}
   </div>
@@ -34,10 +40,10 @@
   {% if tab == 'stored' %}
   <div class="hl-card mb-4">
     <form method="POST" action="/xss/stored" class="space-y-3 mb-5">
-      <input type="text" name="author" placeholder="Name" class="hl-input" />
+      <input type="text" name="author" placeholder="Name" class="hl-input" data-i18n-placeholder="xss_name_ph" />
       <textarea name="comment" rows="3" class="hl-input font-mono"
                 placeholder='&lt;script&gt;alert("Stored XSS")&lt;/script&gt;'></textarea>
-      <button type="submit" class="btn-primary">Post Comment</button>
+      <button type="submit" class="btn-primary" data-i18n="xss_btn_post">Publicar comentario</button>
     </form>
     <div class="space-y-3">
       {% for c in comments %}
@@ -56,9 +62,9 @@
   <!-- DOM -->
   {% if tab == 'dom' %}
   <div class="hl-card mb-4">
-    <div class="text-xs text-gray-400 mb-2">Dynamic output (from URL fragment):</div>
+    <div class="text-xs text-gray-400 mb-2" data-i18n="xss_dom_label">Salida dinámica (desde fragmento URL):</div>
     <div id="dom-output" class="hl-code text-sm text-gray-700 dark:text-gray-300">
-      Add a fragment to the URL: <code>#&lt;img src=x onerror=alert(1)&gt;</code>
+      <span data-i18n="xss_dom_hint">Añade un fragmento a la URL:</span> <code>#&lt;img src=x onerror=alert(1)&gt;</code>
     </div>
   </div>
   {% endif %}

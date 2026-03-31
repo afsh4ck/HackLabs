@@ -7,19 +7,19 @@
   <div class="hl-card mb-4">
     <form method="POST" action="/xxe" class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">XML Payload</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_xml_payload">Payload XML</label>
         <textarea name="xml_data" rows="7" class="hl-input font-mono"
                   placeholder="&lt;user&gt;&lt;name&gt;Alice&lt;/name&gt;&lt;email&gt;alice@test.com&lt;/email&gt;&lt;/user&gt;">{{ xml_input | e }}</textarea>
       </div>
       <div class="flex gap-2 flex-wrap">
-        <button type="submit" class="btn-primary">Parse XML</button>
+        <button type="submit" class="btn-primary" data-i18n="btn_parse_xml">Parsear XML</button>
         <button type="button" onclick="loadPayload('normal')"
-                class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-primary transition">
-          Normal XML
+                class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-primary transition" data-i18n="xxe_btn_normal">
+          XML Normal
         </button>
         <button type="button" onclick="loadPayload('xxe')"
-                class="px-3 py-2 text-xs font-semibold rounded-lg border border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 transition">
-          XXE Payload
+                class="px-3 py-2 text-xs font-semibold rounded-lg border border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 transition" data-i18n="xxe_btn_xxe">
+          Payload XXE
         </button>
       </div>
     </form>
@@ -30,10 +30,10 @@
   {% endif %}
   {% if result %}
   <div class="hl-card mb-4 border-l-4" style="border-left-color:var(--hl-primary)">
-    <div class="text-xs font-semibold mb-2" style="color:var(--hl-primary)">Parsed result</div>
+    <div class="text-xs font-semibold mb-2" style="color:var(--hl-primary)" data-i18n="xxe_parsed">Resultado parseado</div>
     <div class="space-y-1.5 font-mono text-sm">
-      <div><span class="text-gray-400">name: </span><span class="text-gray-800 dark:text-gray-200">{{ result.name }}</span></div>
-      <div><span class="text-gray-400">email: </span><span class="text-gray-800 dark:text-gray-200">{{ result.email }}</span></div>
+      <div><span class="text-gray-400" data-i18n="xxe_name">nombre: </span><span class="text-gray-800 dark:text-gray-200">{{ result.name }}</span></div>
+      <div><span class="text-gray-400" data-i18n="xxe_email">email: </span><span class="text-gray-800 dark:text-gray-200">{{ result.email }}</span></div>
     </div>
   </div>
   {% endif %}

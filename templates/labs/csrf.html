@@ -7,34 +7,34 @@
   {% if user %}
   <div class="hl-card mb-4">
     <div class="text-xs text-gray-400 mb-3">
-      User: <span class="font-mono" style="color:var(--hl-primary)">{{ user['username'] }}</span> &nbsp;|&nbsp;
-      ID: <span class="font-mono text-gray-600 dark:text-gray-400">{{ user['id'] }}</span> &nbsp;|&nbsp;
-      Role: <span class="font-mono text-gray-600 dark:text-gray-400">{{ user['role'] }}</span>
+      <span data-i18n="csrf_user_label">Usuario:</span> <span class="font-mono" style="color:var(--hl-primary)">{{ user['username'] }}</span> &nbsp;|&nbsp;
+      <span data-i18n="csrf_id_label">ID:</span> <span class="font-mono text-gray-600 dark:text-gray-400">{{ user['id'] }}</span> &nbsp;|&nbsp;
+      <span data-i18n="csrf_role_label">Rol:</span> <span class="font-mono text-gray-600 dark:text-gray-400">{{ user['role'] }}</span>
     </div>
     <form method="POST" action="/csrf/change-password" class="space-y-3">
       <input type="hidden" name="user_id" value="{{ user['id'] }}" />
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">New Password</label>
-        <input type="text" name="new_password" placeholder="new_password" class="hl-input" />
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="csrf_new_pw">Nueva contraseña</label>
+        <input type="text" name="new_password" placeholder="new_password" class="hl-input" data-i18n-placeholder="ph_new_email" />
       </div>
-      <button type="submit" class="btn-primary">Change Password</button>
+      <button type="submit" class="btn-primary" data-i18n="csrf_btn_change">Cambiar contraseña</button>
     </form>
   </div>
   {% endif %}
 
   <div class="hl-card mb-4">
-    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">CSRF Attack — Auto-submit</div>
+    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3" data-i18n="csrf_attack_title">Ataque CSRF — Auto-envío</div>
     <div class="flex gap-3">
       <div class="flex-1">
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Victim User ID</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="csrf_victim_id">ID de usuario víctima</label>
         <input type="number" id="csrf-uid" value="2" class="hl-input font-mono" />
       </div>
       <div class="flex-1">
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">New Password</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1" data-i18n="csrf_new_pw">Nueva contraseña</label>
         <input type="text" id="csrf-pwd" value="hacked123" class="hl-input font-mono" />
       </div>
     </div>
-    <button onclick="launchCSRF()" class="btn-primary mt-3" style="background:#ef4444;color:#fff">Launch CSRF</button>
+    <button onclick="launchCSRF()" class="btn-primary mt-3" style="background:#ef4444;color:#fff" data-i18n="csrf_btn_launch">Lanzar CSRF</button>
     <pre id="csrf-result" class="text-xs text-green-500 mt-3 hidden"></pre>
   </div>
 </div>

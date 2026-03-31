@@ -5,27 +5,28 @@
   {% include '_lab_header.html' %}
 
   <div class="hl-card mb-4">
-    <div class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+    <div class="text-xs text-gray-500 dark:text-gray-400 mb-4" data-i18n="or_desc">
       Este portal redirige a los usuarios tras completar acciones. El parámetro de destino no está validado.
     </div>
     <form method="GET" action="/open_redirect" class="space-y-4">
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">URL de destino</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_target_url">URL de destino</label>
         <input type="text" name="url" placeholder="https://ejemplo.com/dashboard"
+               data-i18n-placeholder="ph_redirect_url"
                class="hl-input font-mono" autocomplete="off" />
       </div>
       <button type="submit" class="btn-primary">
-        <i class="ph ph-arrow-right text-sm"></i> Ir a destino
+        <i class="ph ph-arrow-right text-sm"></i> <span data-i18n="btn_go">Ir a destino</span>
       </button>
     </form>
   </div>
 
   <div class="hl-card mb-4">
-    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400">Ejemplos</div>
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400" data-i18n="or_examples">Ejemplos</div>
     <div class="hl-code">
-      <div class="text-gray-400"># Redirección a sitio externo (phishing)</div>
+      <div class="text-gray-400" data-i18n="or_comment1"># Redirección a sitio externo (phishing)</div>
       <div>GET /open_redirect?url=https://evil.com</div>
-      <div class="text-gray-400"># Bypass de filtros básicos</div>
+      <div class="text-gray-400" data-i18n="or_comment2"># Bypass de filtros básicos</div>
       <div>GET /open_redirect?url=//evil.com</div>
       <div>GET /open_redirect?url=https://trusted.com.evil.com</div>
       <div class="text-gray-400"># OAuth token stealing</div>

@@ -8,14 +8,14 @@
   <div class="hl-card mb-4">
     <div class="flex gap-3 items-end mb-4">
       <div class="flex-1">
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Search</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="out_label">Buscar</label>
         <input type="text" id="search-input" value="{{ query }}" placeholder="Search products..."
-               class="hl-input font-mono" />
+               class="hl-input font-mono" data-i18n-placeholder="out_ph" />
       </div>
-      <button id="search-btn" class="btn-primary flex-shrink-0">Search</button>
+      <button id="search-btn" class="btn-primary flex-shrink-0" data-i18n="btn_search">Buscar</button>
     </div>
     <div id="search-result" class="hl-code text-sm text-gray-500 dark:text-gray-500 min-h-10">
-      {% if query %}Searching for: {{ query }}{% else %}Enter a search term...{% endif %}
+      {% if query %}<span data-i18n="out_searching">Buscando:</span> {{ query }}{% else %}<span data-i18n="out_enter">Introduce un término de búsqueda...</span>{% endif %}
     </div>
   </div>
 </div>

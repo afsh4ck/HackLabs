@@ -31,13 +31,154 @@ const T = {
     hero_by:         'Plataforma de hacking ético por',
     hero_rest:       'Practica el OWASP Top 10 (2021) y más con Burp Suite, sqlmap, hydra y otras herramientas de Kali Linux.',
     lab_cat_count:   'labs',
-    // A05 Misconfig lab content
-    misconfig_title:       'Configuraciones inseguras',
-    misconfig_item1:       'Panel de administración accesible sin autenticación',
-    misconfig_item2:       'Repositorio Git expuesto',
-    misconfig_item3:       'Stack trace completo del servidor expuesto en errores',
-    misconfig_item4:       'API interna de usuarios accesible sin autenticación',
-    misconfig_hint:        'Usa herramientas de fuzzing de directorios para descubrir los endpoints expuestos.',
+    // A05 Misconfig
+    misconfig_title: 'Configuraciones inseguras',
+    misconfig_item1: 'Panel de administración accesible sin autenticación',
+    misconfig_item2: 'Repositorio Git expuesto',
+    misconfig_item3: 'Stack trace completo del servidor expuesto en errores',
+    misconfig_item4: 'API interna de usuarios accesible sin autenticación',
+    misconfig_hint:  'Usa herramientas de fuzzing de directorios para descubrir los endpoints expuestos.',
+    misconfig_admin_panel: 'Panel de administración — Sin autenticación',
+    // Shared form labels
+    lbl_username:    'Usuario',
+    lbl_password:    'Contraseña',
+    lbl_search:      'Buscar',
+    lbl_search_products: 'Buscar productos',
+    lbl_host_ip:     'Host / IP',
+    lbl_output:      'Salida',
+    lbl_result:      'Resultado',
+    lbl_target_url:  'URL de destino',
+    lbl_file_path:   'Ruta del archivo',
+    lbl_xml_payload: 'Payload XML',
+    lbl_jwt_token:   'Token JWT',
+    // Shared buttons
+    btn_login:       'Iniciar sesión',
+    btn_search:      'Buscar',
+    btn_render:      'Renderizar',
+    btn_fetch:       'Obtener',
+    btn_read:        'Leer',
+    btn_ping:        'Ping',
+    btn_upload:      'Subir archivo',
+    btn_parse_xml:   'Parsear XML',
+    btn_go:          'Ir a destino',
+    btn_change_pw:   'Cambiar contraseña',
+    btn_post_comment:'Publicar comentario',
+    btn_continue:    'Continuar',
+    btn_verify:      'Verificar',
+    btn_send_put:    'Enviar PUT',
+    btn_launch_csrf: 'Lanzar CSRF',
+    // Shared placeholders
+    ph_search:       'Buscar...',
+    ph_search_products: 'Buscar productos...',
+    ph_redirect_url: 'https://ejemplo.com/dashboard',
+    ph_comment_name: 'Nombre',
+    ph_new_email:    'nuevo@email.com',
+    // SSTI
+    ssti_label:      'Entrada de plantilla',
+    ssti_rendered:   'Salida renderizada',
+    // Open Redirect
+    or_desc:         'Este portal redirige a los usuarios tras completar acciones. El parámetro de destino no está validado.',
+    or_examples:     'Ejemplos',
+    or_comment1:     '# Redirección a sitio externo (phishing)',
+    or_comment2:     '# Bypass de filtros básicos',
+    // JWT
+    jwt_generate:    'Generar Token',
+    jwt_btn_gen:     'Generar JWT',
+    jwt_secret_used: 'Secreto usado:',
+    jwt_verify:      'Verificar / Manipular Token',
+    jwt_btn_verify:  'Verificar',
+    jwt_decoded:     'Payload decodificado',
+    // Deserialization
+    deser_title:     'Deserializar objeto Python (pickle)',
+    deser_label:     'Payload (base64 pickle)',
+    deser_ph:        'Introduce un objeto pickle serializado en base64...',
+    deser_btn:       'Deserializar',
+    deser_example:   'Ejemplo seguro (dict):',
+    deser_result:    'Resultado',
+    // CORS
+    cors_api_title:  'API de datos internos',
+    cors_api_desc:   'La API devuelve datos sensibles y refleja cualquier cabecera Origin con Access-Control-Allow-Credentials: true.',
+    cors_comment1:   '# Endpoint vulnerable',
+    cors_comment2:   '# Probar con curl (observa las cabeceras CORS)',
+    cors_btn:        'Hacer petición cross-origin',
+    cors_response:   'Respuesta:',
+    cors_poc_title:  'PoC – Página maliciosa',
+    // XSS
+    xss_tab_reflected: 'Reflejado',
+    xss_tab_stored:  'Almacenado',
+    xss_tab_dom:     'DOM-based',
+    xss_results_for: 'Resultados para:',
+    xss_name_ph:     'Nombre',
+    xss_btn_post:    'Publicar comentario',
+    xss_dom_label:   'Salida dinámica (desde fragmento URL):',
+    xss_dom_hint:    'Añade un fragmento a la URL: #<img src=x onerror=alert(1)>',
+    // CSRF
+    csrf_user_label: 'Usuario:',
+    csrf_id_label:   'ID:',
+    csrf_role_label: 'Rol:',
+    csrf_new_pw:     'Nueva contraseña',
+    csrf_btn_change: 'Cambiar contraseña',
+    csrf_attack_title: 'Ataque CSRF — Auto-envío',
+    csrf_victim_id:  'ID de usuario víctima',
+    csrf_btn_launch: 'Lanzar CSRF',
+    // File Upload
+    upload_dropzone: 'Haz clic o arrastra un archivo aquí',
+    upload_no_restrict: 'Sin restricciones de tipo de archivo',
+    upload_btn:      'Subir archivo',
+    upload_open:     'Abrir archivo',
+    upload_list:     'Archivos subidos (/uploads/)',
+    upload_access:   'Acceder →',
+    // XXE
+    xxe_btn_normal:  'XML Normal',
+    xxe_btn_xxe:     'Payload XXE',
+    xxe_parsed:      'Resultado parseado',
+    xxe_name:        'nombre:',
+    xxe_email:       'email:',
+    // Path Traversal
+    pt_btn_read:     'Leer',
+    // Bruteforce
+    bf_tab_http:     'Login HTTP',
+    bf_login_title:  'Login sin rate-limiting',
+    bf_ssh_desc:     'Ataque de fuerza bruta contra el servicio SSH de la máquina objetivo. No hay rate-limiting activo; la autenticación se gestiona por el servidor SSH del host.',
+    bf_smb_desc:     'Ataque de fuerza bruta contra el servicio SMB/CIFS de la máquina objetivo (puerto 445).',
+    // SQLi
+    sqli_label:      'Buscar productos',
+    sqli_query:      'Consulta:',
+    sqli_no_results: 'Sin resultados para',
+    // CMDi
+    cmdi_output:     'Salida',
+    // IDOR
+    idor_label_id:   'ID de usuario',
+    idor_btn_view:   'Ver perfil',
+    idor_profile:    'Perfil — ID:',
+    idor_no_user:    'Usuario no encontrado con ID=',
+    // Insecure Design
+    insec_btn_continue: 'Continuar',
+    insec_user_label:   'Usuario:',
+    insec_lbl_answer:   'Respuesta',
+    insec_btn_verify:   'Verificar',
+    insec_compromised:  '¡Cuenta comprometida!',
+    insec_user_inline:  'Usuario:',
+    insec_pw_label:     'Contraseña en texto plano:',
+    // Outdated
+    out_label:       'Buscar',
+    out_ph:          'Buscar productos...',
+    out_searching:   'Buscando:',
+    out_enter:       'Introduce un término de búsqueda...',
+    // Integrity
+    int_target_id:   'ID de usuario objetivo',
+    int_new_role:    'Nuevo rol',
+    int_new_email:   'Nuevo email (opcional)',
+    int_btn_send:    'Enviar PUT',
+    // Logging
+    log_empty:       '(vacío — ningún evento de seguridad es registrado)',
+    // SSRF
+    ssrf_label:      'URL destino',
+    ssrf_response:   'Respuesta de:',
+    // Auth Failures
+    auth_lbl_user:   'Usuario',
+    auth_lbl_pass:   'Contraseña',
+    auth_btn_login:  'Iniciar sesión',
   },
   en: {
     home:            'Home',
@@ -68,13 +209,154 @@ const T = {
     hero_by:         'Ethical hacking training platform by',
     hero_rest:       'Practice OWASP Top 10 (2021) and more with Burp Suite, sqlmap, hydra and other Kali Linux tools.',
     lab_cat_count:   'labs',
-    // A05 Misconfig lab content
-    misconfig_title:       'Misconfigurations',
-    misconfig_item1:       'Admin panel accessible without authentication',
-    misconfig_item2:       'Git repository configuration exposed',
-    misconfig_item3:       'Full server stack trace disclosed on error',
-    misconfig_item4:       'Internal user API accessible without auth',
-    misconfig_hint:        'Use directory fuzzing tools to discover exposed endpoints.',
+    // A05 Misconfig
+    misconfig_title: 'Misconfigurations',
+    misconfig_item1: 'Admin panel accessible without authentication',
+    misconfig_item2: 'Git repository configuration exposed',
+    misconfig_item3: 'Full server stack trace disclosed on error',
+    misconfig_item4: 'Internal user API accessible without auth',
+    misconfig_hint:  'Use directory fuzzing tools to discover exposed endpoints.',
+    misconfig_admin_panel: 'Admin Panel — No Authentication Required',
+    // Shared form labels
+    lbl_username:    'Username',
+    lbl_password:    'Password',
+    lbl_search:      'Search',
+    lbl_search_products: 'Search products',
+    lbl_host_ip:     'Host / IP',
+    lbl_output:      'Output',
+    lbl_result:      'Result',
+    lbl_target_url:  'Target URL',
+    lbl_file_path:   'File path',
+    lbl_xml_payload: 'XML Payload',
+    lbl_jwt_token:   'JWT Token',
+    // Shared buttons
+    btn_login:       'Login',
+    btn_search:      'Search',
+    btn_render:      'Render',
+    btn_fetch:       'Fetch',
+    btn_read:        'Read',
+    btn_ping:        'Ping',
+    btn_upload:      'Upload',
+    btn_parse_xml:   'Parse XML',
+    btn_go:          'Go to destination',
+    btn_change_pw:   'Change Password',
+    btn_post_comment:'Post Comment',
+    btn_continue:    'Continue',
+    btn_verify:      'Verify',
+    btn_send_put:    'Send PUT',
+    btn_launch_csrf: 'Launch CSRF',
+    // Shared placeholders
+    ph_search:       'Search...',
+    ph_search_products: 'Search products...',
+    ph_redirect_url: 'https://example.com/dashboard',
+    ph_comment_name: 'Name',
+    ph_new_email:    'new@email.com',
+    // SSTI
+    ssti_label:      'Template Input',
+    ssti_rendered:   'Rendered output',
+    // Open Redirect
+    or_desc:         'This portal redirects users after completing actions. The destination parameter is not validated.',
+    or_examples:     'Examples',
+    or_comment1:     '# Redirect to external site (phishing)',
+    or_comment2:     '# Bypass basic filters',
+    // JWT
+    jwt_generate:    'Generate Token',
+    jwt_btn_gen:     'Generate JWT',
+    jwt_secret_used: 'Secret used:',
+    jwt_verify:      'Verify / Manipulate Token',
+    jwt_btn_verify:  'Verify',
+    jwt_decoded:     'Decoded payload',
+    // Deserialization
+    deser_title:     'Deserialize Python object (pickle)',
+    deser_label:     'Payload (base64 pickle)',
+    deser_ph:        'Enter a base64-serialized pickle object...',
+    deser_btn:       'Deserialize',
+    deser_example:   'Safe example (dict):',
+    deser_result:    'Result',
+    // CORS
+    cors_api_title:  'Internal data API',
+    cors_api_desc:   'The API returns sensitive data and reflects any Origin header with Access-Control-Allow-Credentials: true.',
+    cors_comment1:   '# Vulnerable endpoint',
+    cors_comment2:   '# Test with curl (observe CORS headers)',
+    cors_btn:        'Make cross-origin request',
+    cors_response:   'Response:',
+    cors_poc_title:  'PoC – Malicious page',
+    // XSS
+    xss_tab_reflected: 'Reflected',
+    xss_tab_stored:  'Stored',
+    xss_tab_dom:     'DOM-based',
+    xss_results_for: 'Results for:',
+    xss_name_ph:     'Name',
+    xss_btn_post:    'Post Comment',
+    xss_dom_label:   'Dynamic output (from URL fragment):',
+    xss_dom_hint:    'Add a fragment to the URL: #<img src=x onerror=alert(1)>',
+    // CSRF
+    csrf_user_label: 'User:',
+    csrf_id_label:   'ID:',
+    csrf_role_label: 'Role:',
+    csrf_new_pw:     'New Password',
+    csrf_btn_change: 'Change Password',
+    csrf_attack_title: 'CSRF Attack — Auto-submit',
+    csrf_victim_id:  'Victim User ID',
+    csrf_btn_launch: 'Launch CSRF',
+    // File Upload
+    upload_dropzone: 'Click or drag file here',
+    upload_no_restrict: 'No file type restrictions',
+    upload_btn:      'Upload',
+    upload_open:     'Open file',
+    upload_list:     'Uploaded files (/uploads/)',
+    upload_access:   'Access →',
+    // XXE
+    xxe_btn_normal:  'Normal XML',
+    xxe_btn_xxe:     'XXE Payload',
+    xxe_parsed:      'Parsed result',
+    xxe_name:        'name:',
+    xxe_email:       'email:',
+    // Path Traversal
+    pt_btn_read:     'Read',
+    // Bruteforce
+    bf_tab_http:     'HTTP Login',
+    bf_login_title:  'Login without rate-limiting',
+    bf_ssh_desc:     'Brute force attack against the SSH service of the target machine. No rate-limiting is active; authentication is handled by the host SSH server.',
+    bf_smb_desc:     'Brute force attack against the SMB/CIFS service of the target machine (port 445).',
+    // SQLi
+    sqli_label:      'Search products',
+    sqli_query:      'Query:',
+    sqli_no_results: 'No results for',
+    // CMDi
+    cmdi_output:     'Output',
+    // IDOR
+    idor_label_id:   'User ID',
+    idor_btn_view:   'View Profile',
+    idor_profile:    'Profile — ID:',
+    idor_no_user:    'No user found with ID=',
+    // Insecure Design
+    insec_btn_continue: 'Continue',
+    insec_user_label:   'User:',
+    insec_lbl_answer:   'Answer',
+    insec_btn_verify:   'Verify',
+    insec_compromised:  'Account compromised!',
+    insec_user_inline:  'User:',
+    insec_pw_label:     'Plaintext password:',
+    // Outdated
+    out_label:       'Search',
+    out_ph:          'Search products...',
+    out_searching:   'Searching for:',
+    out_enter:       'Enter a search term...',
+    // Integrity
+    int_target_id:   'Target User ID',
+    int_new_role:    'New Role',
+    int_new_email:   'New Email (optional)',
+    int_btn_send:    'Send PUT',
+    // Logging
+    log_empty:       '(empty — no security events are ever logged)',
+    // SSRF
+    ssrf_label:      'Target URL',
+    ssrf_response:   'Response from:',
+    // Auth Failures
+    auth_lbl_user:   'Username',
+    auth_lbl_pass:   'Password',
+    auth_btn_login:  'Login',
   }
 };
 
@@ -96,21 +378,26 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     const val = dict[key];
-    if (val === undefined) return; // Never show raw key strings
+    if (val === undefined) return;
 
     if (el.tagName === 'INPUT' && el.type !== 'submit') {
       el.placeholder = val;
     } else if (el.children.length === 0) {
-      // Leaf node — safe to set textContent directly
       el.textContent = val;
     } else {
-      // Has child elements (e.g. icons): update only direct text nodes
       [...el.childNodes].forEach(node => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
           node.textContent = ' ' + val;
         }
       });
     }
+  });
+
+  // Placeholder-only elements (inputs/textareas with data-i18n-placeholder)
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    const val = dict[key];
+    if (val !== undefined) el.placeholder = val;
   });
 
   // Sync lang button active states

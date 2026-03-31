@@ -7,52 +7,52 @@
   <!-- Generate token -->
   <div class="hl-card mb-4">
     <div class="text-xs font-semibold uppercase tracking-wider mb-4" style="color:var(--hl-primary)">
-      <i class="ph ph-key text-sm"></i> Generar Token
+      <i class="ph ph-key text-sm"></i> <span data-i18n="jwt_generate">Generar Token</span>
     </div>
     <form method="POST" action="/jwt" class="space-y-3">
       <input type="hidden" name="action" value="generate" />
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_username">Usuario</label>
           <input type="text" name="username" value="guest" class="hl-input" />
         </div>
         <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Role</label>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="col_role">Rol</label>
           <input type="text" name="role" value="user" class="hl-input" />
         </div>
       </div>
       <button type="submit" class="btn-primary">
-        <i class="ph ph-seal text-sm"></i> Generar JWT
+        <i class="ph ph-seal text-sm"></i> <span data-i18n="jwt_btn_gen">Generar JWT</span>
       </button>
     </form>
     {% if token %}
     <div class="mt-4 p-3 rounded-lg border text-xs font-mono break-all bg-dark-900 border-gray-700" style="color:var(--hl-primary)">
       {{ token }}
     </div>
-    <div class="text-xs text-gray-500 mt-2">Secreto usado: <code class="text-yellow-400">{{ secret }}</code></div>
+    <div class="text-xs text-gray-500 mt-2"><span data-i18n="jwt_secret_used">Secreto usado:</span> <code class="text-yellow-400">{{ secret }}</code></div>
     {% endif %}
   </div>
 
   <!-- Verify token -->
   <div class="hl-card mb-4">
     <div class="text-xs font-semibold uppercase tracking-wider mb-4" style="color:var(--hl-primary)">
-      <i class="ph ph-shield-check text-sm"></i> Verificar / Manipular Token
+      <i class="ph ph-shield-check text-sm"></i> <span data-i18n="jwt_verify">Verificar / Manipular Token</span>
     </div>
     <form method="POST" action="/jwt" class="space-y-3">
       <input type="hidden" name="action" value="verify" />
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">JWT Token</label>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_jwt_token">Token JWT</label>
         <input type="text" name="token" placeholder="header.payload.signature"
                class="hl-input font-mono" value="{{ token or '' }}" />
       </div>
       <button type="submit" class="btn-primary">
-        <i class="ph ph-magnifying-glass text-sm"></i> Verificar
+        <i class="ph ph-magnifying-glass text-sm"></i> <span data-i18n="jwt_btn_verify">Verificar</span>
       </button>
     </form>
 
     {% if decoded %}
     <div class="mt-4 p-3 rounded-lg border bg-dark-900 border-gray-700">
-      <div class="text-xs text-gray-400 mb-2 font-medium">Payload decodificado</div>
+      <div class="text-xs text-gray-400 mb-2 font-medium" data-i18n="jwt_decoded">Payload decodificado</div>
       <pre class="text-green-400 text-xs">{{ decoded | tojson(indent=2) }}</pre>
       {% if decoded._vuln is defined %}
       <div class="mt-2 text-xs text-red-400 font-semibold">
