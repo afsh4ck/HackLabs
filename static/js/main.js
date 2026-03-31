@@ -31,6 +31,13 @@ const T = {
     hero_by:         'Plataforma de hacking ético por',
     hero_rest:       'Practica el OWASP Top 10 (2021) y más con Burp Suite, sqlmap, hydra y otras herramientas de Kali Linux.',
     lab_cat_count:   'labs',
+    // A05 Misconfig lab content
+    misconfig_title:       'Configuraciones inseguras',
+    misconfig_item1:       'Panel de administración accesible sin autenticación',
+    misconfig_item2:       'Repositorio Git expuesto',
+    misconfig_item3:       'Stack trace completo del servidor expuesto en errores',
+    misconfig_item4:       'API interna de usuarios accesible sin autenticación',
+    misconfig_hint:        'Usa herramientas de fuzzing de directorios para descubrir los endpoints expuestos.',
   },
   en: {
     home:            'Home',
@@ -61,6 +68,13 @@ const T = {
     hero_by:         'Ethical hacking training platform by',
     hero_rest:       'Practice OWASP Top 10 (2021) and more with Burp Suite, sqlmap, hydra and other Kali Linux tools.',
     lab_cat_count:   'labs',
+    // A05 Misconfig lab content
+    misconfig_title:       'Misconfigurations',
+    misconfig_item1:       'Admin panel accessible without authentication',
+    misconfig_item2:       'Git repository configuration exposed',
+    misconfig_item3:       'Full server stack trace disclosed on error',
+    misconfig_item4:       'Internal user API accessible without auth',
+    misconfig_hint:        'Use directory fuzzing tools to discover exposed endpoints.',
   }
 };
 
