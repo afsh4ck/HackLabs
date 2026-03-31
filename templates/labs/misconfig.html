@@ -25,19 +25,15 @@
   </div>
   {% endif %}
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-    {% for href, label, sublabel, col in [
-      ('/debug/error', '/debug/error', 'Full server stack trace', 'red'),
-      ('/.git/config', '/.git/config', 'Exposed Git repository config', 'orange'),
-      ('/api/users',   '/api/users',   'User list without auth', 'yellow'),
-      ('/admin',       '/admin',       'Admin panel, no protection', 'red')
-    ] %}
-    <a href="{{ href }}" target="_blank"
-       class="hl-card hover:border-{{ col }}-500 border border-transparent transition flex flex-col gap-1 group">
-      <div class="text-sm font-semibold font-mono text-gray-800 dark:text-gray-200 group-hover:text-{{ col }}-400 transition">{{ label }}</div>
-      <div class="text-xs text-gray-400">{{ sublabel }}</div>
-    </a>
-    {% endfor %}
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">Misconfigurations</div>
+    <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5"></i><span>Admin panel accessible without authentication</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-orange-400 mt-0.5"></i><span>Git repository configuration exposed</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5"></i><span>Full server stack trace disclosed on error</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5"></i><span>Internal user API accessible without auth</span></li>
+    </ul>
+    <p class="text-xs text-gray-400 mt-4">Use directory fuzzing tools to discover exposed endpoints.</p>
   </div>
 </div>
 
@@ -45,30 +41,56 @@
   <div class="lang-content" data-lang="es">
     <h3>Pasos de explotación</h3>
     <ol>
-      <li>Navega a <code>/admin</code> — el panel de administración está completamente abierto sin autenticación.</li>
-      <li>Navega a <code>/.git/config</code> — el repositorio Git está expuesto con la URL interna del repositorio.</li>
-      <li>Navega a <code>/debug/error</code> — se muestra un stack trace completo con rutas del servidor, versiones de librerías y estructura del código.</li>
-      <li>Navega a <code>/api/users</code> — listado completo de usuarios con emails y roles en JSON.</li>
-      <li>Usa <code>nikto</code> o <code>gobuster</code> para descubrir más endpoints expuestos:</li>
+      <li>Usa <strong>gobuster</strong> o <strong>ffuf</strong> para descubrir directorios y endpoints expuestos:</li>
     </ol>
-    <pre>gobuster dir -u http://localhost:5000 -w /usr/share/wordlists/dirb/common.txt
-nikto -h http://localhost:5000</pre>
+    <pre><code class="language-bash">gobuster dir -u http://localhost:5000 \
+  -w /usr/share/wordlists/dirb/common.txt \
+  -x php,html,txt,git,json \
+  --no-error -q
+
+ffuf -u http://localhost:5000/FUZZ \
+  -w /usr/share/seclists/Discovery/Web-Content/common.txt \
+  -mc 200,301,302,403 -t 50</code></pre>
+    <ol start="2">
+      <li>Navega a <code>/admin</code> — panel de administración completamente abierto sin autenticación.</li>
+      <li>Navega a <code>/.git/config</code> — repositorio Git expuesto con la URL interna.</li>
+      <li>Navega a <code>/debug/error</code> — stack trace completo con rutas, versiones y estructura del código.</li>
+      <li>Navega a <code>/api/users</code> — listado completo de usuarios con emails y roles en JSON.</li>
+      <li>Complementa con <strong>nikto</strong> para detectar cabeceras inseguras y misconfigs adicionales:</li>
+    </ol>
+    <pre><code class="language-bash">nikto -h http://localhost:5000
+
+# Verificar cabeceras de seguridad
+curl -I http://localhost:5000/</code></pre>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">gobuster</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span></div>
+    <div><span class="tools-badge">gobuster</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
     <ol>
-      <li>Browse to <code>/admin</code> — the admin panel is fully open with no authentication.</li>
-      <li>Browse to <code>/.git/config</code> — the Git repository is exposed with the internal repo URL.</li>
-      <li>Browse to <code>/debug/error</code> — a full stack trace is shown with server paths, library versions and code structure.</li>
-      <li>Browse to <code>/api/users</code> — full user list with emails and roles in JSON.</li>
-      <li>Use <code>nikto</code> or <code>gobuster</code> to discover more exposed endpoints:</li>
+      <li>Use <strong>gobuster</strong> or <strong>ffuf</strong> to discover exposed directories and endpoints:</li>
     </ol>
-    <pre>gobuster dir -u http://localhost:5000 -w /usr/share/wordlists/dirb/common.txt
-nikto -h http://localhost:5000</pre>
+    <pre><code class="language-bash">gobuster dir -u http://localhost:5000 \
+  -w /usr/share/wordlists/dirb/common.txt \
+  -x php,html,txt,git,json \
+  --no-error -q
+
+ffuf -u http://localhost:5000/FUZZ \
+  -w /usr/share/seclists/Discovery/Web-Content/common.txt \
+  -mc 200,301,302,403 -t 50</code></pre>
+    <ol start="2">
+      <li>Browse to <code>/admin</code> — admin panel fully open with no authentication.</li>
+      <li>Browse to <code>/.git/config</code> — Git repository exposed with internal URL.</li>
+      <li>Browse to <code>/debug/error</code> — full stack trace with server paths, library versions and code structure.</li>
+      <li>Browse to <code>/api/users</code> — full user list with emails and roles in JSON.</li>
+      <li>Complement with <strong>nikto</strong> to detect insecure headers and additional misconfigs:</li>
+    </ol>
+    <pre><code class="language-bash">nikto -h http://localhost:5000
+
+# Check security headers
+curl -I http://localhost:5000/</code></pre>
     <h3>Tools</h3>
-    <div><span class="tools-badge">gobuster</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span></div>
+    <div><span class="tools-badge">gobuster</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span></div>
   </div>
 </div>
 {% endblock %}

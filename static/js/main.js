@@ -286,10 +286,13 @@ function showToast(msg) {
     fab.style.display = '';
   }
 
-  // Mark active sidebar item
+  // Mark active sidebar item and scroll it into view
   const path = window.location.pathname;
   document.querySelectorAll('.sidebar-item').forEach(el => {
-    if (el.getAttribute('href') === path) el.classList.add('active');
+    if (el.getAttribute('href') === path) {
+      el.classList.add('active');
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
   });
 })();
 
