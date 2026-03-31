@@ -11,13 +11,10 @@
 ## 🎯 Características
 
 - **22 laboratorios** cubriendo OWASP Top 10 + extras avanzados
-- Interfaz moderna oscura con **Tailwind CSS** + **Phosphor Icons**
-- Tipografía **Space Grotesk** (headings) + **Inter** (body)
-- **Resaltado de sintaxis** en bloques de código (highlight.js)
-- Modales de resolución paso a paso (ES/EN)
+- Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
-- Sidebar colapsable con categorías
 - Soporte **bilingüe** (Español / English)
+- Interfaz moderna oscura con **Tailwind CSS** + **Phosphor Icons**
 - Compatible con **Burp Suite, sqlmap, hydra, tplmap, jwt_tool** y demás herramientas de Kali Linux
 
 ---
