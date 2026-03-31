@@ -150,28 +150,38 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 }
 
 /* ── Select (dropdown) dark style ── */
-select.hl-input,
-.dark select.hl-input {
+select.hl-input {
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2.25rem;
+  background-position: right 0.875rem center;
+  padding-right: 2.5rem;
   cursor: pointer;
+  border-radius: 0.5rem;
 }
 .dark select.hl-input {
-  background-color: rgba(255,255,255,0.04);
-  border-color: #374151;
+  background-color: #111827;
+  border: 1px solid #374151;
   color: #f3f4f6;
+  border-radius: 0.5rem;
 }
-.dark select.hl-input option {
-  background: #1a1a2e;
-  color: #f3f4f6;
+.dark select.hl-input:hover {
+  border-color: #4b5563;
 }
 .dark select.hl-input:focus {
   border-color: var(--hl-primary);
-  background-color: rgba(255,255,255,0.06);
+  box-shadow: 0 0 0 3px rgba(var(--hl-primary-rgb), 0.15);
+  background-color: #1a1a2e;
+  outline: none;
+}
+.dark select.hl-input option {
+  background: #111827;
+  color: #f3f4f6;
+  padding: 0.5rem;
+}
+.dark select.hl-input option:checked {
+  background: #1f2937;
 }
 
 /* ── Primary button ── */

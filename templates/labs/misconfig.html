@@ -26,14 +26,14 @@
   {% endif %}
 
   <div class="hl-card mb-4">
-    <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">Misconfigurations</div>
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)" data-i18n="misconfig_title">Configuraciones inseguras</div>
     <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5"></i><span>Admin panel accessible without authentication</span></li>
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-orange-400 mt-0.5"></i><span>Git repository configuration exposed</span></li>
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5"></i><span>Full server stack trace disclosed on error</span></li>
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5"></i><span>Internal user API accessible without auth</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item1">Panel de administración accesible sin autenticación</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-orange-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item2">Repositorio Git expuesto</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item3">Stack trace completo del servidor expuesto en errores</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item4">API interna de usuarios accesible sin autenticación</span></li>
     </ul>
-    <p class="text-xs text-gray-400 mt-4">Use directory fuzzing tools to discover exposed endpoints.</p>
+    <p class="text-xs text-gray-400 mt-4" data-i18n="misconfig_hint">Usa herramientas de fuzzing de directorios para descubrir los endpoints expuestos.</p>
   </div>
 </div>
 
