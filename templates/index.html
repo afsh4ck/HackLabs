@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}HackLabs – Inicio{% endblock %}
+
+{% block content %}
+<div class="p-6 lg:p-8 max-w-6xl mx-auto">
+
+  <!-- ── Hero ── -->
+  <div class="mb-10 text-center relative">
+    <div class="absolute inset-x-0 top-0 -z-10 flex justify-center pointer-events-none">
+      <div class="w-96 h-40 rounded-full blur-3xl opacity-20 dark:opacity-10"
+           style="background:var(--hl-primary)"></div>
+    </div>
+
+    <div class="inline-flex items-center gap-2 text-xs px-3.5 py-1.5 rounded-full mb-6 font-mono font-semibold border"
+         style="background:rgba(var(--hl-primary-rgb),.08);border-color:rgba(var(--hl-primary-rgb),.3);color:var(--hl-primary)">
+      <i class="ph ph-shield-warning text-sm"></i>
+      <span data-i18n="badge_text">Intencionalmente Vulnerable · Solo uso educativo</span>
+    </div>
+
+    <h1 class="text-5xl font-bold text-gray-900 dark:text-white mb-4 logo-text tracking-tight">
+      Hack<span style="color:var(--hl-primary)">Labs</span>
+    </h1>
+    <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
+      <span data-i18n="hero_by">Plataforma de hacking ético por</span>
+      <a href="https://www.instagram.com/afsh4ck/" target="_blank" rel="noopener"
+         class="font-semibold transition hover:opacity-70" style="color:var(--hl-primary)">afsh4ck</a>.
+      <span data-i18n="hero_rest">Practica el OWASP Top 10 (2021) y más con Burp Suite, sqlmap, hydra y otras herramientas de Kali Linux.</span>
+    </p>
+  </div>
+
+  <!-- ── Stats ── -->
+  {% set counts = namespace(critical=0, high=0, medium=0, total=0) %}
+  {% for l in all_labs %}
+    {% set counts.total = counts.total + 1 %}
+    {% if l.risk == 'critical' %}{% set counts.critical = counts.critical + 1 %}{% endif %}
+    {% if l.risk == 'high' %}{% set counts.high = counts.high + 1 %}{% endif %}
+    {% if l.risk == 'medium' %}{% set counts.medium = counts.medium + 1 %}{% endif %}
+  {% endfor %}
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+    {% for icon, val, i18n_key, color, bg in [
+      ('ph-flask',          counts.total,    'stat_total',    'var(--hl-primary)', 'rgba(var(--hl-primary-rgb),.1)'),
+      ('ph-skull',          counts.critical, 'stat_critical', '#ef4444',           'rgba(239,68,68,.1)'),
+      ('ph-fire',           counts.high,     'stat_high',     '#f97316',           'rgba(249,115,22,.1)'),
+      ('ph-warning-circle', counts.medium,   'stat_medium',   '#f59e0b',           'rgba(245,158,11,.1)')
+    ] %}
+    <div class="stat-card rounded-xl p-4 border flex items-center gap-3 bg-white dark:bg-dark-800 border-gray-200 dark:border-gray-700/60">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+           style="background:{{ bg }}">
+        <i class="ph {{ icon }} text-xl" style="color:{{ color }}"></i>
+      </div>
+      <div>
+        <div class="text-2xl font-bold logo-text leading-none mb-0.5" style="color:{{ color }}">{{ val }}</div>
+        <div class="text-xs text-gray-400 font-medium" data-i18n="{{ i18n_key }}"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Risk Filters ── -->
+  <div class="flex items-center gap-2 mb-6 flex-wrap">
+    <span class="text-xs text-gray-400 font-semibold uppercase tracking-widest mr-1" data-i18n="filter_label">Filtrar:</span>
+    <button class="risk-filter active" data-risk="all" onclick="filterLabs('all', this)">
+      <i class="ph ph-squares-four text-sm"></i> <span data-i18n="filter_all">Todos</span>
+    </button>
+    <button class="risk-filter risk-filter--critical" data-risk="critical" onclick="filterLabs('critical', this)">
+      <i class="ph ph-skull text-sm"></i> <span data-i18n="stat_critical">Críticos</span>
+    </button>
+    <button class="risk-filter risk-filter--high" data-risk="high" onclick="filterLabs('high', this)">
+      <i class="ph ph-fire text-sm"></i> <span data-i18n="stat_high">Altos</span>
+    </button>
+    <button class="risk-filter risk-filter--medium" data-risk="medium" onclick="filterLabs('medium', this)">
+      <i class="ph ph-warning-circle text-sm"></i> <span data-i18n="stat_medium">Medios</span>
+    </button>
+  </div>
+
+  <!-- ── Lab cards ── -->
+  {% set lab_icons = {
+    'idor':            ('ph-identification-badge', 'Broken Access Control'),
+    'crypto':          ('ph-lock-key-open',         'Crypto Failures'),
+    'sqli':            ('ph-database',              'SQL Injection'),
+    'cmdi':            ('ph-terminal-window',       'Command Injection'),
+    'insecure_design': ('ph-puzzle-piece',          'Insecure Design'),
+    'misconfig':       ('ph-gear-six',              'Misconfiguration'),
+    'outdated':        ('ph-package',               'Outdated Components'),
+    'auth_failures':   ('ph-shield-slash',          'Auth Failures'),
+    'integrity':       ('ph-file-dashed',           'Integrity Failures'),
+    'logging':         ('ph-eye-slash',             'Logging Failures'),
+    'ssrf':            ('ph-arrows-merge',          'SSRF'),
+    'xss':             ('ph-code',                  'Cross-Site Scripting'),
+    'csrf':            ('ph-arrows-clockwise',      'CSRF'),
+    'file_upload':     ('ph-upload-simple',         'File Upload'),
+    'xxe':             ('ph-file-code',             'XXE Injection'),
+    'path_traversal':  ('ph-folder-dotted',         'Path Traversal'),
+    'bruteforce':      ('ph-hammer',                'Bruteforce'),
+    'ssti':            ('ph-brackets-curly',        'Template Injection'),
+    'open_redirect':   ('ph-arrow-bend-up-right',   'Open Redirect'),
+    'jwt':             ('ph-seal',                  'JWT Manipulation'),
+    'deserialization': ('ph-recycle',               'Insecure Deserialization'),
+    'cors':            ('ph-swap',                  'CORS Misconfiguration')
+  } %}
+
+  {% set categories = all_labs | map(attribute='category') | unique | list %}
+  {% for cat in categories %}
+  <div class="lab-section mb-10">
+    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2.5">
+      <span class="w-6 h-0.5 rounded-full inline-block" style="background:var(--hl-primary)"></span>
+      <span data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</span>
+      <span class="text-gray-600 font-normal normal-case tracking-normal">
+        · {{ all_labs | selectattr('category', 'eq', cat) | list | length }} <span data-i18n="lab_cat_count">labs</span>
+      </span>
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for l in all_labs if l.category == cat %}
+      {% set icon_info = lab_icons.get(l.id, ('ph-shield', l.title)) %}
+      <a href="/lab/{{ l.id }}" data-risk="{{ l.risk }}"
+         class="lab-card group bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700/60 rounded-xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-dark-900/60 block relative overflow-hidden">
+
+        <div class="absolute inset-x-0 top-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+             style="background:var(--hl-primary)"></div>
+
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+               style="background:rgba(var(--hl-primary-rgb),.12)">
+            <i class="ph {{ icon_info[0] }} text-xl" style="color:var(--hl-primary)"></i>
+          </div>
+          <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-{{ l.risk }}">{{ l.risk }}</span>
+        </div>
+
+        <h3 class="font-semibold text-sm text-gray-800 dark:text-gray-200 leading-snug mb-1">{{ l.title }}</h3>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">{{ icon_info[1] }}</p>
+
+        <div class="flex items-center gap-1 text-xs font-medium" style="color:var(--hl-primary)">
+          <i class="ph ph-arrow-right text-sm transition-transform duration-200 group-hover:translate-x-1"></i>
+          <span data-i18n="open_lab">Abrir lab</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- ── Credentials ── -->
+  <div class="mt-4 bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700/60 rounded-xl p-6">
+    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2.5">
+      <span class="w-6 h-0.5 rounded-full inline-block" style="background:var(--hl-primary)"></span>
+      <i class="ph ph-key text-sm" style="color:var(--hl-primary)"></i>
+      <span data-i18n="test_credentials">Credenciales de prueba</span>
+    </h2>
+    <div class="overflow-x-auto">
+      <table class="hl-table">
+        <thead>
+          <tr>
+            <th><i class="ph ph-user mr-1"></i><span data-i18n="col_username">Usuario</span></th>
+            <th><i class="ph ph-lock mr-1"></i><span data-i18n="col_password">Contraseña</span></th>
+            <th><i class="ph ph-hash mr-1"></i><span data-i18n="col_hash">Hash MD5</span></th>
+            <th><i class="ph ph-tag mr-1"></i><span data-i18n="col_role">Rol</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="color:var(--hl-primary)" class="font-semibold">admin</td><td>admin123</td><td class="font-mono text-gray-400">0192023a7bbd73250516f069df18b500</td><td><span class="risk-badge-critical px-1.5 py-0.5 rounded text-xs">admin</span></td></tr>
+          <tr><td style="color:var(--hl-primary)" class="font-semibold">alice</td><td>password</td><td class="font-mono text-gray-400">5f4dcc3b5aa765d61d8327deb882cf99</td><td><span class="risk-badge-low px-1.5 py-0.5 rounded text-xs">user</span></td></tr>
+          <tr><td style="color:var(--hl-primary)" class="font-semibold">bob</td><td>123456</td><td class="font-mono text-gray-400">e10adc3949ba59abbe56e057f20f883e</td><td><span class="risk-badge-low px-1.5 py-0.5 rounded text-xs">user</span></td></tr>
+          <tr><td style="color:var(--hl-primary)" class="font-semibold">charlie</td><td>qwerty</td><td class="font-mono text-gray-400">d8578edf8458ce06fbc5bb76a58c5ca4</td><td><span class="risk-badge-low px-1.5 py-0.5 rounded text-xs">user</span></td></tr>
+          <tr><td style="color:var(--hl-primary)" class="font-semibold">dave</td><td>letmein</td><td class="font-mono text-gray-400">0d107d09f5bbe40cade3de5c71e9e9b7</td><td><span class="risk-badge-medium px-1.5 py-0.5 rounded text-xs">manager</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterLabs(risk, btn) {
+  document.querySelectorAll('.risk-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.lab-card').forEach(card => {
+    const show = risk === 'all' || card.dataset.risk === risk;
+    card.style.display = show ? '' : 'none';
+  });
+  document.querySelectorAll('.lab-section').forEach(section => {
+    const visible = [...section.querySelectorAll('.lab-card')].some(c => c.style.display !== 'none');
+    section.style.display = visible ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

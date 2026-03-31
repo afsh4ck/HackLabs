@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}HackLabs{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: { 900: '#0f0f1a', 800: '#1a1a2e', 700: '#16213e', 600: '#0d3b66' },
+            success: '#22c55e',
+            warning: '#f59e0b',
+            danger:  '#ef4444',
+          },
+          fontFamily: {
+            sans:    ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'Inter', 'sans-serif'],
+            mono:    ['JetBrains Mono', 'Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+
+  <!-- highlight.js (syntax highlighting) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+  <!-- Inject saved theme before render to avoid flash -->
+  <script>(function(){ document.documentElement.classList.add('dark'); })();</script>
+</head>
+
+<body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- ── Top Navbar ── -->
+  <header class="bg-white/80 dark:bg-dark-800/90 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-700/60 sticky top-0 z-50">
+    <div class="flex items-center justify-between px-4 py-2.5 gap-3">
+
+      <!-- Left: sidebar toggle + logo -->
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="sidebar-toggle" onclick="toggleSidebar()"
+                class="nav-icon-btn p-1.5 text-gray-500 dark:text-gray-400 flex-shrink-0"
+                title="Toggle sidebar">
+          <i id="sidebar-icon-open"  class="ph ph-list text-lg leading-none"></i>
+          <i id="sidebar-icon-close" class="ph ph-x   text-lg leading-none hidden"></i>
+        </button>
+
+        <a href="/" class="flex items-center gap-2.5 min-w-0">
+          <!-- Flask logo -->
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+               style="background:var(--hl-primary)">
+            <i class="ph-fill ph-flask text-lg" style="color:var(--hl-on-primary)"></i>
+          </div>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="font-bold text-base text-gray-900 dark:text-white logo-text tracking-tight">Hack<span style="color:var(--hl-primary)">Labs</span></span>
+            <span class="hidden md:inline text-xs text-gray-400 whitespace-nowrap" style="font-size:12px">Intentionally Vulnerable Labs by <a href="https://www.instagram.com/afsh4ck/" target="_blank" rel="noopener" class="transition hover:opacity-70" style="color:var(--hl-primary);font-size:12px">afsh4ck</a></span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Right: controls -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+
+        <!-- Hacking Academy button -->
+        <a href="https://h4ckercademy.com/" target="_blank" rel="noopener"
+           class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+           style="background:var(--hl-primary);color:var(--hl-on-primary)">
+          <i class="ph ph-graduation-cap text-sm"></i>
+          Hacking Academy
+        </a>
+
+        <!-- Language toggle -->
+        <div class="flex items-center bg-gray-100 dark:bg-dark-700 rounded-lg p-0.5 border border-gray-200 dark:border-gray-600">
+          <button id="lang-es" onclick="setLang('es')"
+                  class="px-2 py-1 rounded text-xs font-semibold transition lang-btn">ES</button>
+          <button id="lang-en" onclick="setLang('en')"
+                  class="px-2 py-1 rounded text-xs font-semibold transition lang-btn">EN</button>
+        </div>
+
+        {% if session.get('username') %}
+        <div class="hidden md:flex items-center gap-2 pl-1 border-l border-gray-200 dark:border-gray-700 ml-1">
+          <i class="ph ph-user-circle text-gray-400 text-base"></i>
+          <span class="text-xs text-gray-500 dark:text-gray-400">
+            {{ session.username }} <span class="text-gray-400">({{ session.get('role','?') }})</span>
+          </span>
+          <a href="/logout" class="text-xs text-gray-400 hover:text-red-400 transition">
+            <i class="ph ph-sign-out"></i>
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- ── Sidebar ── -->
+    <aside id="sidebar"
+           class="bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-gray-700/60 overflow-y-auto flex-shrink-0 sidebar-open transition-all duration-300">
+      <nav class="p-3 space-y-0.5 w-64">
+
+        <!-- Home -->
+        <a href="/" class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition {% if request.path == '/' %}active{% endif %}">
+          <i class="ph ph-house text-base flex-shrink-0"></i>
+          <span class="text-xs" data-i18n="home">Inicio</span>
+        </a>
+
+        {% set categories = all_labs | map(attribute='category') | unique | list %}
+        {% set sidebar_icons = {
+          'idor':            'ph-identification-badge',
+          'crypto':          'ph-lock-key-open',
+          'sqli':            'ph-database',
+          'cmdi':            'ph-terminal-window',
+          'insecure_design': 'ph-puzzle-piece',
+          'misconfig':       'ph-gear-six',
+          'outdated':        'ph-package',
+          'auth_failures':   'ph-shield-slash',
+          'integrity':       'ph-file-dashed',
+          'logging':         'ph-eye-slash',
+          'ssrf':            'ph-arrows-merge',
+          'xss':             'ph-code',
+          'csrf':            'ph-arrows-clockwise',
+          'file_upload':     'ph-upload-simple',
+          'xxe':             'ph-file-code',
+          'path_traversal':  'ph-folder-dotted',
+          'bruteforce':      'ph-hammer',
+          'ssti':            'ph-brackets-curly',
+          'open_redirect':   'ph-arrow-bend-up-right',
+          'jwt':             'ph-seal',
+          'deserialization': 'ph-recycle',
+          'cors':            'ph-swap'
+        } %}
+
+        {% for cat in categories %}
+          {% set cat_id = cat | lower | replace(' ', '_') %}
+          <div class="sidebar-category" data-cat="{{ cat_id }}">
+            <button onclick="toggleCategory('{{ cat_id }}')"
+                    class="sidebar-cat-toggle w-full flex items-center justify-between px-3 pt-4 pb-1 group">
+              <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest"
+                    data-i18n="cat_{{ cat_id }}">{{ cat }}</span>
+              <i class="ph ph-caret-down sidebar-caret text-gray-500 text-xs transition-transform duration-200 group-hover:text-gray-300"></i>
+            </button>
+            <div class="sidebar-cat-items" id="cat-{{ cat_id }}">
+              {% for l in all_labs if l.category == cat %}
+              <a href="/lab/{{ l.id }}"
+                 class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition {% if current_lab_id == l.id %}active{% endif %}">
+                <i class="ph {{ sidebar_icons.get(l.id, 'ph-shield') }} text-base flex-shrink-0 opacity-70"></i>
+                <span class="truncate text-xs leading-snug">{{ l.title }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </nav>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="flex-1 overflow-y-auto">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-gray-700/60 text-center py-2 text-xs text-gray-400">
+    HackLabs &copy; <span id="footer-year"></span> ·
+    <a href="https://www.instagram.com/afsh4ck/" target="_blank" rel="noopener" style="color:var(--hl-primary)" class="font-semibold hover:opacity-80 transition">afsh4ck</a>
+    · <span data-i18n="footer_warning">Solo para uso educativo en entornos aislados</span>
+  </footer>
+
+  <!-- ── Global Resolution FAB — outside main scroll container ── -->
+  <button id="global-fab" class="fab-resolution" onclick="openResolution()" style="display:none">
+    <i class="ph ph-book-open text-base"></i>
+    <span data-i18n="btn_resolution">Ver resolución</span>
+  </button>
+
+  <!-- ── Resolution Modal ── -->
+  <div id="resolution-modal"
+       class="fixed inset-0 z-50 hidden flex items-center justify-center p-4"
+       aria-modal="true" role="dialog">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeResolution()"></div>
+    <div class="relative bg-white dark:bg-dark-800 border border-gray-200 dark:border-gray-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-dark-800 rounded-t-2xl z-10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:rgba(var(--hl-primary-rgb),0.15)">
+            <i class="ph ph-book-open text-sm" style="color:var(--hl-primary)"></i>
+          </div>
+          <h2 class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="modal_title">Resolución del laboratorio</h2>
+        </div>
+        <button onclick="closeResolution()"
+                class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-dark-700 transition">
+          <i class="ph ph-x text-base"></i>
+        </button>
+      </div>
+      <div id="modal-body" class="px-6 py-5 prose-custom"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Outdated Components – HackLabs{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="flex gap-3 items-end mb-4">
+      <div class="flex-1">
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Search</label>
+        <input type="text" id="search-input" value="{{ query }}" placeholder="Search products..."
+               class="hl-input font-mono" />
+      </div>
+      <button id="search-btn" class="btn-primary flex-shrink-0">Search</button>
+    </div>
+    <div id="search-result" class="hl-code text-sm text-gray-500 dark:text-gray-500 min-h-10">
+      {% if query %}Searching for: {{ query }}{% else %}Enter a search term...{% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>La página carga <strong>jQuery 1.6.1</strong> (2011), con múltiples CVEs de XSS.</li>
+      <li>El widget usa <code>$.html()</code> que inyecta HTML sin sanitizar en el DOM.</li>
+      <li>Introduce el siguiente payload en el campo de búsqueda:</li>
+    </ol>
+    <pre>&lt;img src=x onerror=alert(document.cookie)&gt;
+&lt;script&gt;alert('XSS via jQuery 1.6.1')&lt;/script&gt;</pre>
+    <ol start="4">
+      <li>También funciona via URL: <code>/outdated/search?q=&lt;img src=x onerror=alert(1)&gt;</code></li>
+      <li>CVEs relevantes: <code>CVE-2011-4969</code>, <code>CVE-2015-9251</code>, <code>CVE-2019-11358</code></li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">browser</span> <span class="tools-badge">Burp Suite</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>The page loads <strong>jQuery 1.6.1</strong> (2011), with multiple XSS CVEs.</li>
+      <li>The widget uses <code>$.html()</code> which injects unsanitized HTML into the DOM.</li>
+      <li>Enter the following payload in the search field:</li>
+    </ol>
+    <pre>&lt;img src=x onerror=alert(document.cookie)&gt;
+&lt;script&gt;alert('XSS via jQuery 1.6.1')&lt;/script&gt;</pre>
+    <ol start="4">
+      <li>Also works via URL: <code>/outdated/search?q=&lt;img src=x onerror=alert(1)&gt;</code></li>
+      <li>Relevant CVEs: <code>CVE-2011-4969</code>, <code>CVE-2015-9251</code>, <code>CVE-2019-11358</code></li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">browser</span> <span class="tools-badge">Burp Suite</span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-1.6.1.min.js"></script>
+<script>
+  var initialQuery = "{{ query | safe }}";
+  if (initialQuery) {
+    $('#search-result').html('Results for: <strong>' + initialQuery + '</strong>');
+  }
+  $('#search-btn').click(function() {
+    var q = $('#search-input').val();
+    $('#search-result').html('Results for: <strong>' + q + '</strong>');
+    window.location.href = '/outdated/search?q=' + encodeURIComponent(q);
+  });
+</script>
+{% endblock %}

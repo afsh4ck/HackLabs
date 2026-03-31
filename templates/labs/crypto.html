@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Cryptographic Failures – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <form method="POST" action="/crypto/login" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+        <input type="text" name="username" placeholder="admin" class="hl-input" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Password</label>
+        <input type="password" name="password" placeholder="••••••••" class="hl-input" />
+      </div>
+      <button type="submit" class="btn-primary w-full justify-center">Login</button>
+    </form>
+  </div>
+
+  {% if message %}
+  <div class="{% if success %}alert-success{% else %}alert-error{% endif %} mb-4 font-mono text-xs">{{ message }}</div>
+  {% endif %}
+  {% if weak_hash %}
+  <div class="hl-card border-l-4 mb-4" style="border-left-color:#f59e0b">
+    <div class="text-xs text-yellow-500 font-semibold mb-1">auth_token cookie</div>
+    <div class="font-mono text-sm break-all" style="color:var(--hl-primary)">{{ weak_hash }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Inicia sesión con cualquier usuario (ej. <code>alice / password</code>).</li>
+      <li>Abre <strong>DevTools → Application → Cookies</strong> y copia el valor de <code>auth_token</code>.</li>
+      <li>El token es el hash <strong>MD5 sin salt</strong> de la contraseña.</li>
+      <li>Crackea el hash con hashcat o john:</li>
+    </ol>
+    <pre>echo "5f4dcc3b5aa765d61d8327deb882cf99" > hash.txt
+hashcat -a 0 -m 0 hash.txt /usr/share/wordlists/rockyou.txt
+john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt hash.txt</pre>
+    <ol start="5">
+      <li>También puedes capturar la respuesta HTTP con Burp Suite para ver el hash en el cuerpo de la respuesta.</li>
+      <li>Hashes de muestra: <code>admin123 → 0192023a7bbd73250516f069df18b500</code></li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Burp Suite</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Log in with any user (e.g. <code>alice / password</code>).</li>
+      <li>Open <strong>DevTools → Application → Cookies</strong> and copy the <code>auth_token</code> value.</li>
+      <li>The token is the <strong>MD5 hash without salt</strong> of the password.</li>
+      <li>Crack the hash with hashcat or john:</li>
+    </ol>
+    <pre>echo "5f4dcc3b5aa765d61d8327deb882cf99" > hash.txt
+hashcat -a 0 -m 0 hash.txt /usr/share/wordlists/rockyou.txt
+john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt hash.txt</pre>
+    <ol start="5">
+      <li>You can also capture the HTTP response with Burp Suite to see the hash in the response body.</li>
+      <li>Sample hash: <code>admin123 → 0192023a7bbd73250516f069df18b500</code></li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Burp Suite</span></div>
+  </div>
+</div>
+{% endblock %}

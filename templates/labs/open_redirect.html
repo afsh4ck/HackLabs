@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Open Redirect – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+      Este portal redirige a los usuarios tras completar acciones. El parámetro de destino no está validado.
+    </div>
+    <form method="GET" action="/open_redirect" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">URL de destino</label>
+        <input type="text" name="url" placeholder="https://ejemplo.com/dashboard"
+               class="hl-input font-mono" autocomplete="off" />
+      </div>
+      <button type="submit" class="btn-primary">
+        <i class="ph ph-arrow-right text-sm"></i> Ir a destino
+      </button>
+    </form>
+  </div>
+
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400">Ejemplos</div>
+    <div class="hl-code">
+      <div class="text-gray-400"># Redirección a sitio externo (phishing)</div>
+      <div>GET /open_redirect?url=https://evil.com</div>
+      <div class="text-gray-400"># Bypass de filtros básicos</div>
+      <div>GET /open_redirect?url=//evil.com</div>
+      <div>GET /open_redirect?url=https://trusted.com.evil.com</div>
+      <div class="text-gray-400"># OAuth token stealing</div>
+      <div>GET /oauth/callback?redirect_uri=https://evil.com</div>
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>El endpoint <code>/open_redirect?url=</code> redirige sin validar el dominio destino.</li>
+      <li>Úsalo para robar tokens OAuth: convence al usuario de hacer clic en una URL legítima que redirige a tu servidor malicioso.</li>
+      <li>Bypass de filtros: <code>//evil.com</code>, <code>/\evil.com</code>, <code>https:evil.com</code></li>
+      <li>En combinación con XSS: <code>javascript:alert(1)</code> como URL puede ejecutar código en algunos navegadores.</li>
+      <li>Impacto real: phishing avanzado, robo de sesiones, bypass de CSP.</li>
+    </ol>
+    <pre>curl -v "http://localhost:5000/open_redirect?url=https://evil.com"
+# Observa: Location: https://evil.com en la respuesta</pre>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>The <code>/open_redirect?url=</code> endpoint redirects without validating the destination domain.</li>
+      <li>Use it to steal OAuth tokens: trick users into clicking a legitimate-looking URL that redirects to your server.</li>
+      <li>Filter bypasses: <code>//evil.com</code>, <code>/\evil.com</code>, <code>https:evil.com</code></li>
+      <li>Combined with XSS: <code>javascript:alert(1)</code> as URL may execute code in some browsers.</li>
+      <li>Real impact: advanced phishing, session hijacking, CSP bypass.</li>
+    </ol>
+    <pre>curl -v "http://localhost:5000/open_redirect?url=https://evil.com"
+# Notice: Location: https://evil.com in the response</pre>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
+  </div>
+</div>
+{% endblock %}

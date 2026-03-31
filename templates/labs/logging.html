@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Logging Failures – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <form method="POST" action="/logging/login" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+        <input type="text" name="username" placeholder="admin" class="hl-input" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Password</label>
+        <input type="password" name="password" placeholder="••••••••" class="hl-input" />
+      </div>
+      <button type="submit" class="btn-primary w-full justify-center">Login</button>
+    </form>
+    {% if message %}
+    <div class="{% if success %}alert-success{% else %}alert-error{% endif %} mt-4 text-xs font-mono">{{ message }}</div>
+    {% endif %}
+  </div>
+
+  <div class="hl-card mb-4">
+    <div class="text-xs text-gray-400 font-medium mb-2">/var/log/hacklabs/access.log</div>
+    <div class="hl-code text-xs min-h-16">
+      {% if log_content %}
+        <pre class="text-green-500 whitespace-pre-wrap">{{ log_content }}</pre>
+      {% else %}
+        <span class="text-gray-500 italic">(empty — no security events are ever logged)</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Realiza múltiples intentos de login con contraseñas incorrectas.</li>
+      <li>Observa que el archivo de log permanece completamente vacío — no se registra ningún evento.</li>
+      <li>Esto significa que un ataque de fuerza bruta pasaría completamente desapercibido.</li>
+      <li>En una aplicación segura, cada intento fallido debería generar una entrada de log con: timestamp, IP, username intentado y User-Agent.</li>
+      <li>Combina este lab con el de Auth Failures: lanza hydra y confirma que no hay registro de los miles de intentos:</li>
+    </ol>
+    <pre>hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  localhost -s 5000 http-post-form \
+  "/logging/login:username=^USER^&password=^PASS^:incorrectas"</pre>
+    <h3>Impacto</h3>
+    <div><span class="tools-badge">Sin detección de intrusos</span> <span class="tools-badge">Sin forense</span> <span class="tools-badge">Sin alertas</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Make multiple login attempts with wrong passwords.</li>
+      <li>Notice that the log file remains completely empty — no events are ever recorded.</li>
+      <li>This means a brute-force attack would go completely undetected.</li>
+      <li>In a secure app, each failed attempt should generate a log entry with: timestamp, IP, attempted username and User-Agent.</li>
+      <li>Combine with the Auth Failures lab: run hydra and confirm thousands of attempts leave no trace:</li>
+    </ol>
+    <pre>hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  localhost -s 5000 http-post-form \
+  "/logging/login:username=^USER^&password=^PASS^:incorrectas"</pre>
+    <h3>Impact</h3>
+    <div><span class="tools-badge">No intrusion detection</span> <span class="tools-badge">No forensics</span> <span class="tools-badge">No alerts</span></div>
+  </div>
+</div>
+{% endblock %}

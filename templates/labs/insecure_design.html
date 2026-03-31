@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Insecure Design – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  {% if not question and not success %}
+  <div class="hl-card mb-4">
+    <form method="POST" action="/recover" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Username</label>
+        <input type="text" name="username" placeholder="admin" class="hl-input" />
+      </div>
+      <button type="submit" class="btn-primary">Continue</button>
+    </form>
+    {% if error %}<div class="alert-error mt-3 text-xs font-mono">{{ error }}</div>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if question %}
+  <div class="hl-card mb-4">
+    <div class="text-xs text-gray-400 mb-1">User: <span class="font-mono" style="color:var(--hl-primary)">{{ username }}</span></div>
+    <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4">{{ question }}</div>
+    <form method="POST" action="/recover/answer" class="space-y-4">
+      <input type="hidden" name="username" value="{{ username }}" />
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Answer</label>
+        <input type="text" name="answer" placeholder="..." class="hl-input" />
+      </div>
+      <button type="submit" class="btn-primary">Verify</button>
+    </form>
+    {% if error %}<div class="alert-error mt-3 text-xs font-mono">{{ error }}</div>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if success %}
+  <div class="hl-card border-l-4 mb-4" style="border-left-color:#22c55e">
+    <div class="alert-success mb-2 font-semibold">Account compromised!</div>
+    <div class="text-sm text-gray-700 dark:text-gray-300">User: <code>{{ username }}</code></div>
+    <div class="text-sm mt-1">Plaintext password: <span class="font-bold font-mono text-lg" style="color:var(--hl-primary)">{{ password }}</span></div>
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Introduce un nombre de usuario conocido: <code>admin</code>, <code>alice</code>, <code>bob</code>, <code>charlie</code>, <code>dave</code>.</li>
+      <li>La aplicación muestra la pregunta de seguridad almacenada en texto plano.</li>
+      <li>Adivina o enumera las respuestas (sin rate-limiting): <code>rex</code>, <code>fluffy</code>, <code>sevilla</code>, <code>ceip</code>, <code>max</code>.</li>
+      <li>Con la respuesta correcta, la aplicación revela la contraseña en texto plano.</li>
+      <li>Automatiza con hydra o un script Python para iterar sobre una wordlist de nombres de mascotas.</li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">manual</span> <span class="tools-badge">hydra</span> <span class="tools-badge">Python script</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Enter a known username: <code>admin</code>, <code>alice</code>, <code>bob</code>, <code>charlie</code>, <code>dave</code>.</li>
+      <li>The application reveals the security question stored in plain text.</li>
+      <li>Guess or enumerate answers (no rate-limiting): <code>rex</code>, <code>fluffy</code>, <code>sevilla</code>, <code>ceip</code>, <code>max</code>.</li>
+      <li>With the correct answer, the application reveals the plaintext password.</li>
+      <li>Automate with hydra or a Python script iterating over a pet-name wordlist.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">manual</span> <span class="tools-badge">hydra</span> <span class="tools-badge">Python script</span></div>
+  </div>
+</div>
+{% endblock %}

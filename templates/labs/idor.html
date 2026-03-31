@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}IDOR – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <!-- Vulnerable app -->
+  <div class="hl-card mb-4">
+    <form method="GET" action="/profile" class="flex gap-3 items-end">
+      <div class="flex-1">
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">User ID</label>
+        <input type="number" name="id" value="{{ queried_id or '1' }}" min="1" class="hl-input font-mono" />
+      </div>
+      <button type="submit" class="btn-primary">View Profile</button>
+    </form>
+  </div>
+
+  {% if profile %}
+  <div class="hl-card border-l-4 mb-4" style="border-left-color:var(--hl-primary)">
+    <div class="text-xs font-semibold mb-3" style="color:var(--hl-primary)">Profile — ID: {{ profile['id'] }}</div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {% for key in profile.keys() %}
+      <div class="bg-gray-50 dark:bg-dark-900 rounded-lg p-2.5">
+        <div class="text-xs text-gray-400 mb-0.5">{{ key }}</div>
+        <div class="text-sm font-mono text-gray-800 dark:text-gray-200 truncate">{{ profile[key] or '—' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif error %}
+  <div class="alert-error mb-4 font-mono text-xs">{{ error }}</div>
+  {% elif queried_id %}
+  <div class="hl-card mb-4 text-sm text-gray-400">No user found with ID={{ queried_id }}</div>
+  {% endif %}
+
+  <!-- Resolution trigger -->
+</div>
+
+<!-- Resolution data -->
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Pasos de explotación</h3>
+    <ol>
+      <li>Accede a <code>/profile?id=1</code> para ver el perfil con ID 1.</li>
+      <li>Modifica el parámetro <code>id</code> a <code>2</code>, <code>3</code>, <code>4</code> o <code>5</code> en la URL.</li>
+      <li>La aplicación devuelve los datos de cualquier usuario sin verificar autenticación ni autorización.</li>
+      <li>Observa campos sensibles: <code>credit_card</code>, <code>ssn</code>, <code>password_md5</code>, <code>password_plain</code>.</li>
+      <li><strong>Burp Suite:</strong> Intercepta la petición GET → Repeater → modifica el valor de <code>id</code> → Send.</li>
+      <li><strong>Burp Intruder:</strong> Posición en <code>id=§1§</code> → Payload: Numbers 1–10 → lanza el ataque.</li>
+    </ol>
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite Repeater</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">curl</span></div>
+    <pre>curl "http://localhost:5000/profile?id=2"
+curl "http://localhost:5000/profile?id=3"</pre>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation Steps</h3>
+    <ol>
+      <li>Visit <code>/profile?id=1</code> to view profile with ID 1.</li>
+      <li>Change the <code>id</code> parameter to <code>2</code>, <code>3</code>, <code>4</code> or <code>5</code> in the URL.</li>
+      <li>The application returns any user's data without verifying authentication or authorization.</li>
+      <li>Note the sensitive fields: <code>credit_card</code>, <code>ssn</code>, <code>password_md5</code>, <code>password_plain</code>.</li>
+      <li><strong>Burp Suite:</strong> Intercept the GET request → Repeater → change <code>id</code> value → Send.</li>
+      <li><strong>Burp Intruder:</strong> Position on <code>id=§1§</code> → Payload: Numbers 1–10 → launch attack.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite Repeater</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">curl</span></div>
+    <pre>curl "http://localhost:5000/profile?id=2"
+curl "http://localhost:5000/profile?id=3"</pre>
+  </div>
+</div>
+{% endblock %}

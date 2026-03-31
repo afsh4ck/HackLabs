@@ -1,0 +1,14 @@
+<!-- Partial: lab header breadcrumb + title -->
+<div class="mb-6">
+  <div class="flex items-center gap-2 mb-1.5 text-xs text-gray-400">
+    <a href="/" class="hover:text-primary transition" data-i18n="home">Inicio</a>
+    <span>/</span>
+    <span>{{ lab.category }}</span>
+    <span>/</span>
+    <span class="text-gray-600 dark:text-gray-500 truncate">{{ lab.title }}</span>
+  </div>
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-lg font-bold text-gray-900 dark:text-white leading-snug">{{ lab.title }}</h1>
+    <span class="text-xs px-2 py-0.5 rounded font-mono flex-shrink-0 risk-badge-{{ lab.risk }}">{{ lab.risk }}</span>
+  </div>
+</div>
