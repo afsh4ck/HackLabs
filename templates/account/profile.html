@@ -10,7 +10,14 @@
     </div>
     <div>
       <h1 class="text-xl font-bold text-gray-900 dark:text-white font-display">Mi perfil</h1>
+      {% if is_lab_user %}
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Usuario del sistema
+        <span class="ml-1 px-1.5 py-0.5 rounded text-xs font-semibold" style="background:#1a1a2e;color:var(--hl-primary);border:1px solid var(--hl-primary)">{{ user['role'] }}</span>
+      </p>
+      {% else %}
       <p class="text-sm text-gray-500 dark:text-gray-400">Actualiza tu información de cuenta</p>
+      {% endif %}
     </div>
   </div>
 
@@ -21,6 +28,42 @@
   <div class="alert-error mb-4 text-sm">{{ error }}</div>
   {% endif %}
 
+  {% if is_lab_user %}
+  <!-- Lab user: show full sensitive data, read-only -->
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style="color:var(--hl-primary)">
+      <i class="ph ph-warning text-sm"></i> Información sensible del usuario
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {% set fields = [
+        ('username',          'Usuario',           'ph-user'),
+        ('email',             'Email',             'ph-envelope'),
+        ('role',              'Rol',               'ph-shield'),
+        ('password_plain',    'Contraseña (plain)','ph-lock-open'),
+        ('password_md5',      'Hash MD5',          'ph-key'),
+        ('phone',             'Teléfono',          'ph-phone'),
+        ('address',           'Dirección',         'ph-map-pin'),
+        ('credit_card',       'Tarjeta de crédito','ph-credit-card'),
+        ('ssn',               'SSN',               'ph-identification-card'),
+        ('security_question', 'Pregunta seguridad','ph-question'),
+        ('security_answer',   'Respuesta seguridad','ph-chat-text'),
+      ] %}
+      {% for key, label, icon in fields %}
+      <div class="bg-gray-50 dark:bg-dark-900 rounded-lg p-3">
+        <div class="text-xs text-gray-400 mb-1 flex items-center gap-1">
+          <i class="ph {{ icon }} text-xs" style="color:var(--hl-primary)"></i> {{ label }}
+        </div>
+        <div class="font-mono text-sm text-gray-800 dark:text-gray-200 break-all">{{ user[key] or '—' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="text-xs text-gray-500 dark:text-gray-600 text-center">
+    <i class="ph ph-lock-simple text-xs"></i> Las contraseñas de usuarios del sistema no se pueden modificar.
+  </div>
+
+  {% else %}
+  <!-- Platform account user: editable form -->
   <div class="hl-card">
     <form method="POST" action="/account/profile" class="space-y-4">
       <div>
@@ -55,6 +98,7 @@
       </button>
     </form>
   </div>
+  {% endif %}
 
 </div>
 {% endblock %}

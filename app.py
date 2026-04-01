@@ -868,20 +868,36 @@ def account_login():
         password = request.form.get('password', '')
         next_url = request.form.get('next', url_for('index'))
 
-        ensure_account_table()
-        pw_hash = hashlib.sha256(password.encode()).hexdigest()
         db = get_db()
+
+        # 1) Check platform account_users (SHA-256)
+        ensure_account_table()
+        pw_sha256 = hashlib.sha256(password.encode()).hexdigest()
         user = db.execute(
             'SELECT * FROM account_users WHERE username=? AND password_hash=?',
-            (username, pw_hash)
+            (username, pw_sha256)
         ).fetchone()
 
         if user:
-            session['app_user']  = user['username']
-            session['app_email'] = user['email']
+            session['app_user']      = user['username']
+            session['app_email']     = user['email']
+            session['app_user_type'] = 'account'
             return redirect(next_url)
-        else:
-            error = 'Usuario o contraseña incorrectos.'
+
+        # 2) Fall back to lab users table (MD5)
+        pw_md5 = hashlib.md5(password.encode()).hexdigest()
+        lab_user = db.execute(
+            'SELECT * FROM users WHERE username=? AND password_md5=?',
+            (username, pw_md5)
+        ).fetchone()
+
+        if lab_user:
+            session['app_user']      = lab_user['username']
+            session['app_email']     = lab_user['email']
+            session['app_user_type'] = 'lab'
+            return redirect(next_url)
+
+        error = 'Usuario o contraseña incorrectos.'
 
     return render_template('account/login.html', error=error, next=next_url)
 
@@ -902,6 +918,18 @@ def account_profile():
     error   = None
     ensure_account_table()
     db = get_db()
+    is_lab_user = session.get('app_user_type') == 'lab'
+
+    if is_lab_user:
+        # Lab users: show full personal data, no password change allowed
+        user = db.execute('SELECT * FROM users WHERE username=?',
+                          (session['app_user'],)).fetchone()
+        if request.method == 'POST':
+            error = 'Las contraseñas de los usuarios del sistema no se pueden cambiar.'
+        return render_template('account/profile.html', user=user,
+                               success=success, error=error, is_lab_user=True)
+
+    # Platform account users
     user = db.execute('SELECT * FROM account_users WHERE username=?',
                       (session['app_user'],)).fetchone()
 
@@ -935,7 +963,8 @@ def account_profile():
             except sqlite3.IntegrityError:
                 error = 'El usuario o email ya está en uso.'
 
-    return render_template('account/profile.html', user=user, success=success, error=error)
+    return render_template('account/profile.html', user=user, success=success,
+                           error=error, is_lab_user=False)
 
 
 if __name__ == '__main__':
