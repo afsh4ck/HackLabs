@@ -6,10 +6,11 @@ LABEL maintainer="afsh4ck" \
 
 WORKDIR /app
 
-# Install system dependencies for real SSH and SMB services
+# Install system dependencies for real SSH, SMB and FTP services
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     samba \
+    vsftpd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -22,8 +23,8 @@ COPY . .
 # Create required directories and init DB
 RUN mkdir -p uploads logs static/files && python init_db.py
 
-# HTTP / FTP / SSH / SMB
-EXPOSE 21 22 80 445
+# HTTP / FTP / SSH / SMB (+ PASV ports for vsftpd)
+EXPOSE 21 22 80 445 40000-40010
 
 # Run on port 80 inside the container (macvlan – IP propia)
 # docker-compose bridge sobreescribe con APP_PORT=5000
