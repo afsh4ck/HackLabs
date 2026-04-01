@@ -120,6 +120,7 @@
   </div>
 </div>
 
+{% if not bf_result %}
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
     <h3>Guía de uso</h3>
@@ -260,6 +261,7 @@ set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
