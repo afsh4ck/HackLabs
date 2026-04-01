@@ -1118,15 +1118,62 @@ def start_simulated_services():
 
 
 if __name__ == '__main__':
+    # ── ANSI colors ──────────────────────────────────────
+    R  = '\033[0;31m'   # red
+    G  = '\033[0;32m'   # green
+    Y  = '\033[1;33m'   # yellow
+    C  = '\033[0;36m'   # cyan
+    B  = '\033[1m'      # bold
+    D  = '\033[2m'      # dim
+    NC = '\033[0m'      # reset
+
+    # ── Init ─────────────────────────────────────────────
     if not os.path.exists(DATABASE):
-        print("[*] Inicializando base de datos...")
+        print(f"{Y}[*] Inicializando base de datos...{NC}")
         init_db()
-        print("[+] Base de datos lista.")
+        print(f"{G}[+] Base de datos lista.{NC}")
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), 'logs'), exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), 'static', 'files'), exist_ok=True)
-    start_simulated_services()
-    print("[*] HackLabs corriendo en http://0.0.0.0:5000")
-    print("[!] ADVERTENCIA: Aplicación intencionalmente insegura. Solo usar en entornos aislados.")
+
     _port = int(os.environ.get('APP_PORT', 5000))
+
+    # Detect host IP
+    try:
+        _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        _sock.connect(('8.8.8.8', 80))
+        _ip = _sock.getsockname()[0]
+        _sock.close()
+    except Exception:
+        _ip = '127.0.0.1'
+
+    start_simulated_services()
+
+    # ── Banner ───────────────────────────────────────────
+    print()
+    print(f"{R}    __  __              __    __           __         {NC}")
+    print(f"{R}   / / / /____ _ _____ / /__ / /   ____ _ / /_   _____{NC}")
+    print(f"{R}  / /_/ // __ `// ___// //_// /   / __ `// __ \\ / ___/{NC}")
+    print(f"{R} / __  // /_/ // /__ / ,<  / /___/ /_/ // /_/ /(__  ) {NC}")
+    print(f"{R}/_/ /_/ \\__,_/ \\___//_/|_|/_____/\\__,_//_.___//____/  {NC}")
+    print()
+    print(f"  {G}════════════════════════════════════════════════════{NC}")
+    print(f"  {B}{G}  ✓  Laboratorio iniciado correctamente{NC}")
+    print(f"  {G}════════════════════════════════════════════════════{NC}")
+    print()
+    print(f"  {C}{B}  IP del servidor:   {_ip}{NC}")
+    print()
+    print(f"  {D}  HTTP  →  http://{_ip}:{_port}{NC}")
+    print(f"  {D}  FTP   →  ftp://{_ip}  (puerto 21){NC}")
+    print(f"  {D}  SSH   →  ssh user@{_ip}  (puerto 22){NC}")
+    print(f"  {D}  SMB   →  //{_ip}/  (puerto 445){NC}")
+    print()
+    print(f"  {D}  nmap -sV -p 21,22,80,445 {_ip}{NC}")
+    print()
+    print(f"  {G}════════════════════════════════════════════════════{NC}")
+    print()
+    print(f"  {Y}  ⚠  Solo usar en entornos aislados / laboratorio{NC}")
+    print(f"  {Y}  Presiona Ctrl+C para detener HackLabs{NC}")
+    print()
+
     app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=False)
