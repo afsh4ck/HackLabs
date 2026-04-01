@@ -191,16 +191,34 @@ echo "  ${YELLOW}  Presiona Ctrl+C para detener el laboratorio${NC}"
 echo ""
 
 # ── Abrir navegador ──
-# deploy.sh corre como root; hay que lanzar Firefox como el usuario original
+# deploy.sh corre como root; hay que lanzar el navegador como el usuario original
 _BROWSER_USER="${SUDO_USER:-}"
 if [[ -n "$_BROWSER_USER" ]]; then
-    # Obtener DISPLAY del usuario original (sesión gráfica activa)
     _DISPLAY=$(grep -z DISPLAY /proc/$(pgrep -u "$_BROWSER_USER" -n)/environ 2>/dev/null | tr -d '\0' | sed 's/DISPLAY=//')
     [[ -z "$_DISPLAY" ]] && _DISPLAY=":0"
-    if command -v firefox &>/dev/null; then
-        sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" firefox --new-tab "http://${CONTAINER_IP}" &>/dev/null &
-    elif command -v xdg-open &>/dev/null; then
-        sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" xdg-open "http://${CONTAINER_IP}" &>/dev/null &
+    _URL="http://${CONTAINER_IP}"
+
+    # Intentar Chromium primero (no fuerza HTTPS-Only por defecto)
+    _BROWSER=""
+    for _b in chromium chromium-browser google-chrome; do
+        command -v "$_b" &>/dev/null && { _BROWSER="$_b"; break; }
+    done
+
+    if [[ -n "$_BROWSER" ]]; then
+        sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" "$_BROWSER" "$_URL" &>/dev/null &
+    else
+        # Firefox: usar perfil temporal con HTTPS-Only desactivado para evitar
+        # que convierta http://IP → https://IP y falle la conexión
+        _FF=$(command -v firefox-esr 2>/dev/null || command -v firefox 2>/dev/null)
+        if [[ -n "$_FF" ]]; then
+            _PROF=$(mktemp -d)
+            chown "$_BROWSER_USER" "$_PROF"
+            echo 'user_pref("dom.security.https_only_mode", false);' > "$_PROF/user.js"
+            sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" \
+                "$_FF" --profile "$_PROF" --new-instance "$_URL" &>/dev/null &
+        elif command -v xdg-open &>/dev/null; then
+            sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" xdg-open "$_URL" &>/dev/null &
+        fi
     fi
 fi
 
