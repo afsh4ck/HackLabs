@@ -17,10 +17,11 @@ COPY . .
 RUN mkdir -p uploads logs static/files && python init_db.py
 
 # HTTP / FTP / SSH / SMB
-EXPOSE 21 22 5000 445
+EXPOSE 21 22 80 445
 
-# Run on port 5000 inside the container
-ENV APP_PORT=5000
+# Run on port 80 inside the container (macvlan – IP propia)
+# docker-compose bridge sobreescribe con APP_PORT=5000
+ENV APP_PORT=80
 
 COPY entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
