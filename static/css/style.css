@@ -27,8 +27,8 @@ body { font-family: 'Inter', sans-serif; }
 pre, code { font-family: 'JetBrains Mono', monospace; }
 
 /* ── Sidebar ── */
-.sidebar-open  { width: 272px; }
-.sidebar-closed { width: 0px; overflow: hidden; }
+.sidebar-open  { --sidebar-width: 272px; }
+.sidebar-closed { --sidebar-width: 0px; }
 
 .sidebar-item {
   color: #6b7280;
@@ -73,13 +73,37 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 /* Make the sidebar sticky and internally scrollable so menu items remain visible
    when the main content scrolls. The sidebar keeps a fixed height relative to
    the viewport and allows scrolling through its items. */
+/* Sidebar fixed layout: occupy full height under the navbar and be scrollable.
+   Use CSS variables so the JS toggles (.sidebar-open / .sidebar-closed) change
+   the effective width via --sidebar-width. The main content gets a left margin
+   equal to the sidebar width so it doesn't sit underneath. */
+:root {
+  --header-height: 64px;
+  --sidebar-width: 272px;
+}
+
 #sidebar {
-  position: sticky;
-  top: 64px; /* keep below top navbar */
-  align-self: flex-start;
-  height: calc(100vh - 64px); /* full viewport minus header */
-  overflow-y: auto; /* allow internal scrolling */
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  z-index: 40;
+  transition: width 0.25s ease;
+}
+
+main {
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.25s ease;
+}
+
+/* When sidebar is closed, shrink width to 0 and remove margin on main */
+.sidebar-closed + main,
+/* fallback for different DOM ordering: update main when class applied to #sidebar */
+#sidebar.sidebar-closed ~ main {
+  margin-left: 0 !important;
 }
 
 /* Navbar icon buttons hover — misma gama que navbar bg (dark-800 #1a1a2e) */
