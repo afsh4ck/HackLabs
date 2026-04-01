@@ -57,7 +57,7 @@
 
 ## 🚀 Despliegue
 
-### ⭐ Opción 1 — Docker con IP propia en LAN (recomendado — estilo DockerLabs)
+### ⭐ Opción 1 — Docker con IP propia en LAN (recomendado)
 
 Despliega HackLabs como si fuera una máquina vulnerable real: con su propia IP en tu red local, escaneable con `nmap` y atacable con todas las herramientas de Kali.
 
