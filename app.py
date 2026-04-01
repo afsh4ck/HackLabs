@@ -1658,14 +1658,6 @@ def _tcp_service(port, handler, name):
     except OSError as e:
         print(f'[!] {name}:{port} — no disponible: {e}')
 
-def start_simulated_services():
-    # SSH (port 22) and SMB (port 445) are handled by real sshd/smbd in Docker (entrypoint.sh)
-    for port, handler, name in [
-        (21,  _handle_ftp_client, 'FTP'),
-    ]:
-        threading.Thread(target=_tcp_service, args=(port, handler, name), daemon=True).start()
-
-
 if __name__ == '__main__':
     # ── Fix encoding en terminales Windows (cp1252 no soporta caracteres Unicode del banner)
     if hasattr(sys.stdout, 'reconfigure'):
@@ -1728,5 +1720,4 @@ if __name__ == '__main__':
     print(f"  {Y}  Presiona Ctrl+C para detener HackLabs{NC}")
     print()
 
-    start_simulated_services()
     app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=False)
