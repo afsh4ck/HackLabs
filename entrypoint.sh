@@ -31,5 +31,43 @@ echo "  SSH   →  ${IP}:22"
 echo "  SMB   →  ${IP}:445"
 echo ''
 
-# Run Flask + simulated services (FTP/SSH/SMB threads start in app.py __main__)
+# ── SSH service ────────────────────────────────────────────────
+echo '  [*] Configurando SSH...'
+mkdir -p /var/run/sshd
+ssh-keygen -A 2>/dev/null || true
+sed -i 's/^[#]*\s*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/^[#]*\s*UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
+sed -i 's/^[#]*\s*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+/usr/sbin/sshd
+
+# ── Samba service ──────────────────────────────────────────────
+echo '  [*] Configurando SMB...'
+mkdir -p /var/run/samba /var/lib/samba/private /var/log/samba
+cat > /etc/samba/smb.conf << 'SMBEOF'
+[global]
+   workgroup = WORKGROUP
+   server string = HackLabs
+   security = user
+   map to guest = Never
+   ntlm auth = ntlmv1-permitted
+   lanman auth = no
+   disable netbios = yes
+   smb ports = 445
+SMBEOF
+
+# ── Create lab users (SSH password + Samba) ────────────────────
+echo '  [*] Creando usuarios del laboratorio...'
+for entry in "admin:password1" "alice:Password1" "bob:welcome1" "charlie:changeme" "dave:P@ssw0rd"; do
+    u=$(echo "$entry" | cut -d: -f1)
+    p=$(echo "$entry" | cut -d: -f2-)
+    id "$u" >/dev/null 2>&1 || useradd -m -s /bin/bash "$u"
+    printf '%s:%s\n' "$u" "$p" | chpasswd
+    printf '%s\n%s\n' "$p" "$p" | smbpasswd -s -a "$u" 2>/dev/null || true
+done
+
+/usr/sbin/smbd 2>/dev/null &
+sleep 1
+echo '  [+] SSH y SMB listos.'
+
+# Run Flask + FTP service (SSH/SMB handled by real system services above)
 exec python /app/app.py
