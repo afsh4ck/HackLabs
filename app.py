@@ -824,17 +824,7 @@ def xss_stored():
 @app.route('/xss/dom')
 def xss_dom():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
-    difficulty = session.get('difficulty', 'easy')
-    resp = make_response(render_template('labs/xss.html', lab=lab, tab='dom'))
-
-    if difficulty == 'medium':
-        # CSP básico que bloquea inline scripts pero permite bypass con eventos
-        resp.headers['Content-Security-Policy'] = "script-src 'self' 'unsafe-inline'"
-    elif difficulty == 'hard':
-        # CSP estricto — requiere bypass avanzado (DOM clobbering, mutation XSS)
-        resp.headers['Content-Security-Policy'] = "script-src 'self'; object-src 'none'"
-
-    return resp
+    return render_template('labs/xss.html', lab=lab, tab='dom')
 
 # ─────────────────────────────────────────────
 # CSRF
@@ -966,9 +956,9 @@ def xxe_api():
     xml_str = xml_data.decode('utf-8', errors='replace')
 
     if difficulty == 'medium':
-        # Bloquea DOCTYPE literal pero no case-insensitive ni encoding tricks
-        if '<!DOCTYPE' in xml_str:
-            return jsonify({'status': 'error', 'message': '⚠ DOCTYPE no permitido'}), 400
+        # Bloquea protocolo file:// pero no previene SSRF via http://
+        if 'file://' in xml_str.lower():
+            return jsonify({'status': 'error', 'message': '⚠ Protocolo file:// no permitido'}), 400
 
     elif difficulty == 'hard':
         # Bloquea DOCTYPE case-insensitive + ENTITY + SYSTEM

