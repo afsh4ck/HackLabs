@@ -38,7 +38,7 @@
   <!-- highlight.js (syntax highlighting) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=7" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=8" />
 
   <!-- Inject saved theme before render to avoid flash -->
   <script>(function(){ document.documentElement.classList.add('dark'); })();</script>
@@ -110,8 +110,9 @@
 
     <!-- ── Sidebar ── -->
     <aside id="sidebar"
-           class="bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-gray-700/60 flex-shrink-0 sidebar-open transition-all duration-300">
-      <nav class="space-y-0.5 pb-12">
+           class="border-r border-gray-200 dark:border-gray-700/60 flex-shrink-0 sidebar-open transition-all duration-300"
+           style="background:#0f0f1a">
+      <nav class="space-y-0.5">
 
         <!-- Home -->
         <a href="/" class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition {% if request.path == '/' %}active{% endif %}">
@@ -120,10 +121,11 @@
         </a>
 
         <!-- Search -->
-        <div id="sidebar-search-wrap">
+        <div style="padding:0.4rem 0">
           <div class="relative">
-            <i class="ph ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:rgba(206,255,0,.55)"></i>
-            <input id="sidebar-search" type="search" placeholder="Buscar lab..." />
+            <i class="ph ph-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:rgba(206,255,0,.5)"></i>
+            <input id="sidebar-search" type="text" autocomplete="off" placeholder="Buscar lab..."
+                   style="display:block;width:100%;background:rgba(206,255,0,0.06);border:1px solid rgba(206,255,0,0.2);border-radius:8px;padding:7px 10px 7px 28px;font-size:12px;font-weight:600;color:#e6f08a;outline:none;box-sizing:border-box" />
           </div>
         </div>
 
