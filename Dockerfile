@@ -8,18 +8,19 @@ WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application
 COPY . .
 
-# Create required directories
-RUN mkdir -p uploads logs static/files
+# Create required directories and init DB
+RUN mkdir -p uploads logs static/files && python init_db.py
 
-# Initialize database
-RUN python init_db.py
+# HTTP / FTP / SSH / SMB
+EXPOSE 21 22 80 445
 
-EXPOSE 80
+# Run on port 80 inside the container
+ENV APP_PORT=80
 
 COPY entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
