@@ -169,18 +169,22 @@ def inject_labs():
 @app.route('/profile')
 def profile():
     # VULNERABLE: no se verifica si el usuario autenticado puede ver este perfil
-    user_id = request.args.get('id', '1')
-    db = get_db()
-    try:
-        user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    except Exception as e:
-        return render_template('labs/idor.html',
-                               lab=next(l for l in get_lab_list() if l['id'] == 'idor'),
-                               error=str(e))
+    user_id = request.args.get('id', '')
+    profile = None
+    error = None
+
+    if user_id:
+        db = get_db()
+        try:
+            profile = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        except Exception as e:
+            error = str(e)
+
     return render_template('labs/idor.html',
                            lab=next(l for l in get_lab_list() if l['id'] == 'idor'),
-                           profile=user,
-                           queried_id=user_id)
+                           profile=profile,
+                           queried_id=user_id,
+                           error=error)
 
 # ─────────────────────────────────────────────
 # A02 – Cryptographic Failures
@@ -192,9 +196,10 @@ def crypto_login():
     message = None
     weak_hash = None
 
-    if request.method == 'POST':
-        username = request.form.get('username', '')
-        password = request.form.get('password', '')
+    username = request.values.get('username', '')
+    password = request.values.get('password', '')
+
+    if username and password:
         # VULNERABLE: MD5 sin salt
         weak_hash = hashlib.md5(password.encode()).hexdigest()
 
@@ -249,23 +254,20 @@ def sqli_search():
 def cmdi_ping():
     lab = next(l for l in get_lab_list() if l['id'] == 'cmdi')
     output = None
-    host = ''
+    host = request.values.get('host', '')
 
-    if request.method == 'POST':
-        host = request.form.get('host', '')
-        if host:
-            try:
-                # VULNERABLE: shell=True permite inyección de comandos
-                # Restringido a comandos inofensivos para el host pero demostrable
-                cmd = f"ping -c 2 {host}" if os.name != 'nt' else f"ping -n 2 {host}"
-                result = subprocess.run(
-                    cmd, shell=True, capture_output=True, text=True, timeout=10
-                )
-                output = result.stdout + result.stderr
-            except subprocess.TimeoutExpired:
-                output = "Timeout: el comando tardó demasiado."
-            except Exception as e:
-                output = f"Error: {e}"
+    if host:
+        try:
+            # VULNERABLE: shell=True permite inyección de comandos
+            cmd = f"ping -c 2 {host}" if os.name != 'nt' else f"ping -n 2 {host}"
+            result = subprocess.run(
+                cmd, shell=True, capture_output=True, text=True, timeout=10
+            )
+            output = result.stdout + result.stderr
+        except subprocess.TimeoutExpired:
+            output = "Timeout: el comando tardó demasiado."
+        except Exception as e:
+            output = f"Error: {e}"
 
     return render_template('labs/cmdi.html', lab=lab, output=output, host=host)
 
@@ -451,9 +453,10 @@ def logging_login():
     message = None
     success = False
 
-    if request.method == 'POST':
-        username = request.form.get('username', '')
-        password = request.form.get('password', '')
+    username = request.values.get('username', '')
+    password = request.values.get('password', '')
+
+    if username and password:
         password_hash = hashlib.md5(password.encode()).hexdigest()
         db = get_db()
         user = db.execute(
@@ -493,10 +496,17 @@ def ssrf():
     if url:
         try:
             import urllib.request
+            import json as _json
             # VULNERABLE: sin whitelist, permite acceso a recursos internos
             req = urllib.request.Request(url, headers={'User-Agent': 'HackLabs/1.0'})
             with urllib.request.urlopen(req, timeout=5) as response:
-                content = response.read().decode('utf-8', errors='replace')[:3000]
+                raw = response.read().decode('utf-8', errors='replace')[:5000]
+                # Pretty-print JSON responses
+                try:
+                    parsed = _json.loads(raw)
+                    content = _json.dumps(parsed, indent=2, ensure_ascii=False)
+                except Exception:
+                    content = raw
         except Exception as e:
             error = str(e)
 
@@ -597,10 +607,9 @@ def xxe():
     lab = next(l for l in get_lab_list() if l['id'] == 'xxe')
     result = None
     error = None
-    xml_input = ''
+    xml_input = request.values.get('xml_data', '')
 
-    if request.method == 'POST':
-        xml_input = request.form.get('xml_data', '')
+    if xml_input:
         try:
             # VULNERABLE: parser sin deshabilitar entidades externas
             tree = ET.fromstring(xml_input)
@@ -653,10 +662,10 @@ def bruteforce():
     lab = next(l for l in get_lab_list() if l['id'] == 'bruteforce')
     return render_template('labs/bruteforce.html', lab=lab)
 
-@app.route('/bruteforce/login', methods=['POST'])
+@app.route('/bruteforce/login', methods=['GET', 'POST'])
 def bruteforce_login():
-    username = request.form.get('username', '')
-    password = request.form.get('password', '')
+    username = request.values.get('username', '')
+    password = request.values.get('password', '')
     db = get_db()
     pw_hash = hashlib.md5(password.encode()).hexdigest()
     user = db.execute('SELECT * FROM users WHERE username=? AND password_md5=?', (username, pw_hash)).fetchone()
@@ -687,7 +696,7 @@ def api_users():
 def ssti():
     lab = next(l for l in get_lab_list() if l['id'] == 'ssti')
     result = None
-    template_input = request.form.get('template', '') if request.method == 'POST' else ''
+    template_input = request.values.get('template', '')
     if template_input:
         try:
             result = render_template_string(template_input)
@@ -770,8 +779,8 @@ def deserialization():
     lab = next(l for l in get_lab_list() if l['id'] == 'deserialization')
     result = error = None
     example = base64.b64encode(pickle.dumps({'user': 'admin', 'role': 'admin', 'logged_in': True})).decode()
-    if request.method == 'POST':
-        data = request.form.get('data', '')
+    data = request.values.get('data', '')
+    if data:
         try:
             obj = pickle.loads(base64.b64decode(data))
             result = str(obj)
@@ -802,6 +811,132 @@ def cors_data():
 # ─────────────────────────────────────────────
 # Inicialización
 # ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+# Account system (platform users, separate from labs)
+# ─────────────────────────────────────────────
+
+def ensure_account_table():
+    db = get_db()
+    db.execute('''CREATE TABLE IF NOT EXISTS account_users (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        username      TEXT NOT NULL UNIQUE,
+        email         TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL
+    )''')
+    db.commit()
+
+@app.route('/account/register', methods=['GET', 'POST'])
+def account_register():
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email    = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        confirm  = request.form.get('confirm', '')
+
+        if not username or not email or not password:
+            error = 'Todos los campos son obligatorios.'
+        elif password != confirm:
+            error = 'Las contraseñas no coinciden.'
+        elif len(password) < 6:
+            error = 'La contraseña debe tener al menos 6 caracteres.'
+        else:
+            ensure_account_table()
+            pw_hash = hashlib.sha256(password.encode()).hexdigest()
+            try:
+                db = get_db()
+                db.execute('INSERT INTO account_users (username, email, password_hash) VALUES (?,?,?)',
+                           (username, email, pw_hash))
+                db.commit()
+                session['app_user'] = username
+                session['app_email'] = email
+                return redirect(url_for('index'))
+            except sqlite3.IntegrityError:
+                error = 'El usuario o email ya existe.'
+
+    return render_template('account/register.html', error=error)
+
+
+@app.route('/account/login', methods=['GET', 'POST'])
+def account_login():
+    error = None
+    next_url = request.args.get('next', url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        next_url = request.form.get('next', url_for('index'))
+
+        ensure_account_table()
+        pw_hash = hashlib.sha256(password.encode()).hexdigest()
+        db = get_db()
+        user = db.execute(
+            'SELECT * FROM account_users WHERE username=? AND password_hash=?',
+            (username, pw_hash)
+        ).fetchone()
+
+        if user:
+            session['app_user']  = user['username']
+            session['app_email'] = user['email']
+            return redirect(next_url)
+        else:
+            error = 'Usuario o contraseña incorrectos.'
+
+    return render_template('account/login.html', error=error, next=next_url)
+
+
+@app.route('/account/logout')
+def account_logout():
+    session.pop('app_user', None)
+    session.pop('app_email', None)
+    return redirect(url_for('index'))
+
+
+@app.route('/account/profile', methods=['GET', 'POST'])
+def account_profile():
+    if not session.get('app_user'):
+        return redirect(url_for('account_login', next=request.url))
+
+    success = None
+    error   = None
+    ensure_account_table()
+    db = get_db()
+    user = db.execute('SELECT * FROM account_users WHERE username=?',
+                      (session['app_user'],)).fetchone()
+
+    if request.method == 'POST':
+        new_username = request.form.get('username', '').strip()
+        new_email    = request.form.get('email', '').strip()
+        new_password = request.form.get('password', '')
+        confirm      = request.form.get('confirm', '')
+
+        if not new_username or not new_email:
+            error = 'El usuario y email son obligatorios.'
+        elif new_password and new_password != confirm:
+            error = 'Las contraseñas no coinciden.'
+        elif new_password and len(new_password) < 6:
+            error = 'La contraseña debe tener al menos 6 caracteres.'
+        else:
+            try:
+                if new_password:
+                    pw_hash = hashlib.sha256(new_password.encode()).hexdigest()
+                    db.execute('UPDATE account_users SET username=?, email=?, password_hash=? WHERE username=?',
+                               (new_username, new_email, pw_hash, session['app_user']))
+                else:
+                    db.execute('UPDATE account_users SET username=?, email=? WHERE username=?',
+                               (new_username, new_email, session['app_user']))
+                db.commit()
+                session['app_user']  = new_username
+                session['app_email'] = new_email
+                success = 'Perfil actualizado correctamente.'
+                user = db.execute('SELECT * FROM account_users WHERE username=?',
+                                  (new_username,)).fetchone()
+            except sqlite3.IntegrityError:
+                error = 'El usuario o email ya está en uso.'
+
+    return render_template('account/profile.html', user=user, success=success, error=error)
+
 
 if __name__ == '__main__':
     if not os.path.exists(DATABASE):

