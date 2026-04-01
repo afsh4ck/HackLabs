@@ -401,7 +401,42 @@ Accede en: **http://localhost:5000**
 
 ---
 
-## 🛠️ Herramientas compatibles
+## � Flags del laboratorio de Bruteforce
+
+El lab de Bruteforce expone servicios reales con flags CTF. Encuéntralas tras autenticarte:
+
+| Servicio | Cómo obtenerla | Flag |
+|----------|---------------|------|
+| **HTTP** | Login web exitoso con hydra/Burp | `HL{http_brut3f0rc3_w3b_l0gin_succ3ss}` |
+| **SSH** | `ssh admin@TARGET_IP` → `cat user.txt` | `HL{ssh_brut3f0rc3_l0gin_succ3ss}` |
+| **FTP** | `ftp admin@TARGET_IP` → `get ftp_flag.txt` | `HL{ftp_cr3d3nti4ls_r3us3d}` |
+| **SMB** | `smbclient //TARGET_IP/hacklabs -U admin` → `get flag.txt` | `HL{smb_sh4r3_3num3r4ti0n_succ3ss}` |
+| **SMB (admin_backup)** | `smbclient //TARGET_IP/admin_backup -U admin` → `get root.txt` | `HL{4dm1n_b4ckup_3xf1ltr4ti0n}` |
+
+### Acceso a los servicios tras bruteforce
+
+```bash
+# SSH
+ssh admin@TARGET_IP          # password: password1
+cat user.txt
+
+# FTP
+ftp TARGET_IP                 # user: admin / password: password1
+get ftp_flag.txt
+
+# SMB — enumerar shares
+smbmap -H TARGET_IP -u admin -p 'password1'
+
+# SMB — leer flags
+smbclient //TARGET_IP/hacklabs -U admin%password1 -c 'get flag.txt /tmp/flag.txt'
+smbclient //TARGET_IP/admin_backup -U admin%password1 -c 'get root.txt /tmp/root.txt'
+cat /tmp/flag.txt
+cat /tmp/root.txt
+```
+
+---
+
+## �🛠️ Herramientas compatibles
 
 Todos los labs están diseñados para ser explotados con herramientas nativas de **Kali Linux**:
 

@@ -33,6 +33,9 @@
 
       {% if bf_result %}
         <div class="mb-4 {% if bf_success %}alert-success{% else %}alert-error{% endif %}">{{ bf_result }}</div>
+        {% if bf_flag %}
+        <div class="mt-2 px-4 py-3 rounded font-mono text-sm" style="background:var(--hl-success-bg,#052e16);border:1px solid #16a34a;color:#4ade80;">🚩 Flag: <strong>{{ bf_flag }}</strong></div>
+        {% endif %}
       {% endif %}
 
       <form method="POST" action="/bruteforce/login" class="space-y-3">
