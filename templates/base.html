@@ -248,6 +248,27 @@
       }
     });
   </script>
+  <script>
+  // Auto-replace TARGET_IP, localhost:5000, "localhost -s 5000" with actual server values
+  (function(){
+    const IP   = {{ target_ip | tojson }};
+    const PORT = {{ target_port | tojson }};
+    const BASE = {{ target_base | tojson }};
+    const HYDRA= {{ target_hydra | tojson }};
+    const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while(walk.nextNode()){
+      let n = walk.currentNode;
+      let t = n.nodeValue;
+      if(!t) continue;
+      let r = t
+        .replace(/TARGET_IP/g, IP)
+        .replace(/localhost:5000/g, BASE.replace('http://',''))
+        .replace(/http:\/\/localhost:5000/g, BASE)
+        .replace(/localhost\s+-s\s+5000/g, HYDRA);
+      if(r !== t) n.nodeValue = r;
+    }
+  })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

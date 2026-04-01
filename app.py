@@ -162,7 +162,26 @@ def inject_labs():
     current_lab_id = path_to_lab.get(path, '')
     if not current_lab_id and path.startswith('/lab/'):
         current_lab_id = path[5:]
-    return {'all_labs': get_lab_list(), 'current_lab_id': current_lab_id}
+
+    # Detect real host for TARGET_IP replacement
+    host_header = request.host          # e.g. "192.168.1.147" or "localhost:5000"
+    target_ip   = host_header.split(':')[0]   # just IP/hostname
+    target_port = request.host.split(':')[1] if ':' in request.host else ('80' if not request.is_secure else '443')
+    if target_port == '80':
+        target_base = f'http://{target_ip}'
+        target_hydra = target_ip            # hydra default port 80
+    else:
+        target_base = f'http://{target_ip}:{target_port}'
+        target_hydra = f'{target_ip} -s {target_port}'
+
+    return {
+        'all_labs': get_lab_list(),
+        'current_lab_id': current_lab_id,
+        'target_ip': target_ip,
+        'target_port': target_port,
+        'target_base': target_base,
+        'target_hydra': target_hydra,
+    }
 
 # ─────────────────────────────────────────────
 # A01 – IDOR (Broken Access Control)
