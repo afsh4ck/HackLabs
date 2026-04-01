@@ -78,7 +78,7 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
    the effective width via --sidebar-width. The main content gets a left margin
    equal to the sidebar width so it doesn't sit underneath. */
 :root {
-  --header-height: 64px;
+  --header-height: 56px; /* actual navbar height */
   --sidebar-width: 272px;
 }
 
@@ -106,8 +106,30 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   -webkit-overflow-scrolling: touch;
   padding-left: 0.75rem; /* keep visual left spacing (was p-3) */
   padding-right: 0;      /* remove right padding so scrollbar is flush */
-  padding-bottom: 0.75rem; /* space at bottom so last items aren't cut */
+  padding-bottom: 3rem; /* space at bottom so last items aren't cut */
   height: calc(100vh - var(--header-height));
+
+  /* Hide native scrollbars by default; reveal on hover/focus */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Webkit-based browsers */
+#sidebar > nav::-webkit-scrollbar { width: 0; }
+#sidebar > nav:hover {
+  scrollbar-width: thin;
+}
+#sidebar > nav:hover::-webkit-scrollbar { width: 8px; }
+#sidebar > nav:hover::-webkit-scrollbar-track { background: transparent; }
+#sidebar > nav:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+
+/* Ensure the search input sits immediately under the navbar and is always visible */
+#sidebar > nav #sidebar-search {
+  position: sticky;
+  top: 0;
+  z-index: 45;
+  margin: 0.5rem 0;
+  background: transparent;
+}
 }
 
 main {
