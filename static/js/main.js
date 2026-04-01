@@ -181,6 +181,7 @@ const T = {
     auth_lbl_pass:   'Contraseña',
     auth_btn_login:  'Iniciar sesión',
     difficulty_label: 'Dificultad',
+    sidebar_search:  'Buscar lab...',
   },
   en: {
     home:            'Home',
@@ -360,6 +361,7 @@ const T = {
     auth_lbl_pass:   'Password',
     auth_btn_login:  'Login',
     difficulty_label: 'Difficulty',
+    sidebar_search:  'Search lab...',
   }
 };
 
