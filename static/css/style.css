@@ -82,16 +82,27 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   --sidebar-width: 272px;
 }
 
+/* Sidebar fixed layout: occupy full height under the navbar and be scrollable.
+   We attach the sidebar to the top of the viewport and offset the nav inside
+   so it starts exactly below the header, avoiding any visible gap. */
 #sidebar {
   position: fixed;
-  top: var(--header-height);
+  top: 0; /* attach to top so no gap */
   left: 0;
   bottom: 0;
   width: var(--sidebar-width);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible; /* outer container visible, inner nav will scroll */
   z-index: 40;
   transition: width 0.25s ease;
+  background: inherit;
+}
+
+#sidebar > nav {
+  box-sizing: border-box;
+  height: calc(100vh - var(--header-height));
+  padding-top: var(--header-height); /* push content below header */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 main {

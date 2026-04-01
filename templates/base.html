@@ -119,6 +119,11 @@
           <span class="text-xs" data-i18n="home">Inicio</span>
         </a>
 
+        <!-- Sidebar quick search -->
+        <div class="px-3 py-2">
+          <input id="sidebar-search" type="search" placeholder="Buscar lab..." class="hl-input text-xs" />
+        </div>
+
         {% set categories = all_labs | map(attribute='category') | unique | list %}
         {% set sidebar_icons = {
           'idor':            'ph-identification-badge',
