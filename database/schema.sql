@@ -69,7 +69,8 @@ INSERT OR IGNORE INTO products (id, name, description, price, category) VALUES
 (7, 'HackRF One',          'SDR de propósito general',                       299.99, 'hardware'),
 (8, 'Maltego Pro',         'OSINT y análisis de grafos',                     999.00, 'software'),
 (9, 'Nessus Essentials',   'Escáner de vulnerabilidades',                      0.00, 'software'),
-(10,'OSCP Certification',  'Certificación Offensive Security',               1499.00, 'training');
+(10,'OSCP Certification',  'Certificación Offensive Security',               1499.00, 'training'),
+(11,'Pentesting Toolkit',  'Kit completo de herramientas para testing',        59.99, 'accessories');
 
 -- Comentarios iniciales para XSS stored
 INSERT OR IGNORE INTO comments (id, author, body) VALUES

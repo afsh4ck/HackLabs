@@ -45,6 +45,8 @@ def get_db():
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
         db.row_factory = sqlite3.Row
+        # Registrar CONCAT para compatibilidad con sqlmap (SQLite no la tiene nativa)
+        db.create_function('CONCAT', -1, lambda *args: ''.join(str(a) if a is not None else '' for a in args))
     return db
 
 @app.teardown_appcontext
@@ -328,7 +330,7 @@ def sqli_search():
             sql_error = blocked
         else:
             # VULNERABLE: concatenación directa de cadena
-            executed_query = f"SELECT * FROM products WHERE name LIKE '%{user_input}%' OR description LIKE '%{user_input}%'"
+            executed_query = f"SELECT * FROM products WHERE name LIKE '%{user_input}%'"
             try:
                 db = get_db()
                 results = db.execute(executed_query).fetchall()
