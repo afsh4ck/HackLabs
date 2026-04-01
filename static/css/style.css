@@ -70,6 +70,18 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 }
 .sidebar-caret.rotated { transform: rotate(-90deg); }
 
+/* Make the sidebar sticky and internally scrollable so menu items remain visible
+   when the main content scrolls. The sidebar keeps a fixed height relative to
+   the viewport and allows scrolling through its items. */
+#sidebar {
+  position: sticky;
+  top: 64px; /* keep below top navbar */
+  align-self: flex-start;
+  height: calc(100vh - 64px); /* full viewport minus header */
+  overflow-y: auto; /* allow internal scrolling */
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Navbar icon buttons hover — misma gama que navbar bg (dark-800 #1a1a2e) */
 .nav-icon-btn {
   transition: background 0.15s, color 0.15s;
