@@ -6,11 +6,15 @@ LABEL maintainer="afsh4ck" \
 
 WORKDIR /app
 
-# Install system dependencies for real SSH, SMB and FTP services
+# Install system dependencies for real SSH, SMB, FTP services + privesc lab tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     samba \
     vsftpd \
+    sudo \
+    vim \
+    cron \
+    findutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

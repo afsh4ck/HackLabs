@@ -137,6 +137,49 @@ chmod 644 /home/admin/ftp/ftp_flag.txt
 # Configurar vsftpd para que admin aterrice en /home/admin/ftp
 printf 'local_root=/home/admin/ftp\n' > /etc/vsftpd/users/admin
 
+# ── Privilege Escalation vulnerabilities (SSH) ─────────────────
+echo '  [*] Configurando vectores de escalada de privilegios...'
+
+# Flag de root (objetivo final para todos los vectores)
+printf 'HL{r00t_pr1v3sc_succ3ss}\n' > /root/root.txt
+chmod 600 /root/root.txt
+
+# --- admin: sudo completo (necesario para verificar permisos en la máquina) ---
+mkdir -p /etc/sudoers.d
+printf 'admin ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/admin
+chmod 440 /etc/sudoers.d/admin
+
+# --- bob: sudo misconfiguration → vim (GTFOBins: sudo vim -c ':!/bin/bash') ---
+printf 'bob ALL=(ALL) NOPASSWD: /usr/bin/vim\n' > /etc/sudoers.d/bob
+chmod 440 /etc/sudoers.d/bob
+
+# --- dave: sudo misconfiguration → find (GTFOBins: sudo find . -exec /bin/bash \; -quit) ---
+printf 'dave ALL=(ALL) NOPASSWD: /usr/bin/find\n' > /etc/sudoers.d/dave
+chmod 440 /etc/sudoers.d/dave
+
+# --- alice: SUID en python3 (python3 -c 'import os; os.setuid(0); os.system("/bin/bash")') ---
+chmod u+s /usr/bin/python3
+
+# --- charlie: script de cron escribible world-writable ejecutado por root cada minuto ---
+mkdir -p /opt/scripts
+cat > /opt/scripts/cleanup.sh << 'CRONEOF'
+#!/bin/bash
+# Maintenance cleanup script - runs as root every minute
+find /tmp -type f -mmin +60 -delete 2>/dev/null
+CRONEOF
+chown root:root /opt/scripts/cleanup.sh
+chmod 777 /opt/scripts/cleanup.sh
+printf '* * * * * root /opt/scripts/cleanup.sh\n' > /etc/cron.d/maintenance
+chmod 644 /etc/cron.d/maintenance
+# Pista en el home de charlie
+printf 'Tip: check what runs automatically on this system...\n' > /home/charlie/note.txt
+chmod 644 /home/charlie/note.txt 2>/dev/null || true
+
+# Iniciar cron (necesario para el vector de charlie)
+cron 2>/dev/null || true
+
+echo '  [+] Vectores de privesc configurados.'
+
 /usr/sbin/smbd 2>/dev/null &
 /usr/sbin/vsftpd &
 sleep 1
