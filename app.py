@@ -849,8 +849,9 @@ def account_register():
                 db.execute('INSERT INTO account_users (username, email, password_hash) VALUES (?,?,?)',
                            (username, email, pw_hash))
                 db.commit()
-                session['app_user'] = username
-                session['app_email'] = email
+                session['app_user']      = username
+                session['app_email']     = email
+                session['app_user_type'] = 'account'
                 return redirect(url_for('index'))
             except sqlite3.IntegrityError:
                 error = 'El usuario o email ya existe.'
