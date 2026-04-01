@@ -19,6 +19,8 @@ import hmac as _hmac
 import pickle
 import threading
 import socket
+import time
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = 'hacklabs_super_insecure_secret_2024'
@@ -30,6 +32,9 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB uploads
 
 DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+
+# Rate-limit store for bruteforce (medium/hard difficulty)
+_bruteforce_attempts = defaultdict(list)
 
 # ─────────────────────────────────────────────
 # Base de datos
@@ -176,6 +181,8 @@ def inject_labs():
         target_base = f'http://{target_ip}:{target_port}'
         target_hydra = f'{target_ip} -s {target_port}'
 
+    difficulty = session.get('difficulty', 'easy')
+
     return {
         'all_labs': get_lab_list(),
         'current_lab_id': current_lab_id,
@@ -183,7 +190,20 @@ def inject_labs():
         'target_port': target_port,
         'target_base': target_base,
         'target_hydra': target_hydra,
+        'difficulty': difficulty,
     }
+
+# ─────────────────────────────────────────────
+# Difficulty selector
+# ─────────────────────────────────────────────
+
+@app.route('/set-difficulty', methods=['POST'])
+def set_difficulty():
+    level = request.form.get('level', 'easy')
+    if level not in ('easy', 'medium', 'hard'):
+        level = 'easy'
+    session['difficulty'] = level
+    return jsonify({'status': 'ok', 'difficulty': level})
 
 # ─────────────────────────────────────────────
 # A01 – IDOR (Broken Access Control)
@@ -256,15 +276,46 @@ def sqli_search():
     results = []
     sql_error = None
     executed_query = None
+    difficulty = session.get('difficulty', 'easy')
+    blocked = None
 
     if q:
-        # VULNERABLE: concatenación directa de cadena
-        executed_query = f"SELECT * FROM products WHERE name LIKE '%{q}%' OR description LIKE '%{q}%'"
-        try:
-            db = get_db()
-            results = db.execute(executed_query).fetchall()
-        except Exception as e:
-            sql_error = str(e)  # VULNERABLE: error SQL expuesto al usuario
+        user_input = q
+
+        if difficulty == 'medium':
+            # Filtro básico: bloquea palabras clave comunes (bypassable con mayúsculas, comentarios, etc.)
+            _blocked_words = ['union', 'select', 'drop', 'insert', 'update', 'delete', '--']
+            lower_q = user_input.lower()
+            for w in _blocked_words:
+                if w in lower_q:
+                    blocked = f'⚠ Input bloqueado: se detectó "{w}" (WAF básico)'
+                    break
+
+        elif difficulty == 'hard':
+            # WAF más agresivo: regex que bloquea patrones SQL incluso con ofuscación
+            _patterns = [
+                r'(?i)\bunion\b', r'(?i)\bselect\b', r'(?i)\bdrop\b',
+                r'(?i)\binsert\b', r'(?i)\bupdate\b', r'(?i)\bdelete\b',
+                r'(?i)\bor\b\s+\d', r"[';]", r'--', r'/\*',
+            ]
+            for p in _patterns:
+                if re.search(p, user_input):
+                    blocked = '⛔ Input bloqueado por WAF (patrón sospechoso detectado)'
+                    break
+
+        if blocked:
+            sql_error = blocked
+        else:
+            # VULNERABLE: concatenación directa de cadena
+            executed_query = f"SELECT * FROM products WHERE name LIKE '%{user_input}%' OR description LIKE '%{user_input}%'"
+            try:
+                db = get_db()
+                results = db.execute(executed_query).fetchall()
+            except Exception as e:
+                if difficulty == 'hard':
+                    sql_error = 'Error en la consulta'  # Hard: no muestra detalle
+                else:
+                    sql_error = str(e)  # Easy/Medium: error SQL expuesto
 
     return render_template('labs/sqli.html', lab=lab, results=results,
                            sql_error=sql_error, query=q, executed_query=executed_query)
@@ -278,11 +329,28 @@ def cmdi_ping():
     lab = next(l for l in get_lab_list() if l['id'] == 'cmdi')
     output = None
     host = request.values.get('host', '')
+    difficulty = session.get('difficulty', 'easy')
 
     if host:
+        user_input = host
+
+        if difficulty == 'medium':
+            # Filtra ; y | pero permite & ` $() y newlines
+            if ';' in user_input or '|' in user_input:
+                output = '⚠ Caracteres no permitidos: ; |'
+                return render_template('labs/cmdi.html', lab=lab, output=output, host=host)
+
+        elif difficulty == 'hard':
+            # Filtra muchos metacaracteres pero permite \n (newline URL-encoded)
+            _bad = [';', '|', '&', '`', '$', '(', ')', '{', '}', '<', '>']
+            for c in _bad:
+                if c in user_input:
+                    output = '⛔ Carácter no permitido detectado por WAF'
+                    return render_template('labs/cmdi.html', lab=lab, output=output, host=host)
+
         try:
             # VULNERABLE: shell=True permite inyección de comandos
-            cmd = f"ping -c 2 {host}" if os.name != 'nt' else f"ping -n 2 {host}"
+            cmd = f"ping -c 2 {user_input}" if os.name != 'nt' else f"ping -n 2 {user_input}"
             result = subprocess.run(
                 cmd, shell=True, capture_output=True, text=True, timeout=10
             )
@@ -515,16 +583,40 @@ def ssrf():
     url = request.args.get('url', '')
     content = None
     error = None
+    difficulty = session.get('difficulty', 'easy')
 
     if url:
+        if difficulty == 'medium':
+            # Bloquea localhost y 127.0.0.1 pero no 0.0.0.0, 127.0.0.2, ni decimal IP, ni redirects
+            _blocked = ['localhost', '127.0.0.1', '0177.0.0.1']
+            url_lower = url.lower()
+            for b in _blocked:
+                if b in url_lower:
+                    error = f'⚠ URL bloqueada: {b} no permitido'
+                    return render_template('labs/ssrf.html', lab=lab, url=url, content=content, error=error)
+
+        elif difficulty == 'hard':
+            # Bloquea IPs privadas y localhost (bypass: DNS rebinding, redirects, IPv6, decimal IP)
+            import urllib.parse as _up
+            try:
+                parsed = _up.urlparse(url)
+                hostname = parsed.hostname or ''
+                _blocked_patterns = ['localhost', '127.', '10.', '192.168.', '172.16.',
+                                     '172.17.', '172.18.', '172.19.', '172.2', '172.3',
+                                     '169.254.', '0.0.0.0', 'metadata', '[::1]']
+                for b in _blocked_patterns:
+                    if b in hostname.lower():
+                        error = '⛔ URL bloqueada por WAF: IP privada/reservada'
+                        return render_template('labs/ssrf.html', lab=lab, url=url, content=content, error=error)
+            except Exception:
+                pass
+
         try:
             import urllib.request
             import json as _json
-            # VULNERABLE: sin whitelist, permite acceso a recursos internos
             req = urllib.request.Request(url, headers={'User-Agent': 'HackLabs/1.0'})
             with urllib.request.urlopen(req, timeout=5) as response:
                 raw = response.read().decode('utf-8', errors='replace')[:5000]
-                # Pretty-print JSON responses
                 try:
                     parsed = _json.loads(raw)
                     content = _json.dumps(parsed, indent=2, ensure_ascii=False)
@@ -543,17 +635,33 @@ def ssrf():
 def xss_reflected():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
     q = request.args.get('q', '')
-    # VULNERABLE: q se refleja sin sanitizar (ver template con |safe)
+    difficulty = session.get('difficulty', 'easy')
+
+    if difficulty == 'medium':
+        # Filtra <script> pero no filtra event handlers ni otros tags
+        q = re.sub(r'<\s*script', '&lt;script', q, flags=re.IGNORECASE)
+        q = re.sub(r'</\s*script', '&lt;/script', q, flags=re.IGNORECASE)
+    elif difficulty == 'hard':
+        # Filtra < y > pero no filtra inyecciones dentro de atributos existentes
+        q = q.replace('<', '&lt;').replace('>', '&gt;')
+
     return render_template('labs/xss.html', lab=lab, tab='reflected', query=q)
 
 @app.route('/xss/stored', methods=['GET', 'POST'])
 def xss_stored():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
+    difficulty = session.get('difficulty', 'easy')
     if request.method == 'POST':
         comment = request.form.get('comment', '')
         author = request.form.get('author', 'Anónimo')
+
+        if difficulty == 'medium':
+            comment = re.sub(r'<\s*script', '&lt;script', comment, flags=re.IGNORECASE)
+            comment = re.sub(r'</\s*script', '&lt;/script', comment, flags=re.IGNORECASE)
+        elif difficulty == 'hard':
+            comment = comment.replace('<', '&lt;').replace('>', '&gt;')
+
         db = get_db()
-        # VULNERABLE: se guarda sin sanitizar
         db.execute("INSERT INTO comments (author, body) VALUES (?, ?)", (author, comment))
         db.commit()
         return redirect(url_for('xss_stored'))
@@ -601,12 +709,40 @@ def file_upload():
     lab = next(l for l in get_lab_list() if l['id'] == 'file_upload')
     message = None
     uploaded_path = None
+    difficulty = session.get('difficulty', 'easy')
 
     if request.method == 'POST':
         f = request.files.get('file')
         if f and f.filename:
-            # VULNERABLE: sin validación de tipo, sin rename seguro
             filename = f.filename
+
+            if difficulty == 'medium':
+                # Bloquea extensiones peligrosas (bypass: doble extensión .php.jpg, null byte, .phtml)
+                _dangerous = ['.php', '.phar', '.py', '.sh', '.bat', '.exe', '.jsp', '.asp']
+                ext = os.path.splitext(filename)[1].lower()
+                if ext in _dangerous:
+                    message = f'⚠ Extensión {ext} no permitida'
+                    uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
+                    return render_template('labs/file_upload.html', lab=lab, message=message,
+                                           uploaded_path=None, uploaded_files=uploaded_files)
+
+            elif difficulty == 'hard':
+                # Whitelist de extensiones + verifica Content-Type (bypass: magic bytes + Content-Type spoofing)
+                _allowed_ext = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt']
+                _allowed_mime = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
+                ext = os.path.splitext(filename)[1].lower()
+                if ext not in _allowed_ext:
+                    message = f'⛔ Solo se permiten: {" ".join(_allowed_ext)}'
+                    uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
+                    return render_template('labs/file_upload.html', lab=lab, message=message,
+                                           uploaded_path=None, uploaded_files=uploaded_files)
+                if f.content_type not in _allowed_mime:
+                    message = f'⛔ Content-Type {f.content_type} no permitido'
+                    uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
+                    return render_template('labs/file_upload.html', lab=lab, message=message,
+                                           uploaded_path=None, uploaded_files=uploaded_files)
+
+            # VULNERABLE: sin rename seguro, sin validación real de contenido
             save_path = os.path.join(UPLOAD_FOLDER, filename)
             f.save(save_path)
             uploaded_path = f'/uploads/{filename}'
@@ -637,6 +773,21 @@ def xxe_api():
     xml_data = request.data
     if not xml_data:
         return jsonify({'status': 'error', 'message': 'No se recibieron datos'}), 400
+
+    difficulty = session.get('difficulty', 'easy')
+    xml_str = xml_data.decode('utf-8', errors='replace')
+
+    if difficulty == 'medium':
+        # Bloquea DOCTYPE literal pero no case-insensitive ni encoding tricks
+        if '<!DOCTYPE' in xml_str:
+            return jsonify({'status': 'error', 'message': '⚠ DOCTYPE no permitido'}), 400
+
+    elif difficulty == 'hard':
+        # Bloquea DOCTYPE case-insensitive + ENTITY + SYSTEM
+        upper_xml = xml_str.upper()
+        for kw in ['<!DOCTYPE', '<!ENTITY', 'SYSTEM', 'PUBLIC']:
+            if kw in upper_xml:
+                return jsonify({'status': 'error', 'message': '⛔ Bloqueado por WAF: patrón XML peligroso'}), 400
 
     try:
         # VULNERABLE: parser con resolve_entities + load_dtd (permite XXE)
@@ -679,13 +830,25 @@ def path_traversal():
     filename = request.args.get('file', '')
     content = None
     error = None
+    difficulty = session.get('difficulty', 'easy')
 
     if filename:
+        user_input = filename
+
+        if difficulty == 'medium':
+            # Filtra ../ pero no ..\, ni URL-encoding (%2e%2e%2f), ni ..%252f
+            user_input = user_input.replace('../', '')
+
+        elif difficulty == 'hard':
+            # Filtra ../ y ..\ recursivamente, pero no doble URL-encoding
+            prev = ''
+            while prev != user_input:
+                prev = user_input
+                user_input = user_input.replace('../', '').replace('..\\', '')
+
         try:
-            # VULNERABLE: sin normalización de ruta (permite ../../)
             base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
-            full_path = os.path.join(base_path, filename)
-            # No se verifica que full_path esté dentro de base_path
+            full_path = os.path.join(base_path, user_input)
             with open(full_path, 'r', errors='replace') as f:
                 content = f.read()
         except FileNotFoundError:
@@ -711,11 +874,29 @@ def bruteforce():
 def bruteforce_login():
     username = request.values.get('username', '')
     password = request.values.get('password', '')
+    difficulty = session.get('difficulty', 'easy')
+    lab = next(l for l in get_lab_list() if l['id'] == 'bruteforce')
+    client_ip = request.remote_addr
+    now = time.time()
+
+    if difficulty in ('medium', 'hard'):
+        # Rate-limit por IP
+        window = 30 if difficulty == 'medium' else 60
+        max_attempts = 5 if difficulty == 'medium' else 3
+        attempts = _bruteforce_attempts[client_ip]
+        # Limpiar intentos fuera de ventana
+        _bruteforce_attempts[client_ip] = [t for t in attempts if now - t < window]
+        if len(_bruteforce_attempts[client_ip]) >= max_attempts:
+            wait = int(window - (now - _bruteforce_attempts[client_ip][0]))
+            bf_result = f'⚠ Demasiados intentos. Espera {wait}s (rate-limit: {max_attempts}/{window}s)'
+            return render_template('labs/bruteforce.html', lab=lab, bf_result=bf_result, bf_success=False)
+        _bruteforce_attempts[client_ip].append(now)
+
     db = get_db()
     pw_hash = hashlib.md5(password.encode()).hexdigest()
     user = db.execute('SELECT * FROM users WHERE username=? AND password_md5=?', (username, pw_hash)).fetchone()
-    lab = next(l for l in get_lab_list() if l['id'] == 'bruteforce')
     if user:
+        _bruteforce_attempts.pop(client_ip, None)
         bf_result = f'Login correcto. Bienvenido, {username} (rol: {user["role"]}).'
         return render_template('labs/bruteforce.html', lab=lab, bf_result=bf_result, bf_success=True)
     bf_result = 'Credenciales incorrectas.'
@@ -755,7 +936,23 @@ def ssti():
     lab = next(l for l in get_lab_list() if l['id'] == 'ssti')
     result = None
     template_input = request.values.get('template', '')
+    difficulty = session.get('difficulty', 'easy')
+
     if template_input:
+        if difficulty == 'medium':
+            # Bloquea {{ }} pero permite {% %} (bypass con {% print ... %})
+            if '{{' in template_input:
+                result = '⚠ Expresión {{ }} bloqueada por filtro de seguridad'
+                return render_template('labs/ssti.html', lab=lab, result=result, template_input=template_input)
+        elif difficulty == 'hard':
+            # Bloquea {{ }}, {% %}, y palabras clave comunes – bypass con filtros Jinja2 y codificación
+            _ssti_blocked = ['{{', '{%', '__class__', '__mro__', '__subclasses__',
+                             '__builtins__', '__import__', 'popen', 'subprocess']
+            for w in _ssti_blocked:
+                if w in template_input:
+                    result = '⛔ Input bloqueado: patrón peligroso detectado'
+                    return render_template('labs/ssti.html', lab=lab, result=result, template_input=template_input)
+
         try:
             result = render_template_string(template_input)
         except Exception as e:
@@ -771,7 +968,41 @@ def ssti():
 def open_redirect():
     lab = next(l for l in get_lab_list() if l['id'] == 'open_redirect')
     url = request.args.get('url', '')
+    difficulty = session.get('difficulty', 'easy')
+
     if url:
+        if difficulty == 'medium':
+            # Solo bloquea URLs que empiecen con http:// o https:// externo
+            # Bypass: //evil.com, /\evil.com, javascript:, data:
+            if url.lower().startswith('http://') or url.lower().startswith('https://'):
+                try:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(url)
+                    host = request.host.split(':')[0]
+                    if parsed.hostname and parsed.hostname != host:
+                        return render_template('labs/open_redirect.html', lab=lab,
+                                               error=f'⚠ Redirección externa bloqueada: {parsed.hostname}')
+                except Exception:
+                    pass
+
+        elif difficulty == 'hard':
+            # Bloquea URLs externas y protocol-relative – bypass: @, whitespace, \t, URL encoding
+            from urllib.parse import urlparse
+            try:
+                parsed = urlparse(url)
+                host = request.host.split(':')[0]
+                if parsed.scheme and parsed.scheme not in ('', 'http', 'https'):
+                    return render_template('labs/open_redirect.html', lab=lab,
+                                           error='⛔ Protocolo no permitido')
+                if parsed.hostname and parsed.hostname != host:
+                    return render_template('labs/open_redirect.html', lab=lab,
+                                           error='⛔ Redirección a dominio externo bloqueada')
+                if url.startswith('//'):
+                    return render_template('labs/open_redirect.html', lab=lab,
+                                           error='⛔ URL protocol-relative bloqueada')
+            except Exception:
+                pass
+
         return redirect(url)
     return render_template('labs/open_redirect.html', lab=lab)
 
