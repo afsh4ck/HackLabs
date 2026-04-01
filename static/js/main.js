@@ -497,9 +497,32 @@ function openResolution() {
   document.querySelectorAll('#modal-body [data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
-  // Highlight code inside modal
-  body.querySelectorAll('pre code').forEach(b => {
-    if (typeof hljs !== 'undefined') hljs.highlightElement(b);
+  // Highlight code inside modal and add copy buttons
+  body.querySelectorAll('pre').forEach(pre => {
+    pre.style.position = 'relative';
+    const code = pre.querySelector('code');
+    if (code && typeof hljs !== 'undefined') hljs.highlightElement(code);
+    const btn = document.createElement('button');
+    btn.title = HL.lang === 'en' ? 'Copy' : 'Copiar';
+    btn.innerHTML = '<i class="ph ph-copy"></i>';
+    btn.style.cssText = [
+      'position:absolute', 'top:8px', 'right:8px',
+      'background:rgba(255,255,255,0.08)', 'border:1px solid rgba(255,255,255,0.15)',
+      'color:#9ca3af', 'border-radius:6px', 'padding:3px 7px',
+      'cursor:pointer', 'font-size:13px', 'line-height:1', 'transition:all .15s'
+    ].join(';');
+    btn.addEventListener('mouseenter', () => { btn.style.color='#fff'; btn.style.background='rgba(255,255,255,0.16)'; });
+    btn.addEventListener('mouseleave', () => { btn.style.color='#9ca3af'; btn.style.background='rgba(255,255,255,0.08)'; });
+    btn.addEventListener('click', () => {
+      const text = (code || pre).innerText.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        btn.innerHTML = '<i class="ph ph-check"></i>';
+        btn.style.color = '#4ade80';
+        setTimeout(() => { btn.innerHTML = '<i class="ph ph-copy"></i>'; btn.style.color = '#9ca3af'; }, 1500);
+        showToast(HL.lang === 'en' ? 'Copied!' : '¡Copiado!');
+      }).catch(() => {});
+    });
+    pre.appendChild(btn);
   });
   document.getElementById('resolution-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
