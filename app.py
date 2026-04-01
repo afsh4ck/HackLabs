@@ -130,7 +130,7 @@ def get_lab_list():
         {'id': 'file_upload',     'title': 'File Upload sin restricciones',                'category': 'Extras',       'risk': 'critical'},
         {'id': 'xxe',             'title': 'XXE – XML External Entity',                    'category': 'Extras',       'risk': 'high'},
         {'id': 'path_traversal',  'title': 'Path Traversal / LFI',                        'category': 'Extras',       'risk': 'high'},
-        {'id': 'bruteforce',      'title': 'Bruteforce – Login / SSH / SMB',              'category': 'Extras',       'risk': 'medium'},
+        {'id': 'bruteforce',      'title': 'Login Bruteforce',                           'category': 'Extras',       'risk': 'medium'},
         {'id': 'ssti',            'title': 'SSTI – Server-Side Template Injection',        'category': 'Extras',       'risk': 'critical'},
         {'id': 'open_redirect',   'title': 'Open Redirect',                               'category': 'Extras',       'risk': 'medium'},
         {'id': 'jwt',             'title': 'JWT Manipulation',                             'category': 'Extras',       'risk': 'high'},
