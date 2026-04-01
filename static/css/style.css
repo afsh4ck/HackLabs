@@ -89,46 +89,27 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   width: var(--sidebar-width);
   z-index: 40;
   transition: width 0.22s ease;
-  overflow: hidden;            /* clip when closed */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: #0f0f1a !important;
 }
 
 #sidebar.sidebar-open  { width: var(--sidebar-width); }
 #sidebar.sidebar-closed { width: 0; }
 
-/* Search bar – inside nav, below Inicio */
-#sidebar-search-wrap {
-  padding: 0.35rem 0 0.25rem;
-}
-#sidebar-search {
-  display: block;
-  width: 100%;
-  background: rgba(206,255,0,0.07);
-  border: 1px solid rgba(206,255,0,0.22);
-  border-radius: 0.5rem;
-  padding: 0.45rem 0.65rem 0.45rem 1.85rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #e6f08a;
-  outline: none;
-  box-sizing: border-box;
-}
-#sidebar-search::placeholder { color: rgba(230,240,138,0.5); font-weight: 500; }
-#sidebar-search:focus { border-color: var(--hl-primary); box-shadow: 0 0 0 2px rgba(206,255,0,0.18); }
-
-/* Nav – takes remaining height, scrolls, NO right padding */
+/* Nav – takes remaining height, scrolls, right padding = scrollbar width only */
 #sidebar > nav {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 0.5rem 0 3rem 0.65rem;
+  padding: 0.5rem 3px 3rem 0.65rem !important;
 }
 /* Sidebar scrollbar – flush to right border */
-#sidebar > nav::-webkit-scrollbar { width: 4px; }
+#sidebar > nav::-webkit-scrollbar { width: 3px; }
 #sidebar > nav::-webkit-scrollbar-track { background: transparent; }
-#sidebar > nav::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+#sidebar > nav::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
 #sidebar > nav:hover::-webkit-scrollbar-thumb { background: rgba(var(--hl-primary-rgb),0.35); }
 #sidebar > nav:hover::-webkit-scrollbar-thumb:hover { background: rgba(var(--hl-primary-rgb),0.7); }
 
@@ -541,9 +522,9 @@ select.hl-input { display: none !important; }
 /* ── Scrollbar – thin, auto-hide: visible only on hover ── */
 * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
 *:hover { scrollbar-color: rgba(206,255,0,0.35) transparent; }
-::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar       { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
 :hover::-webkit-scrollbar-thumb { background: rgba(var(--hl-primary-rgb),0.35); }
 :hover::-webkit-scrollbar-thumb:hover { background: rgba(var(--hl-primary-rgb),0.7); }
 
