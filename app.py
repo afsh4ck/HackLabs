@@ -1659,10 +1659,9 @@ def _tcp_service(port, handler, name):
         print(f'[!] {name}:{port} — no disponible: {e}')
 
 def start_simulated_services():
+    # SSH (port 22) and SMB (port 445) are handled by real sshd/smbd in Docker (entrypoint.sh)
     for port, handler, name in [
         (21,  _handle_ftp_client, 'FTP'),
-        (22,  _handle_ssh_client, 'SSH'),
-        (445, _handle_smb_client, 'SMB'),
     ]:
         threading.Thread(target=_tcp_service, args=(port, handler, name), daemon=True).start()
 

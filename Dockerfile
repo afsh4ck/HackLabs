@@ -6,7 +6,13 @@ LABEL maintainer="afsh4ck" \
 
 WORKDIR /app
 
-# Install dependencies
+# Install system dependencies for real SSH and SMB services
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server \
+    samba \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
