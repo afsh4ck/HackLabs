@@ -33,12 +33,20 @@ echo ''
 
 # ── SSH service ────────────────────────────────────────────────
 echo '  [*] Configurando SSH...'
-mkdir -p /var/run/sshd
+mkdir -p /var/run/sshd /run/sshd
 ssh-keygen -A 2>/dev/null || true
-sed -i 's/^[#]*\s*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
-sed -i 's/^[#]*\s*UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
-sed -i 's/^[#]*\s*PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+# Allow password auth and high connection volume from hydra
+cat >> /etc/ssh/sshd_config << 'SSHEOF'
+PasswordAuthentication yes
+PermitRootLogin no
+UsePAM no
+StrictModes no
+MaxAuthTries 100
+MaxStartups 200:30:400
+LoginGraceTime 120
+SSHEOF
 /usr/sbin/sshd
+sleep 1
 
 # ── Samba service ──────────────────────────────────────────────
 echo '  [*] Configurando SMB...'
@@ -53,6 +61,7 @@ cat > /etc/samba/smb.conf << 'SMBEOF'
    lanman auth = no
    disable netbios = yes
    smb ports = 445
+   min protocol = NT1
 SMBEOF
 
 # ── Create lab users (SSH password + Samba) ────────────────────
