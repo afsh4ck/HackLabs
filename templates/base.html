@@ -38,7 +38,7 @@
   <!-- highlight.js (syntax highlighting) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=7" />
 
   <!-- Inject saved theme before render to avoid flash -->
   <script>(function(){ document.documentElement.classList.add('dark'); })();</script>
@@ -111,13 +111,6 @@
     <!-- ── Sidebar ── -->
     <aside id="sidebar"
            class="bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-gray-700/60 flex-shrink-0 sidebar-open transition-all duration-300">
-      <!-- Sidebar quick search pinned at the top -->
-      <div id="sidebar-search-wrap">
-        <div class="relative">
-          <i class="ph ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:rgba(206,255,0,.55)"></i>
-          <input id="sidebar-search" type="search" placeholder="Buscar lab..." />
-        </div>
-      </div>
       <nav class="space-y-0.5 pb-12">
 
         <!-- Home -->
@@ -125,6 +118,14 @@
           <i class="ph ph-house text-base flex-shrink-0"></i>
           <span class="text-xs" data-i18n="home">Inicio</span>
         </a>
+
+        <!-- Search -->
+        <div id="sidebar-search-wrap">
+          <div class="relative">
+            <i class="ph ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style="color:rgba(206,255,0,.55)"></i>
+            <input id="sidebar-search" type="search" placeholder="Buscar lab..." />
+          </div>
+        </div>
 
         {% set categories = all_labs | map(attribute='category') | unique | list %}
         {% set sidebar_icons = {
@@ -182,7 +183,7 @@
   </div>
 
   <!-- Footer -->
-  <footer class="bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-gray-700/60 text-center py-2 text-xs text-gray-400">
+  <footer id="app-footer" class="bg-white dark:bg-dark-800 border-t border-gray-200 dark:border-gray-700/60 text-center py-2 text-xs text-gray-400">
     HackLabs &copy; <span id="footer-year"></span> ·
     <a href="https://www.instagram.com/afsh4ck/" target="_blank" rel="noopener" style="color:var(--hl-primary)" class="font-semibold hover:opacity-80 transition">afsh4ck</a>
     · <span data-i18n="footer_warning">Solo para uso educativo en entornos aislados</span>
