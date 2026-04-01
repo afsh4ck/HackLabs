@@ -1109,4 +1109,5 @@ if __name__ == '__main__':
     start_simulated_services()
     print("[*] HackLabs corriendo en http://0.0.0.0:5000")
     print("[!] ADVERTENCIA: Aplicación intencionalmente insegura. Solo usar en entornos aislados.")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    _port = int(os.environ.get('APP_PORT', 5000))
+    app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=False)
