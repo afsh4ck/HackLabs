@@ -87,22 +87,27 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
    so it starts exactly below the header, avoiding any visible gap. */
 #sidebar {
   position: fixed;
-  top: 0; /* attach to top so no gap */
+  top: var(--header-height); /* place the whole sidebar just below the navbar */
   left: 0;
   bottom: 0;
   width: var(--sidebar-width);
-  overflow: visible; /* outer container visible, inner nav will scroll */
   z-index: 40;
   transition: width 0.25s ease;
   background: inherit;
 }
 
+/* Nav inside sidebar: no top padding (sidebar is already offset),
+   keep left padding for items but remove right padding so scrollbar
+   sits flush against the edge. Add bottom padding to ensure last
+   items are not clipped by floating elements. */
 #sidebar > nav {
   box-sizing: border-box;
-  height: calc(100vh - var(--header-height));
-  padding-top: var(--header-height); /* push content below header */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-left: 0.75rem; /* keep visual left spacing (was p-3) */
+  padding-right: 0;      /* remove right padding so scrollbar is flush */
+  padding-bottom: 0.75rem; /* space at bottom so last items aren't cut */
+  height: calc(100vh - var(--header-height));
 }
 
 main {
