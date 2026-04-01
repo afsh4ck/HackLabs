@@ -94,31 +94,33 @@
         <!-- Difficulty selector -->
         <div class="relative" id="difficulty-wrap">
           <button onclick="toggleDifficultyMenu()" id="difficulty-btn"
-                  class="difficulty-btn difficulty-btn--{{ difficulty }} flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                  class="difficulty-btn difficulty-btn--{{ difficulty }} flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition"
+                  type="button">
             <i class="ph ph-shield-warning text-sm"></i>
-            <span class="hidden sm:inline" id="difficulty-label">{{ difficulty | capitalize }}</span>
+            <span class="diff-dot-inline diff-dot--{{ difficulty }}"></span>
+            <span class="hidden sm:inline" data-i18n="difficulty_label">Dificultad</span>
             <i class="ph ph-caret-down text-xs opacity-60"></i>
           </button>
           <div id="difficulty-menu"
-               class="hidden absolute right-0 mt-1.5 w-44 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+               class="hidden absolute right-0 mt-1.5 w-48 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
                style="background:#1a1a2e">
-            <button onclick="setDifficulty('easy')"
+            <button onclick="setDifficulty('easy')" type="button"
                     class="diff-option diff-option--easy flex items-center gap-2 w-full px-3 py-2 text-xs transition hover:bg-white/5{% if difficulty == 'easy' %} active{% endif %}">
               <span class="diff-dot diff-dot--easy"></span>
               <span class="font-semibold">Easy</span>
-              <span class="ml-auto text-gray-500" data-i18n="diff_easy_desc">Sin protección</span>
+              <span class="ml-auto">{% if difficulty == 'easy' %}<i class="ph-fill ph-check-circle" style="color:#22c55e"></i>{% endif %}</span>
             </button>
-            <button onclick="setDifficulty('medium')"
+            <button onclick="setDifficulty('medium')" type="button"
                     class="diff-option diff-option--medium flex items-center gap-2 w-full px-3 py-2 text-xs transition hover:bg-white/5{% if difficulty == 'medium' %} active{% endif %}">
               <span class="diff-dot diff-dot--medium"></span>
               <span class="font-semibold">Medium</span>
-              <span class="ml-auto text-gray-500" data-i18n="diff_medium_desc">Filtros básicos</span>
+              <span class="ml-auto">{% if difficulty == 'medium' %}<i class="ph-fill ph-check-circle" style="color:#f59e0b"></i>{% endif %}</span>
             </button>
-            <button onclick="setDifficulty('hard')"
+            <button onclick="setDifficulty('hard')" type="button"
                     class="diff-option diff-option--hard flex items-center gap-2 w-full px-3 py-2 text-xs transition hover:bg-white/5{% if difficulty == 'hard' %} active{% endif %}">
               <span class="diff-dot diff-dot--hard"></span>
               <span class="font-semibold">Hard</span>
-              <span class="ml-auto text-gray-500" data-i18n="diff_hard_desc">WAF / validación</span>
+              <span class="ml-auto">{% if difficulty == 'hard' %}<i class="ph-fill ph-check-circle" style="color:#ef4444"></i>{% endif %}</span>
             </button>
           </div>
         </div>
@@ -287,17 +289,42 @@
 
     /* ── Difficulty selector ── */
     function toggleDifficultyMenu() {
-      document.getElementById('difficulty-menu').classList.toggle('hidden');
+      var menu = document.getElementById('difficulty-menu');
+      if (menu) menu.classList.toggle('hidden');
     }
     function setDifficulty(level) {
       fetch('/set-difficulty', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        credentials: 'same-origin',
         body: 'level=' + level
-      }).then(r => r.json()).then(data => {
-        if (data.status === 'ok') location.reload();
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.status === 'ok') {
+          localStorage.setItem('hacklabs_difficulty', level);
+          location.reload();
+        }
+      }).catch(function(err) {
+        console.error('Error setting difficulty:', err);
+        localStorage.setItem('hacklabs_difficulty', level);
+        location.reload();
       });
     }
+
+    /* Sync difficulty from localStorage on first visit (if session lost) */
+    (function() {
+      var current = '{{ difficulty }}';
+      var stored = localStorage.getItem('hacklabs_difficulty');
+      if (stored && stored !== current && ['easy','medium','hard'].indexOf(stored) !== -1) {
+        fetch('/set-difficulty', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          credentials: 'same-origin',
+          body: 'level=' + stored
+        }).then(function(r) { return r.json(); }).then(function(data) {
+          if (data.status === 'ok') location.reload();
+        });
+      }
+    })();
   </script>
   <script>
   // Auto-replace TARGET_IP, localhost:5000, "localhost -s 5000" with actual server values
