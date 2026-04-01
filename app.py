@@ -4,6 +4,7 @@
 
 from flask import (Flask, request, render_template, redirect, url_for,
                    session, jsonify, make_response, g, send_file, render_template_string)
+import sys
 import sqlite3
 import os
 import hashlib
@@ -1667,6 +1668,10 @@ def start_simulated_services():
 
 
 if __name__ == '__main__':
+    # ── Fix encoding en terminales Windows (cp1252 no soporta caracteres Unicode del banner)
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
     # ── ANSI colors ──────────────────────────────────────
     R  = '\033[0;31m'   # red
     G  = '\033[0;32m'   # green
@@ -1687,17 +1692,14 @@ if __name__ == '__main__':
 
     _port = int(os.environ.get('APP_PORT', 5000))
 
-    # En local (puerto 5000) mostrar localhost; en Docker (puerto 80) detectar IP real
-    if _port == 5000:
+    # Detectar IP real de la interfaz de red
+    try:
+        _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        _sock.connect(('8.8.8.8', 80))
+        _ip = _sock.getsockname()[0]
+        _sock.close()
+    except Exception:
         _ip = '127.0.0.1'
-    else:
-        try:
-            _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            _sock.connect(('8.8.8.8', 80))
-            _ip = _sock.getsockname()[0]
-            _sock.close()
-        except Exception:
-            _ip = '127.0.0.1'
 
     # ── Banner ───────────────────────────────────────────
     print()
