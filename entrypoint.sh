@@ -142,23 +142,24 @@ echo '  [*] Configurando vectores de escalada de privilegios...'
 
 # Flag de root (objetivo final para todos los vectores)
 printf 'HL{r00t_pr1v3sc_succ3ss}\n' > /root/root.txt
-chmod 600 /root/root.txt
+chmod 600 /root/root.txt 2>/dev/null || true
 
 # --- admin: sudo completo (necesario para verificar permisos en la máquina) ---
 mkdir -p /etc/sudoers.d
 printf 'admin ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/admin
-chmod 440 /etc/sudoers.d/admin
+chmod 440 /etc/sudoers.d/admin 2>/dev/null || true
 
 # --- bob: sudo misconfiguration → vim (GTFOBins: sudo vim -c ':!/bin/bash') ---
 printf 'bob ALL=(ALL) NOPASSWD: /usr/bin/vim\n' > /etc/sudoers.d/bob
-chmod 440 /etc/sudoers.d/bob
+chmod 440 /etc/sudoers.d/bob 2>/dev/null || true
 
 # --- dave: sudo misconfiguration → find (GTFOBins: sudo find . -exec /bin/bash \; -quit) ---
 printf 'dave ALL=(ALL) NOPASSWD: /usr/bin/find\n' > /etc/sudoers.d/dave
-chmod 440 /etc/sudoers.d/dave
+chmod 440 /etc/sudoers.d/dave 2>/dev/null || true
 
 # --- alice: SUID en python3 (python3 -c 'import os; os.setuid(0); os.system("/bin/bash")') ---
-chmod u+s /usr/bin/python3
+# En python:3.11-slim el binario está en /usr/local/bin/python3
+chmod u+s /usr/local/bin/python3 2>/dev/null || chmod u+s /usr/bin/python3 2>/dev/null || true
 
 # --- charlie: script de cron escribible world-writable ejecutado por root cada minuto ---
 mkdir -p /opt/scripts
