@@ -100,7 +100,8 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 /* Search bar – pinned at top, never scrolls away */
 #sidebar-search-wrap {
   flex-shrink: 0;
-  background: #1a1a2e;  /* matches dark-800 */
+  padding: 0.75rem 0.75rem 0.35rem;
+  background: inherit;
 }
 #sidebar-search {
   display: block;
@@ -108,7 +109,7 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   background: rgba(206,255,0,0.07);
   border: 1px solid rgba(206,255,0,0.22);
   border-radius: 0.5rem;
-  padding: 0.4rem 0.65rem;
+  padding: 0.4rem 0.65rem 0.4rem 1.75rem;
   font-size: 0.75rem;
   font-weight: 600;
   color: #e6f08a;
@@ -124,18 +125,6 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  /* Custom scrollbar – always visible, yellow, flush to edge */
-  scrollbar-width: thin;
-  scrollbar-color: var(--hl-primary) transparent;
-}
-
-/* Webkit: flush yellow scrollbar */
-#sidebar > nav::-webkit-scrollbar { width: 8px; }
-#sidebar > nav::-webkit-scrollbar-track { background: transparent; }
-#sidebar > nav::-webkit-scrollbar-thumb {
-  background: var(--hl-primary);
-  border-radius: 999px;
-  border: 2px solid rgba(0,0,0,0.15);
 }
 
 /* Main content pushed by sidebar */
@@ -541,11 +530,12 @@ select.hl-input { display: none !important; }
 .hl-table tbody tr:hover td { background: rgba(var(--hl-primary-rgb),0.04); }
 .dark .hl-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
 
-/* ── Scrollbar ── */
+/* ── Scrollbar – thin, auto-hide: visible only on hover ── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(var(--hl-primary-rgb),0.4); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--hl-primary); }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+:hover::-webkit-scrollbar-thumb { background: rgba(var(--hl-primary-rgb),0.35); }
+:hover::-webkit-scrollbar-thumb:hover { background: rgba(var(--hl-primary-rgb),0.7); }
 
 /* ── Alerts ── */
 .alert-success {
