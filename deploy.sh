@@ -203,9 +203,6 @@ if [[ -n "$_BROWSER_USER" ]]; then
 fi
 
 # ── Mantener el script activo hasta Ctrl+C ──
-echo ""
-echo "  ${DIM}  [Ctrl+C para detener y eliminar el laboratorio]${NC}"
-echo ""
 while true; do
     # Verificar que el contenedor sigue corriendo
     if ! docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" &>/dev/null 2>&1; then
