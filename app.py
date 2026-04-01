@@ -1558,6 +1558,13 @@ def account_profile():
 # Escaneables con nmap; FTP es bruteforceable con hydra -M ftp
 # ─────────────────────────────────────────────
 
+# Virtual files served by the Python FTP server (Windows / no Docker)
+_FTP_FILES = {
+    'ftp_flag.txt': b'HL{ftp_cr3d3nti4ls_r3us3d}\n',
+    'user.txt':     b'HL{ssh_brut3f0rc3_l0gin_succ3ss}\n',
+    'README.txt':   b'HackLabs FTP service. Bruteforce to access.\n',
+}
+
 def _ftp_auth(username, password):
     pw_hash = hashlib.md5(password.encode()).hexdigest()
     con = sqlite3.connect(DATABASE)
@@ -1569,9 +1576,11 @@ def _ftp_auth(username, password):
         con.close()
 
 def _handle_ftp_client(conn, addr):
+    pasv_sock = None
     try:
         conn.sendall(b'220 HackLabs FTP Server ready (vsFTPd 3.0.5)\r\n')
         username = None
+        logged_in = False
         while True:
             try:
                 data = conn.recv(1024)
@@ -1581,12 +1590,15 @@ def _handle_ftp_client(conn, addr):
                 break
             cmd = data.decode('utf-8', errors='ignore').strip()
             up = cmd.upper()
+
             if up.startswith('USER '):
                 username = cmd[5:].strip()
+                logged_in = False
                 conn.sendall(b'331 Please specify the password.\r\n')
             elif up.startswith('PASS ') and username:
                 password = cmd[5:].strip()
                 if _ftp_auth(username, password):
+                    logged_in = True
                     conn.sendall(b'230 Login successful.\r\n')
                 else:
                     conn.sendall(b'530 Login incorrect.\r\n')
@@ -1599,14 +1611,85 @@ def _handle_ftp_client(conn, addr):
             elif up == 'SYST':
                 conn.sendall(b'215 UNIX Type: L8\r\n')
             elif up.startswith('FEAT'):
-                conn.sendall(b'211-Features:\r\n211 End\r\n')
-            elif up.startswith(('OPTS', 'TYPE', 'MODE')):
+                conn.sendall(b'211-Features:\r\nPASV\r\n211 End\r\n')
+            elif up.startswith(('OPTS', 'MODE')):
                 conn.sendall(b'200 OK\r\n')
-            else:
+            elif up.startswith('TYPE'):
+                conn.sendall(b'200 Switching to Binary mode.\r\n')
+            elif not logged_in:
                 conn.sendall(b'530 Please login with USER and PASS.\r\n')
+            elif up == 'PASV':
+                if pasv_sock:
+                    try: pasv_sock.close()
+                    except: pass
+                pasv_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                pasv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                pasv_sock.bind(('0.0.0.0', 0))
+                pasv_sock.listen(1)
+                pasv_sock.settimeout(15)
+                port = pasv_sock.getsockname()[1]
+                p1, p2 = port >> 8, port & 0xff
+                local_ip = conn.getsockname()[0]
+                ip_str = local_ip.replace('.', ',')
+                conn.sendall(f'227 Entering Passive Mode ({ip_str},{p1},{p2}).\r\n'.encode())
+            elif up == 'PWD' or up == 'XPWD':
+                conn.sendall(b'257 "/" is the current directory.\r\n')
+            elif up.startswith('CWD') or up == 'CDUP':
+                conn.sendall(b'250 Directory successfully changed.\r\n')
+            elif up in ('LIST', 'NLST') or up.startswith('LIST ') or up.startswith('NLST '):
+                if pasv_sock is None:
+                    conn.sendall(b'425 Use PASV first.\r\n')
+                    continue
+                conn.sendall(b'150 Here comes the directory listing.\r\n')
+                try:
+                    dc, _ = pasv_sock.accept()
+                    listing = b''
+                    for fname, content in _FTP_FILES.items():
+                        listing += f'-rw-r--r-- 1 ftp ftp {len(content):8d} Apr  1 2026 {fname}\r\n'.encode()
+                    dc.sendall(listing)
+                    dc.close()
+                    conn.sendall(b'226 Directory send OK.\r\n')
+                except Exception:
+                    conn.sendall(b'426 Connection closed; transfer aborted.\r\n')
+                finally:
+                    try: pasv_sock.close()
+                    except: pass
+                    pasv_sock = None
+            elif up.startswith('RETR '):
+                fname = cmd[5:].strip().lstrip('/')
+                if fname not in _FTP_FILES:
+                    conn.sendall(b'550 Failed to open file.\r\n')
+                    continue
+                if pasv_sock is None:
+                    conn.sendall(b'425 Use PASV first.\r\n')
+                    continue
+                content = _FTP_FILES[fname]
+                conn.sendall(f'150 Opening BINARY mode data connection for {fname} ({len(content)} bytes).\r\n'.encode())
+                try:
+                    dc, _ = pasv_sock.accept()
+                    dc.sendall(content)
+                    dc.close()
+                    conn.sendall(b'226 Transfer complete.\r\n')
+                except Exception:
+                    conn.sendall(b'426 Connection closed; transfer aborted.\r\n')
+                finally:
+                    try: pasv_sock.close()
+                    except: pass
+                    pasv_sock = None
+            elif up.startswith('SIZE '):
+                fname = cmd[5:].strip().lstrip('/')
+                if fname in _FTP_FILES:
+                    conn.sendall(f'213 {len(_FTP_FILES[fname])}\r\n'.encode())
+                else:
+                    conn.sendall(b'550 Could not get file size.\r\n')
+            else:
+                conn.sendall(b'502 Command not implemented.\r\n')
     except Exception:
         pass
     finally:
+        if pasv_sock:
+            try: pasv_sock.close()
+            except: pass
         conn.close()
 
 def _handle_ssh_client(conn, addr):
@@ -1658,6 +1741,15 @@ def _tcp_service(port, handler, name):
         print(f'[!] {name}:{port} — permiso denegado (requiere root/admin o Docker)')
     except OSError as e:
         print(f'[!] {name}:{port} — no disponible: {e}')
+
+def start_simulated_services():
+    # Python FTP simulation — works on Windows and as fallback on Linux
+    # In Docker, vsftpd already owns port 21 so this will fail silently
+    for port, handler, name in [
+        (21, _handle_ftp_client, 'FTP'),
+    ]:
+        threading.Thread(target=_tcp_service, args=(port, handler, name), daemon=True).start()
+
 
 if __name__ == '__main__':
     # ── Fix encoding en terminales Windows (cp1252 no soporta caracteres Unicode del banner)
@@ -1721,4 +1813,5 @@ if __name__ == '__main__':
     print(f"  {Y}  Presiona Ctrl+C para detener HackLabs{NC}")
     print()
 
+    start_simulated_services()
     app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=False)
