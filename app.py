@@ -9,10 +9,12 @@ import os
 import hashlib
 import subprocess
 import xml.etree.ElementTree as ET
+from lxml import etree as lxml_etree
 from io import StringIO
 import re
 import base64
 import json
+import random
 import hmac as _hmac
 import pickle
 import threading
@@ -623,27 +625,49 @@ def uploaded_file(filename):
 # XXE – XML External Entity
 # ─────────────────────────────────────────────
 
-@app.route('/xxe', methods=['GET', 'POST'])
+@app.route('/xxe', methods=['GET'])
 def xxe():
     lab = next(l for l in get_lab_list() if l['id'] == 'xxe')
-    result = None
-    error = None
-    xml_input = request.values.get('xml_data', '')
+    return render_template('labs/xxe.html', lab=lab)
 
-    if xml_input:
-        try:
-            # VULNERABLE: parser sin deshabilitar entidades externas
-            tree = ET.fromstring(xml_input)
-            name = tree.findtext('name', default='(vacío)')
-            email = tree.findtext('email', default='(vacío)')
-            result = {'name': name, 'email': email}
-        except ET.ParseError as e:
-            error = f'Error XML: {e}'
-        except Exception as e:
-            error = str(e)
 
-    return render_template('labs/xxe.html', lab=lab, result=result,
-                           error=error, xml_input=xml_input)
+@app.route('/xxe/api', methods=['POST'])
+def xxe_api():
+    """API que recibe XML – VULNERABLE a XXE intencionalmente."""
+    xml_data = request.data
+    if not xml_data:
+        return jsonify({'status': 'error', 'message': 'No se recibieron datos'}), 400
+
+    try:
+        # VULNERABLE: parser con resolve_entities + load_dtd (permite XXE)
+        parser = lxml_etree.XMLParser(
+            resolve_entities=True,
+            load_dtd=True,
+            no_network=False
+        )
+        doc = lxml_etree.fromstring(xml_data, parser)
+
+        name    = doc.findtext('name', default='')
+        email   = doc.findtext('email', default='')
+        subject = doc.findtext('subject', default='')
+        message = doc.findtext('message', default='')
+
+        ticket_id = f'TK-{random.randint(10000, 99999)}'
+
+        return jsonify({
+            'status': 'ok',
+            'ticket': {
+                'id': ticket_id,
+                'name': name,
+                'email': email,
+                'subject': subject,
+                'message': message
+            }
+        })
+    except lxml_etree.XMLSyntaxError as e:
+        return jsonify({'status': 'error', 'message': f'Error XML: {e}'}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
 
 # ─────────────────────────────────────────────
 # Path Traversal / LFI
@@ -1150,8 +1174,6 @@ if __name__ == '__main__':
         except Exception:
             _ip = '127.0.0.1'
 
-    start_simulated_services()
-
     # ── Banner ───────────────────────────────────────────
     print()
     print(f"{R}    __  __              __    __           __         {NC}")
@@ -1180,4 +1202,5 @@ if __name__ == '__main__':
     print(f"  {Y}  Presiona Ctrl+C para detener HackLabs{NC}")
     print()
 
+    start_simulated_services()
     app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=False)

