@@ -19,7 +19,7 @@ const T = {
     filter_label:    'Filtrar:',
     filter_all:      'Todos',
     open_lab:        'Abrir lab',
-    test_credentials:'Credenciales de prueba',
+    test_credentials:'Usuarios y Contraseñas',
     col_username:    'Usuario',
     col_password:    'Contraseña',
     col_hash:        'Hash MD5',
@@ -198,7 +198,7 @@ const T = {
     filter_label:    'Filter:',
     filter_all:      'All',
     open_lab:        'Open lab',
-    test_credentials:'Test Credentials',
+    test_credentials:'Users & Passwords',
     col_username:    'Username',
     col_password:    'Password',
     col_hash:        'MD5 Hash',
@@ -468,11 +468,13 @@ function applySidebar() {
   const sb  = document.getElementById('sidebar');
   const iOp = document.getElementById('sidebar-icon-open');
   const iCl = document.getElementById('sidebar-icon-close');
+  const ft  = document.getElementById('app-footer');
   if (!sb) return;
   sb.classList.toggle('sidebar-open',   HL.sidebar);
   sb.classList.toggle('sidebar-closed', !HL.sidebar);
   iOp && iOp.classList.toggle('hidden',  HL.sidebar);
   iCl && iCl.classList.toggle('hidden', !HL.sidebar);
+  if (ft) ft.style.marginLeft = HL.sidebar ? 'var(--sidebar-width)' : '0';
 }
 
 function toggleSidebar() {

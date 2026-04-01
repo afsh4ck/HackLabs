@@ -97,10 +97,9 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 #sidebar.sidebar-open  { width: var(--sidebar-width); }
 #sidebar.sidebar-closed { width: 0; }
 
-/* Search bar – pinned at top, never scrolls away */
+/* Search bar – inside nav, below Inicio */
 #sidebar-search-wrap {
-  flex-shrink: 0;
-  padding: 0.65rem 0.65rem 0.4rem;
+  padding: 0.35rem 0 0.25rem;
 }
 #sidebar-search {
   display: block;
@@ -118,16 +117,15 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 #sidebar-search::placeholder { color: rgba(230,240,138,0.5); font-weight: 500; }
 #sidebar-search:focus { border-color: var(--hl-primary); box-shadow: 0 0 0 2px rgba(206,255,0,0.18); }
 
-/* Nav – takes remaining height and scrolls internally */
+/* Nav – takes remaining height, scrolls, NO right padding */
 #sidebar > nav {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-left: 0.65rem;
-  padding-right: 0;
+  padding: 0.5rem 0 3rem 0.65rem;
 }
-/* Sidebar scrollbar – thin, flush to right edge, same as global */
+/* Sidebar scrollbar – flush to right border */
 #sidebar > nav::-webkit-scrollbar { width: 4px; }
 #sidebar > nav::-webkit-scrollbar-track { background: transparent; }
 #sidebar > nav::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
@@ -136,8 +134,11 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 
 /* Main content pushed by sidebar */
 main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
-#sidebar.sidebar-open + main, #sidebar.sidebar-open ~ main { margin-left: var(--sidebar-width) !important; }
-#sidebar.sidebar-closed + main, #sidebar.sidebar-closed ~ main { margin-left: 0 !important; }
+#sidebar.sidebar-open  ~ main { margin-left: var(--sidebar-width) !important; }
+#sidebar.sidebar-closed ~ main { margin-left: 0 !important; }
+
+/* Footer pushed by sidebar (margin set via JS in applySidebar) */
+#app-footer { transition: margin-left 0.22s ease; }
 
 /* Navbar icon buttons hover — misma gama que navbar bg (dark-800 #1a1a2e) */
 .nav-icon-btn {
@@ -538,6 +539,8 @@ select.hl-input { display: none !important; }
 .dark .hl-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
 
 /* ── Scrollbar – thin, auto-hide: visible only on hover ── */
+* { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+*:hover { scrollbar-color: rgba(206,255,0,0.35) transparent; }
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
