@@ -1138,14 +1138,17 @@ if __name__ == '__main__':
 
     _port = int(os.environ.get('APP_PORT', 5000))
 
-    # Detect host IP
-    try:
-        _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        _sock.connect(('8.8.8.8', 80))
-        _ip = _sock.getsockname()[0]
-        _sock.close()
-    except Exception:
+    # En local (puerto 5000) mostrar localhost; en Docker (puerto 80) detectar IP real
+    if _port == 5000:
         _ip = '127.0.0.1'
+    else:
+        try:
+            _sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            _sock.connect(('8.8.8.8', 80))
+            _ip = _sock.getsockname()[0]
+            _sock.close()
+        except Exception:
+            _ip = '127.0.0.1'
 
     start_simulated_services()
 
@@ -1161,9 +1164,10 @@ if __name__ == '__main__':
     print(f"  {B}{G}  ✓  Laboratorio iniciado correctamente{NC}")
     print(f"  {G}════════════════════════════════════════════════════{NC}")
     print()
+    _url = f"http://{_ip}" if _port == 80 else f"http://{_ip}:{_port}"
     print(f"  {C}{B}  IP del servidor:   {_ip}{NC}")
     print()
-    print(f"  {D}  HTTP  →  http://{_ip}:{_port}{NC}")
+    print(f"  {D}  HTTP  →  {_url}{NC}")
     print(f"  {D}  FTP   →  ftp://{_ip}  (puerto 21){NC}")
     print(f"  {D}  SSH   →  ssh user@{_ip}  (puerto 22){NC}")
     print(f"  {D}  SMB   →  //{_ip}/  (puerto 445){NC}")
