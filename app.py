@@ -15,6 +15,8 @@ import base64
 import json
 import hmac as _hmac
 import pickle
+import threading
+import socket
 
 app = Flask(__name__)
 app.secret_key = 'hacklabs_super_insecure_secret_2024'
@@ -676,6 +678,19 @@ def bruteforce_login():
     bf_result = 'Credenciales incorrectas.'
     return render_template('labs/bruteforce.html', lab=lab, bf_result=bf_result, bf_success=False)
 
+@app.route('/bruteforce/ftp', methods=['GET', 'POST'])
+def bruteforce_ftp():
+    username = request.values.get('username', '')
+    password = request.values.get('password', '')
+    if not username or not password:
+        return 'Login failed.\r\n', 401
+    db = get_db()
+    pw_hash = hashlib.md5(password.encode()).hexdigest()
+    user = db.execute('SELECT * FROM users WHERE username=? AND password_md5=?', (username, pw_hash)).fetchone()
+    if user:
+        return f'230 Login successful. Welcome {username}.\r\n', 200
+    return '530 Login incorrect.\r\n', 401
+
 # ─────────────────────────────────────────────
 # API: lista de usuarios (para practicar enumeration)
 # VULNERABLE: sin autenticación
@@ -968,6 +983,121 @@ def account_profile():
                            error=error, is_lab_user=False)
 
 
+# ─────────────────────────────────────────────
+# Servicios simulados reales: FTP / SSH / SMB
+# Escaneables con nmap; FTP es bruteforceable con hydra -M ftp
+# ─────────────────────────────────────────────
+
+def _ftp_auth(username, password):
+    pw_hash = hashlib.md5(password.encode()).hexdigest()
+    con = sqlite3.connect(DATABASE)
+    try:
+        row = con.execute('SELECT 1 FROM users WHERE username=? AND password_md5=?',
+                          (username, pw_hash)).fetchone()
+        return row is not None
+    finally:
+        con.close()
+
+def _handle_ftp_client(conn, addr):
+    try:
+        conn.sendall(b'220 HackLabs FTP Server ready (vsFTPd 3.0.5)\r\n')
+        username = None
+        while True:
+            try:
+                data = conn.recv(1024)
+            except Exception:
+                break
+            if not data:
+                break
+            cmd = data.decode('utf-8', errors='ignore').strip()
+            up = cmd.upper()
+            if up.startswith('USER '):
+                username = cmd[5:].strip()
+                conn.sendall(b'331 Please specify the password.\r\n')
+            elif up.startswith('PASS ') and username:
+                password = cmd[5:].strip()
+                if _ftp_auth(username, password):
+                    conn.sendall(b'230 Login successful.\r\n')
+                else:
+                    conn.sendall(b'530 Login incorrect.\r\n')
+                    username = None
+            elif up.startswith('PASS '):
+                conn.sendall(b'503 Login with USER first.\r\n')
+            elif up == 'QUIT':
+                conn.sendall(b'221 Goodbye.\r\n')
+                break
+            elif up == 'SYST':
+                conn.sendall(b'215 UNIX Type: L8\r\n')
+            elif up.startswith('FEAT'):
+                conn.sendall(b'211-Features:\r\n211 End\r\n')
+            elif up.startswith(('OPTS', 'TYPE', 'MODE')):
+                conn.sendall(b'200 OK\r\n')
+            else:
+                conn.sendall(b'530 Please login with USER and PASS.\r\n')
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+def _handle_ssh_client(conn, addr):
+    """Sends real SSH banner — nmap -sV identifies it as OpenSSH."""
+    try:
+        conn.sendall(b'SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6\r\n')
+        conn.recv(256)
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+def _handle_smb_client(conn, addr):
+    """Responds to SMB negotiate probe — nmap -sV identifies it as SMB/CIFS."""
+    _SMB_RESP = (
+        b'\x00\x00\x00\x31'          # NetBIOS session (length 49)
+        b'\xffSMB'                    # SMB magic
+        b'\x72'                        # SMB_COM_NEGOTIATE
+        b'\x00\x00\x00\x00'          # Status OK
+        b'\x88\x01\xc8\x00'          # Flags / Flags2
+        b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'  # Signature + reserved
+        b'\xff\xff\x00\x00\x00\x00\x00\x00'           # TID PID UID MID
+        b'\x01\x00\x00'               # WordCount=1, DialectIndex=0
+        b'\x00\x00'                   # ByteCount=0
+    )
+    try:
+        conn.recv(256)
+        conn.sendall(_SMB_RESP)
+        conn.recv(256)
+    except Exception:
+        pass
+    finally:
+        conn.close()
+
+def _tcp_service(port, handler, name):
+    try:
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        srv.bind(('0.0.0.0', port))
+        srv.listen(20)
+        print(f'[+] Servicio {name} escuchando en :{port}')
+        while True:
+            try:
+                conn, addr = srv.accept()
+                threading.Thread(target=handler, args=(conn, addr), daemon=True).start()
+            except Exception:
+                pass
+    except PermissionError:
+        print(f'[!] {name}:{port} — permiso denegado (requiere root/admin o Docker)')
+    except OSError as e:
+        print(f'[!] {name}:{port} — no disponible: {e}')
+
+def start_simulated_services():
+    for port, handler, name in [
+        (21,  _handle_ftp_client, 'FTP'),
+        (22,  _handle_ssh_client, 'SSH'),
+        (445, _handle_smb_client, 'SMB'),
+    ]:
+        threading.Thread(target=_tcp_service, args=(port, handler, name), daemon=True).start()
+
+
 if __name__ == '__main__':
     if not os.path.exists(DATABASE):
         print("[*] Inicializando base de datos...")
@@ -976,6 +1106,7 @@ if __name__ == '__main__':
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), 'logs'), exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), 'static', 'files'), exist_ok=True)
+    start_simulated_services()
     print("[*] HackLabs corriendo en http://0.0.0.0:5000")
     print("[!] ADVERTENCIA: Aplicación intencionalmente insegura. Solo usar en entornos aislados.")
     app.run(host='0.0.0.0', port=5000, debug=True)
