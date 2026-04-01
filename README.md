@@ -393,7 +393,7 @@ Accede en: **http://localhost:5000**
 
 | Usuario | Contraseña | Hash MD5 | Rol |
 |---------|-----------|----------|-----|
-| admin | admin123 | `0192023a7bbd73250516f069df18b500` | admin |
+| admin | admin | `21232f297a57a5a743894a0e4a801fc3` | admin |
 | alice | password | `5f4dcc3b5aa765d61d8327deb882cf99` | user |
 | bob | 123456 | `e10adc3949ba59abbe56e057f20f883e` | user |
 | charlie | qwerty | `d8578edf8458ce06fbc5bb76a58c5ca4` | user |
