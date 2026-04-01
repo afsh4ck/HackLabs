@@ -16,6 +16,273 @@
 - Soporte **bilingüe** (Español / English)
 - Interfaz moderna oscura con **Tailwind CSS** + **Phosphor Icons**
 - Compatible con **Burp Suite, sqlmap, hydra, tplmap, jwt_tool** y demás herramientas de Kali Linux
+- **Selector de dificultad** (Easy / Medium / Hard) que modifica las protecciones de cada lab en tiempo real
+
+---
+
+## 🛡️ Sistema de Dificultad
+
+HackLabs incluye un **selector de dificultad** en la barra de navegación (similar a Mutillidae/DVWA) que ajusta las protecciones de **todos** los laboratorios en tiempo real. La dificultad seleccionada se mantiene entre labs y persiste durante toda la sesión.
+
+| Nivel | Descripción | Color |
+|-------|-------------|-------|
+| **Easy** | Sin protección — vulnerabilidades completamente expuestas | 🟢 Verde |
+| **Medium** | Filtros básicos — bypass posible con técnicas intermedias | 🟡 Ámbar |
+| **Hard** | WAF / validación avanzada — requiere técnicas avanzadas de bypass | 🔴 Rojo |
+
+### Detalle por laboratorio
+
+<details>
+<summary><strong>A01 — IDOR (Broken Access Control)</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Devuelve **todos** los campos del usuario (incluye `password_md5` y `password_plain`) |
+| Medium | Oculta `password_plain` pero expone `password_md5` y `security_answer` |
+| Hard | Solo datos básicos: `id`, `username`, `email`, `role` |
+
+</details>
+
+<details>
+<summary><strong>A02 — Cryptographic Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Hash MD5 expuesto en cookie sin `HttpOnly` ni salt |
+| Medium | Cookie `HttpOnly` pero sigue siendo MD5 sin salt |
+| Hard | SHA256 con salt estático `"hacklabs"` + cookie `HttpOnly` + `SameSite` |
+
+</details>
+
+<details>
+<summary><strong>A03 — SQL Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — inyección SQL directa con errores expuestos |
+| Medium | WAF básico bloquea `UNION`, `SELECT`, `OR` (bypass: variaciones de mayúsculas) |
+| Hard | Regex WAF agresivo + errores ocultos (bypass: ofuscación avanzada) |
+
+</details>
+
+<details>
+<summary><strong>A03 — Command Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — `shell=True` con inyección directa |
+| Medium | Filtra `;` y `\|` (bypass: `&`, backticks, `$()`, newlines) |
+| Hard | Filtra `;` `\|` `&` `` ` `` `$` `()` `{}` `<` `>` (bypass: `\n` newline) |
+
+</details>
+
+<details>
+<summary><strong>A04 — Insecure Design (Password Recovery)</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Pregunta secreta visible + sin rate-limiting |
+| Medium | Pregunta parcialmente censurada + 5 intentos / 30s |
+| Hard | Pregunta oculta + 3 intentos / 60s + errores genéricos |
+
+</details>
+
+<details>
+<summary><strong>A05 — Security Misconfiguration</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Panel `/admin` sin autenticación — acceso total |
+| Medium | Requiere cookie `is_admin=true` (bypass: editar cookie) |
+| Hard | Requiere header `X-Admin-Token: hacklabs-admin-2024` |
+
+</details>
+
+<details>
+<summary><strong>A06 — Outdated Components</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro XSS — inyección de tags directa |
+| Medium | Filtra `<script>` pero no event handlers ni otros tags |
+| Hard | Filtra `<` y `>` (bypass: atributos inline) |
+
+</details>
+
+<details>
+<summary><strong>A07 — Authentication Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin rate-limiting — brute force ilimitado |
+| Medium | Límite: 10 intentos / 30 segundos |
+| Hard | Límite: 5 intentos / 60 segundos + errores genéricos |
+
+</details>
+
+<details>
+<summary><strong>A08 — Software & Data Integrity Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Campo `role` editable vía API + todos los campos visibles |
+| Medium | `role` bloqueado en PUT + vista sin campo role |
+| Hard | Solo `email` editable + requiere header Authorization + vista mínima |
+
+</details>
+
+<details>
+<summary><strong>A09 — Security Logging & Monitoring Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin logging — el atacante es invisible |
+| Medium | Solo registra logins exitosos con IP (fallos invisibles) |
+| Hard | Registra éxitos y fallos pero sin IP (auditoría incompleta) |
+
+</details>
+
+<details>
+<summary><strong>A10 — SSRF</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — SSRF a servicios internos directamente |
+| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal, 0x7f000001) |
+| Hard | Bloquea rangos privados (bypass: DNS rebinding, IPv6) |
+
+</details>
+
+<details>
+<summary><strong>XSS — Reflected / Stored / DOM</strong></summary>
+
+**Reflected & Stored:**
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — inyección XSS directa |
+| Medium | Filtra `<script>` (bypass: event handlers `onerror`, `onload`) |
+| Hard | Filtra `<` y `>` (bypass: inyección de atributos) |
+
+**DOM XSS:**
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin CSP — DOM XSS vía JavaScript inseguro del cliente |
+| Medium | CSP permite `'unsafe-inline'` (bypass: event handlers) |
+| Hard | CSP estricto `script-src 'self'` (bypass: mutation XSS, DOM clobbering) |
+
+</details>
+
+<details>
+<summary><strong>CSRF</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin protección CSRF + todos los campos del perfil visibles |
+| Medium | Verificación de header `Referer` (bypass: supresión/manipulación) |
+| Hard | Requiere header `X-CSRF-Token` en sesión (bypass: XSS para robar token) |
+
+</details>
+
+<details>
+<summary><strong>File Upload</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin validación — cualquier archivo con nombre original |
+| Medium | Blacklist de extensiones peligrosas (bypass: doble extensión `.php.jpg`) |
+| Hard | Whitelist + verificación Content-Type (bypass: magic bytes) |
+
+</details>
+
+<details>
+<summary><strong>XXE — XML External Entity</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin protección XXE — `resolve_entities` habilitado |
+| Medium | Bloquea `<!DOCTYPE` literal (bypass: variaciones de mayúsculas/encoding) |
+| Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` (bypass: codificación UTF) |
+
+</details>
+
+<details>
+<summary><strong>Path Traversal / LFI</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — `../` traversal directo |
+| Medium | Filtra `../` una vez (bypass: `..\`, URL encoding `%2e%2e%2f`) |
+| Hard | Filtra `../` y `..\` recursivamente (bypass: doble URL-encoding) |
+
+</details>
+
+<details>
+<summary><strong>Bruteforce (HTTP + FTP)</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin rate-limiting — intentos ilimitados |
+| Medium | Límite: 5 intentos / 30 segundos |
+| Hard | Límite: 3 intentos / 60 segundos (+ delay de 1s en FTP) |
+
+</details>
+
+<details>
+<summary><strong>SSTI — Server-Side Template Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — inyección Jinja2 directa `{{ 7*7 }}` |
+| Medium | Bloquea `{{ }}` (bypass: `{% print 7*7 %}`) |
+| Hard | Bloquea `{{ }}`, `{% %}` y keywords peligrosos (bypass: filtros Jinja2, codificación) |
+
+</details>
+
+<details>
+<summary><strong>Open Redirect</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin validación — redirección a cualquier URL |
+| Medium | Bloquea `http://` y `https://` externos (bypass: `//`, `javascript:`) |
+| Hard | Bloquea dominios externos y protocol-relative (bypass: `@`, encoding) |
+
+</details>
+
+<details>
+<summary><strong>JWT Manipulation</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Acepta `alg=none` + secreto expuesto en la interfaz |
+| Medium | Rechaza `alg=none` pero secreto débil (bypass: brute force con hashcat) |
+| Hard | Rechaza `alg=none` + secreto fuerte (bypass: kid injection, jwt_tool) |
+
+</details>
+
+<details>
+<summary><strong>Insecure Deserialization</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | `pickle.loads()` directo del input del usuario |
+| Medium | Blacklist de keywords (`os`, `subprocess`, `system`, `popen`...) |
+| Hard | Bloqueo de opcodes peligrosos de pickle (`R`, `i`, `c`, `0x81`) |
+
+</details>
+
+<details>
+<summary><strong>CORS Misconfiguration</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Refleja cualquier Origin + `Access-Control-Allow-Credentials: true` |
+| Medium | Solo permite orígenes `*.hacklabs.local` (bypass: subdominio) |
+| Hard | Regex estricto (bypass: prefijo de dominio similar) |
+
+</details>
 
 ---
 
