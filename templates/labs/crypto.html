@@ -38,12 +38,12 @@
       <li>El token es el hash <strong>MD5 sin salt</strong> de la contraseña.</li>
       <li>Crackea el hash con hashcat o john:</li>
     </ol>
-    <pre>echo "5f4dcc3b5aa765d61d8327deb882cf99" > hash.txt
-hashcat -a 0 -m 0 hash.txt /usr/share/wordlists/rockyou.txt
-john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt hash.txt</pre>
+    <pre>echo "2ac9cb7dc02b3c0083eb70898e549b63" > hash.txt
+hashcat -a 0 -m 0 hash.txt /usr/share/wordlists/fasttrack.txt
+john --format=raw-md5 --wordlist=/usr/share/wordlists/fasttrack.txt hash.txt</pre>
     <ol start="5">
       <li>También puedes capturar la respuesta HTTP con Burp Suite para ver el hash en el cuerpo de la respuesta.</li>
-      <li>Hashes de muestra: <code>admin → 21232f297a57a5a743894a0e4a801fc3</code></li>
+      <li>Hashes de muestra: <code>alice / Password1 → 2ac9cb7dc02b3c0083eb70898e549b63</code></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Burp Suite</span></div>
@@ -56,12 +56,12 @@ john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt hash.txt</pre>
       <li>The token is the <strong>MD5 hash without salt</strong> of the password.</li>
       <li>Crack the hash with hashcat or john:</li>
     </ol>
-    <pre>echo "5f4dcc3b5aa765d61d8327deb882cf99" > hash.txt
-hashcat -a 0 -m 0 hash.txt /usr/share/wordlists/rockyou.txt
-john --format=raw-md5 --wordlist=/usr/share/wordlists/rockyou.txt hash.txt</pre>
+    <pre>echo "2ac9cb7dc02b3c0083eb70898e549b63" > hash.txt
+hashcat -a 0 -m 0 hash.txt /usr/share/wordlists/fasttrack.txt
+john --format=raw-md5 --wordlist=/usr/share/wordlists/fasttrack.txt hash.txt</pre>
     <ol start="5">
       <li>You can also capture the HTTP response with Burp Suite to see the hash in the response body.</li>
-      <li>Sample hash: <code>admin → 21232f297a57a5a743894a0e4a801fc3</code></li>
+      <li>Sample hash: <code>alice / Password1 → 2ac9cb7dc02b3c0083eb70898e549b63</code></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Burp Suite</span></div>
