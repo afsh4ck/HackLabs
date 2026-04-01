@@ -126,9 +126,11 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
-# ── Construir imagen Docker ──
+# ── Construir imagen Docker (eliminando caché previa para reflejar cambios) ──
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-log "Construyendo imagen Docker (puede tardar unos minutos la primera vez)..."
+log "Eliminando imagen anterior si existe..."
+docker rmi "$IMAGE_NAME" 2>/dev/null || true
+log "Construyendo imagen Docker (puede tardar unos minutos)..."
 docker build -t "$IMAGE_NAME" "$SCRIPT_DIR" --quiet \
     || err "Error al construir la imagen Docker."
 log "Imagen construida correctamente."
