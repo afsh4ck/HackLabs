@@ -155,6 +155,7 @@ docker run -d \
     --name "$CONTAINER_NAME" \
     --network "$NET_NAME" \
     --ip "$CONTAINER_IP" \
+    --hostname hacklabs \
     --cap-add NET_ADMIN \
     "$IMAGE_NAME" > /dev/null \
     || err "No se pudo iniciar el contenedor."

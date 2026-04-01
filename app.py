@@ -1561,7 +1561,6 @@ def account_profile():
 # Virtual files served by the Python FTP server (Windows / no Docker)
 _FTP_FILES = {
     'ftp_flag.txt': b'HL{ftp_cr3d3nti4ls_r3us3d}\n',
-    'user.txt':     b'HL{ssh_brut3f0rc3_l0gin_succ3ss}\n',
     'README.txt':   b'HackLabs FTP service. Bruteforce to access.\n',
 }
 
