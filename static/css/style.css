@@ -111,7 +111,7 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-left: 0.75rem; /* keep visual left spacing (was p-3) */
-  padding-right: 0;      /* remove right padding so scrollbar is flush */
+  padding-right: 0 !important;      /* remove right padding so scrollbar is flush */
   padding-bottom: 3rem; /* space at bottom so last items aren't cut */
   height: calc(100vh - var(--header-height));
 
@@ -148,11 +148,32 @@ main {
 #sidebar > nav.show-scroll::-webkit-scrollbar-track { background: transparent; }
 #sidebar > nav:hover::-webkit-scrollbar-thumb,
 #sidebar > nav.show-scroll::-webkit-scrollbar-thumb {
-  background: var(--hl-primary);
+  background: var(--hl-primary) !important;
   border-radius: 999px;
   border: 2px solid rgba(0,0,0,0.12);
   background-clip: padding-box;
 }
+
+/* Ensure native scrollbar is hidden by default in webkit (will appear via hover/show-scroll) */
+#sidebar > nav::-webkit-scrollbar { width: 0; }
+
+/* Search input visible styling */
+#sidebar > nav #sidebar-search {
+  position: sticky;
+  top: 0;
+  z-index: 45;
+  margin: 0.4rem 0;
+  display: block;
+  width: calc(100% - 1.25rem);
+  background: rgba(var(--hl-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--hl-primary-rgb), 0.12);
+  color: var(--hl-surface-2);
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+}
+
+/* Force the scrollbar absolutely flush to the right edge by removing any container inset */
+#sidebar { padding-right: 0 !important; }
 
 /* Ensure the search input sits immediately under the navbar and is always visible */
 #sidebar > nav #sidebar-search {
