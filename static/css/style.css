@@ -100,8 +100,7 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 /* Search bar – pinned at top, never scrolls away */
 #sidebar-search-wrap {
   flex-shrink: 0;
-  padding: 0.75rem 0.75rem 0.35rem;
-  background: inherit;
+  padding: 0.65rem 0.65rem 0.4rem;
 }
 #sidebar-search {
   display: block;
@@ -109,14 +108,14 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   background: rgba(206,255,0,0.07);
   border: 1px solid rgba(206,255,0,0.22);
   border-radius: 0.5rem;
-  padding: 0.4rem 0.65rem 0.4rem 1.75rem;
-  font-size: 0.75rem;
+  padding: 0.45rem 0.65rem 0.45rem 1.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #e6f08a;
   outline: none;
   box-sizing: border-box;
 }
-#sidebar-search::placeholder { color: rgba(230,240,138,0.55); }
+#sidebar-search::placeholder { color: rgba(230,240,138,0.5); font-weight: 500; }
 #sidebar-search:focus { border-color: var(--hl-primary); box-shadow: 0 0 0 2px rgba(206,255,0,0.18); }
 
 /* Nav – takes remaining height and scrolls internally */
@@ -125,7 +124,15 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  padding-left: 0.65rem;
+  padding-right: 0;
 }
+/* Sidebar scrollbar – thin, flush to right edge, same as global */
+#sidebar > nav::-webkit-scrollbar { width: 4px; }
+#sidebar > nav::-webkit-scrollbar-track { background: transparent; }
+#sidebar > nav::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+#sidebar > nav:hover::-webkit-scrollbar-thumb { background: rgba(var(--hl-primary-rgb),0.35); }
+#sidebar > nav:hover::-webkit-scrollbar-thumb:hover { background: rgba(var(--hl-primary-rgb),0.7); }
 
 /* Main content pushed by sidebar */
 main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
