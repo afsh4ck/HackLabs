@@ -55,81 +55,70 @@
 
 ---
 
-## 🚀 Instalación rápida
+## 🚀 Despliegue
 
-### Requisitos
-- Python 3.8+
-- pip
+### ⭐ Opción 1 — Docker con IP propia en LAN (recomendado — estilo DockerLabs)
 
-### Opción 1 — Script automático (Kali Linux)
+Despliega HackLabs como si fuera una máquina vulnerable real: con su propia IP en tu red local, escaneable con `nmap` y atacable con todas las herramientas de Kali.
+
+**Requisitos:** Docker instalado y ejecutándose en Kali Linux.
 
 ```bash
 git clone https://github.com/afsh4ck/HackLabs.git
 cd HackLabs
-chmod +x setup.sh
-./setup.sh
+sudo bash deploy.sh
 ```
 
-### Opción 2 — Manual
+El script detecta automáticamente tu red (`eth0`), asigna una **IP aleatoria** al laboratorio dentro del rango `.100–.199` y muestra el resultado:
+
+```
+    __  __              __    __           __
+   / / / /____ _ _____ / /__ / /   ____ _ / /_   _____
+  / /_/ // __ `// ___// //_// /   / __ `// __ \ / ___/
+ / __  // /_/ // /__ / ,<  / /___/ /_/ // /_/ /(__  )
+/_/ /_/ \__,_/ \___//_/|_|/_____/\__,_//_.___//____/
+
+  ════════════════════════════════════════════════════
+  ✓  Laboratorio desplegado correctamente
+  ════════════════════════════════════════════════════
+
+  IP del objetivo:   192.168.1.147
+
+  HTTP  →  http://192.168.1.147
+  FTP   →  192.168.1.147:21
+  SSH   →  192.168.1.147:22
+  SMB   →  192.168.1.147:445
+
+  nmap -sV -p 21,22,80,445 192.168.1.147
+
+  Presiona Ctrl+C para detener el laboratorio
+```
+
+Pulsa **Ctrl+C** para detener y eliminar el contenedor automáticamente.
+
+> **Nota:** El script necesita `sudo` para crear la red macvlan (interfaz de red propia). El puerto 445 (SMB) puede estar ocupado en Windows; en Linux/Docker funciona correctamente.
+
+---
+
+### Opción 2 — Local sin Docker (desarrollo / pruebas rápidas)
+
+**Requisitos:** Python 3.8+
 
 ```bash
 git clone https://github.com/afsh4ck/HackLabs.git
 cd HackLabs
 
-# Crear entorno virtual
-python3 -m venv venv
-source venv/bin/activate        # Linux/macOS
-# venv\Scripts\activate         # Windows
+# Instalación automática
+chmod +x setup.sh && ./setup.sh
 
-# Instalar dependencias
+# O manual:
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# Inicializar base de datos
 python init_db.py
-
-# Arrancar la aplicación
 python app.py
 ```
 
 Accede en: **http://localhost:5000**
-
-### Opción 3 — Docker (recomendado para labs)
-
-Despliega HackLabs como una máquina vulnerable con su propia IP en tu red local:
-
-```bash
-git clone https://github.com/afsh4ck/HackLabs.git
-cd HackLabs
-```
-
-**1. Edita `docker-compose.yml`** y ajusta la red a tu entorno:
-- `parent`: interfaz de red del host (`eth0`, `ens33`, `wlan0`…)
-- `subnet` / `gateway`: tu red local (ej. `192.168.1.0/24`)
-- `ip_range`: rango de IPs que Docker puede asignar (ej. `192.168.1.128/25`)
-
-**2. Levanta el contenedor:**
-
-```bash
-docker compose up -d
-```
-
-**3. Consulta la IP asignada:**
-
-```bash
-docker compose logs hacklabs
-```
-
-Verás algo como:
-```
-  Target machine IP:  http://192.168.1.130
-
-  HTTP  →  http://192.168.1.130  (port 80)
-  FTP   →  192.168.1.130:21
-  SSH   →  192.168.1.130:22
-  SMB   →  192.168.1.130:445
-```
-
-Accede directamente por IP sin puerto, igual que una máquina real en un CTF.
 
 ---
 
@@ -164,10 +153,11 @@ HackLabs/
 ├── app.py                  # Aplicación Flask principal
 ├── init_db.py              # Inicialización de la base de datos
 ├── requirements.txt        # Dependencias Python
-├── setup.sh                # Script de instalación automática
+├── setup.sh                # Instalación local automática
+├── deploy.sh               # ⭐ Despliegue Docker estilo DockerLabs
 ├── Dockerfile              # Imagen Docker
 ├── docker-compose.yml      # Compose con macvlan (IP propia en LAN)
-├── entrypoint.sh           # Entrypoint: muestra IP al arrancar
+├── entrypoint.sh           # Entrypoint: muestra banner + IP al arrancar
 ├── .dockerignore           # Excluye archivos innecesarios del build
 ├── hacklabs.db             # Base de datos SQLite (generada)
 ├── static/
