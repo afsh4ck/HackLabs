@@ -189,9 +189,16 @@ echo "  ${YELLOW}  Presiona Ctrl+C para detener el laboratorio${NC}"
 echo ""
 
 # ── Abrir navegador ──
-if command -v firefox &>/dev/null; then
-    firefox "http://${CONTAINER_IP}" &>/dev/null &
-elif command -v xdg-open &>/dev/null; then
-    xdg-open "http://${CONTAINER_IP}" &>/dev/null &
+# deploy.sh corre como root; hay que lanzar Firefox como el usuario original
+_BROWSER_USER="${SUDO_USER:-}"
+if [[ -n "$_BROWSER_USER" ]]; then
+    # Obtener DISPLAY del usuario original (sesión gráfica activa)
+    _DISPLAY=$(grep -z DISPLAY /proc/$(pgrep -u "$_BROWSER_USER" -n)/environ 2>/dev/null | tr -d '\0' | sed 's/DISPLAY=//')
+    [[ -z "$_DISPLAY" ]] && _DISPLAY=":0"
+    if command -v firefox &>/dev/null; then
+        sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" firefox --new-tab "http://${CONTAINER_IP}" &>/dev/null &
+    elif command -v xdg-open &>/dev/null; then
+        sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" xdg-open "http://${CONTAINER_IP}" &>/dev/null &
+    fi
 fi
 
