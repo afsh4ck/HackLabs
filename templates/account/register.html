@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Registro – HackLabs{% endblock %}
+{% block content %}
+<div class="flex items-center justify-center min-h-[70vh] px-4">
+  <div class="w-full max-w-sm">
+
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+           style="background:var(--hl-primary)">
+        <i class="ph ph-user-plus text-2xl" style="color:var(--hl-on-primary)"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white font-display">Crear cuenta</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Únete a HackLabs</p>
+    </div>
+
+    {% if error %}
+    <div class="alert-error mb-4 text-sm">{{ error }}</div>
+    {% endif %}
+
+    <div class="hl-card">
+      <form method="POST" action="/account/register" class="space-y-4">
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Usuario</label>
+          <input type="text" name="username" required autofocus
+                 class="hl-input" placeholder="tu_usuario" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Email</label>
+          <input type="email" name="email" required
+                 class="hl-input" placeholder="tu@email.com" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Contraseña</label>
+          <input type="password" name="password" required
+                 class="hl-input" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Repite la contraseña</label>
+          <input type="password" name="confirm" required
+                 class="hl-input" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn-primary w-full justify-center">
+          <i class="ph ph-user-plus text-sm"></i> Crear cuenta
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+      ¿Ya tienes cuenta?
+      <a href="/account/login" class="font-medium transition hover:opacity-80" style="color:var(--hl-primary)">Inicia sesión</a>
+    </p>
+
+  </div>
+</div>
+{% endblock %}

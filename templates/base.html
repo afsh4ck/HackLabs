@@ -91,16 +91,42 @@
                   class="px-2 py-1 rounded text-xs font-semibold transition lang-btn">EN</button>
         </div>
 
-        {% if session.get('username') %}
-        <div class="hidden md:flex items-center gap-2 pl-1 border-l border-gray-200 dark:border-gray-700 ml-1">
-          <i class="ph ph-user-circle text-gray-400 text-base"></i>
-          <span class="text-xs text-gray-500 dark:text-gray-400">
-            {{ session.username }} <span class="text-gray-400">({{ session.get('role','?') }})</span>
-          </span>
-          <a href="/logout" class="text-xs text-gray-400 hover:text-red-400 transition">
-            <i class="ph ph-sign-out"></i>
-          </a>
+        {% if session.get('app_user') %}
+        <!-- User dropdown -->
+        <div class="relative" id="account-menu-wrap">
+          <button onclick="toggleAccountMenu()" 
+                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-yellow-400 transition">
+            <i class="ph ph-user-circle text-base" style="color:var(--hl-primary)"></i>
+            <span class="hidden sm:inline max-w-[90px] truncate">{{ session.app_user }}</span>
+            <i class="ph ph-caret-down text-xs text-gray-400"></i>
+          </button>
+          <div id="account-menu"
+               class="hidden absolute right-0 mt-1.5 w-44 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+               style="background:#1a1a2e">
+            <a href="/account/profile"
+               class="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 transition">
+              <i class="ph ph-user text-sm" style="color:var(--hl-primary)"></i> Mi perfil
+            </a>
+            <div class="border-t border-gray-700 my-1"></div>
+            <a href="/account/logout"
+               class="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-red-400 hover:bg-white/5 transition">
+              <i class="ph ph-sign-out text-sm"></i> Cerrar sesión
+            </a>
+          </div>
         </div>
+        {% else %}
+        <!-- Login / Register buttons -->
+        <a href="/account/login"
+           class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-yellow-400 transition">
+          <i class="ph ph-sign-in text-sm"></i>
+          <span class="hidden sm:inline ml-1">Login</span>
+        </a>
+        <a href="/account/register"
+           class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition hover:opacity-90"
+           style="background:var(--hl-primary);color:var(--hl-on-primary)">
+          <i class="ph ph-user-plus text-sm"></i>
+          <span class="hidden sm:inline ml-1">Registro</span>
+        </a>
         {% endif %}
       </div>
     </div>
@@ -215,6 +241,19 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    function toggleAccountMenu() {
+      const menu = document.getElementById('account-menu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+    document.addEventListener('click', function(e) {
+      const wrap = document.getElementById('account-menu-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const menu = document.getElementById('account-menu');
+        if (menu) menu.classList.add('hidden');
+      }
+    });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

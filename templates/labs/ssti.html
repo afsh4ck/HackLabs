@@ -5,11 +5,11 @@
   {% include '_lab_header.html' %}
 
   <div class="hl-card mb-4">
-    <form method="POST" action="/ssti" class="space-y-4">
+    <form method="GET" action="/ssti" class="space-y-4">
       <div>
         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="ssti_label">Entrada de plantilla</label>
         <input type="text" name="template" value="{{ template_input | e }}"
-               placeholder="Hello {{ '{{' }} name {{ '}}' }}" class="hl-input font-mono" autocomplete="off" />
+               placeholder="Hello {{ '{{' }} name {{ '}}' }}" class="hl-input font-mono" autocomplete="off" value="{{ template_input | e }}" />
       </div>
       <button type="submit" class="btn-primary">
         <i class="ph ph-play text-sm"></i> <span data-i18n="btn_render">Renderizar</span>

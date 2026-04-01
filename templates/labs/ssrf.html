@@ -21,7 +21,12 @@
   {% if content %}
   <div class="hl-card mb-4">
     <div class="text-xs font-mono mb-2" style="color:var(--hl-primary)"><span data-i18n="ssrf_response">Respuesta de:</span> {{ url }}</div>
-    <pre class="text-gray-700 dark:text-gray-300 text-xs whitespace-pre-wrap max-h-80 overflow-y-auto">{{ content }}</pre>
+    {% set first_char = content.lstrip()[0] if content.lstrip() else '' %}
+    {% if first_char in ['{', '['] %}
+    <pre class="text-green-400 text-xs whitespace-pre-wrap max-h-80 overflow-y-auto font-mono">{{ content }}</pre>
+    {% else %}
+    <pre class="text-gray-700 dark:text-gray-300 text-xs whitespace-pre-wrap max-h-80 overflow-y-auto">{{ content | truncate(2000, True, '...') }}</pre>
+    {% endif %}
   </div>
   {% endif %}
 </div>

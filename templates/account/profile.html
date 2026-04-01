@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-lg mx-auto">
+
+  <div class="flex items-center gap-4 mb-8">
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+         style="background:var(--hl-primary)">
+      <i class="ph ph-user text-2xl" style="color:var(--hl-on-primary)"></i>
+    </div>
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white font-display">Mi perfil</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Actualiza tu información de cuenta</p>
+    </div>
+  </div>
+
+  {% if success %}
+  <div class="alert-success mb-4 text-sm">{{ success }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="alert-error mb-4 text-sm">{{ error }}</div>
+  {% endif %}
+
+  <div class="hl-card">
+    <form method="POST" action="/account/profile" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Usuario</label>
+        <input type="text" name="username" required value="{{ user['username'] }}"
+               class="hl-input" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Email</label>
+        <input type="email" name="email" required value="{{ user['email'] }}"
+               class="hl-input" />
+      </div>
+
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <p class="text-xs text-gray-400 mb-3">Deja en blanco para no cambiar la contraseña</p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Nueva contraseña</label>
+            <input type="password" name="password"
+                   class="hl-input" placeholder="Mínimo 6 caracteres" />
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Confirmar contraseña</label>
+            <input type="password" name="confirm"
+                   class="hl-input" placeholder="••••••••" />
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary w-full justify-center">
+        <i class="ph ph-floppy-disk text-sm"></i> Guardar cambios
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
