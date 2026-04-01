@@ -20,7 +20,43 @@
 
 ---
 
-## 🛡️ Sistema de Dificultad
+## 🧪 Laboratorios disponibles
+
+### OWASP Top 10 (2021)
+
+| # | Lab | Riesgo | Técnica |
+|---|-----|--------|---------|
+| A01 | IDOR – Broken Access Control | 🟠 High | `/profile?id=N` sin autenticación |
+| A02 | Cryptographic Failures | 🟠 High | Contraseñas MD5 en cookie/respuesta |
+| A03 | SQL Injection | 🔴 Critical | UNION-based, error-based, `sqlmap` |
+| A03 | Command Injection | 🔴 Critical | Campo ping → RCE |
+| A04 | Insecure Design | 🟡 Medium | Preguntas secretas predecibles |
+| A05 | Security Misconfiguration | 🟡 Medium | `/admin` sin auth, `.git` expuesto |
+| A06 | Outdated Components | 🟡 Medium | jQuery vulnerable con XSS |
+| A07 | Auth Failures | 🟠 High | Sin rate-limiting, credenciales por defecto |
+| A08 | Integrity Failures | 🟠 High | `PUT /api/user` sin validación de propiedad |
+| A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
+| A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
+
+### Extras
+
+| Lab | Riesgo | Técnica |
+|-----|--------|---------|
+| XSS (Reflected/Stored/DOM) | 🟠 High | Cross-Site Scripting |
+| CSRF | 🟠 High | Cambio de contraseña sin token |
+| File Upload | 🔴 Critical | Subida de webshell sin restricciones |
+| XXE | 🟠 High | XML External Entity |
+| Path Traversal / LFI | 🟠 High | `../../etc/passwd` |
+| Bruteforce (HTTP/SSH/SMB) | 🟡 Medium | Hydra, Medusa, CrackMapExec |
+| **SSTI** | 🔴 Critical | Jinja2 `render_template_string` → RCE |
+| **Open Redirect** | 🟡 Medium | Parámetro URL sin whitelist |
+| **JWT Manipulation** | 🟠 High | `alg=none`, secreto débil (hashcat) |
+| **Insecure Deserialization** | 🔴 Critical | Python `pickle.loads()` → RCE |
+| **CORS Misconfiguration** | 🟠 High | Reflejo de Origin + Allow-Credentials |
+
+---
+
+## �️ Sistema de Dificultad
 
 HackLabs incluye un **selector de dificultad** en la barra de navegación (similar a Mutillidae/DVWA) que ajusta las protecciones de **todos** los laboratorios en tiempo real. La dificultad seleccionada se mantiene entre labs y persiste durante toda la sesión.
 
@@ -60,8 +96,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Sin filtro — inyección SQL directa con errores expuestos |
-| Medium | WAF básico bloquea `UNION`, `SELECT`, `OR` (bypass: variaciones de mayúsculas) |
-| Hard | Regex WAF agresivo + errores ocultos (bypass: ofuscación avanzada) |
+| Medium | WAF básico bloquea `UNION`, `SELECT`, `DROP`, `INSERT`, `DELETE`, `--` |
+| Hard | Regex WAF agresivo `\bunion\b`, `\bselect\b`, `[';]` + errores ocultos |
 
 </details>
 
@@ -71,8 +107,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Sin filtro — `shell=True` con inyección directa |
-| Medium | Filtra `;` y `\|` (bypass: `&`, backticks, `$()`, newlines) |
-| Hard | Filtra `;` `\|` `&` `` ` `` `$` `()` `{}` `<` `>` (bypass: `\n` newline) |
+| Medium | Filtra `;` y `\|` (bypass: `&&`, newlines `%0a`) |
+| Hard | Filtra `;` `\|` `&` `` ` `` `$` `()` `{}` `<` `>` (bypass: `%0a` newline) |
 
 </details>
 
@@ -162,15 +198,15 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 |-------|---------------|
 | Easy | Sin filtro — inyección XSS directa |
 | Medium | Filtra `<script>` (bypass: event handlers `onerror`, `onload`) |
-| Hard | Filtra `<` y `>` (bypass: inyección de atributos) |
+| Hard | Filtra `<` y `>` — XSS bloqueado |
 
 **DOM XSS:**
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | Sin CSP — DOM XSS vía JavaScript inseguro del cliente |
-| Medium | CSP permite `'unsafe-inline'` (bypass: event handlers) |
-| Hard | CSP estricto `script-src 'self'` (bypass: mutation XSS, DOM clobbering) |
+| Easy | Sin filtro — `innerHTML` con input del usuario directo |
+| Medium | JS filtra `<script>` tags (bypass: `<img onerror>`, `<svg onload>`) |
+| Hard | JS filtra tags peligrosos + `on*=` handlers + `javascript:` (bypass: HTML entities `&#106;avascript:`) |
 
 </details>
 
@@ -202,8 +238,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Sin protección XXE — `resolve_entities` habilitado |
-| Medium | Bloquea `<!DOCTYPE` literal (bypass: variaciones de mayúsculas/encoding) |
-| Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` (bypass: codificación UTF) |
+| Medium | Bloquea protocolo `file://` (bypass: SSRF con `http://` a servicios internos) |
+| Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` case-insensitive |
 
 </details>
 
@@ -213,8 +249,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Sin filtro — `../` traversal directo |
-| Medium | Filtra `../` una vez (bypass: `..\`, URL encoding `%2e%2e%2f`) |
-| Hard | Filtra `../` y `..\` recursivamente (bypass: doble URL-encoding) |
+| Medium | Filtra `../` una sola vez (bypass: `....//` doble traversal) |
+| Hard | Filtra `../` y `..\` recursivamente |
 
 </details>
 
@@ -236,7 +272,7 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 |-------|---------------|
 | Easy | Sin filtro — inyección Jinja2 directa `{{ 7*7 }}` |
 | Medium | Bloquea `{{ }}` (bypass: `{% print 7*7 %}`) |
-| Hard | Bloquea `{{ }}`, `{% %}` y keywords peligrosos (bypass: filtros Jinja2, codificación) |
+| Hard | Bloquea `{{ }}`, `{% %}` y keywords peligrosos |
 
 </details>
 
@@ -246,8 +282,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Sin validación — redirección a cualquier URL |
-| Medium | Bloquea `http://` y `https://` externos (bypass: `//`, `javascript:`) |
-| Hard | Bloquea dominios externos y protocol-relative (bypass: `@`, encoding) |
+| Medium | Bloquea `http://` y `https://` externos (bypass: `//evil.com`, `/\evil.com`) |
+| Hard | Bloquea dominios externos + protocol-relative `//` (bypass: `/\evil.com` — browser normaliza `\` a `/`) |
 
 </details>
 
@@ -286,43 +322,7 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 
 ---
 
-## 🧪 Laboratorios disponibles
-
-### OWASP Top 10 (2021)
-
-| # | Lab | Riesgo | Técnica |
-|---|-----|--------|---------|
-| A01 | IDOR – Broken Access Control | 🟠 High | `/profile?id=N` sin autenticación |
-| A02 | Cryptographic Failures | 🟠 High | Contraseñas MD5 en cookie/respuesta |
-| A03 | SQL Injection | 🔴 Critical | UNION-based, error-based, `sqlmap` |
-| A03 | Command Injection | 🔴 Critical | Campo ping → RCE |
-| A04 | Insecure Design | 🟡 Medium | Preguntas secretas predecibles |
-| A05 | Security Misconfiguration | 🟡 Medium | `/admin` sin auth, `.git` expuesto |
-| A06 | Outdated Components | 🟡 Medium | jQuery vulnerable con XSS |
-| A07 | Auth Failures | 🟠 High | Sin rate-limiting, credenciales por defecto |
-| A08 | Integrity Failures | 🟠 High | `PUT /api/user` sin validación de propiedad |
-| A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
-| A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
-
-### Extras
-
-| Lab | Riesgo | Técnica |
-|-----|--------|---------|
-| XSS (Reflected/Stored/DOM) | 🟠 High | Cross-Site Scripting |
-| CSRF | 🟠 High | Cambio de contraseña sin token |
-| File Upload | 🔴 Critical | Subida de webshell sin restricciones |
-| XXE | 🟠 High | XML External Entity |
-| Path Traversal / LFI | 🟠 High | `../../etc/passwd` |
-| Bruteforce (HTTP/SSH/SMB) | 🟡 Medium | Hydra, Medusa, CrackMapExec |
-| **SSTI** | 🔴 Critical | Jinja2 `render_template_string` → RCE |
-| **Open Redirect** | 🟡 Medium | Parámetro URL sin whitelist |
-| **JWT Manipulation** | 🟠 High | `alg=none`, secreto débil (hashcat) |
-| **Insecure Deserialization** | 🔴 Critical | Python `pickle.loads()` → RCE |
-| **CORS Misconfiguration** | 🟠 High | Reflejo de Origin + Allow-Credentials |
-
----
-
-## 🚀 Despliegue
+## �🚀 Despliegue
 
 ### ⭐ Opción 1 — Docker con IP propia en LAN (recomendado)
 
