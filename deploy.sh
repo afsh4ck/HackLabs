@@ -126,15 +126,13 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
-# ── Construir imagen Docker (eliminando caché previa para reflejar cambios) ──
+# ── Construir imagen Docker ──
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-log "Eliminando imagen anterior si existe..."
 docker rmi "$IMAGE_NAME" 2>/dev/null || true
 GIT_HASH=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || date +%s)
-log "Construyendo imagen Docker (commit ${BOLD}${GIT_HASH}${NC})..."
-docker build -t "$IMAGE_NAME" --build-arg CACHEBUST="$GIT_HASH" "$SCRIPT_DIR" \
+log "Construyendo imagen Docker..."
+docker build -t "$IMAGE_NAME" --build-arg CACHEBUST="$GIT_HASH" "$SCRIPT_DIR" --quiet \
     || err "Error al construir la imagen Docker."
-log "Imagen construida correctamente."
 
 # ── Crear red macvlan ──
 log "Creando red macvlan '${BOLD}$NET_NAME${NC}'..."
