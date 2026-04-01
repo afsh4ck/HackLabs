@@ -689,24 +689,6 @@ function initSidebarSearch() {
     });
   });
 
-  // Show custom scrollbar while user is scrolling the nav
-  const nav = document.querySelector('#sidebar > nav');
-  if (nav) {
-    let scrollTimer = null;
-    nav.addEventListener('scroll', () => {
-      nav.classList.add('show-scroll');
-      if (scrollTimer) clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => nav.classList.remove('show-scroll'), 600);
-    }, { passive: true });
-    // also show scrollbar when input is focused
-    input.addEventListener('focus', () => {
-      nav.classList.add('show-scroll');
-    });
-    input.addEventListener('blur', () => {
-      // remove after short delay to allow interactions
-      setTimeout(() => nav.classList.remove('show-scroll'), 300);
-    });
-  }
 }
 
 // ── Toast ─────────────────────────────────────────────────────────
