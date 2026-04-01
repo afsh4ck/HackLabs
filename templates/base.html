@@ -121,12 +121,6 @@
           <i class="ph ph-sign-in text-sm"></i>
           <span class="hidden sm:inline ml-1">Login</span>
         </a>
-        <a href="/account/register"
-           class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition hover:opacity-90"
-           style="background:var(--hl-primary);color:var(--hl-on-primary)">
-          <i class="ph ph-user-plus text-sm"></i>
-          <span class="hidden sm:inline ml-1">Registro</span>
-        </a>
         {% endif %}
       </div>
     </div>
@@ -199,7 +193,7 @@
     </aside>
 
     <!-- ── Main Content ── -->
-    <main class="flex-1 overflow-y-auto">
+    <main class="flex-1 overflow-y-auto {% block main_class %}{% endblock %}">
       {% block content %}{% endblock %}
     </main>
   </div>
