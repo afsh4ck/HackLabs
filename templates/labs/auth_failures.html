@@ -33,7 +33,7 @@
     <h3>Pasos de explotación</h3>
     <ol>
       <li>El endpoint <code>/login</code> no implementa rate-limiting, CAPTCHA ni bloqueo de cuenta.</li>
-      <li>Credenciales por defecto: <code>admin / admin</code></li>
+      <li>Credenciales por defecto: <code>admin / password1</code></li>
       <li>Ataque con Hydra:</li>
     </ol>
     <pre>hydra -l admin -P /usr/share/wordlists/rockyou.txt \
@@ -50,7 +50,7 @@
     <h3>Exploitation Steps</h3>
     <ol>
       <li>The <code>/login</code> endpoint has no rate-limiting, CAPTCHA or account lockout.</li>
-      <li>Default credentials: <code>admin / admin</code></li>
+      <li>Default credentials: <code>admin / password1</code></li>
       <li>Brute force with Hydra:</li>
     </ol>
     <pre>hydra -l admin -P /usr/share/wordlists/rockyou.txt \

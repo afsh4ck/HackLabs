@@ -44,19 +44,20 @@ CREATE TABLE IF NOT EXISTS orders (
 -- ─────────────────────────────────────────────
 -- Usuarios de prueba
 -- Contraseñas en texto plano y MD5 (intencionalmente inseguro)
--- admin:admin      →  MD5: 21232f297a57a5a743894a0e4a801fc3
--- alice:password  →  MD5: 5f4dcc3b5aa765d61d8327deb882cf99
--- bob:123456      →  MD5: e10adc3949ba59abbe56e057f20f883e
--- charlie:qwerty  →  MD5: d8578edf8458ce06fbc5bb76a58c5ca4
+-- admin:password1  →  MD5: 7c6a180b36896a0a8c02787eeafb0e4c
+-- alice:Password1  →  MD5: 2ac9cb7dc02b3c0083eb70898e549b63
+-- bob:welcome1     →  MD5: 201f00b5ca5d65a1c118e5e32431514c
+-- charlie:changeme →  MD5: 4cb9c8a8048fd02294477fcb1a41191a
+-- dave:P@ssw0rd    →  MD5: 161ebd7d45089b3446ee4e0d86dbcf92
 -- ─────────────────────────────────────────────
 
 INSERT OR IGNORE INTO users (id, username, email, password_plain, password_md5, role, security_question, security_answer, phone, address, credit_card, ssn, is_system_user)
 VALUES
-(1, 'admin',   'admin@hacklabs.local',   'admin',    '21232f297a57a5a743894a0e4a801fc3', 'admin',   '¿Cuál es el nombre de tu mascota?', 'rex',     '+34 600 000 001', 'Calle Mayor 1, Madrid',  '4111111111111111', '111-22-3333', 1),
-(2, 'alice',   'alice@hacklabs.local',   'password', '5f4dcc3b5aa765d61d8327deb882cf99', 'user',    '¿Cuál es el nombre de tu mascota?', 'fluffy',  '+34 600 000 002', 'Av. Libertad 22, BCN',   '4222222222222222', '222-33-4444', 1),
-(3, 'bob',     'bob@hacklabs.local',     '123456',   'e10adc3949ba59abbe56e057f20f883e', 'user',    '¿Ciudad donde naciste?',            'sevilla', '+34 600 000 003', 'C/ Rosas 7, Sevilla',    '4333333333333333', '333-44-5555', 1),
-(4, 'charlie', 'charlie@hacklabs.local', 'qwerty',   'd8578edf8458ce06fbc5bb76a58c5ca4', 'user',    '¿Nombre de tu primera escuela?',    'ceip',    '+34 600 000 004', 'Pl. España 3, Valencia', '4444444444444444', '444-55-6666', 1),
-(5, 'dave',    'dave@hacklabs.local',    'letmein',  '0d107d09f5bbe40cade3de5c71e9e9b7', 'manager', '¿Cuál es el nombre de tu mascota?', 'max',     '+34 600 000 005', 'Gran Vía 100, Madrid',   '4555555555555555', '555-66-7777', 1);
+(1, 'admin',   'admin@hacklabs.local',   'password1', '7c6a180b36896a0a8c02787eeafb0e4c', 'admin',   '¿Cuál es el nombre de tu mascota?', 'rex',     '+34 600 000 001', 'Calle Mayor 1, Madrid',  '4111111111111111', '111-22-3333', 1),
+(2, 'alice',   'alice@hacklabs.local',   'Password1', '2ac9cb7dc02b3c0083eb70898e549b63', 'user',    '¿Cuál es el nombre de tu mascota?', 'fluffy',  '+34 600 000 002', 'Av. Libertad 22, BCN',   '4222222222222222', '222-33-4444', 1),
+(3, 'bob',     'bob@hacklabs.local',     'welcome1',  '201f00b5ca5d65a1c118e5e32431514c', 'user',    '¿Ciudad donde naciste?',            'sevilla', '+34 600 000 003', 'C/ Rosas 7, Sevilla',    '4333333333333333', '333-44-5555', 1),
+(4, 'charlie', 'charlie@hacklabs.local', 'changeme',  '4cb9c8a8048fd02294477fcb1a41191a', 'user',    '¿Nombre de tu primera escuela?',    'ceip',    '+34 600 000 004', 'Pl. España 3, Valencia', '4444444444444444', '444-55-6666', 1),
+(5, 'dave',    'dave@hacklabs.local',    'P@ssw0rd',  '161ebd7d45089b3446ee4e0d86dbcf92', 'manager', '¿Cuál es el nombre de tu mascota?', 'max',     '+34 600 000 005', 'Gran Vía 100, Madrid',   '4555555555555555', '555-66-7777', 1);
 
 -- Productos de prueba para SQL Injection
 INSERT OR IGNORE INTO products (id, name, description, price, category) VALUES

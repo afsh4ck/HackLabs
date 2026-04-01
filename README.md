@@ -393,11 +393,11 @@ Accede en: **http://localhost:5000**
 
 | Usuario | Contraseña | Hash MD5 | Rol |
 |---------|-----------|----------|-----|
-| admin | admin | `21232f297a57a5a743894a0e4a801fc3` | admin |
-| alice | password | `5f4dcc3b5aa765d61d8327deb882cf99` | user |
-| bob | 123456 | `e10adc3949ba59abbe56e057f20f883e` | user |
-| charlie | qwerty | `d8578edf8458ce06fbc5bb76a58c5ca4` | user |
-| dave | letmein | `0d107d09f5bbe40cade3de5c71e9e9b7` | manager |
+| admin | password1 | `7c6a180b36896a0a8c02787eeafb0e4c` | admin |
+| alice | Password1 | `2ac9cb7dc02b3c0083eb70898e549b63` | user |
+| bob | welcome1 | `201f00b5ca5d65a1c118e5e32431514c` | user |
+| charlie | changeme | `4cb9c8a8048fd02294477fcb1a41191a` | user |
+| dave | P@ssw0rd | `161ebd7d45089b3446ee4e0d86dbcf92` | manager |
 
 ---
 
