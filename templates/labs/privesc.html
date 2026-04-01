@@ -37,27 +37,8 @@
     </div>
   </div>
 
-  <!-- Tab navigation -->
-  <div class="flex items-center gap-2 mb-6 flex-wrap">
-    <button class="tab-pill active" onclick="switchTab('admin', this)">
-      <i class="ph ph-crown text-sm"></i> admin
-    </button>
-    <button class="tab-pill" onclick="switchTab('alice', this)">
-      <i class="ph ph-user text-sm"></i> alice
-    </button>
-    <button class="tab-pill" onclick="switchTab('bob', this)">
-      <i class="ph ph-user text-sm"></i> bob
-    </button>
-    <button class="tab-pill" onclick="switchTab('charlie', this)">
-      <i class="ph ph-user text-sm"></i> charlie
-    </button>
-    <button class="tab-pill" onclick="switchTab('dave', this)">
-      <i class="ph ph-user text-sm"></i> dave
-    </button>
-  </div>
-
-  <!-- ── admin tab ── -->
-  <div id="tab-admin" class="tab-pane active">
+  <!-- ── admin ── -->
+  <div class="mb-6">
     <div class="hl-card mb-4">
       <div class="flex items-center gap-2 mb-3">
         <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">admin — sudo sin restricciones</span>
@@ -83,8 +64,8 @@
     </div>
   </div>
 
-  <!-- ── alice tab ── -->
-  <div id="tab-alice" class="tab-pane">
+  <!-- ── alice ── -->
+  <div class="mb-6">
     <div class="hl-card mb-4">
       <div class="flex items-center gap-2 mb-3">
         <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">alice — SUID en python3</span>
@@ -116,8 +97,8 @@
     </div>
   </div>
 
-  <!-- ── bob tab ── -->
-  <div id="tab-bob" class="tab-pane">
+  <!-- ── bob ── -->
+  <div class="mb-6">
     <div class="hl-card mb-4">
       <div class="flex items-center gap-2 mb-3">
         <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">bob — sudo misconfiguration (vim)</span>
@@ -150,8 +131,8 @@
     </div>
   </div>
 
-  <!-- ── charlie tab ── -->
-  <div id="tab-charlie" class="tab-pane">
+  <!-- ── charlie ── -->
+  <div class="mb-6">
     <div class="hl-card mb-4">
       <div class="flex items-center gap-2 mb-3">
         <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">charlie — Cron job world-writable</span>
@@ -197,8 +178,8 @@
     </div>
   </div>
 
-  <!-- ── dave tab ── -->
-  <div id="tab-dave" class="tab-pane">
+  <!-- ── dave ── -->
+  <div class="mb-6">
     <div class="hl-card mb-4">
       <div class="flex items-center gap-2 mb-3">
         <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">dave — sudo misconfiguration (find)</span>
