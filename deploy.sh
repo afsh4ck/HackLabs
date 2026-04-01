@@ -130,8 +130,9 @@ trap cleanup SIGINT SIGTERM
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log "Eliminando imagen anterior si existe..."
 docker rmi "$IMAGE_NAME" 2>/dev/null || true
-log "Construyendo imagen Docker (puede tardar unos minutos)..."
-docker build -t "$IMAGE_NAME" "$SCRIPT_DIR" --quiet \
+GIT_HASH=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || date +%s)
+log "Construyendo imagen Docker (commit ${BOLD}${GIT_HASH}${NC})..."
+docker build -t "$IMAGE_NAME" --build-arg CACHEBUST="$GIT_HASH" "$SCRIPT_DIR" \
     || err "Error al construir la imagen Docker."
 log "Imagen construida correctamente."
 
