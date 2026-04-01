@@ -339,10 +339,15 @@ select.hl-input { display: none !important; }
 
 /* ── Lab card ── */
 .lab-card {
-  border-left: 3px solid transparent;
+  border: 1px solid transparent;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 .lab-card:hover {
-  border-left-color: var(--hl-primary);
+  border-color: var(--hl-primary) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
 }
 
 /* ── Code blocks ── */

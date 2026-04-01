@@ -141,6 +141,7 @@ const T = {
     bf_login_title:  'Login sin rate-limiting',
     bf_ssh_desc:     'Ataque de fuerza bruta contra el servicio SSH de la máquina objetivo. No hay rate-limiting activo; la autenticación se gestiona por el servidor SSH del host.',
     bf_smb_desc:     'Ataque de fuerza bruta contra el servicio SMB/CIFS de la máquina objetivo (puerto 445).',
+    bf_ftp_desc:     'Ataque de fuerza bruta contra el servicio FTP de la máquina objetivo (puerto 21). No hay rate-limiting activo.',
     // SQLi
     sqli_label:      'Buscar productos',
     sqli_query:      'Consulta:',
