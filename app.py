@@ -1079,7 +1079,8 @@ def bruteforce_login():
     if user:
         _bruteforce_attempts.pop(client_ip, None)
         bf_result = f'Login correcto. Bienvenido, {username} (rol: {user["role"]}).'
-        return render_template('labs/bruteforce.html', lab=lab, bf_result=bf_result, bf_success=True)
+        bf_flag = 'HL{http_brut3f0rc3_w3b_l0gin_succ3ss}'
+        return render_template('labs/bruteforce.html', lab=lab, bf_result=bf_result, bf_success=True, bf_flag=bf_flag)
     bf_result = 'Credenciales incorrectas.'
     return render_template('labs/bruteforce.html', lab=lab, bf_result=bf_result, bf_success=False)
 
