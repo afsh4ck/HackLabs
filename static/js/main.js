@@ -651,6 +651,45 @@ function initCustomSelects() {
   });
 }
 
+// ── Sidebar search/filter ─────────────────────────────────────────
+function initSidebarSearch() {
+  const input = document.getElementById('sidebar-search');
+  if (!input) return;
+
+  input.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
+
+    const items = document.querySelectorAll('.sidebar-item');
+    // If query empty, restore default visibility and category collapsed state
+    if (!q) {
+      items.forEach(i => i.style.display = '');
+      document.querySelectorAll('.sidebar-category').forEach(cat => cat.style.display = '');
+      initCategories();
+      return;
+    }
+
+    // Filter items and show/hide categories accordingly
+    document.querySelectorAll('.sidebar-category').forEach(cat => {
+      const catItems = cat.querySelectorAll('.sidebar-item');
+      let anyVisible = false;
+      catItems.forEach(it => {
+        const txt = (it.textContent || it.innerText || '').toLowerCase();
+        if (txt.indexOf(q) !== -1) {
+          it.style.display = '';
+          anyVisible = true;
+        } else {
+          it.style.display = 'none';
+        }
+      });
+      // show category header only if it has matches
+      cat.style.display = anyVisible ? '' : 'none';
+      // expand category if it has matches
+      const itemsEl = cat.querySelector('.sidebar-cat-items');
+      if (itemsEl && anyVisible) itemsEl.classList.remove('collapsed');
+    });
+  });
+}
+
 // ── Toast ─────────────────────────────────────────────────────────
 function showToast(msg) {
   const el = document.createElement('div');
@@ -669,6 +708,7 @@ function showToast(msg) {
   applyTranslations();
   initCodeHighlight();
   initCustomSelects();
+  initSidebarSearch();
 
   // Dynamic footer year
   const fy = document.getElementById('footer-year');
