@@ -97,7 +97,8 @@
     'open_redirect':   ('ph-arrow-bend-up-right',   'Open Redirect'),
     'jwt':             ('ph-seal',                  'JWT Manipulation'),
     'deserialization': ('ph-recycle',               'Insecure Deserialization'),
-    'cors':            ('ph-swap',                  'CORS Misconfiguration')
+    'cors':            ('ph-swap',                  'CORS Misconfiguration'),
+    'privesc':         ('ph-arrow-fat-lines-up',    'SSH Privilege Escalation')
   } %}
 
   {% set categories = all_labs | map(attribute='category') | unique | list %}

