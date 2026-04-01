@@ -41,14 +41,14 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 .sidebar-item:hover {
   border-left-color: var(--hl-primary);
 }
-/* Active: misma gama cromática que dark-800 (#1a1a2e), ligeramente más oscuro */
-.dark .sidebar-item.active { background: #0e0e1e; color: #e5e5f0; }
-.dark .sidebar-item:hover  { background: #13132a; color: #d4d4e0; }
-.sidebar-item.active       { background: rgba(0,0,0,0.06); color: #111; }
-.sidebar-item:hover        { background: rgba(0,0,0,0.04); color: #222; }
+/* Active: yellow text + yellow icon */
+.dark .sidebar-item.active { background: #0e0e1e; color: var(--hl-primary); }
+.dark .sidebar-item:hover  { background: #13132a; color: #fff; }
+.sidebar-item.active       { background: rgba(0,0,0,0.06); color: var(--hl-primary); }
+.sidebar-item:hover        { background: rgba(0,0,0,0.04); color: #fff; }
 
 .sidebar-item.active i { color: var(--hl-primary); opacity: 1 !important; }
-.sidebar-item:hover  i { opacity: 1 !important; }
+.sidebar-item:hover  i { color: var(--hl-primary); opacity: 1 !important; }
 
 /* ── Sidebar category toggle ── */
 .sidebar-cat-toggle {
