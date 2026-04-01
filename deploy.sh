@@ -188,5 +188,10 @@ echo ""
 echo "  ${YELLOW}  Presiona Ctrl+C para detener el laboratorio${NC}"
 echo ""
 
-# ── Bucle de espera ──
-while true; do sleep 1; done
+# ── Abrir navegador ──
+if command -v firefox &>/dev/null; then
+    firefox "http://${CONTAINER_IP}" &>/dev/null &
+elif command -v xdg-open &>/dev/null; then
+    xdg-open "http://${CONTAINER_IP}" &>/dev/null &
+fi
+
