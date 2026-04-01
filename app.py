@@ -215,11 +215,20 @@ def profile():
     user_id = request.args.get('id', '')
     profile = None
     error = None
+    difficulty = session.get('difficulty', 'easy')
 
     if user_id:
         db = get_db()
         try:
-            profile = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+            if difficulty == 'easy':
+                # Devuelve TODOS los campos incluyendo password_md5 y password_plain
+                profile = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+            elif difficulty == 'medium':
+                # Oculta password_plain pero sigue exponiendo password_md5 y security_answer
+                profile = db.execute('SELECT id, username, email, role, password_md5, security_question, security_answer FROM users WHERE id = ?', (user_id,)).fetchone()
+            else:
+                # Solo datos básicos — necesitas explotar otro vector para escalar
+                profile = db.execute('SELECT id, username, email, role FROM users WHERE id = ?', (user_id,)).fetchone()
         except Exception as e:
             error = str(e)
 
@@ -238,6 +247,7 @@ def crypto_login():
     lab = next(l for l in get_lab_list() if l['id'] == 'crypto')
     message = None
     weak_hash = None
+    difficulty = session.get('difficulty', 'easy')
 
     username = request.values.get('username', '')
     password = request.values.get('password', '')
@@ -255,15 +265,26 @@ def crypto_login():
         if user:
             resp = make_response(render_template('labs/crypto.html', lab=lab,
                                                   message='Login exitoso', success=True,
-                                                  weak_hash=weak_hash, username=username))
-            # VULNERABLE: hash MD5 expuesto en cookie sin HttpOnly real
-            resp.set_cookie('auth_token', weak_hash, httponly=False)
-            resp.set_cookie('username', username, httponly=False)
+                                                  weak_hash=weak_hash if difficulty == 'easy' else None,
+                                                  username=username))
+            if difficulty == 'easy':
+                # Hash MD5 expuesto en cookie sin HttpOnly
+                resp.set_cookie('auth_token', weak_hash, httponly=False)
+                resp.set_cookie('username', username, httponly=False)
+            elif difficulty == 'medium':
+                # Cookie con HttpOnly pero sigue siendo MD5 sin salt (bypass: sniff en tránsito)
+                resp.set_cookie('auth_token', weak_hash, httponly=True)
+                resp.set_cookie('username', username, httponly=True)
+            else:
+                # SHA256 con salt estático (bypass: salt predecible "hacklabs")
+                salted = hashlib.sha256(('hacklabs' + password).encode()).hexdigest()
+                resp.set_cookie('auth_token', salted, httponly=True, samesite='Lax')
+                resp.set_cookie('username', username, httponly=True, samesite='Lax')
             return resp
         else:
             message = 'Credenciales incorrectas'
 
-    return render_template('labs/crypto.html', lab=lab, message=message, weak_hash=weak_hash)
+    return render_template('labs/crypto.html', lab=lab, message=message, weak_hash=weak_hash if difficulty == 'easy' else None)
 
 # ─────────────────────────────────────────────
 # A03 – SQL Injection
@@ -372,13 +393,23 @@ def recover_step1():
     question = None
     username = ''
     error = None
+    difficulty = session.get('difficulty', 'easy')
 
     if request.method == 'POST':
         username = request.form.get('username', '')
         db = get_db()
         user = db.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
         if user:
-            question = user['security_question']
+            if difficulty == 'easy':
+                question = user['security_question']  # Pregunta visible directamente
+            elif difficulty == 'medium':
+                # Muestra pregunta parcialmente censurada
+                q = user['security_question']
+                words = q.split()
+                question = ' '.join(w if i == 0 else '****' if len(w) > 3 else w for i, w in enumerate(words))
+            else:
+                # No revela la pregunta, solo confirma que el usuario existe
+                question = '(La pregunta de seguridad no se muestra en este nivel)'
         else:
             error = 'Usuario no encontrado'
 
@@ -390,18 +421,46 @@ def recover_answer():
     lab = next(l for l in get_lab_list() if l['id'] == 'insecure_design')
     username = request.form.get('username', '')
     answer = request.form.get('answer', '')
+    difficulty = session.get('difficulty', 'easy')
+    client_ip = request.remote_addr
+    now = time.time()
     db = get_db()
-    # VULNERABLE: comparación en texto plano, sin rate-limiting
+
+    if difficulty == 'medium':
+        # Rate-limit: 5 intentos / 30s
+        key = f'recover_{client_ip}'
+        attempts = _bruteforce_attempts[key]
+        _bruteforce_attempts[key] = [t for t in attempts if now - t < 30]
+        if len(_bruteforce_attempts[key]) >= 5:
+            return render_template('labs/insecure_design.html', lab=lab,
+                                   error='⚠ Demasiados intentos. Espera 30s', username=username)
+        _bruteforce_attempts[key].append(now)
+    elif difficulty == 'hard':
+        # Rate-limit más estricto: 3 intentos / 60s + respuesta genérica
+        key = f'recover_{client_ip}'
+        attempts = _bruteforce_attempts[key]
+        _bruteforce_attempts[key] = [t for t in attempts if now - t < 60]
+        if len(_bruteforce_attempts[key]) >= 3:
+            return render_template('labs/insecure_design.html', lab=lab,
+                                   error='⛔ Cuenta bloqueada temporalmente', username=username)
+        _bruteforce_attempts[key].append(now)
+
     user = db.execute(
         "SELECT * FROM users WHERE username = ? AND security_answer = ?",
         (username, answer)
     ).fetchone()
     if user:
+        if difficulty == 'hard':
+            # No revela la contraseña directamente, solo un hint
+            masked = user['password_plain'][0] + '*' * (len(user['password_plain']) - 2) + user['password_plain'][-1]
+            return render_template('labs/insecure_design.html', lab=lab,
+                                   success=True, password=masked, username=username)
         return render_template('labs/insecure_design.html', lab=lab,
                                success=True, password=user['password_plain'],
                                username=username)
+    error_msg = 'Respuesta incorrecta' if difficulty != 'hard' else 'Datos incorrectos'
     return render_template('labs/insecure_design.html', lab=lab,
-                           error='Respuesta incorrecta', username=username)
+                           error=error_msg, username=username)
 
 # ─────────────────────────────────────────────
 # A05 – Security Misconfiguration
@@ -410,10 +469,27 @@ def recover_answer():
 @app.route('/admin')
 def admin_panel():
     lab = next(l for l in get_lab_list() if l['id'] == 'misconfig')
+    difficulty = session.get('difficulty', 'easy')
     db = get_db()
-    # VULNERABLE: panel admin sin autenticación
-    users = db.execute("SELECT * FROM users").fetchall()
-    return render_template('labs/misconfig.html', lab=lab, users=users, admin=True)
+
+    if difficulty == 'easy':
+        # Sin autenticación, todos los datos visibles
+        users = db.execute("SELECT * FROM users").fetchall()
+        return render_template('labs/misconfig.html', lab=lab, users=users, admin=True)
+    elif difficulty == 'medium':
+        # Requiere cookie is_admin=true (bypass: editar cookie manualmente)
+        if request.cookies.get('is_admin') != 'true':
+            return render_template('labs/misconfig.html', lab=lab, users=[], admin=False,
+                                   error='⚠ Acceso denegado. Se requiere autorización de administrador.')
+        users = db.execute("SELECT id, username, email, role FROM users").fetchall()
+        return render_template('labs/misconfig.html', lab=lab, users=users, admin=True)
+    else:
+        # Requiere header X-Admin-Token (bypass: añadir header en Burp/curl)
+        if request.headers.get('X-Admin-Token') != 'hacklabs-admin-2024':
+            return render_template('labs/misconfig.html', lab=lab, users=[], admin=False,
+                                   error='⛔ Acceso denegado. Token de administración requerido.')
+        users = db.execute("SELECT id, username, email, role FROM users").fetchall()
+        return render_template('labs/misconfig.html', lab=lab, users=users, admin=True)
 
 @app.route('/debug/error')
 def debug_error():
@@ -456,7 +532,15 @@ def git_config():
 def outdated_search():
     lab = next(l for l in get_lab_list() if l['id'] == 'outdated')
     q = request.args.get('q', '')
-    # VULNERABLE: parámetro reflejado sin sanitización + jQuery 1.6.1 cargado en template
+    difficulty = session.get('difficulty', 'easy')
+
+    if difficulty == 'medium' and q:
+        # Filtra <script> pero no event handlers (bypass: <img onerror=...>)
+        q = re.sub(r'<\s*/?\s*script[^>]*>', '', q, flags=re.IGNORECASE)
+    elif difficulty == 'hard' and q:
+        # Filtra tags HTML (bypass: explotar jQuery 1.6.1 .html() con location.hash/$.getJSON)
+        q = re.sub(r'<[^>]+>', '', q)
+
     return render_template('labs/outdated.html', lab=lab, query=q)
 
 # ─────────────────────────────────────────────
@@ -468,26 +552,44 @@ def login():
     lab = next(l for l in get_lab_list() if l['id'] == 'auth_failures')
     message = None
     success = False
+    difficulty = session.get('difficulty', 'easy')
+    client_ip = request.remote_addr
+    now = time.time()
 
     if request.method == 'POST':
         username = request.form.get('username', '')
         password = request.form.get('password', '')
+
+        if difficulty in ('medium', 'hard'):
+            key = f'auth_{client_ip}'
+            window = 30 if difficulty == 'medium' else 60
+            max_att = 10 if difficulty == 'medium' else 5
+            attempts = _bruteforce_attempts[key]
+            _bruteforce_attempts[key] = [t for t in attempts if now - t < window]
+            if len(_bruteforce_attempts[key]) >= max_att:
+                wait = int(window - (now - _bruteforce_attempts[key][0]))
+                message = f'⚠ Cuenta bloqueada temporalmente. Espera {wait}s'
+                return render_template('labs/auth_failures.html', lab=lab, message=message, success=False)
+            _bruteforce_attempts[key].append(now)
+
         password_hash = hashlib.md5(password.encode()).hexdigest()
         db = get_db()
-        # VULNERABLE: sin rate-limit, sin CAPTCHA, sin bloqueo de cuenta
         user = db.execute(
             "SELECT * FROM users WHERE username = ? AND password_md5 = ?",
             (username, password_hash)
         ).fetchone()
-        # NO se registra ningún log de intento fallido (A09)
         if user:
+            _bruteforce_attempts.pop(f'auth_{client_ip}', None)
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
             success = True
             message = f'Bienvenido, {user["username"]} (rol: {user["role"]})'
         else:
-            message = 'Credenciales incorrectas'
+            if difficulty == 'hard':
+                message = 'Datos incorrectos'  # No indica si el usuario existe
+            else:
+                message = 'Credenciales incorrectas'
 
     return render_template('labs/auth_failures.html', lab=lab, message=message, success=success)
 
@@ -502,18 +604,42 @@ def logout():
 
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 def api_get_user(user_id):
+    difficulty = session.get('difficulty', 'easy')
     db = get_db()
-    user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
+
+    if difficulty == 'easy':
+        # VULNERABLE: expone todos los campos incluido password_md5
+        user = db.execute("SELECT id, username, email, role, password_md5 FROM users WHERE id = ?", (user_id,)).fetchone()
+    elif difficulty == 'medium':
+        # Solo datos básicos — sin hash de contraseña
+        user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
+    else:
+        # Requiere header de autorización para consultar
+        if request.headers.get('Authorization') != 'Bearer hacklabs-integrity-token':
+            return jsonify({'error': 'Se requiere autenticación'}), 401
+        user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
+
     if not user:
         return jsonify({'error': 'Usuario no encontrado'}), 404
     return jsonify(dict(user))
 
 @app.route('/api/user/<int:user_id>', methods=['PUT'])
 def api_update_user(user_id):
-    # VULNERABLE: no se verifica que el usuario autenticado sea el propietario
-    # ni se valida la firma de integridad
+    difficulty = session.get('difficulty', 'easy')
     data = request.get_json(silent=True) or {}
-    allowed_fields = ['email', 'role', 'username']  # VULNERABLE: 'role' no debería ser editable
+
+    if difficulty == 'easy':
+        # VULNERABLE: 'role' editable, sin verificación de propiedad
+        allowed_fields = ['email', 'role', 'username']
+    elif difficulty == 'medium':
+        # 'role' ya no está en los campos permitidos (bypass: usar PATCH con otro campo, mass assignment)
+        allowed_fields = ['email', 'username']
+    else:
+        # Solo email editable + requiere header de autorización (bypass: adivinar/robar token)
+        if request.headers.get('Authorization') != 'Bearer hacklabs-integrity-token':
+            return jsonify({'error': 'Se requiere token de autorización'}), 403
+        allowed_fields = ['email']
+
     updates = {k: v for k, v in data.items() if k in allowed_fields}
 
     if not updates:
@@ -530,8 +656,19 @@ def api_update_user(user_id):
 @app.route('/integrity')
 def integrity_lab():
     lab = next(l for l in get_lab_list() if l['id'] == 'integrity')
+    difficulty = session.get('difficulty', 'easy')
     db = get_db()
-    users = db.execute("SELECT id, username, email, role FROM users").fetchall()
+
+    if difficulty == 'easy':
+        # Muestra todos los campos incluyendo role (facilita descubrir mass assignment)
+        users = db.execute("SELECT id, username, email, role FROM users").fetchall()
+    elif difficulty == 'medium':
+        # Oculta el campo role de la vista — hay que descubrirlo por la API
+        users = db.execute("SELECT id, username, email FROM users").fetchall()
+    else:
+        # Solo muestra IDs y usernames — requiere más enumeración
+        users = db.execute("SELECT id, username FROM users").fetchall()
+
     return render_template('labs/integrity.html', lab=lab, users=users)
 
 # ─────────────────────────────────────────────
@@ -543,9 +680,11 @@ def logging_login():
     lab = next(l for l in get_lab_list() if l['id'] == 'logging')
     message = None
     success = False
+    difficulty = session.get('difficulty', 'easy')
 
     username = request.values.get('username', '')
     password = request.values.get('password', '')
+    log_path = os.path.join(os.path.dirname(__file__), 'logs', 'access.log')
 
     if username and password:
         password_hash = hashlib.md5(password.encode()).hexdigest()
@@ -554,15 +693,28 @@ def logging_login():
             "SELECT * FROM users WHERE username = ? AND password_md5 = ?",
             (username, password_hash)
         ).fetchone()
-        # VULNERABLE: NO se registra ningún evento (ni éxito ni fallo)
+
+        if difficulty == 'easy':
+            # NO se registra ningún evento
+            pass
+        elif difficulty == 'medium':
+            # Registra solo éxitos (no fallos — el atacante pasa desapercibido)
+            if user:
+                with open(log_path, 'a') as lf:
+                    lf.write(f'[LOGIN OK] user={username} ip={request.remote_addr}\n')
+        else:
+            # Registra éxitos y fallos pero sin IP (incompleto — no permite rastrear atacante)
+            with open(log_path, 'a') as lf:
+                status = 'OK' if user else 'FAIL'
+                lf.write(f'[LOGIN {status}] user={username}\n')
+
         if user:
             success = True
             message = f'Login exitoso como {username}'
         else:
-            message = 'Credenciales incorrectas (no hay ningún registro de este intento)'
+            message = 'Credenciales incorrectas (no hay ningún registro de este intento)' if difficulty == 'easy' else 'Credenciales incorrectas'
 
-    # Mostrar el archivo de log vacío como evidencia
-    log_path = os.path.join(os.path.dirname(__file__), 'logs', 'access.log')
+    # Mostrar el archivo de log como evidencia
     log_content = ''
     if os.path.exists(log_path):
         with open(log_path, 'r') as f:
@@ -672,7 +824,17 @@ def xss_stored():
 @app.route('/xss/dom')
 def xss_dom():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
-    return render_template('labs/xss.html', lab=lab, tab='dom')
+    difficulty = session.get('difficulty', 'easy')
+    resp = make_response(render_template('labs/xss.html', lab=lab, tab='dom'))
+
+    if difficulty == 'medium':
+        # CSP básico que bloquea inline scripts pero permite bypass con eventos
+        resp.headers['Content-Security-Policy'] = "script-src 'self' 'unsafe-inline'"
+    elif difficulty == 'hard':
+        # CSP estricto — requiere bypass avanzado (DOM clobbering, mutation XSS)
+        resp.headers['Content-Security-Policy'] = "script-src 'self'; object-src 'none'"
+
+    return resp
 
 # ─────────────────────────────────────────────
 # CSRF
@@ -681,16 +843,42 @@ def xss_dom():
 @app.route('/csrf/profile')
 def csrf_profile():
     lab = next(l for l in get_lab_list() if l['id'] == 'csrf')
+    difficulty = session.get('difficulty', 'easy')
     user_id = request.args.get('id', '2')
     db = get_db()
-    user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+
+    if difficulty == 'easy':
+        # Muestra todos los campos — fácil identificar qué cambiar via CSRF
+        user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    elif difficulty == 'medium':
+        # Oculta campos sensibles
+        user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
+    else:
+        # Solo datos mínimos — hay que descubrir la estructura del formulario
+        user = db.execute("SELECT id, username, email FROM users WHERE id = ?", (user_id,)).fetchone()
+
     return render_template('labs/csrf.html', lab=lab, user=user)
 
 @app.route('/csrf/change-password', methods=['POST'])
 def csrf_change_password():
-    # VULNERABLE: sin token CSRF, cualquier origen puede enviar este formulario
+    difficulty = session.get('difficulty', 'easy')
     user_id = request.form.get('user_id', '')
     new_password = request.form.get('new_password', '')
+
+    if difficulty == 'medium':
+        # Verifica Referer (bypass: Referer puede ser manipulado o suprimido)
+        referer = request.headers.get('Referer', '')
+        if referer and not referer.startswith(request.host_url):
+            return jsonify({'status': 'error', 'message': '⚠ Referer inválido — petición bloqueada'}), 403
+    elif difficulty == 'hard':
+        # Requiere token CSRF en header (bypass: XSS para robar token, o API sin validación de origen)
+        csrf_token = request.headers.get('X-CSRF-Token', '')
+        if csrf_token != session.get('_csrf_token', ''):
+            # Generar token si no existe (para que el frontend lo pueda descubrir)
+            if '_csrf_token' not in session:
+                session['_csrf_token'] = hashlib.md5(os.urandom(16)).hexdigest()
+            return jsonify({'status': 'error', 'message': '⛔ Token CSRF inválido'}), 403
+
     if user_id and new_password:
         new_hash = hashlib.md5(new_password.encode()).hexdigest()
         db = get_db()
@@ -908,11 +1096,30 @@ def bruteforce_ftp():
     password = request.values.get('password', '')
     if not username or not password:
         return 'Login failed.\r\n', 401
+
+    difficulty = session.get('difficulty', 'easy')
+    client_ip = request.remote_addr
+    now = time.time()
+
+    if difficulty in ('medium', 'hard'):
+        key = f'ftp_{client_ip}'
+        window = 30 if difficulty == 'medium' else 60
+        max_att = 5 if difficulty == 'medium' else 3
+        attempts = _bruteforce_attempts[key]
+        _bruteforce_attempts[key] = [t for t in attempts if now - t < window]
+        if len(_bruteforce_attempts[key]) >= max_att:
+            return '421 Too many connections. Try again later.\r\n', 429
+        _bruteforce_attempts[key].append(now)
+
     db = get_db()
     pw_hash = hashlib.md5(password.encode()).hexdigest()
     user = db.execute('SELECT * FROM users WHERE username=? AND password_md5=?', (username, pw_hash)).fetchone()
     if user:
+        _bruteforce_attempts.pop(f'ftp_{client_ip}', None)
         return f'230 Login successful. Welcome {username}.\r\n', 200
+    if difficulty == 'hard':
+        # Añade delay artificial para ralentizar bruteforce
+        time.sleep(1)
     return '530 Login incorrect.\r\n', 401
 
 # ─────────────────────────────────────────────
@@ -922,8 +1129,21 @@ def bruteforce_ftp():
 
 @app.route('/api/users')
 def api_users():
+    difficulty = session.get('difficulty', 'easy')
     db = get_db()
-    users = db.execute("SELECT id, username, email, role FROM users").fetchall()
+
+    if difficulty == 'easy':
+        # Expone todos los datos de usuarios — útil para enumeración
+        users = db.execute("SELECT id, username, email, role FROM users").fetchall()
+    elif difficulty == 'medium':
+        # Solo username — requiere más enumeración para emails
+        users = db.execute("SELECT id, username FROM users").fetchall()
+    else:
+        # Requiere Authorization header
+        if request.headers.get('Authorization') != 'Bearer hacklabs-integrity-token':
+            return jsonify({'error': 'Acceso denegado'}), 403
+        users = db.execute("SELECT id, username FROM users").fetchall()
+
     return jsonify([dict(u) for u in users])
 
 # ─────────────────────────────────────────────
@@ -1023,6 +1243,7 @@ def _b64dec(s):
 def jwt_lab():
     lab = next(l for l in get_lab_list() if l['id'] == 'jwt')
     token = decoded = error = None
+    difficulty = session.get('difficulty', 'easy')
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'generate':
@@ -1042,21 +1263,54 @@ def jwt_lab():
                 h_data = _b64dec(parts[0])
                 p_data = _b64dec(parts[1])
                 alg = h_data.get('alg', 'HS256')
-                if alg.lower() == 'none':
-                    decoded = p_data
-                    decoded['_vuln'] = 'alg=none accepted — no signature verified!'
+
+                if difficulty == 'easy':
+                    # Acepta alg=none sin verificar firma
+                    if alg.lower() == 'none':
+                        decoded = p_data
+                        decoded['_vuln'] = 'alg=none accepted — no signature verified!'
+                    else:
+                        sig_input = f'{parts[0]}.{parts[1]}'.encode()
+                        expected = base64.urlsafe_b64encode(
+                            _hmac.new(JWT_SECRET.encode(), sig_input, hashlib.sha256).digest()
+                        ).rstrip(b'=').decode()
+                        decoded = p_data if parts[2] == expected else None
+                        if not decoded:
+                            error = 'Firma inválida.'
+
+                elif difficulty == 'medium':
+                    # Rechaza alg=none pero secreto débil sigue (bypass: fuerza bruta del secreto)
+                    if alg.lower() == 'none':
+                        error = '⚠ Algoritmo "none" no permitido'
+                    else:
+                        sig_input = f'{parts[0]}.{parts[1]}'.encode()
+                        expected = base64.urlsafe_b64encode(
+                            _hmac.new(JWT_SECRET.encode(), sig_input, hashlib.sha256).digest()
+                        ).rstrip(b'=').decode()
+                        decoded = p_data if parts[2] == expected else None
+                        if not decoded:
+                            error = 'Firma inválida.'
+
                 else:
-                    sig_input = f'{parts[0]}.{parts[1]}'.encode()
-                    expected = base64.urlsafe_b64encode(
-                        _hmac.new(JWT_SECRET.encode(), sig_input, hashlib.sha256).digest()
-                    ).rstrip(b'=').decode()
-                    decoded = p_data if parts[2] == expected else None
-                    if not decoded:
-                        error = 'Firma inválida.'
+                    # Rechaza none + secreto más largo (bypass: jwt_tool con wordlist, kid injection)
+                    _hard_secret = 'hacklabs-jwt-S3cr3t!-2024'
+                    if alg.lower() == 'none':
+                        error = '⛔ Algoritmo no permitido'
+                    else:
+                        sig_input = f'{parts[0]}.{parts[1]}'.encode()
+                        expected = base64.urlsafe_b64encode(
+                            _hmac.new(_hard_secret.encode(), sig_input, hashlib.sha256).digest()
+                        ).rstrip(b'=').decode()
+                        decoded = p_data if parts[2] == expected else None
+                        if not decoded:
+                            error = 'Firma inválida.'
+
             except Exception as e:
                 error = str(e)
+
+    show_secret = JWT_SECRET if difficulty == 'easy' else None
     return render_template('labs/jwt.html', lab=lab, token=token, decoded=decoded,
-                           error=error, secret=JWT_SECRET)
+                           error=error, secret=show_secret)
 
 # ─────────────────────────────────────────────
 # Insecure Deserialization
@@ -1069,7 +1323,29 @@ def deserialization():
     result = error = None
     example = base64.b64encode(pickle.dumps({'user': 'admin', 'role': 'admin', 'logged_in': True})).decode()
     data = request.values.get('data', '')
+    difficulty = session.get('difficulty', 'easy')
+
     if data:
+        if difficulty == 'medium':
+            # Bloquea palabras clave de pickle peligrosas en texto (bypass: ofuscación de opcodes)
+            decoded_preview = base64.b64decode(data) if data else b''
+            _blocked = [b'os', b'subprocess', b'system', b'popen', b'exec', b'eval']
+            for kw in _blocked:
+                if kw in decoded_preview.lower():
+                    error = f'⚠ Payload bloqueado: patrón sospechoso "{kw.decode()}"'
+                    return render_template('labs/deserialization.html', lab=lab, result=result,
+                                           error=error, example=example)
+
+        elif difficulty == 'hard':
+            # Verifica que el payload decodificado sea solo un dict básico (bypass: __reduce__ crafteado)
+            decoded_preview = base64.b64decode(data) if data else b''
+            _blocked_opcodes = [b'R', b'i', b'c', b'\x81']  # Reduce, inst, global, newobj opcodes
+            for op in _blocked_opcodes:
+                if op in decoded_preview:
+                    error = '⛔ Payload bloqueado: contiene opcodes peligrosos de pickle'
+                    return render_template('labs/deserialization.html', lab=lab, result=result,
+                                           error=error, example=example)
+
         try:
             obj = pickle.loads(base64.b64decode(data))
             result = str(obj)
@@ -1086,15 +1362,41 @@ def deserialization():
 @app.route('/cors')
 def cors_lab():
     lab = next(l for l in get_lab_list() if l['id'] == 'cors')
-    return render_template('labs/cors.html', lab=lab)
+    difficulty = session.get('difficulty', 'easy')
+    return render_template('labs/cors.html', lab=lab, difficulty=difficulty)
 
 @app.route('/cors/data')
 def cors_data():
-    origin = request.headers.get('Origin', '*')
+    difficulty = session.get('difficulty', 'easy')
+    origin = request.headers.get('Origin', '')
     data = {'secret': 'FLAG{cors_misconfigured_4cc3ss}', 'users': ['admin', 'alice', 'bob'], 'internal': True}
     resp = jsonify(data)
-    resp.headers['Access-Control-Allow-Origin'] = origin
-    resp.headers['Access-Control-Allow-Credentials'] = 'true'
+
+    if difficulty == 'easy':
+        # Refleja cualquier origen — trivial de explotar
+        resp.headers['Access-Control-Allow-Origin'] = origin or '*'
+        resp.headers['Access-Control-Allow-Credentials'] = 'true'
+    elif difficulty == 'medium':
+        # Solo permite orígenes que terminen en .hacklabs.local (bypass: subdominio evil.hacklabs.local)
+        if origin and origin.endswith('.hacklabs.local'):
+            resp.headers['Access-Control-Allow-Origin'] = origin
+            resp.headers['Access-Control-Allow-Credentials'] = 'true'
+        elif origin:
+            resp.headers['Access-Control-Allow-Origin'] = 'null'
+        else:
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+    else:
+        # Verifica contra regex más estricta pero sigue siendo bypassable (prefix match)
+        import re as _re
+        allowed_pattern = r'^https?://(www\.)?hacklabs\.local(:\d+)?$'
+        if origin and _re.match(allowed_pattern, origin):
+            resp.headers['Access-Control-Allow-Origin'] = origin
+            resp.headers['Access-Control-Allow-Credentials'] = 'true'
+        elif origin:
+            return jsonify({'error': 'Origin not allowed'}), 403
+        else:
+            resp.headers['Access-Control-Allow-Origin'] = 'null'
+
     return resp
 
 # ─────────────────────────────────────────────
