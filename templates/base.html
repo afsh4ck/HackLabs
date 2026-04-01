@@ -38,7 +38,7 @@
   <!-- highlight.js (syntax highlighting) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6" />
 
   <!-- Inject saved theme before render to avoid flash -->
   <script>(function(){ document.documentElement.classList.add('dark'); })();</script>
@@ -118,7 +118,7 @@
           <input id="sidebar-search" type="search" placeholder="Buscar lab..." />
         </div>
       </div>
-      <nav class="space-y-0.5 pl-3 pr-0 pb-12">
+      <nav class="space-y-0.5 pb-12">
 
         <!-- Home -->
         <a href="/" class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition {% if request.path == '/' %}active{% endif %}">

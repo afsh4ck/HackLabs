@@ -1,0 +1,10 @@
+hacklabs.db
+__pycache__/
+*.pyc
+venv/
+.env
+uploads/*
+!uploads/.gitkeep
+logs/*
+!logs/.gitkeep
+.DS_Store

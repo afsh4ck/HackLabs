@@ -1,0 +1,43 @@
+version: "3.9"
+
+# ──────────────────────────────────────────────────────────────────
+# HackLabs – Docker Compose with macvlan (dedicated IP on LAN)
+#
+# USAGE:
+#   1. Edit the 'subnet', 'gateway' and 'ip_range' below to match
+#      your local network (run `ip route` or `ipconfig` to check).
+#   2. docker compose up -d
+#   3. The container will show its assigned IP in the logs:
+#      docker compose logs hacklabs
+# ──────────────────────────────────────────────────────────────────
+
+services:
+  hacklabs:
+    build: .
+    container_name: hacklabs
+    restart: unless-stopped
+    # Persistent data
+    volumes:
+      - hacklabs_db:/app/hacklabs.db
+      - hacklabs_uploads:/app/uploads
+      - hacklabs_logs:/app/logs
+    networks:
+      hacknet:
+        # Remove or change this to let Docker assign a random IP from the range
+        # ipv4_address: 192.168.1.100
+
+networks:
+  hacknet:
+    driver: macvlan
+    driver_opts:
+      parent: eth0          # ← change to your host interface (eth0, ens33, wlan0…)
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
+          gateway: 192.168.1.1
+          ip_range: 192.168.1.128/25   # Docker picks from .128-.254
+
+volumes:
+  hacklabs_db:
+  hacklabs_uploads:
+  hacklabs_logs:
