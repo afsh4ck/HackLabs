@@ -103,6 +103,7 @@ pasv_enable=YES
 pasv_min_port=40000
 pasv_max_port=40010
 pasv_address=${IP}
+user_config_dir=/etc/vsftpd/users
 FTPEOF
 
 # ── Crear usuarios del laboratorio ────────────────────────────
@@ -115,14 +116,26 @@ for entry in "admin:password1" "alice:Password1" "bob:welcome1" "charlie:changem
     printf '%s\n%s\n' "$p" "$p" | smbpasswd -s -a "$u" 2>/dev/null || true
 done
 
-# ── Flags en los servicios ────────────────────────────────────
+# ── Hostname ─────────────────────────────────────────────────
+hostname hacklabs 2>/dev/null || true
+echo 'hacklabs' > /etc/hostname 2>/dev/null || true
+
+# ── Flags en los servicios (una por servicio, separadas) ─────
+# SSH flag: solo en el home → visible al conectar por SSH
 printf 'HL{ssh_brut3f0rc3_l0gin_succ3ss}\n' > /home/admin/user.txt
-printf 'HL{ftp_cr3d3nti4ls_r3us3d}\n'       > /home/admin/ftp_flag.txt
-chmod 644 /home/admin/user.txt /home/admin/ftp_flag.txt
+chmod 644 /home/admin/user.txt
 for u in alice bob charlie dave; do
     printf 'HL{%s_ssh_l0gin_succ3ss}\n' "$u" > /home/${u}/user.txt 2>/dev/null || true
     chmod 644 /home/${u}/user.txt 2>/dev/null || true
 done
+
+# FTP flag: en un directorio dedicado → vsftpd hace chroot ahí (no visible por SSH)
+mkdir -p /etc/vsftpd/users /home/admin/ftp
+printf 'HL{ftp_cr3d3nti4ls_r3us3d}\n' > /home/admin/ftp/ftp_flag.txt
+chmod 755 /home/admin/ftp
+chmod 644 /home/admin/ftp/ftp_flag.txt
+# Configurar vsftpd para que admin aterrice en /home/admin/ftp
+printf 'local_root=/home/admin/ftp\n' > /etc/vsftpd/users/admin
 
 /usr/sbin/smbd 2>/dev/null &
 /usr/sbin/vsftpd &
