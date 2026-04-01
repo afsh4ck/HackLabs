@@ -1682,7 +1682,7 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(os.path.dirname(__file__), 'logs'), exist_ok=True)
     os.makedirs(os.path.join(os.path.dirname(__file__), 'static', 'files'), exist_ok=True)
 
-    _port = int(os.environ.get('APP_PORT', 5000))
+    _port = int(os.environ.get('APP_PORT', 80))
 
     # Detectar IP real de la interfaz de red
     try:
