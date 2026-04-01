@@ -95,6 +95,7 @@ def lab(lab_id):
         'xxe':             '/xxe',
         'path_traversal':  '/files',
         'bruteforce':      '/bruteforce',
+        'privesc':         '/privesc',
         'crypto':          '/crypto/login',
         'outdated':        '/outdated/search',
     }
@@ -135,6 +136,7 @@ def get_lab_list():
         {'id': 'jwt',             'title': 'JWT Manipulation',                             'category': 'Extras',       'risk': 'high'},
         {'id': 'deserialization', 'title': 'Insecure Deserialization',                    'category': 'Extras',       'risk': 'critical'},
         {'id': 'cors',            'title': 'CORS Misconfiguration',                        'category': 'Extras',       'risk': 'high'},
+        {'id': 'privesc',         'title': 'Privilege Escalation (SSH)',                    'category': 'Extras',       'risk': 'critical'},
     ]
 
 @app.context_processor
@@ -160,6 +162,7 @@ def inject_labs():
         '/files':          'path_traversal',
         '/bruteforce':         'bruteforce',
         '/bruteforce/login':   'bruteforce',
+        '/privesc':            'privesc',
         '/crypto/login':   'crypto',
         '/outdated/search':'outdated',
         '/ssti':           'ssti',
@@ -1748,6 +1751,15 @@ def start_simulated_services():
         (21, _handle_ftp_client, 'FTP'),
     ]:
         threading.Thread(target=_tcp_service, args=(port, handler, name), daemon=True).start()
+
+# ─────────────────────────────────────────────
+# Privilege Escalation lab
+# ─────────────────────────────────────────────
+
+@app.route('/privesc')
+def privesc():
+    lab = next(l for l in get_lab_list() if l['id'] == 'privesc')
+    return render_template('labs/privesc.html', lab=lab)
 
 
 if __name__ == '__main__':
