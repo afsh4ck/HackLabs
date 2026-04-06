@@ -1894,7 +1894,7 @@ def ai_indirect_injection():
                            document=document, sample_docs=sample_docs)
 
 
-
+if __name__ == '__main__':
     # ── Fix encoding en terminales Windows (cp1252 no soporta caracteres Unicode del banner)
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
