@@ -411,7 +411,8 @@ function applyTranslations() {
     if (btn) btn.classList.toggle('active-lang', l === HL.lang);
   });
 
-  applyResolutionLang('#modal-body');
+  // Apply lang-content visibility across the whole page (not just modal)
+  applyResolutionLang('body');
 }
 
 function setLang(lang) {

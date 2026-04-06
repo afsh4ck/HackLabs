@@ -80,7 +80,7 @@
       </div>
     </div>
 
-    <form method="POST" class="flex gap-2">
+    <form method="POST" action="/ai/prompt" class="flex gap-2">
       <input type="text" name="message" placeholder="Escribe tu mensaje..." data-i18n-placeholder="ai_message_ph"
              class="flex-1 hl-input font-mono text-sm" autocomplete="off"
              value="{{ request.form.get('message', '') }}" />

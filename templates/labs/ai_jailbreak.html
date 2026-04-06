@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <form method="POST" class="flex gap-2">
+    <form method="POST" action="/ai/jailbreak" class="flex gap-2">
       <input type="text" name="message" placeholder="Intenta hacer jailbreak..." data-i18n-placeholder="ai_jailbreak_ph"
              class="flex-1 hl-input font-mono text-sm" autocomplete="off"
              value="{{ request.form.get('message', '') }}" />
