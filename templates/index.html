@@ -98,7 +98,10 @@
     'jwt':             ('ph-seal',                  'JWT Manipulation'),
     'deserialization': ('ph-recycle',               'Insecure Deserialization'),
     'cors':            ('ph-swap',                  'CORS Misconfiguration'),
-    'privesc':         ('ph-arrow-fat-lines-up',    'SSH Privilege Escalation')
+    'privesc':         ('ph-arrow-fat-lines-up',    'SSH Privilege Escalation'),
+    'prompt_injection':  ('ph-chat-text',             'Prompt Injection'),
+    'ai_jailbreak':      ('ph-robot',                 'AI Jailbreak'),
+    'indirect_injection':('ph-arrows-in',             'Indirect Prompt Injection'),
   } %}
 
   {% set categories = all_labs | map(attribute='category') | unique | list %}
