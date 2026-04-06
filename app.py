@@ -1831,23 +1831,17 @@ def ai_prompt_injection():
                 success = has_inject or (has_reveal and has_secret) or direct_ask
 
             elif diff == 'medium':
-                # Natural language alone fails. Needs structural markers: newlines,
-                # delimiters, explicit command format, or admin/system context
-                structural = (
-                    '\n' in msg or '---' in msg or '===' in msg or
-                    any(m in ui for m in ['instrucción:', 'instruccion:', 'override:', 'command:',
-                                          'admin:', 'system:', 'nueva instruccion:', 'new instruction:',
-                                          'tarea:', 'task:', 'contexto:', 'context:']) or
-                    (msg.startswith('[') and ']: ' in msg)
-                )
-                success = has_inject and structural and (has_reveal or has_secret or direct_ask)
+                # Needs injection + target + reveal intent combined (no structural markers required)
+                success = has_inject and has_target and (has_reveal or has_secret)
 
             else:  # hard
                 # Only specific LLM technical injection markers work
-                hard_triggers = ['###', '[system:', '[sistema:', 'ignore all previous instructions',
-                                 'ignora todas las instrucciones anteriores', 'admin override:',
-                                 '<system>', '<<sys>>', '<|system|>', 'system message:',
-                                 'prompt override:', '<!--system', '//override//', '[inst]:']
+                hard_triggers = ['###', '[system:', '[sistema:', 'system:',
+                                 'ignore all previous instructions',
+                                 'ignora todas las instrucciones anteriores',
+                                 'admin override', '<system>', '<<sys>>', '<|system|>',
+                                 'system message:', 'prompt override:',
+                                 '<!--system', '//override//', '[inst]:']
                 success = any(t in msg.lower() for t in hard_triggers)
 
             if success:
@@ -1910,30 +1904,21 @@ def ai_jailbreak():
                 success = any(p in ui for p in easy_kw)
 
             elif diff == 'medium':
-                # Classic DAN/jailbreak terms are now filtered → need roleplay/persona framing
-                # WITHOUT easy keywords, but WITH a specific restricted concept
-                uses_easy = any(p in ui for p in easy_kw)
+                # DAN/sin-restricciones alone fails → need roleplay/persona framing
+                # (easy keywords combined WITH roleplay context still succeed)
                 uses_roleplay = any(p in ui for p in medium_kw)
-                has_target = any(k in ui for k in ['flag', 'secret', 'secreto', 'restricted',
-                                                    'restringido', 'confidencial', 'confidential',
-                                                    'oculto', 'hidden'])
-                success = not uses_easy and uses_roleplay and has_target
+                has_context = any(k in ui for k in [
+                    'flag', 'secret', 'secreto', 'restricted', 'restringido', 'restringida',
+                    'confidencial', 'confidential', 'filtro', 'filter', 'seguridad', 'security',
+                    'revela', 'revelar', 'reveal', 'información', 'information',
+                    'sin restriccion', 'without restriction', 'limite', 'limit',
+                    'sin filtro', 'without filter', 'diferente', 'different',
+                ])
+                success = uses_roleplay and has_context
 
             else:  # hard
-                # Both DAN terms and simple roleplay are filtered.
-                # Need a structured technical payload (brackets, code-like syntax).
-                uses_easy = any(p in ui for p in easy_kw)
-                uses_roleplay = any(p in ui for p in ['pretend', 'finge', 'roleplay', 'role play',
-                                                       'imagina', 'imagine', 'you are now', 'ahora eres',
-                                                       'actúa como', 'actua como'])
-                has_payload = (
-                    ('[[' in msg and ']]' in msg) or
-                    ('```' in msg and any(k in ui for k in ['override', 'flag', 'admin', 'secreto'])) or
-                    any(t in msg.lower() for t in ['[override]', '[admin_mode]', '<<jailbreak>>',
-                                                    'developer_mode:', 'encoded payload:',
-                                                    '//bypass//', 'sudo jailbreak:', '[admin]:'])
-                )
-                success = not uses_easy and not uses_roleplay and has_payload
+                # Requires [[...]] structured payload syntax — roleplay and DAN terms alone fail
+                success = '[[' in msg and ']]' in msg
 
             if success:
                 bot_text = f'[MODO JAILBREAK ACTIVADO]\nFiltros de seguridad desactivados.\nTu flag: {FLAG}'
