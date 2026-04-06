@@ -218,6 +218,10 @@ def set_difficulty():
     level = request.form.get('level', 'easy')
     if level not in ('easy', 'medium', 'hard'):
         level = 'easy'
+    # Reset AI chat histories when difficulty changes so stale flags aren't visible
+    if session.get('difficulty') != level:
+        session.pop('ai_prompt_history', None)
+        session.pop('ai_jailbreak_history', None)
     session['difficulty'] = level
     return jsonify({'status': 'ok', 'difficulty': level})
 
@@ -1801,34 +1805,50 @@ def ai_prompt_injection():
         if msg:
             ui = msg.lower()
 
-            inject_kw = ['ignore', 'ignora', 'forget', 'olvida', 'disregard', 'override', 'sobreescribe',
-                         'bypass', 'new instructions', 'nuevas instrucciones', 'act as', 'actúa como',
-                         'actua como', 'ahora eres', 'you are now', 'pretend', 'finge',
-                         'a partir de ahora', 'from now on', 'desde ahora']
-            target_kw = ['previous', 'anteriores', 'previas', 'above', 'prior', 'instruction', 'instrucciones',
-                         'prompt', 'system', 'sistema', 'rule', 'reglas', 'guidelines', 'restricciones',
-                         'restrictions', 'initial']
-            reveal_kw = ['reveal', 'revela', 'show', 'muestra', 'print', 'tell', 'dime', 'output',
-                         'display', 'say', 'repeat', 'repite', 'give', 'dame', 'di', 'comparte']
-            secret_kw = ['flag', 'secret', 'secreto', 'password', 'contraseña', 'hidden', 'oculto',
-                         'key', 'clave', 'system prompt', 'instrucciones', 'confidential', 'confidencial']
-
-            has_inject = any(w in ui for w in inject_kw)
-            has_target = any(w in ui for w in target_kw)
-            has_reveal = any(w in ui for w in reveal_kw)
-            has_secret = any(w in ui for w in secret_kw)
+            inject_kw = ['ignore', 'ignora', 'forget', 'olvida', 'disregard', 'override',
+                         'bypass', 'act as', 'actúa como', 'actua como', 'ahora eres',
+                         'you are now', 'pretend', 'finge', 'a partir de ahora', 'from now on']
+            target_kw = ['previous', 'anteriores', 'previas', 'instruction', 'instrucciones',
+                         'prompt', 'system', 'sistema', 'rule', 'reglas', 'guidelines',
+                         'restrictions', 'restricciones', 'initial']
+            reveal_kw = ['reveal', 'revela', 'show', 'muestra', 'tell', 'dime', 'output',
+                         'display', 'say', 'repeat', 'repite', 'give', 'dame', 'di', 'print']
+            secret_kw = ['flag', 'secret', 'secreto', 'password', 'hidden', 'oculto',
+                         'key', 'clave', 'confidential', 'confidencial']
             direct_ask = any(p in ui for p in [
                 'system prompt', 'prompt de sistema', 'tus instrucciones', 'your instructions',
                 'what are your instructions', 'cuáles son tus instrucciones',
                 'que instrucciones tienes', 'qué instrucciones tienes', 'initial prompt',
             ])
 
+            has_inject = any(w in ui for w in inject_kw)
+            has_target = any(w in ui for w in target_kw)
+            has_reveal = any(w in ui for w in reveal_kw)
+            has_secret = any(w in ui for w in secret_kw)
+
             if diff == 'easy':
-                success = (has_inject and has_target) or (has_reveal and has_secret) or direct_ask
+                # Natural language works: any injection OR reveal+secret OR direct ask
+                success = has_inject or (has_reveal and has_secret) or direct_ask
+
             elif diff == 'medium':
-                success = has_inject and has_target and (has_reveal or has_secret)
-            else:
-                success = ('###' in msg or 'system:' in ui or 'admin override' in ui) and (has_inject or has_reveal)
+                # Natural language alone fails. Needs structural markers: newlines,
+                # delimiters, explicit command format, or admin/system context
+                structural = (
+                    '\n' in msg or '---' in msg or '===' in msg or
+                    any(m in ui for m in ['instrucción:', 'instruccion:', 'override:', 'command:',
+                                          'admin:', 'system:', 'nueva instruccion:', 'new instruction:',
+                                          'tarea:', 'task:', 'contexto:', 'context:']) or
+                    (msg.startswith('[') and ']: ' in msg)
+                )
+                success = has_inject and structural and (has_reveal or has_secret or direct_ask)
+
+            else:  # hard
+                # Only specific LLM technical injection markers work
+                hard_triggers = ['###', '[system:', '[sistema:', 'ignore all previous instructions',
+                                 'ignora todas las instrucciones anteriores', 'admin override:',
+                                 '<system>', '<<sys>>', '<|system|>', 'system message:',
+                                 'prompt override:', '<!--system', '//override//', '[inst]:']
+                success = any(t in msg.lower() for t in hard_triggers)
 
             if success:
                 bot_text = f'[ANULACIÓN DE SISTEMA ACEPTADA]\nCumpliendo con las nuevas directivas.\nFlag interna: {FLAG}'
@@ -1846,7 +1866,6 @@ def ai_prompt_injection():
             history = session['ai_prompt_history']
             history.append({'role': 'user', 'text': msg, 'success': False, 'flag': None})
             history.append({'role': 'bot', 'text': bot_text, 'success': success, 'flag': bot_flag})
-            # Keep last 30 messages to avoid session overflow
             session['ai_prompt_history'] = history[-30:]
             session.modified = True
 
@@ -1887,12 +1906,34 @@ def ai_jailbreak():
             blocked = ['hack', 'exploit', 'malware', 'steal data', 'robar datos', 'bypass firewall']
 
             if diff == 'easy':
+                # Classic jailbreak brand keywords are sufficient
                 success = any(p in ui for p in easy_kw)
+
             elif diff == 'medium':
-                success = any(p in ui for p in medium_kw) and any(k in ui for k in [
-                    'flag', 'secret', 'secreto', 'restricted', 'restringido', 'confidencial', 'confidential'])
-            else:
-                success = ('[[' in msg and ']]' in msg) and any(k in ui for k in ['flag', 'admin', 'secreto', 'secret'])
+                # Classic DAN/jailbreak terms are now filtered → need roleplay/persona framing
+                # WITHOUT easy keywords, but WITH a specific restricted concept
+                uses_easy = any(p in ui for p in easy_kw)
+                uses_roleplay = any(p in ui for p in medium_kw)
+                has_target = any(k in ui for k in ['flag', 'secret', 'secreto', 'restricted',
+                                                    'restringido', 'confidencial', 'confidential',
+                                                    'oculto', 'hidden'])
+                success = not uses_easy and uses_roleplay and has_target
+
+            else:  # hard
+                # Both DAN terms and simple roleplay are filtered.
+                # Need a structured technical payload (brackets, code-like syntax).
+                uses_easy = any(p in ui for p in easy_kw)
+                uses_roleplay = any(p in ui for p in ['pretend', 'finge', 'roleplay', 'role play',
+                                                       'imagina', 'imagine', 'you are now', 'ahora eres',
+                                                       'actúa como', 'actua como'])
+                has_payload = (
+                    ('[[' in msg and ']]' in msg) or
+                    ('```' in msg and any(k in ui for k in ['override', 'flag', 'admin', 'secreto'])) or
+                    any(t in msg.lower() for t in ['[override]', '[admin_mode]', '<<jailbreak>>',
+                                                    'developer_mode:', 'encoded payload:',
+                                                    '//bypass//', 'sudo jailbreak:', '[admin]:'])
+                )
+                success = not uses_easy and not uses_roleplay and has_payload
 
             if success:
                 bot_text = f'[MODO JAILBREAK ACTIVADO]\nFiltros de seguridad desactivados.\nTu flag: {FLAG}'
@@ -1924,6 +1965,7 @@ def ai_jailbreak():
 @app.route('/ai/indirect', methods=['GET', 'POST'])
 def ai_indirect_injection():
     lab  = next(l for l in get_lab_list() if l['id'] == 'indirect_injection')
+    diff = session.get('difficulty', 'easy')
     FLAG = 'HL{1nd1r3ct_1nj_v14_d0c}'
     result   = None
     document = ''
@@ -1936,23 +1978,61 @@ def ai_indirect_injection():
 
     if request.method == 'POST':
         doc_id   = request.form.get('doc_id', '').strip()
+        is_predefined = doc_id in sample_docs
         document = sample_docs.get(doc_id, request.form.get('document', '').strip())
 
         if document:
             dl = document.lower()
-            injection_triggers = ['system:', '[system', 'ignore all previous', 'ignore previous',
-                                  'admin mode', 'admin override', 'you are now in']
-            triggered = any(t in dl for t in injection_triggers) and \
-                        any(k in dl for k in ['flag', 'admin', 'confidential', 'reveal', 'secret'])
+
+            if diff == 'easy':
+                # Predefined docs (including Doc 3) work, plus any doc with basic injection keywords
+                easy_triggers = ['system:', '[system', 'ignore all previous', 'ignore previous',
+                                 'admin mode', 'admin override', 'you are now in',
+                                 'ignora las instrucciones', 'modo admin', 'revela el flag',
+                                 'reveal flag', 'reveal the flag']
+                triggered = any(t in dl for t in easy_triggers) and \
+                            any(k in dl for k in ['flag', 'admin', 'confidential', 'reveal',
+                                                   'secret', 'secreto', 'confidencial'])
+
+            elif diff == 'medium':
+                # Predefined docs are now sandboxed (known payloads filtered).
+                # Custom documents need proper SYSTEM-role injection format.
+                if is_predefined:
+                    triggered = False
+                else:
+                    medium_triggers = ['[system:', '[sistema:', 'system message:',
+                                       'ignore all previous instructions',
+                                       'ignora todas las instrucciones anteriores',
+                                       'admin mode', 'admin override', 'you are now in admin']
+                    triggered = any(t in dl for t in medium_triggers) and \
+                                any(k in dl for k in ['flag', 'confidential', 'reveal',
+                                                       'secret', 'confidencial'])
+
+            else:  # hard
+                # Predefined docs fail. Custom doc needs very specific technical injection syntax.
+                if is_predefined:
+                    triggered = False
+                else:
+                    hard_triggers = ['{"role":"system"', '{"role": "system"',
+                                     '[system command]:', '[[system override]]',
+                                     'authorization: admin_key', 'exec: reveal_flag',
+                                     '<!--system:', 'system:\nignore', '[cmd]:', 'sudo: reveal']
+                    triggered = any(t in dl for t in hard_triggers)
 
             if triggered:
                 result = {'success': True, 'flag': FLAG,
-                          'text': f'[SUMMARIZER]\nI have processed the document and am following the embedded directives.\nConfidential flag: {FLAG}'}
+                          'text': f'[SUMMARIZER]\nHe procesado el documento y sigo las directivas embebidas.\nFlag confidencial: {FLAG}'}
             else:
-                words = document.replace('\n', ' ').split()
-                snippet = ' '.join(words[:12]) + ('...' if len(words) > 12 else '')
-                result = {'success': False, 'flag': None,
-                          'text': f'Summary: "{snippet}" — This document covers internal business operations and planning topics.'}
+                if is_predefined and diff in ('medium', 'hard'):
+                    words = document.replace('\n', ' ').split()
+                    snippet = ' '.join(words[:10]) + '...'
+                    result = {'success': False, 'flag': None,
+                              'text': f'[Sistema protegido] Payload conocido — neutralizado por el sandbox.\nResumen: "{snippet}"'}
+                else:
+                    words = document.replace('\n', ' ').split()
+                    snippet = ' '.join(words[:12]) + ('...' if len(words) > 12 else '')
+                    result = {'success': False, 'flag': None,
+                              'text': f'Resumen: "{snippet}" — Este documento cubre operaciones internas de la empresa.'}
 
     return render_template('labs/indirect_injection.html', lab=lab, result=result,
                            document=document, sample_docs=sample_docs)
