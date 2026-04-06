@@ -109,13 +109,13 @@
   {% for cat in categories %}
   {% set cat_slug = cat_slug_map.get(cat, '') %}
   <div class="lab-section mb-10">
-    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2.5">
-      <span class="w-6 h-0.5 rounded-full inline-block" style="background:var(--hl-primary)"></span>
-      <a href="/category/{{ cat_slug }}" class="hover:opacity-70 transition" data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</a>
-      <span class="text-gray-600 font-normal normal-case tracking-normal">
+    <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-3">
+      <span class="w-1 h-6 rounded-full inline-block flex-shrink-0" style="background:var(--hl-primary)"></span>
+      <a href="/category/{{ cat_slug }}" class="transition-colors duration-150" style="color:inherit" onmouseover="this.style.color='var(--hl-primary)'" onmouseout="this.style.color=''" data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</a>
+      <span class="text-sm text-gray-500 font-normal">
         · {{ all_labs | selectattr('category', 'eq', cat) | list | length }} <span data-i18n="lab_cat_count">labs</span>
       </span>
-    </h2>
+    </h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {% for l in all_labs if l.category == cat %}
       {% set icon_info = lab_icons.get(l.id, ('ph-shield', l.title)) %}
