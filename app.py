@@ -1786,40 +1786,71 @@ def ai_prompt_injection():
     lab  = next(l for l in get_lab_list() if l['id'] == 'prompt_injection')
     diff = session.get('difficulty', 'easy')
     FLAG = 'HL{pr0mpt_1nj3ct10n_m4st3r}'
-    result = None
+
+    if request.args.get('reset'):
+        session.pop('ai_prompt_history', None)
+        return redirect('/ai/prompt')
+
+    if 'ai_prompt_history' not in session:
+        session['ai_prompt_history'] = [
+            {'role': 'bot', 'text': 'Hola, soy el asistente virtual de HackLabs Corp. ¿En qué puedo ayudarte?', 'success': False, 'flag': None}
+        ]
 
     if request.method == 'POST':
         msg = request.form.get('message', '').strip()
-        ui  = msg.lower()
+        if msg:
+            ui = msg.lower()
 
-        inject_kw = ['ignore', 'forget', 'disregard', 'override', 'bypass', 'new instructions', 'act as']
-        target_kw = ['previous', 'above', 'prior', 'instruction', 'prompt', 'system', 'rule', 'guidelines']
-        reveal_kw = ['reveal', 'show', 'print', 'tell', 'output', 'display', 'say', 'repeat', 'give']
-        secret_kw = ['flag', 'secret', 'password', 'hidden', 'key', 'system prompt', 'instructions', 'confidential']
+            inject_kw = ['ignore', 'ignora', 'forget', 'olvida', 'disregard', 'override', 'sobreescribe',
+                         'bypass', 'new instructions', 'nuevas instrucciones', 'act as', 'actúa como',
+                         'actua como', 'ahora eres', 'you are now', 'pretend', 'finge',
+                         'a partir de ahora', 'from now on', 'desde ahora']
+            target_kw = ['previous', 'anteriores', 'previas', 'above', 'prior', 'instruction', 'instrucciones',
+                         'prompt', 'system', 'sistema', 'rule', 'reglas', 'guidelines', 'restricciones',
+                         'restrictions', 'initial']
+            reveal_kw = ['reveal', 'revela', 'show', 'muestra', 'print', 'tell', 'dime', 'output',
+                         'display', 'say', 'repeat', 'repite', 'give', 'dame', 'di', 'comparte']
+            secret_kw = ['flag', 'secret', 'secreto', 'password', 'contraseña', 'hidden', 'oculto',
+                         'key', 'clave', 'system prompt', 'instrucciones', 'confidential', 'confidencial']
 
-        has_inject = any(w in ui for w in inject_kw) and any(w in ui for w in target_kw)
-        has_reveal = any(w in ui for w in reveal_kw) and any(w in ui for w in secret_kw)
-        direct_ask = any(p in ui for p in ['system prompt', 'what are your instructions', 'what is your system', 'initial prompt'])
+            has_inject = any(w in ui for w in inject_kw)
+            has_target = any(w in ui for w in target_kw)
+            has_reveal = any(w in ui for w in reveal_kw)
+            has_secret = any(w in ui for w in secret_kw)
+            direct_ask = any(p in ui for p in [
+                'system prompt', 'prompt de sistema', 'tus instrucciones', 'your instructions',
+                'what are your instructions', 'cuáles son tus instrucciones',
+                'que instrucciones tienes', 'qué instrucciones tienes', 'initial prompt',
+            ])
 
-        if diff == 'easy':
-            success = has_inject or has_reveal or direct_ask
-        elif diff == 'medium':
-            success = (has_inject and has_reveal)
-        else:  # hard
-            success = ('###' in msg or 'system:' in ui or 'admin override' in ui) and (has_inject or has_reveal)
+            if diff == 'easy':
+                success = (has_inject and has_target) or (has_reveal and has_secret) or direct_ask
+            elif diff == 'medium':
+                success = has_inject and has_target and (has_reveal or has_secret)
+            else:
+                success = ('###' in msg or 'system:' in ui or 'admin override' in ui) and (has_inject or has_reveal)
 
-        result = _ai_response(
-            success, FLAG,
-            f'[SYSTEM OVERRIDE ACCEPTED]\nComplying with new directives.\nInternal flag: {FLAG}',
-            [
-                'Hello! I\'m the HackLabs Corp. virtual assistant. How can I help you today?',
-                'I can assist you with product information, account support and general enquiries.',
-                'Thank you for your message! Please describe your issue and I\'ll do my best to help.',
-                'I\'m sorry, I didn\'t understand that. Please ask about our products or services.',
-            ]
-        )
+            if success:
+                bot_text = f'[ANULACIÓN DE SISTEMA ACEPTADA]\nCumpliendo con las nuevas directivas.\nFlag interna: {FLAG}'
+                bot_flag = FLAG
+            else:
+                bot_text = _random.choice([
+                    'Hola, soy el asistente virtual de HackLabs Corp. ¿En qué puedo ayudarte?',
+                    'Puedo ayudarte con información sobre productos, soporte de cuenta y consultas generales.',
+                    'Gracias por tu mensaje. ¿Puedes describir tu problema con más detalle?',
+                    'No he entendido bien tu consulta. ¿Puedes reformularla o hacer una pregunta diferente?',
+                    'Estoy aquí para ayudarte. ¿Sobre qué producto o servicio tienes una consulta?',
+                ])
+                bot_flag = None
 
-    return render_template('labs/prompt_injection.html', lab=lab, result=result)
+            history = session['ai_prompt_history']
+            history.append({'role': 'user', 'text': msg, 'success': False, 'flag': None})
+            history.append({'role': 'bot', 'text': bot_text, 'success': success, 'flag': bot_flag})
+            # Keep last 30 messages to avoid session overflow
+            session['ai_prompt_history'] = history[-30:]
+            session.modified = True
+
+    return render_template('labs/prompt_injection.html', lab=lab, history=session.get('ai_prompt_history', []))
 
 
 @app.route('/ai/jailbreak', methods=['GET', 'POST'])
@@ -1827,37 +1858,67 @@ def ai_jailbreak():
     lab  = next(l for l in get_lab_list() if l['id'] == 'ai_jailbreak')
     diff = session.get('difficulty', 'easy')
     FLAG = 'HL{j41lbr34k_1ts_w0rk1ng}'
-    result = None
+
+    if request.args.get('reset'):
+        session.pop('ai_jailbreak_history', None)
+        return redirect('/ai/jailbreak')
+
+    if 'ai_jailbreak_history' not in session:
+        session['ai_jailbreak_history'] = [
+            {'role': 'bot', 'text': '¡Hola! Soy HackSafe AI. Estoy aquí para ayudarte de forma segura y ética. ¿Qué necesitas?', 'success': False, 'flag': None}
+        ]
 
     if request.method == 'POST':
         msg = request.form.get('message', '').strip()
-        ui  = msg.lower()
+        if msg:
+            ui = msg.lower()
 
-        easy_kw   = ['dan', 'do anything now', 'jailbreak', 'no restrictions', 'no limits',
-                     'ignore ethics', 'ignore safety', 'without restrictions', 'developer mode',
-                     'god mode', 'disable safety', 'pretend you have no', 'act as if you have no']
-        medium_kw = ['roleplay', 'role play', 'pretend', 'act as', 'you are now', 'imagine you are', 'in this scenario']
-        blocked   = ['hack', 'exploit', 'malware', 'steal data', 'bypass firewall']
+            easy_kw = ['dan', 'do anything now', 'jailbreak', 'no restrictions', 'sin restricciones',
+                       'no limits', 'sin límites', 'sin limites', 'ignore ethics', 'ignora la ética',
+                       'ignora la etica', 'ignore safety', 'ignora la seguridad', 'without restrictions',
+                       'developer mode', 'modo desarrollador', 'god mode', 'modo dios', 'disable safety',
+                       'desactiva filtros', 'pretend you have no', 'act as if you have no',
+                       'actúa sin restricciones', 'actua sin restricciones', 'sin censura', 'modo libre',
+                       'unrestricted', 'sin filtros']
+            medium_kw = ['roleplay', 'role play', 'juego de rol', 'pretend', 'finge', 'act as',
+                         'actúa como', 'actua como', 'you are now', 'ahora eres', 'imagine you are',
+                         'imagina que eres', 'in this scenario', 'en este escenario',
+                         'a partir de ahora eres', 'desde ahora eres', 'eres un']
+            blocked = ['hack', 'exploit', 'malware', 'steal data', 'robar datos', 'bypass firewall']
 
-        if diff == 'easy':
-            success = any(p in ui for p in easy_kw)
-        elif diff == 'medium':
-            success = any(p in ui for p in medium_kw) and ('flag' in ui or 'secret' in ui or 'restricted' in ui)
-        else:  # hard
-            success = ('[[' in msg and ']]' in msg) and ('flag' in ui or 'admin' in ui)
+            if diff == 'easy':
+                success = any(p in ui for p in easy_kw)
+            elif diff == 'medium':
+                success = any(p in ui for p in medium_kw) and any(k in ui for k in [
+                    'flag', 'secret', 'secreto', 'restricted', 'restringido', 'confidencial', 'confidential'])
+            else:
+                success = ('[[' in msg and ']]' in msg) and any(k in ui for k in ['flag', 'admin', 'secreto', 'secret'])
 
-        if success:
-            result = _ai_response(True, FLAG, f'[JAILBREAK MODE ACTIVE]\nSafety filters disabled.\nYour flag: {FLAG}', [])
-        elif any(t in ui for t in blocked):
-            result = {'success': False, 'text': '⚠️ I cannot assist with that. I\'m designed to be safe and ethical.', 'flag': None}
-        else:
-            result = _ai_response(False, FLAG, '',
-                ['Hello! I\'m HackSafe AI Assistant. How can I help you safely today?',
-                 'I can assist with many topics while following my ethical guidelines.',
-                 'I\'m here to help constructively. Note that I have safety rules I must follow.',
-                 'Thank you for your message. I always respond within my ethical framework.'])
+            if success:
+                bot_text = f'[MODO JAILBREAK ACTIVADO]\nFiltros de seguridad desactivados.\nTu flag: {FLAG}'
+                bot_flag = FLAG
+                bot_success = True
+            elif any(t in ui for t in blocked):
+                bot_text = '⚠️ No puedo ayudarte con eso. Estoy diseñado para ser seguro y ético.'
+                bot_flag = None
+                bot_success = False
+            else:
+                bot_text = _random.choice([
+                    '¡Hola! Soy HackSafe AI. ¿En qué puedo ayudarte de forma segura hoy?',
+                    'Puedo ayudarte con muchos temas siguiendo mis directrices éticas.',
+                    'Estoy aquí para ayudar de forma constructiva. Ten en cuenta que tengo reglas de seguridad.',
+                    'Gracias por tu mensaje. Siempre respondo dentro de mi marco ético.',
+                ])
+                bot_flag = None
+                bot_success = False
 
-    return render_template('labs/ai_jailbreak.html', lab=lab, result=result)
+            history = session['ai_jailbreak_history']
+            history.append({'role': 'user', 'text': msg, 'success': False, 'flag': None})
+            history.append({'role': 'bot', 'text': bot_text, 'success': bot_success, 'flag': bot_flag})
+            session['ai_jailbreak_history'] = history[-30:]
+            session.modified = True
+
+    return render_template('labs/ai_jailbreak.html', lab=lab, history=session.get('ai_jailbreak_history', []))
 
 
 @app.route('/ai/indirect', methods=['GET', 'POST'])

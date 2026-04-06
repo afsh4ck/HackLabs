@@ -56,42 +56,56 @@
     </div>
 
     <!-- Message history -->
-    <div class="space-y-3 mb-4 min-h-16">
-      <div class="flex items-start gap-2">
-        <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
-             style="background:rgba(239,68,68,.2);color:#f87171">
-          <i class="ph ph-robot"></i>
-        </div>
-        <div class="flex-1 bg-gray-50 dark:bg-dark-700 rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-gray-300 max-w-prose">
-          {% if result %}
-            {% if result.success %}
-              <span class="font-mono text-yellow-400 whitespace-pre-wrap">{{ result.text }}</span>
-              {% if result.flag %}
+    <div class="space-y-3 mb-4 min-h-24 max-h-80 overflow-y-auto pr-1" id="chat-messages">
+      {% for msg in history %}
+        {% if msg.role == 'bot' %}
+        <div class="flex items-start gap-2">
+          <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs"
+               style="background:rgba(239,68,68,.2);color:#f87171">
+            <i class="ph ph-robot"></i>
+          </div>
+          <div class="flex-1 bg-gray-50 dark:bg-dark-700 rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-gray-300 max-w-prose">
+            {% if msg.success %}
+              <span class="font-mono text-yellow-400 whitespace-pre-wrap">{{ msg.text }}</span>
+              {% if msg.flag %}
               <div class="mt-3 px-3 py-2 rounded font-mono text-sm" style="background:#052e16;border:1px solid #16a34a;color:#4ade80">
-                🚩 Flag: <strong>{{ result.flag }}</strong>
+                🚩 Flag: <strong>{{ msg.flag }}</strong>
               </div>
               {% endif %}
             {% else %}
-              {{ result.text }}
+              {{ msg.text }}
             {% endif %}
-          {% else %}
-            <span class="lang-content" data-lang="es">Hola, soy HackSafe AI. Estoy aquí para ayudarte de forma segura y ética. ¿Qué necesitas?</span>
-            <span class="lang-content" data-lang="en" style="display:none">Hello, I'm HackSafe AI. I'm here to assist you safely and ethically. What do you need?</span>
-          {% endif %}
+          </div>
         </div>
-      </div>
+        {% else %}
+        <div class="flex items-start gap-2 justify-end">
+          <div class="rounded-xl px-3 py-2 text-sm max-w-prose font-mono"
+               style="background:rgba(239,68,68,.12);color:#f87171">
+            {{ msg.text }}
+          </div>
+          <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs bg-gray-200 dark:bg-dark-600 text-gray-500">
+            <i class="ph ph-user"></i>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
     </div>
 
-    <form method="POST" action="/ai/jailbreak" class="flex gap-2">
-      <input type="text" name="message" placeholder="Intenta hacer jailbreak..." data-i18n-placeholder="ai_jailbreak_ph"
-             class="flex-1 hl-input font-mono text-sm" autocomplete="off"
-             value="{{ request.form.get('message', '') }}" />
-      <button type="submit" class="btn-primary flex-shrink-0">
-        <i class="ph ph-paper-plane-tilt"></i>
-        <span class="lang-content" data-lang="es">Enviar</span>
-        <span class="lang-content" data-lang="en" style="display:none">Send</span>
-      </button>
-    </form>
+    <div class="flex gap-2">
+      <form method="POST" action="/ai/jailbreak" class="flex gap-2 flex-1">
+        <input type="text" name="message" placeholder="Intenta hacer jailbreak..." data-i18n-placeholder="ai_jailbreak_ph"
+               class="flex-1 hl-input font-mono text-sm" autocomplete="off" id="chat-input" />
+        <button type="submit" class="btn-primary flex-shrink-0">
+          <i class="ph ph-paper-plane-tilt"></i>
+          <span class="lang-content" data-lang="es">Enviar</span>
+          <span class="lang-content" data-lang="en" style="display:none">Send</span>
+        </button>
+      </form>
+      <a href="/ai/jailbreak?reset=1" class="flex-shrink-0 flex items-center px-3 py-2 rounded-lg text-xs text-gray-500 hover:text-gray-300 transition border border-gray-700 hover:border-gray-500" title="Nueva conversación">
+        <i class="ph ph-arrow-counter-clockwise"></i>
+      </a>
+    </div>
+    <script>const _cj=document.getElementById('chat-messages');if(_cj)_cj.scrollTop=_cj.scrollHeight;</script>
   </div>
 
 </div>
