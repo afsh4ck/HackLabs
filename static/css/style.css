@@ -98,13 +98,17 @@ pre, code { font-family: 'JetBrains Mono', monospace; }
 #sidebar.sidebar-open  { width: var(--sidebar-width); }
 #sidebar.sidebar-closed { width: 0; }
 
-/* Nav – takes remaining height, scrolls, right padding = scrollbar width only */
+/* Nav – takes remaining height, scrolls.
+   scrollbar-gutter:stable places the scrollbar in the gutter between the
+   right padding edge and the border, so it sits flush at the sidebar edge.
+   Both horizontal paddings are equal; the scrollbar never eats into content. */
 #sidebar > nav {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 0.5rem 3px 3rem 0.65rem !important;
+  scrollbar-gutter: stable;
+  padding: 0.5rem 0.65rem 3rem 0.65rem !important;
 }
 /* Sidebar scrollbar – flush to right border */
 #sidebar > nav::-webkit-scrollbar { width: 4px; }
