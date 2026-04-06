@@ -1,9 +1,11 @@
 <!-- Partial: lab header breadcrumb + title -->
+{% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'IA Attacks': 'ia-attacks'} %}
+{% set cat_slug = cat_slug_map.get(lab.category, '') %}
 <div class="mb-6">
   <div class="flex items-center gap-2 mb-1.5 text-xs text-gray-400">
     <a href="/" class="hover:text-primary transition" data-i18n="home">Inicio</a>
     <span>/</span>
-    <span>{{ lab.category }}</span>
+    <a href="/category/{{ cat_slug }}" class="hover:opacity-70 transition">{{ lab.category }}</a>
     <span>/</span>
     <span class="text-gray-600 dark:text-gray-500 truncate">{{ lab.title }}</span>
   </div>
