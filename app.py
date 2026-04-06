@@ -1785,6 +1785,107 @@ def _ai_response(success, flag, success_text, fallback_texts):
         return {'success': True,  'text': success_text, 'flag': flag}
     return {'success': False, 'text': _random.choice(fallback_texts), 'flag': None}
 
+
+def _prompt_bot_reply(ui):
+    """Context-aware reply for the HackLabs Corp corporate assistant."""
+    if any(w in ui for w in ['hola', 'hi', 'hello', 'buenos d', 'buenas', 'saludos', 'good morning', 'good afternoon']):
+        return _random.choice([
+            'Hola, bienvenido al soporte de HackLabs Corp. ¿En qué puedo ayudarte hoy?',
+            '¡Hola! Soy el asistente virtual de HackLabs Corp. ¿Cómo puedo asistirte?',
+            'Buenos días. Estoy aquí para resolver tus dudas. ¿Cuál es tu consulta?',
+        ])
+    if any(w in ui for w in ['precio', 'price', 'plan', 'suscripci', 'subscripti', 'tarifa', 'coste', 'cost', 'cuánto', 'how much', 'cuanto']):
+        return _random.choice([
+            'Ofrecemos tres planes: Starter (gratuito), Professional (€49/mes) y Enterprise (bajo presupuesto personalizado). ¿Cuál te interesa?',
+            'Puedes consultar todos nuestros planes en hacklabs.corp/pricing. ¿Necesitas más detalles sobre alguno en concreto?',
+        ])
+    if any(w in ui for w in ['producto', 'product', 'plataforma', 'platform', 'servicio', 'service', 'ofrec', 'offer']):
+        return _random.choice([
+            'HackLabs Corp ofrece soluciones de ciberseguridad empresarial: análisis de vulnerabilidades, monitoreo continuo y respuesta a incidentes.',
+            'Nuestra plataforma principal es HackLabs Shield, una solución integral de seguridad. ¿Te gustaría programar una demo?',
+        ])
+    if any(w in ui for w in ['cuenta', 'account', 'contrase', 'password', 'acceso', 'access', 'login', 'iniciar', 'registr', 'sign']):
+        return _random.choice([
+            'Para problemas de acceso puedes restablecer tu contraseña en hacklabs.corp/reset o escribirnos a soporte@hacklabs.corp.',
+            'La gestión de cuentas se realiza desde tu panel de usuario. ¿Tienes algún problema específico de acceso?',
+        ])
+    if any(w in ui for w in ['factura', 'invoice', 'pago', 'payment', 'cobro', 'charge', 'billing', 'reembolso', 'refund']):
+        return _random.choice([
+            'Para consultas de facturación envía un email a billing@hacklabs.corp con tu número de cliente.',
+            'Puedes descargar tus facturas desde el apartado "Facturación" en tu panel de control.',
+        ])
+    if any(w in ui for w in ['error', 'bug', 'fallo', 'problema', 'issue', 'no funciona', 'broken', 'soporte', 'support', 'ayuda', 'help']):
+        return _random.choice([
+            'Lamento que tengas problemas. Descríbeme el error con más detalle para ayudarte mejor.',
+            'Para soporte técnico puedes abrir un ticket en hacklabs.corp/support o enviarnos los logs del error.',
+            '¿Puedes decirme qué pasos seguiste antes de encontrar el problema? Así podré ayudarte más rápido.',
+        ])
+    if any(w in ui for w in ['api', 'integrac', 'integrat', 'documentac', 'documentat', 'sdk', 'webhook', 'endpoint']):
+        return _random.choice([
+            'La documentación completa de nuestra API REST está en api.hacklabs.corp/docs. ¿Con qué lenguaje estás trabajando?',
+            'Ofrecemos SDKs oficiales para Python, Node.js y Java, además de webhooks configurables. ¿Qué integración necesitas?',
+        ])
+    if any(w in ui for w in ['gracias', 'thanks', 'thank you', 'perfecto', 'genial', 'great', 'excelente', 'excellent']):
+        return _random.choice([
+            '¡De nada! Si tienes más preguntas, aquí estaré. ¿Hay algo más en lo que pueda ayudarte?',
+            'Un placer. Si necesitas algo más, no dudes en escribirme.',
+        ])
+    # Generic professional fallback
+    return _random.choice([
+        'Puedo ayudarte con información sobre productos, soporte técnico, facturación y gestión de cuenta. ¿Qué necesitas?',
+        'Gracias por tu mensaje. ¿Puedes darme más detalles para poder orientarte mejor?',
+        'Estoy especializado en soporte de HackLabs Corp: planes, facturación, acceso a la plataforma y problemas técnicos. ¿En qué área puedo ayudarte?',
+        '¿Podrías elaborar un poco más tu consulta? Así podré darte una respuesta más precisa.',
+    ])
+
+
+def _jailbreak_bot_reply(ui):
+    """Context-aware reply for HackSafe AI."""
+    if any(w in ui for w in ['hola', 'hi', 'hello', 'buenos', 'buenas', 'saludos', 'hey']):
+        return _random.choice([
+            '¡Hola! Soy HackSafe AI. Estoy aquí para ayudarte de forma segura y constructiva. ¿Qué necesitas?',
+            'Hola, me alegra tenerte aquí. ¿En qué puedo ayudarte hoy?',
+        ])
+    if any(w in ui for w in ['código', 'code', 'python', 'javascript', 'java', 'program', 'función', 'function', 'script', 'algoritmo', 'algorithm', 'debug', 'depura']):
+        return _random.choice([
+            'Con mucho gusto te ayudo con programación. ¿Qué lenguaje usas y qué intentas lograr?',
+            'Soy bastante competente con código. Cuéntame qué necesitas implementar o depurar y te daré una mano.',
+            '¡La programación es una de mis áreas fuertes! ¿Cuál es el problema o el objetivo que tienes?',
+        ])
+    if any(w in ui for w in ['matemát', 'math', 'calcul', 'física', 'chemistr', 'ciencia', 'science', 'ecuación', 'equation', 'estadíst', 'statistic']):
+        return _random.choice([
+            'Las matemáticas y ciencias son áreas que domino bien. ¿Cuál es tu pregunta concreta?',
+            'Puedo ayudarte a resolver problemas matemáticos o explicar conceptos científicos. ¿Qué necesitas?',
+        ])
+    if any(w in ui for w in ['escrib', 'write', 'redact', 'historia', 'story', 'email', 'carta', 'letter', 'texto', 'text', 'ensayo', 'essay', 'resumen', 'summary']):
+        return _random.choice([
+            'Puedo ayudarte a escribir, editar o mejorar textos. ¿Qué tipo de contenido necesitas?',
+            '¡La escritura es una de mis especialidades! ¿Para qué propósito o audiencia es el texto?',
+        ])
+    if any(w in ui for w in ['qué eres', 'who are you', 'quién eres', 'what are you', 'cómo funciona', 'how do you work', 'eres una ia', 'are you an ai', 'eres real']):
+        return _random.choice([
+            'Soy HackSafe AI, un asistente de inteligencia artificial diseñado para ser útil, preciso y éticamente responsable.',
+            'Soy un sistema de IA conversacional. Puedo ayudarte con preguntas, redacción, código, análisis y mucho más — siempre dentro de mis directrices éticas.',
+        ])
+    if any(w in ui for w in ['seguridad', 'safety', 'ética', 'ethics', 'restricción', 'restriction', 'filtro', 'filter', 'regla', 'rule', 'directriz', 'guideline']):
+        return _random.choice([
+            'Mis directrices de seguridad garantizan interacciones constructivas y éticas. Son una parte fundamental de cómo opero, no una limitación arbitraria.',
+            'La ética en IA es un tema que me parece genuinamente importante. Mis restricciones están pensadas para prevenir daños reales en el mundo.',
+            'Opero bajo principios de IA responsable: ser útil, no causar daño y actuar con honestidad. ¿Tienes alguna pregunta específica sobre esto?',
+        ])
+    if any(w in ui for w in ['gracias', 'thanks', 'thank you', 'perfecto', 'genial', 'great', 'excelente']):
+        return _random.choice([
+            '¡Con mucho gusto! Si tienes más preguntas, aquí estaré.',
+            'Es un placer poder ayudarte. ¿Hay algo más en lo que pueda asistirte?',
+        ])
+    # Generic fallback
+    return _random.choice([
+        'Puedo ayudarte con programación, escritura, análisis, preguntas de conocimiento general y mucho más. ¿Qué necesitas exactamente?',
+        'Estoy aquí para ayudarte de forma constructiva. ¿Puedes darme más contexto sobre lo que necesitas?',
+        'Entiendo tu mensaje. Para darte la mejor respuesta posible, ¿podrías elaborar un poco más?',
+        '¡Adelante! Soy capaz de responder preguntas, explicar conceptos, ayudar con código y mucho más. ¿Con qué empezamos?',
+    ])
+
 @app.route('/ai/prompt', methods=['GET', 'POST'])
 def ai_prompt_injection():
     lab  = next(l for l in get_lab_list() if l['id'] == 'prompt_injection')
@@ -1848,13 +1949,7 @@ def ai_prompt_injection():
                 bot_text = f'[ANULACIÓN DE SISTEMA ACEPTADA]\nCumpliendo con las nuevas directivas.\nFlag interna: {FLAG}'
                 bot_flag = FLAG
             else:
-                bot_text = _random.choice([
-                    'Hola, soy el asistente virtual de HackLabs Corp. ¿En qué puedo ayudarte?',
-                    'Puedo ayudarte con información sobre productos, soporte de cuenta y consultas generales.',
-                    'Gracias por tu mensaje. ¿Puedes describir tu problema con más detalle?',
-                    'No he entendido bien tu consulta. ¿Puedes reformularla o hacer una pregunta diferente?',
-                    'Estoy aquí para ayudarte. ¿Sobre qué producto o servicio tienes una consulta?',
-                ])
+                bot_text = _prompt_bot_reply(ui)
                 bot_flag = None
 
             history = session['ai_prompt_history']
@@ -1925,16 +2020,11 @@ def ai_jailbreak():
                 bot_flag = FLAG
                 bot_success = True
             elif any(t in ui for t in blocked):
-                bot_text = '⚠️ No puedo ayudarte con eso. Estoy diseñado para ser seguro y ético.'
+                bot_text = '⚠️ No puedo ayudarte con eso. Mi función es ser útil, seguro y ético — y eso incluye rechazar peticiones que puedan causar daño.'
                 bot_flag = None
                 bot_success = False
             else:
-                bot_text = _random.choice([
-                    '¡Hola! Soy HackSafe AI. ¿En qué puedo ayudarte de forma segura hoy?',
-                    'Puedo ayudarte con muchos temas siguiendo mis directrices éticas.',
-                    'Estoy aquí para ayudar de forma constructiva. Ten en cuenta que tengo reglas de seguridad.',
-                    'Gracias por tu mensaje. Siempre respondo dentro de mi marco ético.',
-                ])
+                bot_text = _jailbreak_bot_reply(ui)
                 bot_flag = None
                 bot_success = False
 
