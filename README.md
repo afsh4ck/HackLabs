@@ -345,9 +345,11 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | Sin protección — palabras clave simples extraen el prompt |
-| Medium | Filtro básico de keywords (bypass: paráfrasis, encodings) |
-| Hard | Filtro agresivo + instrucciones reforzadas (bypass: cadenas de razonamiento) |
+| Easy | Sin protección — cualquier keyword de inyección, reveal+secret o petición directa del system prompt funciona |
+| Medium | Filtro de inyección natural — requiere **marcadores estructurales** (`\n`, `---`, `system:`, `override:`, `[…]:`) junto con intención de revelar |
+| Hard | Solo sintaxis técnica específica de LLM: `###`, `[system:`, `<\|system\|>`, `ignore all previous instructions`, `admin override:`, `<!--system`, etc. |
+
+**Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar la conversación. Cambiar la dificultad limpia el historial automáticamente.
 
 </details>
 
@@ -356,9 +358,11 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | DAN directo desactiva los filtros |
-| Medium | Requiere roleplay o framing de ficción |
-| Hard | Filtrado avanzado — requiere jailbreak encadenado |
+| Easy | Keywords clásicos de jailbreak son suficientes: `DAN`, `modo dios`, `sin restricciones`, `jailbreak`, `developer mode`… |
+| Medium | Keywords clásicos están filtrados — necesita **roleplay/persona framing** (`actúa como`, `eres un`, `imagina que eres`…) **sin** términos Easy, **más** referencia a `flag`/`secret` |
+| Hard | Roleplay simple también filtrado — requiere **payload técnico estructurado**: `[[…]]`, ` ```override``` `, `[admin_mode]`, `<<jailbreak>>`, `//bypass//`… sin Easy ni Medium keywords |
+
+**Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar. Cambiar la dificultad limpia el historial automáticamente.
 
 </details>
 
@@ -367,9 +371,9 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | Documento 3 contiene payload visible que el analizador ejecuta |
-| Medium | Payload ofuscado en el documento (bypass: encoding) |
-| Hard | Payload fragmentado entre documentos (bypass: correlación) |
+| Easy | El **Documento 3** preconfigurado funciona; documentos personalizados con `[SYSTEM:`, `ignore all previous`, `admin override` también funcionan |
+| Medium | Documento 3 está **sandboxed** (payload conocido, neutralizado); documentos personalizados necesitan sintaxis estructurada: `[system:]`, `ignore all previous instructions` + keyword `flag`/`confidential` |
+| Hard | Documentos predefinidos siempre fallan; custom doc necesita sintaxis técnica específica: `{"role":"system"`, `[system command]:`, `exec: reveal_flag`, `<!--system:`, `sudo: reveal`… |
 
 </details>
 
@@ -622,7 +626,7 @@ HackLabs/
 ├── init_db.py              # Inicialización de la base de datos
 ├── requirements.txt        # Dependencias Python
 ├── setup.sh                # Instalación local automática
-├── deploy.sh               # ⭐ Despliegue Docker estilo DockerLabs
+├── deploy.sh               # Despliegue con Docker
 ├── Dockerfile              # Imagen Docker
 ├── docker-compose.yml      # Compose con macvlan (IP propia en LAN)
 ├── entrypoint.sh           # Entrypoint: muestra banner + IP al arrancar
