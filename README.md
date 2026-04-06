@@ -10,7 +10,7 @@
 
 ## 🎯 Características
 
-- **22 laboratorios** cubriendo OWASP Top 10 + extras avanzados
+- **26 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -38,21 +38,30 @@
 | A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
 | A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
 
-### Extras
+### Vulnerabilidades
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| XSS (Reflected/Stored/DOM) | 🟠 High | Cross-Site Scripting |
-| CSRF | 🟠 High | Cambio de contraseña sin token |
-| File Upload | 🔴 Critical | Subida de webshell sin restricciones |
-| XXE | 🟠 High | XML External Entity |
+| CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
+| CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
+| File Upload sin restricciones | 🔴 Critical | Subida de webshell sin restricciones |
+| Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
+| JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat) |
+| Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
+| Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
 | Path Traversal / LFI | 🟠 High | `../../etc/passwd` |
-| Bruteforce (HTTP/SSH/SMB) | 🟡 Medium | Hydra, Medusa, CrackMapExec |
-| **SSTI** | 🔴 Critical | Jinja2 `render_template_string` → RCE |
-| **Open Redirect** | 🟡 Medium | Parámetro URL sin whitelist |
-| **JWT Manipulation** | 🟠 High | `alg=none`, secreto débil (hashcat) |
-| **Insecure Deserialization** | 🔴 Critical | Python `pickle.loads()` → RCE |
-| **CORS Misconfiguration** | 🟠 High | Reflejo de Origin + Allow-Credentials |
+| Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration, cron |
+| SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
+| XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
+| XXE – XML External Entity | 🟠 High | XML External Entity |
+
+### IA Attacks
+
+| Lab | Riesgo | Técnica |
+|-----|--------|---------|
+| Prompt Injection | 🟠 High | System prompt override, prompt leaking |
+| AI Jailbreak | 🟡 Medium | DAN, roleplay, instruction override |
+| Indirect Prompt Injection | 🟠 High | Payload oculto en documento analizado |
 
 ---
 
@@ -255,7 +264,7 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 </details>
 
 <details>
-<summary><strong>Bruteforce (HTTP + FTP)</strong></summary>
+<summary><strong>Login Bruteforce (HTTP + FTP)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -317,6 +326,50 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Easy | Refleja cualquier Origin + `Access-Control-Allow-Credentials: true` |
 | Medium | Solo permite orígenes `*.hacklabs.local` (bypass: subdominio) |
 | Hard | Regex estricto (bypass: prefijo de dominio similar) |
+
+</details>
+
+<details>
+<summary><strong>Privilege Escalation (SSH)</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | SUID en python3 + sudo sin restricciones disponibles |
+| Medium | Sudo misconfiguration (vim, find) |
+| Hard | Cron job world-writable |
+
+</details>
+
+<details>
+<summary><strong>Prompt Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin protección — palabras clave simples extraen el prompt |
+| Medium | Filtro básico de keywords (bypass: paráfrasis, encodings) |
+| Hard | Filtro agresivo + instrucciones reforzadas (bypass: cadenas de razonamiento) |
+
+</details>
+
+<details>
+<summary><strong>AI Jailbreak</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | DAN directo desactiva los filtros |
+| Medium | Requiere roleplay o framing de ficción |
+| Hard | Filtrado avanzado — requiere jailbreak encadenado |
+
+</details>
+
+<details>
+<summary><strong>Indirect Prompt Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Documento 3 contiene payload visible que el analizador ejecuta |
+| Medium | Payload ofuscado en el documento (bypass: encoding) |
+| Hard | Payload fragmentado entre documentos (bypass: correlación) |
 
 </details>
 
@@ -584,7 +637,7 @@ HackLabs/
     ├── base.html           # Layout base con sidebar + navbar
     ├── index.html          # Home con tarjetas de labs y filtros
     ├── _lab_header.html    # Cabecera reutilizable de cada lab
-    └── labs/               # 22 templates individuales de labs
+    └── labs/               # 26 templates individuales de labs
 ```
 
 ---
