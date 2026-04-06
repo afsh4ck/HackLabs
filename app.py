@@ -98,6 +98,9 @@ def lab(lab_id):
         'privesc':         '/privesc',
         'crypto':          '/crypto/login',
         'outdated':        '/outdated/search',
+        'prompt_injection':  '/ai/prompt',
+        'ai_jailbreak':      '/ai/jailbreak',
+        'indirect_injection':'/ai/indirect',
     }
     if lab_id in dedicated:
         return redirect(dedicated[lab_id])
