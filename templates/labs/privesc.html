@@ -4,36 +4,69 @@
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
-  <!-- Info banner -->
-  <div class="flex items-start gap-3 p-4 rounded-xl mb-6 text-sm"
-       style="background:rgba(var(--hl-primary-rgb),.08);border:1px solid rgba(var(--hl-primary-rgb),.2)">
-    <i class="ph ph-info text-lg flex-shrink-0 mt-0.5" style="color:var(--hl-primary)"></i>
-    <div>
-      <p class="font-semibold mb-1" style="color:var(--hl-primary)">¿Cómo funciona este laboratorio?</p>
-      <p class="text-gray-600 dark:text-gray-400">
-        Conéctate por SSH usando cualquiera de los 5 usuarios del sistema. Cada uno tiene un vector de
-        escalada de privilegios distinto. El objetivo es conseguir acceso <strong>root</strong> y leer
-        <code class="font-mono text-xs px-1 py-0.5 rounded" style="background:rgba(0,0,0,.2)">/root/root.txt</code>.
-      </p>
-      <p class="mt-2 text-gray-500 dark:text-gray-500 text-xs">
-        El usuario <strong>admin</strong> tiene <code class="font-mono">sudo</code> completo — úsalo para
-        inspeccionar la máquina: permisos SUID, sudoers, cron jobs...
-      </p>
+  <!-- Info banner ES -->
+  <div class="lang-content" data-lang="es">
+    <div class="flex items-start gap-3 p-4 rounded-xl mb-6 text-sm"
+         style="background:rgba(var(--hl-primary-rgb),.08);border:1px solid rgba(var(--hl-primary-rgb),.2)">
+      <i class="ph ph-info text-lg flex-shrink-0 mt-0.5" style="color:var(--hl-primary)"></i>
+      <div>
+        <p class="font-semibold mb-1" style="color:var(--hl-primary)">¿Cómo funciona este laboratorio?</p>
+        <p class="text-gray-600 dark:text-gray-400">
+          Conéctate por SSH usando cualquiera de los 5 usuarios del sistema. Cada uno tiene un vector de
+          escalada de privilegios distinto. El objetivo es conseguir acceso <strong>root</strong> y leer
+          <code class="font-mono text-xs px-1 py-0.5 rounded" style="background:rgba(0,0,0,.2)">/root/root.txt</code>.
+        </p>
+        <p class="mt-2 text-gray-500 dark:text-gray-500 text-xs">
+          El usuario <strong>admin</strong> tiene <code class="font-mono">sudo</code> completo — úsalo para
+          inspeccionar la máquina: permisos SUID, sudoers, cron jobs...
+        </p>
+      </div>
+    </div>
+    <div class="hl-card mb-6">
+      <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
+        <i class="ph ph-terminal-window mr-1"></i> Conexión SSH
+      </div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># Conectar por SSH — reemplaza {{ target_ip }} por la IP del laboratorio</div>
+        <div>ssh admin@{{ target_ip }}      <span class="text-gray-500"># contraseña: password1 (sudo completo)</span></div>
+        <div>ssh alice@{{ target_ip }}      <span class="text-gray-500"># contraseña: Password1</span></div>
+        <div>ssh bob@{{ target_ip }}        <span class="text-gray-500"># contraseña: welcome1</span></div>
+        <div>ssh charlie@{{ target_ip }}    <span class="text-gray-500"># contraseña: changeme</span></div>
+        <div>ssh dave@{{ target_ip }}       <span class="text-gray-500"># contraseña: P@ssw0rd</span></div>
+      </div>
     </div>
   </div>
 
-  <!-- Connection info -->
-  <div class="hl-card mb-6">
-    <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
-      <i class="ph ph-terminal-window mr-1"></i> Conexión SSH
+  <!-- Info banner EN -->
+  <div class="lang-content" data-lang="en" style="display:none">
+    <div class="flex items-start gap-3 p-4 rounded-xl mb-6 text-sm"
+         style="background:rgba(var(--hl-primary-rgb),.08);border:1px solid rgba(var(--hl-primary-rgb),.2)">
+      <i class="ph ph-info text-lg flex-shrink-0 mt-0.5" style="color:var(--hl-primary)"></i>
+      <div>
+        <p class="font-semibold mb-1" style="color:var(--hl-primary)">How does this lab work?</p>
+        <p class="text-gray-600 dark:text-gray-400">
+          Connect via SSH using any of the 5 system users. Each one has a different privilege escalation
+          vector. The goal is to gain <strong>root</strong> access and read
+          <code class="font-mono text-xs px-1 py-0.5 rounded" style="background:rgba(0,0,0,.2)">/root/root.txt</code>.
+        </p>
+        <p class="mt-2 text-gray-500 dark:text-gray-500 text-xs">
+          The <strong>admin</strong> user has full <code class="font-mono">sudo</code> — use it to
+          inspect the machine: SUID binaries, sudoers entries, cron jobs...
+        </p>
+      </div>
     </div>
-    <div class="hl-code text-xs space-y-1">
-      <div class="text-gray-400"># Conectar por SSH — reemplaza TARGET_IP por la IP del laboratorio</div>
-      <div>ssh admin@TARGET_IP      <span class="text-gray-500"># contraseña: password1 (sudo completo)</span></div>
-      <div>ssh alice@TARGET_IP      <span class="text-gray-500"># contraseña: Password1</span></div>
-      <div>ssh bob@TARGET_IP        <span class="text-gray-500"># contraseña: welcome1</span></div>
-      <div>ssh charlie@TARGET_IP    <span class="text-gray-500"># contraseña: changeme</span></div>
-      <div>ssh dave@TARGET_IP       <span class="text-gray-500"># contraseña: P@ssw0rd</span></div>
+    <div class="hl-card mb-6">
+      <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
+        <i class="ph ph-terminal-window mr-1"></i> SSH Connection
+      </div>
+      <div class="hl-code text-xs space-y-1">
+        <div class="text-gray-400"># Connect via SSH — replace {{ target_ip }} with the lab IP</div>
+        <div>ssh admin@{{ target_ip }}      <span class="text-gray-500"># password: password1 (full sudo)</span></div>
+        <div>ssh alice@{{ target_ip }}      <span class="text-gray-500"># password: Password1</span></div>
+        <div>ssh bob@{{ target_ip }}        <span class="text-gray-500"># password: welcome1</span></div>
+        <div>ssh charlie@{{ target_ip }}    <span class="text-gray-500"># password: changeme</span></div>
+        <div>ssh dave@{{ target_ip }}       <span class="text-gray-500"># password: P@ssw0rd</span></div>
+      </div>
     </div>
   </div>
 
