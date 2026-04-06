@@ -516,12 +516,12 @@ function openResolution() {
     btn.addEventListener('mouseleave', () => { btn.style.color='#9ca3af'; btn.style.background='rgba(255,255,255,0.08)'; });
     btn.addEventListener('click', () => {
       const text = (code || pre).innerText.trim();
-      navigator.clipboard.writeText(text).then(() => {
+      copyToClipboard(text, () => {
         btn.innerHTML = '<i class="ph ph-check"></i>';
         btn.style.color = '#4ade80';
         setTimeout(() => { btn.innerHTML = '<i class="ph ph-copy"></i>'; btn.style.color = '#9ca3af'; }, 1500);
         showToast(HL.lang === 'en' ? 'Copied!' : '¡Copiado!');
-      }).catch(() => {});
+      });
     });
     pre.appendChild(btn);
   });
@@ -542,10 +542,28 @@ document.addEventListener('keydown', e => {
 document.addEventListener('dblclick', e => {
   const target = e.target.closest('pre, code');
   if (!target) return;
-  navigator.clipboard.writeText(target.textContent.trim()).then(() => {
+  copyToClipboard(target.textContent.trim(), () => {
     showToast(HL.lang === 'en' ? 'Copied!' : '¡Copiado!');
-  }).catch(() => {});
+  });
 });
+
+// ── Clipboard helper (works on HTTP + HTTPS) ─────────────────────
+function copyToClipboard(text, onSuccess) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => _fallbackCopy(text, onSuccess));
+  } else {
+    _fallbackCopy(text, onSuccess);
+  }
+}
+function _fallbackCopy(text, onSuccess) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { if (document.execCommand('copy') && onSuccess) onSuccess(); } catch(e) {}
+  document.body.removeChild(ta);
+}
 
 // ── Syntax highlighting ───────────────────────────────────────────
 function detectLang(text) {
