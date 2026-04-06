@@ -671,7 +671,9 @@ JWT_SECRET = 'secret123'                    # Secreto débil intencional
 
 ## 📸 Screenshots
 
-> Coming soon
+![hacklabs-owasp](https://github.com/user-attachments/assets/1ff26dae-6b4b-48d1-8014-c86748b3cf92)
+![hacklabs-vulns](https://github.com/user-attachments/assets/6fcc3325-eb78-4668-81cc-b0a37a18e9e9)
+![hacklabs-ia](https://github.com/user-attachments/assets/4783ff29-6f58-4db0-bd1b-3d29b4dc84b0)
 
 ---
 
