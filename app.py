@@ -76,6 +76,24 @@ def init_db():
 def index():
     return render_template('index.html')
 
+# ─────────────────────────────────────────────
+# Category pages
+# ─────────────────────────────────────────────
+
+CATEGORY_SLUGS = {
+    'owasp':            'OWASP Top 10',
+    'vulnerabilidades': 'Vulnerabilidades',
+    'ia-attacks':       'IA Attacks',
+}
+
+@app.route('/category/<slug>')
+def category_page(slug):
+    cat_name = CATEGORY_SLUGS.get(slug)
+    if not cat_name:
+        abort(404)
+    labs = [l for l in get_lab_list() if l['category'] == cat_name]
+    return render_template('category.html', category=cat_name, slug=slug, labs=labs)
+
 @app.route('/lab/<lab_id>')
 def lab(lab_id):
     # Labs that have dedicated routes with data – redirect to them

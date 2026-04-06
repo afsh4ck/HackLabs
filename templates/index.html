@@ -104,12 +104,14 @@
     'indirect_injection':('ph-arrows-in',             'Indirect Prompt Injection'),
   } %}
 
+  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'IA Attacks': 'ia-attacks'} %}
   {% set categories = all_labs | map(attribute='category') | unique | list %}
   {% for cat in categories %}
+  {% set cat_slug = cat_slug_map.get(cat, '') %}
   <div class="lab-section mb-10">
     <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2.5">
       <span class="w-6 h-0.5 rounded-full inline-block" style="background:var(--hl-primary)"></span>
-      <span data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</span>
+      <a href="/category/{{ cat_slug }}" class="hover:opacity-70 transition" data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</a>
       <span class="text-gray-600 font-normal normal-case tracking-normal">
         · {{ all_labs | selectattr('category', 'eq', cat) | list | length }} <span data-i18n="lab_cat_count">labs</span>
       </span>
