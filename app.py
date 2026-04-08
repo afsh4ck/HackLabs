@@ -1013,6 +1013,11 @@ def xxe_api():
             no_network=False
         )
         doc = lxml_etree.fromstring(xml_data, parser)
+        # Procesa XInclude — permite bypass a través de xi:include en Hard mode
+        try:
+            lxml_etree.XInclude()(doc)
+        except lxml_etree.XIncludeError:
+            pass  # xi:include no encontrado o sin nodos XInclude — continuar
 
         name    = doc.findtext('name', default='')
         email   = doc.findtext('email', default='')
