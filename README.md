@@ -15,7 +15,7 @@
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
 - Interfaz moderna oscura con **Tailwind CSS** + **Phosphor Icons**
-- Compatible con **Burp Suite, sqlmap, hydra, tplmap, jwt_tool** y demás herramientas de Kali Linux
+- Compatible con **Burp Suite, sqlmap, hydra, nmap, jwt_tool** y demás herramientas de Kali Linux
 - **Selector de dificultad** (Easy / Medium / Hard) que modifica las protecciones de cada lab en tiempo real
 
 ---
