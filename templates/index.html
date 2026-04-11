@@ -3,6 +3,9 @@
 
 {% block content %}
 <div class="p-6 lg:p-8 max-w-6xl mx-auto">
+  <!-- Favicon y CSS internos forzados a HTTP -->
+  <link rel="icon" type="image/png" href="http://{{ request.host }}/static/files/favicon.png">
+  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css">
 
   <!-- ── Hero ── -->
   <div class="mb-10 text-center relative">
@@ -23,7 +26,7 @@
     <p class="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto text-sm leading-relaxed">
       <span data-i18n="hero_by">Plataforma de hacking ético por</span>
       <a href="https://www.instagram.com/afsh4ck/" target="_blank" rel="noopener"
-         class="font-semibold transition hover:opacity-70" style="color:var(--hl-primary)">afsh4ck</a>.
+        class="font-semibold transition hover:opacity-70" style="color:var(--hl-primary)">afsh4ck</a>.
       <span data-i18n="hero_rest">Practica el OWASP Top 10 (2021) y más con Burp Suite, sqlmap, hydra y otras herramientas de Kali Linux.</span>
     </p>
   </div>
@@ -175,6 +178,8 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- JS interno forzado a HTTP -->
+<script src="http://{{ request.host }}/static/js/main.js"></script>
 <script>
 function filterLabs(risk, btn) {
   document.querySelectorAll('.risk-filter').forEach(b => b.classList.remove('active'));

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}HackLabs{% endblock %}</title>
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
+  <link rel="icon" type="image/svg+xml" href="http://{{ request.host }}/static/favicon.svg" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -38,7 +38,7 @@
   <!-- highlight.js (syntax highlighting) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=8" />
+  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css?v=8" />
 
   <!-- Inject saved theme and sidebar state before render to avoid flash -->
   <script>
@@ -316,7 +316,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="http://{{ request.host }}/static/js/main.js"></script>
   <script>
     function toggleAccountMenu() {
       const menu = document.getElementById('account-menu');

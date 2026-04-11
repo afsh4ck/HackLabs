@@ -65,7 +65,7 @@
 
 ---
 
-## �️ Sistema de Dificultad
+## Sistema de Dificultad
 
 HackLabs incluye un **selector de dificultad** en la barra de navegación (similar a Mutillidae/DVWA) que ajusta las protecciones de **todos** los laboratorios en tiempo real. La dificultad seleccionada se mantiene entre labs y persiste durante toda la sesión.
 
@@ -379,7 +379,7 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 
 ---
 
-## �🚀 Despliegue
+## 🚀 Despliegue
 
 ### ⭐ Opción 1 — Docker con IP propia en LAN (recomendado)
 
