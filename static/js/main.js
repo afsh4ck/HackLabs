@@ -460,6 +460,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function setLang(lang) {
   HL.lang = lang;
   localStorage.setItem('hl_lang', lang);
+  // Cambia el texto del botón principal
+  const langSelected = document.getElementById('lang-selected');
+  if (langSelected) langSelected.textContent = lang === 'en' ? 'English' : 'Español';
+  // Actualiza el check visual
+  ['es', 'en'].forEach(l => {
+    const check = document.getElementById('lang-check-' + l);
+    if (check) {
+      check.innerHTML = (l === lang)
+        ? '<i class="ph-fill ph-check-circle" style="color:#CEFF00;font-size:1.1em"></i>'
+        : '';
+    }
+  });
+  // Actualiza el estado activo en el botón
+  ['es', 'en'].forEach(l => {
+    const btn = document.getElementById('lang-' + l);
+    if (btn) btn.classList.toggle('active', l === lang);
+  });
   applyTranslations();
   // sync custom dropdown / select UI
   const langSelect = document.getElementById('lang-select');
@@ -471,6 +488,10 @@ function setLang(lang) {
   }
 }
 
+// Inicializa el check visual y el texto al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  setLang(HL.lang);
+});
 // Custom language dropdown behaviour
 function initLangDropdown() {
   const wrap = document.getElementById('lang-wrap');
