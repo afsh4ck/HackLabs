@@ -148,6 +148,19 @@ main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
 #lang-select option { background: white; color: black; }
 #lang-wrap.dark { background: #1a1a2e; }
 
+/* Custom language dropdown list styling */
+#lang-list { background: #0f1724; border: 1px solid rgba(255,255,255,0.04); }
+#lang-list .lang-option { color: #d1d5db; border-radius: 0.5rem; }
+#lang-list .lang-option:hover { background: rgba(255,255,255,0.03); color: #fff; }
+#lang-list .lang-option.active { background: rgba(var(--hl-primary-rgb),0.12); color: var(--hl-primary); }
+
+/* ensure the dropdown looks correct on light mode too */
+@media (prefers-color-scheme: light) {
+  #lang-list { background: #fff; border: 1px solid rgba(0,0,0,0.06); }
+  #lang-list .lang-option { color: #111827; }
+  #lang-list .lang-option:hover { background: rgba(0,0,0,0.03); color: #000; }
+}
+
 /* ── Risk badges ── */
 .risk-badge-critical { background:rgba(239,68,68,.12);  border:1px solid rgba(239,68,68,.5); color:#ef4444; border-radius:4px; }
 .risk-badge-high     { background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.5); color:#f97316; border-radius:4px; }

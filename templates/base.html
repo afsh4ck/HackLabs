@@ -91,12 +91,15 @@
         </div>
 
         <!-- Language selector (dropdown) -->
-        <div id="lang-wrap" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-gray-600">
-          <select id="lang-select" onchange="setLang(this.value)" class="bg-transparent pr-7 text-xs font-bold rounded-lg appearance-none outline-none" aria-label="Seleccionar idioma">
-            <option value="es">Español</option>
-            <option value="en">English</option>
-          </select>
-          <i class="ph ph-caret-down text-xs opacity-60" style="margin-left:-0.4rem;pointer-events:none"></i>
+        <div id="lang-wrap" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 relative">
+          <div id="lang-btn" class="inline-flex items-center gap-2 text-xs font-bold cursor-pointer" role="button" aria-haspopup="listbox" aria-expanded="false">
+            <span id="lang-selected">Español</span>
+            <i class="ph ph-caret-down text-xs opacity-60"></i>
+          </div>
+          <ul id="lang-list" class="hidden absolute right-0 mt-2 w-40 rounded-lg shadow-lg z-50" role="listbox" aria-label="Seleccionar idioma">
+            <li class="lang-option px-3 py-2 text-sm cursor-pointer" data-lang="es">Español</li>
+            <li class="lang-option px-3 py-2 text-sm cursor-pointer" data-lang="en">English</li>
+          </ul>
         </div>
 
         <!-- Difficulty selector -->

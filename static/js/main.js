@@ -461,13 +461,64 @@ function setLang(lang) {
   HL.lang = lang;
   localStorage.setItem('hl_lang', lang);
   applyTranslations();
-  // Ensure lang-select matches current language
+  // sync custom dropdown / select UI
   const langSelect = document.getElementById('lang-select');
   if (langSelect) langSelect.value = HL.lang || 'es';
+  if (window._initLangDropdown) window._initLangDropdown();
   // Re-apply resolution lang if modal is open
   if (!document.getElementById('resolution-modal').classList.contains('hidden')) {
     applyResolutionLang('#modal-body');
   }
+}
+
+// Custom language dropdown behaviour
+function initLangDropdown() {
+  const wrap = document.getElementById('lang-wrap');
+  if (!wrap) return;
+  const btn = document.getElementById('lang-btn');
+  const list = document.getElementById('lang-list');
+  const selected = document.getElementById('lang-selected');
+
+  // set initial state from HL.lang
+  selected.textContent = HL.lang === 'en' ? 'English' : 'Español';
+  // mark active option
+  list.querySelectorAll('.lang-option').forEach(li => li.classList.toggle('active', li.dataset.lang === HL.lang));
+
+  function open() {
+    list.classList.remove('hidden');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+  function close() {
+    list.classList.add('hidden');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (list.classList.contains('hidden')) open(); else close();
+  });
+
+  list.addEventListener('click', (e) => {
+    const li = e.target.closest('.lang-option');
+    if (!li) return;
+    const lang = li.dataset.lang;
+    setLang(lang);
+    selected.textContent = li.textContent;
+    list.querySelectorAll('.lang-option').forEach(x => x.classList.remove('active'));
+    li.classList.add('active');
+    close();
+  });
+
+  // close when clicking outside
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) close(); });
+
+  // helper to sync UI after translations applied
+  window._initLangDropdown = () => {
+    const sel = document.getElementById('lang-selected');
+    const hl = HL.lang || 'es';
+    sel && (sel.textContent = hl === 'en' ? 'English' : 'Español');
+    list.querySelectorAll('.lang-option').forEach(li => li.classList.toggle('active', li.dataset.lang === hl));
+  };
 }
 
 function applyResolutionLang(scope) {
