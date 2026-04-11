@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
     samba \
     vsftpd \
+    openssl \
     sudo \
     vim \
     cron \

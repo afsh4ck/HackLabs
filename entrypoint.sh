@@ -188,3 +188,53 @@ echo '  [+] FTP, SSH y SMB listos.'
 
 # Run Flask (FTP/SSH/SMB handled by real system services above)
 exec python /app/app.py
+
+# Start a small HTTPS redirector on port 443 that redirects all requests to HTTP.
+# This ensures clients that auto-upgrade to HTTPS still reach the app.
+cat > /app/https_redirect.py << 'PY'
+#!/usr/bin/env python3
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import ssl
+import os
+
+IP = os.environ.get('IP', '127.0.0.1')
+PORT = 443
+
+class RedirectHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        location = f'http://{IP}{self.path}'
+        self.send_response(302)
+        self.send_header('Location', location)
+        self.end_headers()
+    def do_POST(self):
+        location = f'http://{IP}{self.path}'
+        self.send_response(302)
+        self.send_header('Location', location)
+        self.end_headers()
+    def log_message(self, format, *args):
+        return
+
+if __name__ == '__main__':
+    cert = '/app/redirect.crt'
+    key  = '/app/redirect.key'
+    # If certs missing, generate a self-signed cert
+    if not (os.path.exists(cert) and os.path.exists(key)):
+        try:
+            os.system(f"openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout {key} -out {cert} -subj '/CN={IP}' >/dev/null 2>&1")
+        except Exception:
+            pass
+    httpd = HTTPServer(('', PORT), RedirectHandler)
+    try:
+        httpd.socket = ssl.wrap_socket(httpd.socket, certfile=cert, keyfile=key, server_side=True)
+    except Exception:
+        pass
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        pass
+PY
+
+chmod +x /app/https_redirect.py || true
+python /app/https_redirect.py &
+
+exec python /app/app.py
