@@ -60,9 +60,9 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| Prompt Injection | 🟠 High | System prompt override, prompt leaking |
 | AI Jailbreak | 🟡 Medium | DAN, roleplay, instruction override |
 | Indirect Prompt Injection | 🟠 High | Payload oculto en documento analizado |
+| Prompt Injection | 🟠 High | System prompt override, prompt leaking |
 
 ---
 
