@@ -42,6 +42,7 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
+| C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
 | CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
 | CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
 | File Upload sin restricciones | 🔴 Critical | Subida de webshell sin restricciones |
