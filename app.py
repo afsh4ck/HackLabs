@@ -594,23 +594,15 @@ def login():
     client_ip = request.remote_addr
     now = time.time()
 
-    # Login automático como admin por cookie is_admin=true (GET o POST)
+    # Login automático como admin por cookie is_admin=true (GET o POST, siempre sobrescribe la sesión)
     if request.cookies.get('is_admin') == 'true':
-        if session.get('username') != 'admin':
-            db = get_db()
-            user = db.execute("SELECT * FROM users WHERE username = 'admin'").fetchone()
-            if user:
-                session['user_id'] = user['id']
-                session['username'] = user['username']
-                session['role'] = user['role']
-                success = True
-                message = f'Bienvenido, {user["username"]} (rol: {user["role"]}) [login por cookie is_admin]'
-                return render_template('labs/auth_failures.html', lab=lab, message=message, success=success)
-        else:
-            # Ya está logueado como admin
-            success = True
-            message = f'Bienvenido, admin (rol: admin) [login por cookie is_admin]'
-            return render_template('labs/auth_failures.html', lab=lab, message=message, success=success)
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE username = 'admin'").fetchone()
+        if user:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            return redirect(url_for('login'))
 
     if request.method == 'POST':
         username = request.form.get('username', '')
