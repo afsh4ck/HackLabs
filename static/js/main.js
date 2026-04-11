@@ -438,10 +438,11 @@ async function fetchGitHubStars() {
     elCount.textContent = 'N/A';
     elWrap.classList.remove('hidden');
   }
-  // Set localized tooltip/title and aria-label
+  // Set localized custom tooltip
   try {
     const title = t('gh_star_tooltip');
-    elBtn.title = title;
+    const tooltip = document.getElementById('gh-star-tooltip');
+    if (tooltip) tooltip.textContent = title;
     elBtn.setAttribute('aria-label', title);
   } catch (e) {}
 

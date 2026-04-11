@@ -1,3 +1,15 @@
+/* Custom tooltip for GitHub star */
+.gh-tooltip {
+  box-shadow: 0 4px 20px rgba(0,0,0,.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s;
+}
+.group:hover .gh-tooltip,
+.group:focus .gh-tooltip {
+  opacity: 1 !important;
+  pointer-events: auto;
+}
 /* HackLabs – Custom styles */
 
 /* ── CSS Custom Properties ── */

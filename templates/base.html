@@ -99,9 +99,10 @@
         </a>
         <!-- GitHub stars: count + quick star (opens repo) -->
         <div id="gh-stars" class="hidden sm:inline-flex items-center gap-2 ml-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95" style="background:rgba(var(--hl-primary-rgb),0.06);color:var(--hl-primary)">
-          <button id="gh-star-btn" class="inline-flex items-center gap-2 text-xs h-full" title="Abrir repositorio en GitHub">
+          <button id="gh-star-btn" class="inline-flex items-center gap-2 text-xs h-full relative group" tabindex="0">
             <i class="ph ph-star text-sm"></i>
             <span id="gh-star-count">—</span>
+            <span id="gh-star-tooltip" class="gh-tooltip group-hover:opacity-100 group-focus:opacity-100 opacity-0 pointer-events-none transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold z-50" style="background:var(--hl-primary);color:var(--hl-on-primary);white-space:nowrap;min-width:120px;text-align:center;">Poner estrella en GitHub</span>
           </button>
         </div>
 
