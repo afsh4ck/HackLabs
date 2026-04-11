@@ -132,6 +132,22 @@ main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
 }
 .nav-icon-btn:hover { background: #0e0e1e; }
 
+/* Lang select styling: visual, dark-friendly, rounded */
+#lang-wrap { display: inline-flex; align-items: center; }
+#lang-select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  height: 100%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+#lang-select:focus { outline: none; }
+#lang-select option { background: white; color: black; }
+#lang-wrap.dark { background: #1a1a2e; }
+
 /* ── Risk badges ── */
 .risk-badge-critical { background:rgba(239,68,68,.12);  border:1px solid rgba(239,68,68,.5); color:#ef4444; border-radius:4px; }
 .risk-badge-high     { background:rgba(249,115,22,.12); border:1px solid rgba(249,115,22,.5); color:#f97316; border-radius:4px; }

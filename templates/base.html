@@ -91,11 +91,12 @@
         </div>
 
         <!-- Language selector (dropdown) -->
-        <div class="hidden sm:inline-flex items-center bg-gray-100 dark:bg-dark-700 rounded-lg border border-gray-200 dark:border-gray-600">
-          <select id="lang-select" onchange="setLang(this.value)" class="bg-transparent px-3 py-1.5 text-xs font-semibold rounded-lg appearance-none outline-none" aria-label="Seleccionar idioma">
-            <option value="es">ES</option>
-            <option value="en">EN</option>
+        <div id="lang-wrap" class="hidden sm:inline-flex items-center bg-gray-100 dark:bg-dark-700 rounded-lg border border-gray-200 dark:border-gray-600 px-0.5">
+          <select id="lang-select" onchange="setLang(this.value)" class="bg-transparent pl-3 pr-7 py-1.5 text-sm font-semibold rounded-lg appearance-none outline-none" aria-label="Seleccionar idioma">
+            <option value="es">Español</option>
+            <option value="en">English</option>
           </select>
+          <i class="ph ph-caret-down text-xs opacity-60" style="margin-left:-0.6rem;pointer-events:none"></i>
         </div>
 
         <!-- Difficulty selector -->
