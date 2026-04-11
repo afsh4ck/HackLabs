@@ -835,7 +835,9 @@ def xss_reflected():
         # Filtra < y > pero no filtra inyecciones dentro de atributos existentes
         q = q.replace('<', '&lt;').replace('>', '&gt;')
 
-    return render_template('labs/xss.html', lab=lab, tab='reflected', query=q)
+    resp = make_response(render_template('labs/xss.html', lab=lab, tab='reflected', query=q))
+    resp.set_cookie('is_admin', 'true')
+    return resp
 
 @app.route('/xss/stored', methods=['GET', 'POST'])
 def xss_stored():
@@ -846,25 +848,30 @@ def xss_stored():
         author = request.form.get('author', 'Anónimo')
 
         if difficulty == 'medium':
-            # Bloquea <script>, <img>, <svg>, <iframe>, <object>, <embed>, <math>, y on* handlers
-            comment = re.sub(r'<\s*(script|img|svg|iframe|object|embed|math)', '&lt;\1', comment, flags=re.IGNORECASE)
-            comment = re.sub(r'</\s*(script|img|svg|iframe|object|embed|math)', '&lt;/\1', comment, flags=re.IGNORECASE)
-            comment = re.sub(r'\bon\w+\s*=', 'data-blocked=', comment, flags=re.IGNORECASE)
+            # Solo bloquea <script> y </script>, permite otros vectores
+            comment = re.sub(r'<\s*script', '&lt;script', comment, flags=re.IGNORECASE)
+            comment = re.sub(r'</\s*script', '&lt;/script', comment, flags=re.IGNORECASE)
         elif difficulty == 'hard':
             comment = comment.replace('<', '&lt;').replace('>', '&gt;')
 
         db = get_db()
         db.execute("INSERT INTO comments (author, body) VALUES (?, ?)", (author, comment))
         db.commit()
-        return redirect(url_for('xss_stored'))
+        resp = make_response(redirect(url_for('xss_stored')))
+        resp.set_cookie('is_admin', 'true')
+        return resp
     db = get_db()
     comments = db.execute("SELECT * FROM comments ORDER BY id DESC").fetchall()
-    return render_template('labs/xss.html', lab=lab, tab='stored', comments=comments)
+    resp = make_response(render_template('labs/xss.html', lab=lab, tab='stored', comments=comments))
+    resp.set_cookie('is_admin', 'true')
+    return resp
 
 @app.route('/xss/dom')
 def xss_dom():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
-    return render_template('labs/xss.html', lab=lab, tab='dom')
+    resp = make_response(render_template('labs/xss.html', lab=lab, tab='dom'))
+    resp.set_cookie('is_admin', 'true')
+    return resp
 
 # ─────────────────────────────────────────────
 # CSRF
@@ -880,14 +887,14 @@ def csrf_profile():
     if difficulty == 'easy':
         # Muestra todos los campos — fácil identificar qué cambiar via CSRF
         user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    elif difficulty == 'medium':
-        # Oculta campos sensibles
-        user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
-    else:
-        # Solo datos mínimos — hay que descubrir la estructura del formulario
-        user = db.execute("SELECT id, username, email FROM users WHERE id = ?", (user_id,)).fetchone()
-
-    return render_template('labs/csrf.html', lab=lab, user=user)
+        if difficulty == 'medium':
+            # Solo bloquea <script> y </script>, permite otros vectores
+            comment = re.sub(r'<\s*script', '&lt;script', comment, flags=re.IGNORECASE)
+            comment = re.sub(r'</\s*script', '&lt;/script', comment, flags=re.IGNORECASE)
+        elif difficulty == 'hard':
+            # Escapa todo < y > para bloquear XSS
+            comment = comment.replace('<', '&lt;').replace('>', '&gt;')
+        # En easy no se filtra nada
 
 @app.route('/csrf/change-password', methods=['POST'])
 def csrf_change_password():
