@@ -4,11 +4,30 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity .18s;
+  background: #18181b;
+  color: #fff;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 100%;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  min-width: 120px;
+  text-align: center;
+  z-index: 50;
 }
 .group:hover .gh-tooltip,
 .group:focus .gh-tooltip {
   opacity: 1 !important;
   pointer-events: auto;
+}
+.gh-tooltip-arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #18181b;
+  margin-top: -2px;
 }
 /* HackLabs – Custom styles */
 
