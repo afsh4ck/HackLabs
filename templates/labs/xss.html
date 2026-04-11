@@ -52,7 +52,12 @@
           <span style="color:var(--hl-primary)" class="font-semibold">{{ c['author'] }}</span>
           <span class="text-gray-400">{{ c['created'] }}</span>
         </div>
-        <div class="text-sm text-gray-800 dark:text-gray-200">{{ c['body'] | safe }}</div>
+        <div class="flex items-center gap-2">
+          <div class="text-sm text-gray-800 dark:text-gray-200">{{ c['body'] | safe }}</div>
+          <form method="POST" action="/xss/stored/delete/{{ c['id'] }}" style="margin:0;display:inline">
+            <button type="submit" class="ml-2 px-2 py-0.5 rounded bg-red-600 text-white text-xs font-bold hover:bg-red-700" title="Eliminar comentario" onclick="return confirm('¿Eliminar este comentario?')">✕</button>
+          </form>
+        </div>
       </div>
       {% endfor %}
     </div>

@@ -1,3 +1,14 @@
+@app.route('/xss/stored/delete/<int:comment_id>', methods=['POST'])
+def xss_stored_delete(comment_id):
+    # Solo permite borrar si tienes la cookie is_admin=true
+    if request.cookies.get('is_admin') != 'true':
+        return "No autorizado", 403
+    db = get_db()
+    db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+    db.commit()
+    resp = make_response(redirect(url_for('xss_stored')))
+    resp.set_cookie('is_admin', 'true')
+    return resp
 # HackLabs - Ethical Hacking Training Platform
 # ADVERTENCIA: Esta aplicación es INTENCIONALMENTE INSEGURA.
 # Úsala SOLO en entornos controlados y aislados.
