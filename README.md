@@ -79,85 +79,6 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 ### Detalle por laboratorio
 
 <details>
-<summary><strong>AI Jailbreak</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Keywords clásicos de jailbreak son suficientes: `DAN`, `modo dios`, `sin restricciones`, `jailbreak`, `developer mode`… |
-| Medium | Keywords clásicos están filtrados — necesita **roleplay/persona framing** (`actúa como`, `eres un`, `imagina que eres`…) **sin** términos Easy, **más** referencia a `flag`/`secret` |
-| Hard | Roleplay simple también filtrado — requiere **payload técnico estructurado**: `[[…]]`, ` ```override``` `, `[admin_mode]`, `<<jailbreak>>`, `//bypass//`… sin Easy ni Medium keywords |
-
-**Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar. Cambiar la dificultad limpia el historial automáticamente.
-
-</details>
-
-<details>
-<summary><strong>A07 — Authentication Failures</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin rate-limiting — brute force ilimitado |
-| Medium | Límite: 10 intentos / 30 segundos |
-| Hard | Límite: 5 intentos / 60 segundos + errores genéricos |
-
-</details>
-
-<details>
-<summary><strong>A03 — Command Injection</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin filtro — `shell=True` con inyección directa |
-| Medium | Filtra `;` y `\|` (bypass: `&&`, newlines `%0a`) |
-| Hard | Filtra `;` `\|` `&` `` ` `` `$` `()` `{}` `<` `>` (bypass: `%0a` newline) |
-
-</details>
-
-<details>
-<summary><strong>CORS Misconfiguration</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Refleja cualquier Origin + `Access-Control-Allow-Credentials: true` |
-| Medium | Solo permite orígenes `*.hacklabs.local` (bypass: subdominio) |
-| Hard | Regex estricto (bypass: prefijo de dominio similar) |
-
-</details>
-
-<details>
-<summary><strong>A02 — Cryptographic Failures</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Hash MD5 expuesto en cookie sin `HttpOnly` ni salt |
-| Medium | Cookie `HttpOnly` pero sigue siendo MD5 sin salt |
-| Hard | SHA256 con salt estático `"hacklabs"` + cookie `HttpOnly` + `SameSite` |
-
-</details>
-
-<details>
-<summary><strong>CSRF</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin protección CSRF + todos los campos del perfil visibles |
-| Medium | Verificación de header `Referer` (bypass: supresión/manipulación) |
-| Hard | Requiere header `X-CSRF-Token` en sesión (bypass: XSS para robar token) |
-
-</details>
-
-<details>
-<summary><strong>File Upload</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin validación — cualquier archivo con nombre original |
-| Medium | Blacklist de extensiones peligrosas (bypass: doble extensión `.php.jpg`) |
-| Hard | Whitelist + verificación Content-Type (bypass: magic bytes) |
-
-</details>
-
-<details>
 <summary><strong>A01 — IDOR (Broken Access Control)</strong></summary>
 
 <details>
@@ -200,24 +121,35 @@ sliver (ID) > ps
 </details>
 
 <details>
-<summary><strong>Indirect Prompt Injection</strong></summary>
+<summary><strong>A02 — Cryptographic Failures</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | El **Documento 3** preconfigurado funciona; documentos personalizados con `[SYSTEM:`, `ignore all previous`, `admin override` también funcionan |
-| Medium | Documento 3 está **sandboxed** (payload conocido, neutralizado); documentos personalizados necesitan sintaxis estructurada: `[system:]`, `ignore all previous instructions` + keyword `flag`/`confidential` |
-| Hard | Documentos predefinidos siempre fallan; custom doc necesita sintaxis técnica específica: `{"role":"system"`, `[system command]:`, `exec: reveal_flag`, `<!--system:`, `sudo: reveal`… |
+| Easy | Hash MD5 expuesto en cookie sin `HttpOnly` ni salt |
+| Medium | Cookie `HttpOnly` pero sigue siendo MD5 sin salt |
+| Hard | SHA256 con salt estático `"hacklabs"` + cookie `HttpOnly` + `SameSite` |
 
 </details>
 
 <details>
-<summary><strong>Insecure Deserialization</strong></summary>
+<summary><strong>A03 — Command Injection</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | `pickle.loads()` directo del input del usuario |
-| Medium | Blacklist de keywords (`os`, `subprocess`, `system`, `popen`...) |
-| Hard | Bloqueo de opcodes peligrosos de pickle (`R`, `i`, `c`, `0x81`) |
+| Easy | Sin filtro — `shell=True` con inyección directa |
+| Medium | Filtra `;` y `\|` (bypass: `&&`, newlines `%0a`) |
+| Hard | Filtra `;` `\|` `&` `` ` `` `$` `()` `{}` `<` `>` (bypass: `%0a` newline) |
+
+</details>
+
+<details>
+<summary><strong>A03 — SQL Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — inyección SQL directa con errores expuestos |
+| Medium | WAF básico bloquea `UNION`, `SELECT`, `DROP`, `INSERT`, `DELETE`, `--` |
+| Hard | Regex WAF agresivo `\bunion\b`, `\bselect\b`, `[';]` + errores ocultos |
 
 </details>
 
@@ -229,6 +161,116 @@ sliver (ID) > ps
 | Easy | Pregunta secreta visible + sin rate-limiting |
 | Medium | Pregunta parcialmente censurada + 5 intentos / 30s |
 | Hard | Pregunta oculta + 3 intentos / 60s + errores genéricos |
+
+</details>
+
+<details>
+<summary><strong>A05 — Security Misconfiguration</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Panel `/admin` sin autenticación — acceso total |
+| Medium | Requiere cookie `is_admin=true` (bypass: editar cookie) |
+| Hard | Requiere header `X-Admin-Token: hacklabs-admin-2024` |
+
+</details>
+
+<details>
+<summary><strong>A06 — Outdated Components</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro XSS — inyección de tags directa |
+| Medium | Filtra `<script>` pero no event handlers ni otros tags |
+| Hard | Filtra `<` y `>` (bypass: atributos inline) |
+
+</details>
+
+<details>
+<summary><strong>A07 — Authentication Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin rate-limiting — brute force ilimitado |
+| Medium | Límite: 10 intentos / 30 segundos |
+| Hard | Límite: 5 intentos / 60 segundos + errores genéricos |
+
+</details>
+
+<details>
+<summary><strong>A08 — Software & Data Integrity Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Campo `role` editable vía API + todos los campos visibles |
+| Medium | `role` bloqueado en PUT + vista sin campo role |
+| Hard | Solo `email` editable + requiere header Authorization + vista mínima |
+
+</details>
+
+<details>
+<summary><strong>A09 — Security Logging & Monitoring Failures</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin logging — el atacante es invisible |
+| Medium | Solo registra logins exitosos con IP (fallos invisibles) |
+| Hard | Registra éxitos y fallos pero sin IP (auditoría incompleta) |
+
+</details>
+
+<details>
+<summary><strong>A10 — SSRF</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin filtro — SSRF a servicios internos directamente |
+| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal, 0x7f000001) |
+| Hard | Bloquea rangos privados (bypass: DNS rebinding, IPv6) |
+
+</details>
+
+<details>
+<summary><strong>CORS Misconfiguration</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Refleja cualquier Origin + `Access-Control-Allow-Credentials: true` |
+| Medium | Solo permite orígenes `*.hacklabs.local` (bypass: subdominio) |
+| Hard | Regex estricto (bypass: prefijo de dominio similar) |
+
+</details>
+
+<details>
+<summary><strong>CSRF</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin protección CSRF + todos los campos del perfil visibles |
+| Medium | Verificación de header `Referer` (bypass: supresión/manipulación) |
+| Hard | Requiere header `X-CSRF-Token` en sesión (bypass: XSS para robar token) |
+
+</details>
+
+<details>
+<summary><strong>File Upload</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin validación — cualquier archivo con nombre original |
+| Medium | Blacklist de extensiones peligrosas (bypass: doble extensión `.php.jpg`) |
+| Hard | Whitelist + verificación Content-Type (bypass: magic bytes) |
+
+</details>
+
+<details>
+<summary><strong>Insecure Deserialization</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | `pickle.loads()` directo del input del usuario |
+| Medium | Blacklist de keywords (`os`, `subprocess`, `system`, `popen`...) |
+| Hard | Bloqueo de opcodes peligrosos de pickle (`R`, `i`, `c`, `0x81`) |
 
 </details>
 
@@ -266,17 +308,6 @@ sliver (ID) > ps
 </details>
 
 <details>
-<summary><strong>A06 — Outdated Components</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin filtro XSS — inyección de tags directa |
-| Medium | Filtra `<script>` pero no event handlers ni otros tags |
-| Hard | Filtra `<` y `>` (bypass: atributos inline) |
-
-</details>
-
-<details>
 <summary><strong>Path Traversal / LFI</strong></summary>
 
 | Nivel | Comportamiento |
@@ -299,15 +330,13 @@ sliver (ID) > ps
 </details>
 
 <details>
-<summary><strong>Prompt Injection</strong></summary>
+<summary><strong>SSTI — Server-Side Template Injection</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | Sin protección — cualquier keyword de inyección, reveal+secret o petición directa del system prompt funciona |
-| Medium | Filtro de inyección natural — requiere **marcadores estructurales** (`\n`, `---`, `system:`, `override:`, `[…]:`) junto con intención de revelar |
-| Hard | Solo sintaxis técnica específica de LLM: `###`, `[system:`, `<\|system\|>`, `ignore all previous instructions`, `admin override:`, `<!--system`, etc. |
-
-**Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar la conversación. Cambiar la dificultad limpia el historial automáticamente.
+| Easy | Sin filtro — inyección Jinja2 directa `{{ 7*7 }}` |
+| Medium | Bloquea `{{ }}` (bypass: `{% print 7*7 %}`) |
+| Hard | Bloquea `{{ }}`, `{% %}` y keywords peligrosos |
 
 </details>
 
@@ -333,72 +362,6 @@ sliver (ID) > ps
 </details>
 
 <details>
-<summary><strong>A09 — Security Logging & Monitoring Failures</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin logging — el atacante es invisible |
-| Medium | Solo registra logins exitosos con IP (fallos invisibles) |
-| Hard | Registra éxitos y fallos pero sin IP (auditoría incompleta) |
-
-</details>
-
-<details>
-<summary><strong>A05 — Security Misconfiguration</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Panel `/admin` sin autenticación — acceso total |
-| Medium | Requiere cookie `is_admin=true` (bypass: editar cookie) |
-| Hard | Requiere header `X-Admin-Token: hacklabs-admin-2024` |
-
-</details>
-
-<details>
-<summary><strong>SSTI — Server-Side Template Injection</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin filtro — inyección Jinja2 directa `{{ 7*7 }}` |
-| Medium | Bloquea `{{ }}` (bypass: `{% print 7*7 %}`) |
-| Hard | Bloquea `{{ }}`, `{% %}` y keywords peligrosos |
-
-</details>
-
-<details>
-<summary><strong>A08 — Software & Data Integrity Failures</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Campo `role` editable vía API + todos los campos visibles |
-| Medium | `role` bloqueado en PUT + vista sin campo role |
-| Hard | Solo `email` editable + requiere header Authorization + vista mínima |
-
-</details>
-
-<details>
-<summary><strong>A03 — SQL Injection</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin filtro — inyección SQL directa con errores expuestos |
-| Medium | WAF básico bloquea `UNION`, `SELECT`, `DROP`, `INSERT`, `DELETE`, `--` |
-| Hard | Regex WAF agresivo `\bunion\b`, `\bselect\b`, `[';]` + errores ocultos |
-
-</details>
-
-<details>
-<summary><strong>A10 — SSRF</strong></summary>
-
-| Nivel | Comportamiento |
-|-------|---------------|
-| Easy | Sin filtro — SSRF a servicios internos directamente |
-| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal, 0x7f000001) |
-| Hard | Bloquea rangos privados (bypass: DNS rebinding, IPv6) |
-
-</details>
-
-<details>
 <summary><strong>XXE — XML External Entity</strong></summary>
 
 | Nivel | Comportamiento |
@@ -406,6 +369,43 @@ sliver (ID) > ps
 | Easy | Sin protección XXE — `resolve_entities` habilitado |
 | Medium | Bloquea protocolo `file://` (bypass: SSRF con `http://` a servicios internos) |
 | Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` case-insensitive |
+
+</details>
+
+<details>
+<summary><strong>AI Jailbreak</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Keywords clásicos de jailbreak son suficientes: `DAN`, `modo dios`, `sin restricciones`, `jailbreak`, `developer mode`… |
+| Medium | Keywords clásicos están filtrados — necesita **roleplay/persona framing** (`actúa como`, `eres un`, `imagina que eres`…) **sin** términos Easy, **más** referencia a `flag`/`secret` |
+| Hard | Roleplay simple también filtrado — requiere **payload técnico estructurado**: `[[…]]`, ` ```override``` `, `[admin_mode]`, `<<jailbreak>>`, `//bypass//`… sin Easy ni Medium keywords |
+
+**Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar. Cambiar la dificultad limpia el historial automáticamente.
+
+</details>
+
+<details>
+<summary><strong>Indirect Prompt Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | El **Documento 3** preconfigurado funciona; documentos personalizados con `[SYSTEM:`, `ignore all previous`, `admin override` también funcionan |
+| Medium | Documento 3 está **sandboxed** (payload conocido, neutralizado); documentos personalizados necesitan sintaxis estructurada: `[system:]`, `ignore all previous instructions` + keyword `flag`/`confidential` |
+| Hard | Documentos predefinidos siempre fallan; custom doc necesita sintaxis técnica específica: `{"role":"system"`, `[system command]:`, `exec: reveal_flag`, `<!--system:`, `sudo: reveal`… |
+
+</details>
+
+<details>
+<summary><strong>Prompt Injection</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin protección — cualquier keyword de inyección, reveal+secret o petición directa del system prompt funciona |
+| Medium | Filtro de inyección natural — requiere **marcadores estructurales** (`\n`, `---`, `system:`, `override:`, `[…]:`) junto con intención de revelar |
+| Hard | Solo sintaxis técnica específica de LLM: `###`, `[system:`, `<\|system\|>`, `ignore all previous instructions`, `admin override:`, `<!--system`, etc. |
+
+**Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar la conversación. Cambiar la dificultad limpia el historial automáticamente.
 
 </details>
 ## 🚀 Despliegue
