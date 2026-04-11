@@ -211,6 +211,9 @@ main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
   font-weight: 700;
 }
 
+/* Ensure lang menu matches difficulty menu visuals when used as header control */
+#lang-menu { background:#1a1a2e; }
+
 /* ── Inputs ── */
 .hl-input {
   width: 100%;

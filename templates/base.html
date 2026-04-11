@@ -90,16 +90,30 @@
           </button>
         </div>
 
-        <!-- Language selector (dropdown) -->
-        <div id="lang-wrap" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition bg-gray-100 dark:bg-dark-700 border border-gray-200 dark:border-gray-600 relative">
-          <div id="lang-btn" class="inline-flex items-center gap-2 text-xs font-bold cursor-pointer" role="button" aria-haspopup="listbox" aria-expanded="false">
+        <!-- Language selector (dropdown) — same design/behavior as Difficulty -->
+        <div id="lang-wrap" class="hidden sm:inline-flex items-center gap-1.5 relative">
+          <button onclick="toggleLanguageMenu()" id="lang-btn"
+                  class="difficulty-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition"
+                  type="button" aria-haspopup="true" aria-expanded="false">
+            <i class="ph ph-translate text-sm"></i>
             <span id="lang-selected">Español</span>
             <i class="ph ph-caret-down text-xs opacity-60"></i>
+          </button>
+          <div id="lang-menu"
+               class="hidden absolute right-0 mt-1.5 w-40 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+               style="background:#1a1a2e"
+               role="menu" aria-label="Seleccionar idioma">
+            <button onclick="setLang('es')" type="button"
+                    class="diff-option flex items-center gap-2 w-full px-3 py-2 text-xs transition hover:bg-white/5" id="lang-es">
+              <span class="font-semibold">Español</span>
+              <span class="ml-auto" aria-hidden></span>
+            </button>
+            <button onclick="setLang('en')" type="button"
+                    class="diff-option flex items-center gap-2 w-full px-3 py-2 text-xs transition hover:bg-white/5" id="lang-en">
+              <span class="font-semibold">English</span>
+              <span class="ml-auto" aria-hidden></span>
+            </button>
           </div>
-          <ul id="lang-list" class="hidden absolute right-0 mt-2 w-40 rounded-lg shadow-lg z-50" role="listbox" aria-label="Seleccionar idioma">
-            <li class="lang-option px-3 py-2 text-sm cursor-pointer" data-lang="es">Español</li>
-            <li class="lang-option px-3 py-2 text-sm cursor-pointer" data-lang="en">English</li>
-          </ul>
         </div>
 
         <!-- Difficulty selector -->
@@ -300,11 +314,21 @@
         const diffMenu = document.getElementById('difficulty-menu');
         if (diffMenu) diffMenu.classList.add('hidden');
       }
+      // Close language menu when clicking outside
+      const langWrap = document.getElementById('lang-wrap');
+      if (langWrap && !langWrap.contains(e.target)) {
+        const langMenu = document.getElementById('lang-menu');
+        if (langMenu) langMenu.classList.add('hidden');
+      }
     });
 
     /* ── Difficulty selector ── */
     function toggleDifficultyMenu() {
       var menu = document.getElementById('difficulty-menu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+    function toggleLanguageMenu() {
+      var menu = document.getElementById('lang-menu');
       if (menu) menu.classList.toggle('hidden');
     }
     function setDifficulty(level) {
