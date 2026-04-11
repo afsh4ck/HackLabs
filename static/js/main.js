@@ -475,7 +475,15 @@ function setLang(lang) {
   // Actualiza el estado activo en el botón
   ['es', 'en'].forEach(l => {
     const btn = document.getElementById('lang-' + l);
-    if (btn) btn.classList.toggle('active', l === lang);
+    if (btn) {
+      btn.classList.toggle('active', l === lang);
+      // Aplica color amarillo al texto de la opción activa
+      if (l === lang) {
+        btn.querySelector('span.font-semibold').style.color = '#CEFF00';
+      } else {
+        btn.querySelector('span.font-semibold').style.color = '';
+      }
+    }
   });
   applyTranslations();
   // sync custom dropdown / select UI
