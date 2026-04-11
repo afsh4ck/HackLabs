@@ -235,6 +235,33 @@ if __name__ == '__main__':
 PY
 
 chmod +x /app/https_redirect.py || true
-python /app/https_redirect.py &
+# Generate self-signed cert with SAN for the container IP (use openssl -addext if available)
+if [ ! -f /app/redirect.crt ] || [ ! -f /app/redirect.key ]; then
+    echo "  [*] Generating self-signed cert for HTTPS redirect..."
+    if command -v openssl >/dev/null 2>&1; then
+        # Try using -addext (OpenSSL >=1.1.1)
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout /app/redirect.key -out /app/redirect.crt -subj "/CN=${IP}" \
+            -addext "subjectAltName=IP:${IP}" >/dev/null 2>&1 || \
+        {
+            # Fallback: create a minimal config file for SAN
+            cat > /tmp/openssl_san.cnf <<-EOF
+[req]
+distinguished_name = req_distinguished_name
+[req_distinguished_name]
+[v3_req]
+subjectAltName = @alt_names
+[alt_names]
+IP.1 = ${IP}
+EOF
+            openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+                -keyout /app/redirect.key -out /app/redirect.crt -subj "/CN=${IP}" \
+                -extensions v3_req -config /tmp/openssl_san.cnf >/dev/null 2>&1 || true
+        }
+    fi
+fi
+
+# Export IP for the redirector and start it
+IP=${IP} python /app/https_redirect.py &
 
 exec python /app/app.py
