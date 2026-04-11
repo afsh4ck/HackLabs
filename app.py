@@ -53,6 +53,8 @@ def force_admin_cookie():
         if user:
             session['user_id'] = user['id']
             session['username'] = user['username']
+            # `app_user` is used by templates/navbar to show logged user
+            session['app_user'] = user['username']
             session['role'] = user['role']
 
 @app.after_request
