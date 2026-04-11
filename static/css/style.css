@@ -213,6 +213,12 @@ main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
 
 /* Ensure lang menu matches difficulty menu visuals when used as header control */
 #lang-menu { background:#1a1a2e; }
+.lang-menu-border {
+  border: 1.5px solid #e5e7eb !important;
+}
+.dark .lang-menu-border {
+  border: 1.5px solid #374151 !important;
+}
 
 /* ── Inputs ── */
 .hl-input {
