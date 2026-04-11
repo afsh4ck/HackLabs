@@ -695,3 +695,12 @@ pre.hljs-block .hljs {
 .diff-option--medium:hover, .diff-option--medium.active { color: #f59e0b; }
 .diff-option--hard:hover,   .diff-option--hard.active   { color: #ef4444; }
 .diff-option.active { font-weight: 800; }
+
+/* Hover amarillo para enlaces en contenido de labs y referencias */
+.hl-card a:hover, .lang-content a:hover, .lab-section a:hover {
+  color: var(--hl-primary);
+  background: rgba(var(--hl-primary-rgb), 0.08);
+  border-radius: 4px;
+  padding: 0 0.15rem;
+  transition: background 0.12s, color 0.12s;
+}
