@@ -853,6 +853,8 @@ function showToast(msg) {
   applyTranslations();
   initCodeHighlight();
   initCustomSelects();
+  // initialize custom language dropdown (styles+handlers)
+  try { initLangDropdown(); } catch(e) {}
   initSidebarSearch();
 
   // Dynamic footer year
