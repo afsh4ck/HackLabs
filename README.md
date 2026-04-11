@@ -408,6 +408,9 @@ sliver (ID) > ps
 **Chat:** el historial persiste en sesión. Usa el botón **Reset** para limpiar la conversación. Cambiar la dificultad limpia el historial automáticamente.
 
 </details>
+
+---
+
 ## 🚀 Despliegue
 
 ### ⭐ Opción 1 — Docker con IP propia en LAN (recomendado)
