@@ -58,6 +58,7 @@ const T = {
     btn_search:      'Buscar',
     btn_render:      'Renderizar',
     btn_fetch:       'Obtener',
+    gh_star_tooltip: 'Poner estrella en GitHub',
     btn_read:        'Leer',
     btn_ping:        'Ping',
     btn_upload:      'Subir archivo',
@@ -241,6 +242,7 @@ const T = {
     btn_search:      'Search',
     btn_render:      'Render',
     btn_fetch:       'Fetch',
+    gh_star_tooltip: 'Star on GitHub',
     btn_read:        'Read',
     btn_ping:        'Ping',
     btn_upload:      'Upload',
@@ -436,6 +438,12 @@ async function fetchGitHubStars() {
     elCount.textContent = 'N/A';
     elWrap.classList.remove('hidden');
   }
+  // Set localized tooltip/title and aria-label
+  try {
+    const title = t('gh_star_tooltip');
+    elBtn.title = title;
+    elBtn.setAttribute('aria-label', title);
+  } catch (e) {}
 
   // Click behavior: open repo page so user can star easily (requires GitHub login)
   elBtn.addEventListener('click', (e) => {
