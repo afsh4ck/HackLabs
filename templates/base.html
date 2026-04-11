@@ -40,8 +40,23 @@
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=8" />
 
-  <!-- Inject saved theme before render to avoid flash -->
-  <script>(function(){ document.documentElement.classList.add('dark'); })();</script>
+  <!-- Inject saved theme and sidebar state before render to avoid flash -->
+  <script>
+    (function(){
+      document.documentElement.classList.add('dark');
+      try {
+        var sidebar = localStorage.getItem('hl_sidebar');
+        var cls = (sidebar === 'closed') ? 'sidebar-closed' : 'sidebar-open';
+        document.addEventListener('DOMContentLoaded', function() {
+          var sb = document.getElementById('sidebar');
+          if (sb) {
+            sb.classList.remove('sidebar-open', 'sidebar-closed');
+            sb.classList.add(cls);
+          }
+        });
+      } catch(e){}
+    })();
+  </script>
 </head>
 
 <body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
