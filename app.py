@@ -846,8 +846,10 @@ def xss_stored():
         author = request.form.get('author', 'Anónimo')
 
         if difficulty == 'medium':
-            comment = re.sub(r'<\s*script', '&lt;script', comment, flags=re.IGNORECASE)
-            comment = re.sub(r'</\s*script', '&lt;/script', comment, flags=re.IGNORECASE)
+            # Bloquea <script>, <img>, <svg>, <iframe>, <object>, <embed>, <math>, y on* handlers
+            comment = re.sub(r'<\s*(script|img|svg|iframe|object|embed|math)', '&lt;\1', comment, flags=re.IGNORECASE)
+            comment = re.sub(r'</\s*(script|img|svg|iframe|object|embed|math)', '&lt;/\1', comment, flags=re.IGNORECASE)
+            comment = re.sub(r'\bon\w+\s*=', 'data-blocked=', comment, flags=re.IGNORECASE)
         elif difficulty == 'hard':
             comment = comment.replace('<', '&lt;').replace('>', '&gt;')
 
