@@ -203,6 +203,7 @@ def get_lab_list():
         {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',      'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                 'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'xxe',                'title': 'XXE – XML External Entity',                  'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'c2_sliver',          'title': 'C2 – Sliver Command & Control',              'category': 'Vulnerabilidades', 'risk': 'critical'},
         # IA Attacks
         {'id': 'ai_jailbreak',       'title': 'AI Jailbreak',                                'category': 'IA Attacks',       'risk': 'medium'},
         {'id': 'indirect_injection', 'title': 'Indirect Prompt Injection',                   'category': 'IA Attacks',       'risk': 'high'},
@@ -262,14 +263,18 @@ def inject_labs():
 
     difficulty = session.get('difficulty', 'easy')
 
+    # Ordena labs alfabéticamente por título para mostrar secciones ordenadas
+    all_labs_sorted = sorted(get_lab_list(), key=lambda l: l['title'].lower())
+
     return {
-        'all_labs': get_lab_list(),
+        'all_labs': all_labs_sorted,
         'current_lab_id': current_lab_id,
         'target_ip': target_ip,
         'target_port': target_port,
         'target_base': target_base,
         'target_hydra': target_hydra,
         'difficulty': difficulty,
+        'client_ip': request.remote_addr,
     }
 
 # ─────────────────────────────────────────────
