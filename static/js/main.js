@@ -461,6 +461,9 @@ function setLang(lang) {
   HL.lang = lang;
   localStorage.setItem('hl_lang', lang);
   applyTranslations();
+  // Ensure lang-select matches current language
+  const langSelect = document.getElementById('lang-select');
+  if (langSelect) langSelect.value = HL.lang || 'es';
   // Re-apply resolution lang if modal is open
   if (!document.getElementById('resolution-modal').classList.contains('hidden')) {
     applyResolutionLang('#modal-body');
