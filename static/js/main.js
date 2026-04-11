@@ -419,6 +419,36 @@ function applyTranslations() {
   applyResolutionLang('body');
 }
 
+// ── GitHub stars helper ──────────────────────────────────────────
+async function fetchGitHubStars() {
+  const repo = 'afsh4ck/HackLabs';
+  const elWrap = document.getElementById('gh-stars');
+  const elCount = document.getElementById('gh-star-count');
+  const elBtn = document.getElementById('gh-star-btn');
+  if (!elWrap || !elCount || !elBtn) return;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}`);
+    if (!res.ok) throw new Error('GitHub API error');
+    const data = await res.json();
+    elCount.textContent = (data.stargazers_count || 0).toLocaleString();
+    elWrap.classList.remove('hidden');
+  } catch (err) {
+    elCount.textContent = 'N/A';
+    elWrap.classList.remove('hidden');
+  }
+
+  // Click behavior: open repo page so user can star easily (requires GitHub login)
+  elBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.open('https://github.com/afsh4ck/HackLabs', '_blank');
+  });
+}
+
+// Init on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  try { fetchGitHubStars(); } catch (e) {}
+});
+
 function setLang(lang) {
   HL.lang = lang;
   localStorage.setItem('hl_lang', lang);
