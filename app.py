@@ -1,40 +1,6 @@
-# --- Middleware para forzar login admin por cookie y setear is_admin=false por defecto ---
-@app.before_request
-def force_admin_cookie():
-    # Si la ruta es estática o favicon, no modificar
-    if request.path.startswith('/static/') or request.path.startswith('/favicon'):
-        return
-    # Si la cookie is_admin=true y no estamos logueados como admin, fuerza sesión admin
-    if request.cookies.get('is_admin') == 'true' and session.get('username') != 'admin':
-        db = get_db()
-        user = db.execute("SELECT * FROM users WHERE username = 'admin'").fetchone()
-        if user:
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            session['role'] = user['role']
-
-@app.after_request
-def set_is_admin_cookie(response):
-    # Si ya se está seteando explícitamente, no tocar
-    if 'is_admin' in response.headers.get('Set-Cookie', ''):
-        return response
-    # Si está logueado como admin, deja la cookie como está
-    if session.get('username') == 'admin':
-        response.set_cookie('is_admin', 'true')
-    else:
-        response.set_cookie('is_admin', 'false')
-    return response
-@app.route('/xss/stored/delete/<int:comment_id>', methods=['POST'])
-def xss_stored_delete(comment_id):
-    # Solo permite borrar si tienes la cookie is_admin=true
-    if request.cookies.get('is_admin') != 'true':
-        return "No autorizado", 403
-    db = get_db()
-    db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
-    db.commit()
-    resp = make_response(redirect(url_for('xss_stored')))
-    resp.set_cookie('is_admin', 'true')
-    return resp
+# HackLabs - Ethical Hacking Training Platform
+# ADVERTENCIA: Esta aplicación es INTENCIONALMENTE INSEGURA.
+# Úsala SOLO en entornos controlados y aislados.
 # HackLabs - Ethical Hacking Training Platform
 # ADVERTENCIA: Esta aplicación es INTENCIONALMENTE INSEGURA.
 # Úsala SOLO en entornos controlados y aislados.
@@ -73,6 +39,46 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
 # Rate-limit store for bruteforce (medium/hard difficulty)
 _bruteforce_attempts = defaultdict(list)
+
+# --- Middleware para forzar login admin por cookie y setear is_admin=false por defecto ---
+@app.before_request
+def force_admin_cookie():
+    # Si la ruta es estática o favicon, no modificar
+    if request.path.startswith('/static/') or request.path.startswith('/favicon'):
+        return
+    # Si la cookie is_admin=true y no estamos logueados como admin, fuerza sesión admin
+    if request.cookies.get('is_admin') == 'true' and session.get('username') != 'admin':
+        db = get_db()
+        user = db.execute("SELECT * FROM users WHERE username = 'admin'").fetchone()
+        if user:
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+
+@app.after_request
+def set_is_admin_cookie(response):
+    # Si ya se está seteando explícitamente, no tocar
+    if 'is_admin' in response.headers.get('Set-Cookie', ''):
+        return response
+    # Si está logueado como admin, deja la cookie como está
+    if session.get('username') == 'admin':
+        response.set_cookie('is_admin', 'true')
+    else:
+        response.set_cookie('is_admin', 'false')
+    return response
+
+
+@app.route('/xss/stored/delete/<int:comment_id>', methods=['POST'])
+def xss_stored_delete(comment_id):
+    # Solo permite borrar si tienes la cookie is_admin=true
+    if request.cookies.get('is_admin') != 'true':
+        return "No autorizado", 403
+    db = get_db()
+    db.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+    db.commit()
+    resp = make_response(redirect(url_for('xss_stored')))
+    resp.set_cookie('is_admin', 'true')
+    return resp
 
 # ─────────────────────────────────────────────
 # Base de datos
