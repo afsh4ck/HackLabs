@@ -149,7 +149,12 @@ main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
 #lang-wrap.dark { background: #1a1a2e; }
 
 /* Custom language dropdown list styling */
-#lang-list { background: #0f1724; border: 1px solid rgba(255,255,255,0.04); }
+#lang-list {
+  background: #0f1724;
+  border: 1px solid rgba(255,255,255,0.04);
+  z-index: 40; /* ensure primary header dropdowns (z-50) sit above this */
+  transform-origin: top right;
+}
 #lang-list .lang-option { color: #d1d5db; border-radius: 0.5rem; }
 #lang-list .lang-option:hover { background: rgba(255,255,255,0.03); color: #fff; }
 #lang-list .lang-option.active { background: rgba(var(--hl-primary-rgb),0.12); color: var(--hl-primary); }
