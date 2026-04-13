@@ -7,7 +7,7 @@
 > ⚠️ **ADVERTENCIA**: Esta aplicación es intencionalmente insegura. Úsala SOLO en entornos aislados (máquina virtual, red local sin internet). Nunca la expongas públicamente.
 
 ## Video: Hands On
-https://youtu.be/pZFGQj3XrX8
+[![HackLabs Preview](https://img.youtube.com/vi/pZFGQj3XrX8/0.jpg)](https://www.youtube.com/watch?v=pZFGQj3XrX8)
 
 ---
 
