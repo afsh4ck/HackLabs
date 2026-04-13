@@ -6,11 +6,14 @@
 
 > ⚠️ **ADVERTENCIA**: Esta aplicación es intencionalmente insegura. Úsala SOLO en entornos aislados (máquina virtual, red local sin internet). Nunca la expongas públicamente.
 
+## Video: Hands On
+https://youtu.be/pZFGQj3XrX8
+
 ---
 
 ## 🎯 Características
 
-- **26 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **27 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
