@@ -5,7 +5,6 @@
 <div class="p-6 lg:p-8 max-w-6xl mx-auto">
   <!-- Favicon y CSS internos forzados a HTTP -->
   <link rel="icon" type="image/png" href="http://{{ request.host }}/static/files/favicon.png">
-  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css">
 
   <!-- ── Hero ── -->
   <div class="mb-10 text-center relative">
@@ -108,42 +107,45 @@
   } %}
 
   {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'IA Attacks': 'ia-attacks'} %}
-  {% set categories = all_labs | map(attribute='category') | unique | list %}
-  {% for cat in categories %}
-  {% set cat_slug = cat_slug_map.get(cat, '') %}
-  <div class="lab-section mb-10">
-    <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-3">
-      <span class="w-1 h-6 rounded-full inline-block flex-shrink-0" style="background:var(--hl-primary)"></span>
-      <a href="/category/{{ cat_slug }}" class="transition-colors duration-150" style="color:inherit" onmouseover="this.style.color='var(--hl-primary)'" onmouseout="this.style.color=''" data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</a>
-      <span class="text-sm text-gray-500 font-normal">
-        · {{ all_labs | selectattr('category', 'eq', cat) | list | length }} <span data-i18n="lab_cat_count">labs</span>
-      </span>
-    </h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {% for l in all_labs if l.category == cat %}
-      {% set icon_info = lab_icons.get(l.id, ('ph-shield', l.title)) %}
-      <a href="/lab/{{ l.id }}" data-risk="{{ l.risk }}"
-        class="lab-card group bg-white dark:bg-dark-800 rounded-xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-dark-900/60 block relative overflow-hidden">
+  {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'IA Attacks'] %}
+  {% for cat in desired_order %}
+    {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
+    {% if labs_in_cat %}
+    {% set cat_slug = cat_slug_map.get(cat, '') %}
+    <div class="lab-section mb-10">
+      <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-3">
+        <span class="w-1 h-6 rounded-full inline-block flex-shrink-0" style="background:var(--hl-primary)"></span>
+        <a href="/category/{{ cat_slug }}" class="transition-colors duration-150" style="color:inherit" onmouseover="this.style.color='var(--hl-primary)'" onmouseout="this.style.color=''" data-i18n="cat_{{ cat | lower | replace(' ', '_') }}">{{ cat }}</a>
+        <span class="text-sm text-gray-500 font-normal">
+          · {{ labs_in_cat | length }} <span data-i18n="lab_cat_count">labs</span>
+        </span>
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for l in labs_in_cat %}
+        {% set icon_info = lab_icons.get(l.id, ('ph-shield', l.title)) %}
+        <a href="/lab/{{ l.id }}" data-risk="{{ l.risk }}"
+          class="lab-card group bg-white dark:bg-dark-800 rounded-xl p-5 transition duration-200 block relative overflow-hidden">
 
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
-               style="background:rgba(var(--hl-primary-rgb),.12)">
-            <i class="ph {{ icon_info[0] }} text-xl" style="color:var(--hl-primary)"></i>
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
+                 style="background:rgba(var(--hl-primary-rgb),.12)">
+              <i class="ph {{ icon_info[0] }} text-xl" style="color:var(--hl-primary)"></i>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-{{ l.risk }}">{{ l.risk }}</span>
           </div>
-          <span class="text-xs px-2 py-0.5 rounded-full font-semibold risk-badge-{{ l.risk }}">{{ l.risk }}</span>
-        </div>
 
-        <h3 class="font-semibold text-sm text-gray-800 dark:text-gray-200 leading-snug mb-1">{{ l.title }}</h3>
-        <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">{{ icon_info[1] }}</p>
+          <h3 class="font-semibold text-sm text-gray-800 dark:text-gray-200 leading-snug mb-1">{{ l.title }}</h3>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mb-4">{{ icon_info[1] }}</p>
 
-        <div class="flex items-center gap-1 text-xs font-medium" style="color:var(--hl-primary)">
-          <i class="ph ph-arrow-right text-sm transition-transform duration-200 group-hover:translate-x-1"></i>
-          <span data-i18n="open_lab">Abrir lab</span>
-        </div>
-      </a>
-      {% endfor %}
+          <div class="flex items-center gap-1 text-xs font-medium" style="color:var(--hl-primary)">
+            <i class="ph ph-arrow-right text-sm transition-transform duration-200 group-hover:translate-x-1"></i>
+            <span data-i18n="open_lab">Abrir lab</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+    {% endif %}
   {% endfor %}
 
   <!-- ── Credentials ── -->

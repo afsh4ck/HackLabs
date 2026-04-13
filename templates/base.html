@@ -221,7 +221,6 @@
           </div>
         </div>
 
-        {% set categories = all_labs | map(attribute='category') | unique | list %}
         {% set sidebar_icons = {
           'idor':            'ph-identification-badge',
           'crypto':          'ph-lock-key-open',
@@ -251,17 +250,19 @@
           'indirect_injection':'ph-arrows-in',
         } %}
 
-        {% for cat in categories %}
-          {% set cat_id = cat | lower | replace(' ', '_') %}
-          <div class="sidebar-category" data-cat="{{ cat_id }}">
-            <button onclick="toggleCategory('{{ cat_id }}')"
+        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'IA Attacks'] %}
+        {% for cat in desired_order %}
+          {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
+          {% if labs_in_cat %}
+          <div class="sidebar-category" data-cat="{{ cat | lower | replace(' ', '_') }}">
+            <button onclick="toggleCategory('{{ cat | lower | replace(' ', '_') }}')"
                     class="sidebar-cat-toggle w-full flex items-center justify-between px-3 pt-4 pb-1 group">
               <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest"
-                    data-i18n="cat_{{ cat_id }}">{{ cat }}</span>
+                    data-i18n="cat_{{ (cat | lower | replace(' ', '_')) }}">{{ cat }}</span>
               <i class="ph ph-caret-down sidebar-caret text-gray-500 text-xs transition-transform duration-200 group-hover:text-gray-300"></i>
             </button>
-            <div class="sidebar-cat-items" id="cat-{{ cat_id }}">
-              {% for l in all_labs if l.category == cat %}
+            <div class="sidebar-cat-items" id="cat-{{ cat | lower | replace(' ', '_') }}">
+              {% for l in labs_in_cat %}
               <a href="/lab/{{ l.id }}"
                  class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition {% if current_lab_id == l.id %}active{% endif %}">
                 <i class="ph {{ sidebar_icons.get(l.id, 'ph-shield') }} text-base flex-shrink-0 opacity-70"></i>
@@ -270,7 +271,9 @@
               {% endfor %}
             </div>
           </div>
+          {% endif %}
         {% endfor %}
+        
       </nav>
     </aside>
 
