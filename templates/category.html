@@ -132,7 +132,7 @@
     {% for l in labs %}
     {% set icon_info = lab_icons.get(l.id, ('ph-shield', l.title)) %}
     <a href="/lab/{{ l.id }}" data-risk="{{ l.risk }}"
-       class="lab-card group bg-white dark:bg-dark-800 rounded-xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-dark-900/60 block relative overflow-hidden">
+      class="lab-card group bg-white dark:bg-dark-800 rounded-xl p-5 transition duration-200 block relative overflow-hidden">
 
       <div class="flex items-start justify-between mb-4">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-110"
