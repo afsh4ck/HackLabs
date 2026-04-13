@@ -469,10 +469,8 @@ select.hl-input { display: none !important; }
 /* ── Lab card ── */
 .lab-card {
   border: 1px solid transparent;
-  transition: transform 0.18s cubic-bezier(.2,.8,.2,1),
-              box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
-  /* Mejorar renderizado en Chrome: permitir transform pero con aceleración GPU */
-  will-change: transform, box-shadow, border-color, background-color;
+  transition: transform 0.18s cubic-bezier(.2,.8,.2,1), box-shadow 0.15s, border-color 0.15s, background-color 0.15s, color 0.15s;
+  will-change: transform, box-shadow, border-color, background-color, color;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   -webkit-transform: translateZ(0);
@@ -482,7 +480,9 @@ select.hl-input { display: none !important; }
   border: 1px solid var(--hl-primary);
   transform: translateY(-6px);
   box-shadow: 0 10px 28px rgba(0,0,0,0.26);
-  background: rgba(var(--hl-primary-rgb),0.03);
+  background: rgba(var(--hl-primary-rgb),0.03) !important;
+  padding: 1.25rem !important;
+  border-radius: 0.875rem !important;
 }
 
 /* ── Code blocks ── */
