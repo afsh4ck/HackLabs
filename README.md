@@ -425,6 +425,9 @@ Despliega HackLabs como si fuera una máquina vulnerable real: con su propia IP 
 **Requisitos:** Docker instalado y ejecutándose en Kali Linux.
 
 ```bash
+# Instalar Docker en Kali
+sudo apt install -y docker.io
+# Clonar el repositorio y ejecutar
 git clone https://github.com/afsh4ck/HackLabs.git
 cd HackLabs
 sudo bash deploy.sh
