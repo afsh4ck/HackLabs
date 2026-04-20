@@ -2,10 +2,11 @@
 
 <img width="1725" height="997" alt="HackLabs" src="https://github.com/user-attachments/assets/d6a74433-0818-4028-aab2-e4b10336b017" />
 
-<br><br>
+<br>
 **Plataforma de entrenamiento en hacking ético** — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el **OWASP Top 10 (2021)** completo + vulnerabilidades extra avanzadas.
 
 > ⚠️ **ADVERTENCIA**: Esta aplicación es intencionalmente insegura. Úsala SOLO en entornos aislados (máquina virtual, red local sin internet). Nunca la expongas públicamente.
+<br>
 
 ## Video: Hands On
 [![HackLabs Preview](https://github.com/user-attachments/assets/da3054ce-f946-433f-a731-cead61f7d096)](https://www.youtube.com/watch?v=pZFGQj3XrX8)
