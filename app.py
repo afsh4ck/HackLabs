@@ -1211,7 +1211,7 @@ def file_upload():
             if difficulty == 'easy':
                 if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
                     try:
-                        output = subprocess.check_output(['php', save_path], stderr=subprocess.STDOUT, timeout=2)
+                        output = subprocess.check_output(['/usr/bin/php', save_path], stderr=subprocess.STDOUT, timeout=2)
                         msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
                     except Exception as e:
                         msg += f' | Error de ejecución PHP: {e}'
@@ -1232,7 +1232,7 @@ def file_upload():
                         msg += f' | Error de ejecución Python: {e}'
                 elif (filename.lower().endswith('.php') or filename.lower().endswith('.php.txt')):
                     try:
-                        output = subprocess.check_output(['php', save_path], stderr=subprocess.STDOUT, timeout=2)
+                        output = subprocess.check_output(['/usr/bin/php', save_path], stderr=subprocess.STDOUT, timeout=2)
                         msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
                     except Exception as e:
                         msg += f' | Error de ejecución PHP: {e}'
@@ -1255,7 +1255,7 @@ def uploaded_file(filename):
     ext = filename.lower().split('.')[-1]
     if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
         try:
-            output = subprocess.check_output(['php', file_path], stderr=subprocess.STDOUT, timeout=5)
+            output = subprocess.check_output(['/usr/bin/php', file_path], stderr=subprocess.STDOUT, timeout=5)
             return output, 200, {'Content-Type': 'text/html; charset=utf-8'}
         except subprocess.CalledProcessError as e:
             return f"<pre>Error al ejecutar PHP:\n{e.output.decode(errors='replace')}</pre>", 500
