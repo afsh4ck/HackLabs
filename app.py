@@ -1,9 +1,6 @@
 # HackLabs - Ethical Hacking Training Platform
 # ADVERTENCIA: Esta aplicación es INTENCIONALMENTE INSEGURA.
 # Úsala SOLO en entornos controlados y aislados.
-# HackLabs - Ethical Hacking Training Platform
-# ADVERTENCIA: Esta aplicación es INTENCIONALMENTE INSEGURA.
-# Úsala SOLO en entornos controlados y aislados.
 
 from flask import (Flask, request, render_template, redirect, url_for,
                    session, jsonify, make_response, g, send_file, render_template_string)
@@ -164,6 +161,7 @@ def lab(lab_id):
         'prompt_injection':  '/ai/prompt',
         'ai_jailbreak':      '/ai/jailbreak',
         'indirect_injection':'/ai/indirect',
+        'api_attacks':     '/api_attacks',
     }
     if lab_id in dedicated:
         return redirect(dedicated[lab_id])
@@ -208,6 +206,8 @@ def get_lab_list():
         {'id': 'ai_jailbreak',       'title': 'AI Jailbreak',                                'category': 'IA Attacks',       'risk': 'medium'},
         {'id': 'indirect_injection', 'title': 'Indirect Prompt Injection',                   'category': 'IA Attacks',       'risk': 'high'},
         {'id': 'prompt_injection',   'title': 'Prompt Injection',                            'category': 'IA Attacks',       'risk': 'high'},
+        # API Attacks
+        {'id': 'api_attacks', 'title': 'API Attacks – Laboratorio de APIs Inseguras', 'category': 'Vulnerabilidades', 'risk': 'critical'},
     ]
 
 @app.context_processor
@@ -245,7 +245,9 @@ def inject_labs():
         '/deserialization':'deserialization',
         '/cors':           'cors',
         '/cors/data':      'cors',
+        '/api_attacks':      'api_attacks',
     }
+    # ...existing code...
     current_lab_id = path_to_lab.get(path, '')
     if not current_lab_id and path.startswith('/lab/'):
         current_lab_id = path[5:]
@@ -276,6 +278,110 @@ def inject_labs():
         'difficulty': difficulty,
         'client_ip': request.remote_addr,
     }
+
+# ─────────────────────────────────────────────
+# API Attacks Lab – Endpoints inseguros
+# ─────────────────────────────────────────────
+
+@app.route('/api_attacks')
+def api_attacks_lab():
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'api_attacks'), None)
+    return render_template('labs/api_attacks.html', lab=lab_info)
+
+# Endpoint 1: Autenticación insegura (ejemplo)
+@app.route('/api/v1/auth', methods=['POST'])
+def api_auth():
+    data = request.get_json(force=True)
+    username = data.get('username')
+    password = data.get('password')
+    # Authenticate against users table. Accept either plain password or MD5 match.
+    db = get_db()
+    user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
+    if user:
+        # Check plain password first (easy mode / stored plain)
+        try:
+            if password == user['password_plain']:
+                return jsonify({'token': f'insecure-token-{username}', 'role': user['role']})
+        except Exception:
+            pass
+        # Check MD5 hash
+        try:
+            import hashlib as _hashlib
+            if _hashlib.md5(password.encode()).hexdigest() == user['password_md5']:
+                return jsonify({'token': f'insecure-token-{username}', 'role': user['role']})
+        except Exception:
+            pass
+
+    # Authentication failed — respond in English
+    return jsonify({'error': 'Invalid credentials'}), 401
+
+# Endpoint 2: Exposición de datos de usuarios
+@app.route('/api/v1/users', methods=['GET'])
+def api_users_v1():
+    db = get_db()
+    difficulty = session.get('difficulty', 'easy')
+    if difficulty == 'easy':
+        users = db.execute("SELECT id, username, email, password_plain as password FROM users").fetchall()
+        return jsonify([dict(u) for u in users])
+    elif difficulty == 'medium':
+        users = db.execute("SELECT id, username, email FROM users").fetchall()
+        return jsonify([dict(u) for u in users])
+    else:  # hard
+        # Solo username y email, requiere header Authorization EXACTO
+        auth = request.headers.get('Authorization', '')
+        if not auth or not auth.strip() == 'Bearer hacklabs-integrity-token':
+            return jsonify({'error': 'Authorization required'}), 403
+        users = db.execute("SELECT username, email FROM users").fetchall()
+        return jsonify([dict(u) for u in users])
+
+# Endpoint 3: Transferencia vulnerable a inyección
+@app.route('/api/v1/transfer', methods=['POST'])
+def api_transfer():
+    data = request.get_json(force=True)
+    amount = data.get('amount')
+    to = data.get('to')
+    difficulty = session.get('difficulty', 'easy')
+    if difficulty == 'easy':
+        return jsonify({'status': f'Transferidos {amount} a {to}'})
+    elif difficulty == 'medium':
+        # Requiere campo "confirm" en el body
+        if data.get('confirm') != 'yes':
+            return jsonify({'error': 'Missing confirmation'}), 400
+        return jsonify({'status': f'Transferencia confirmada de {amount} a {to}'})
+    else:  # hard
+        # Requiere autenticación y confirmación
+        auth = request.headers.get('Authorization', '')
+        if auth != 'Bearer hacklabs-integrity-token':
+            return jsonify({'error': 'Authorization required'}), 403
+        if data.get('confirm') != 'yes':
+            return jsonify({'error': 'Missing confirmation'}), 400
+        return jsonify({'status': f'Transferencia segura de {amount} a {to}'})
+
+# Endpoint 4: Notas privadas sin autorización
+@app.route('/api/v1/notes', methods=['GET'])
+def api_notes():
+    difficulty = session.get('difficulty', 'easy')
+    if difficulty == 'easy':
+        notes = [
+            {'user': 'admin', 'note': 'Username: admin, Password: password1'},
+            {'user': 'admin', 'note': 'Flag: HL{Ap1_InS3cur3_2026}'},
+        ]
+        return jsonify(notes)
+    elif difficulty == 'medium':
+        notes = [
+            {'user': 'admin', 'note': 'Username: admin, Password: password1'},
+            {'user': 'admin', 'note': 'Confidential note hidden at this level.'},
+        ]
+        return jsonify(notes)
+    else:  # hard
+        auth = request.headers.get('Authorization', '')
+        if auth != 'Bearer hacklabs-integrity-token':
+            return jsonify({'error': 'Authorization required'}), 403
+        notes = [
+            {'user': 'admin', 'note': 'Username: admin, Password: password1'},
+            {'user': 'admin', 'note': 'Flag: HL{Ap1_InS3cur3_2026}'},
+        ]
+        return jsonify(notes)
 
 # ─────────────────────────────────────────────
 # Difficulty selector
@@ -2239,33 +2345,42 @@ if __name__ == '__main__':
     except Exception:
         _ip = '127.0.0.1'
 
-    # ── Banner ───────────────────────────────────────────
-    print()
-    print(f"{R}    __  __              __    __           __         {NC}")
-    print(f"{R}   / / / /____ _ _____ / /__ / /   ____ _ / /_   _____{NC}")
-    print(f"{R}  / /_/ // __ `// ___// //_// /   / __ `// __ \\ / ___/{NC}")
-    print(f"{R} / __  // /_/ // /__ / ,<  / /___/ /_/ // /_/ /(__  ) {NC}")
-    print(f"{R}/_/ /_/ \\__,_/ \\___//_/|_|/_____/\\__,_//_.___//____/  {NC}")
-    print()
-    print(f"  {G}════════════════════════════════════════════════════{NC}")
-    print(f"  {B}{G}  ✓  Laboratorio iniciado correctamente{NC}")
-    print(f"  {G}════════════════════════════════════════════════════{NC}")
-    print()
-    _url = f"http://{_ip}" if _port == 80 else f"http://{_ip}:{_port}"
-    print(f"  {C}{B}  IP del servidor:   {_ip}{NC}")
-    print()
-    print(f"  {D}  HTTP  →  {_url}{NC}")
-    print(f"  {D}  FTP   →  ftp://{_ip}  (puerto 21){NC}")
-    print(f"  {D}  SSH   →  ssh user@{_ip}  (puerto 22){NC}")
-    print(f"  {D}  SMB   →  //{_ip}/  (puerto 445){NC}")
-    print()
-    print(f"  {D}  nmap -sV -p 21,22,80,445 {_ip}{NC}")
-    print()
-    print(f"  {G}════════════════════════════════════════════════════{NC}")
-    print()
-    print(f"  {Y}  ⚠  Solo usar en entornos aislados / laboratorio{NC}")
-    print(f"  {Y}  Presiona Ctrl+C para detener HackLabs{NC}")
-    print()
+    # ── Banner & servicios (evitar duplicados con el reloader) ─────────────────
+    _use_reloader = True
+    _is_reloader_child = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
 
-    start_simulated_services()
-    app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=False)
+    if (not _use_reloader) or _is_reloader_child:
+        print()
+        print(f"{R}    __  __              __    __           __         {NC}")
+        print(f"{R}   / / / /____ _ _____ / /__ / /   ____ _ / /_   _____{NC}")
+        print(f"{R}  / /_/ // __ `// ___// //_// /   / __ `// __ \\ / ___/{NC}")
+        print(f"{R} / __  // /_/ // /__ / ,<  / /___/ /_/ // /_/ /(__  ) {NC}")
+        print(f"{R}/_/ /_/ \\__,_/ \\___//_/|_|/_____/\\__,_//_.___//____/  {NC}")
+        print()
+        print(f"  {G}════════════════════════════════════════════════════{NC}")
+        print(f"  {B}{G}  ✓  Laboratorio iniciado correctamente{NC}")
+        print(f"  {G}════════════════════════════════════════════════════{NC}")
+        print()
+        _url = f"http://{_ip}" if _port == 80 else f"http://{_ip}:{_port}"
+        print(f"  {C}{B}  IP del servidor:   {_ip}{NC}")
+        print()
+        print(f"  {D}  HTTP  →  {_url}{NC}")
+        print(f"  {D}  FTP   →  ftp://{_ip}  (puerto 21){NC}")
+        print(f"  {D}  SSH   →  ssh user@{_ip}  (puerto 22){NC}")
+        print(f"  {D}  SMB   →  //{_ip}/  (puerto 445){NC}")
+        print()
+        print(f"  {D}  nmap -sV -p 21,22,80,445 {_ip}{NC}")
+        print()
+        print(f"  {G}════════════════════════════════════════════════════{NC}")
+        print()
+        print(f"  {Y}  ⚠  Solo usar en entornos aislados / laboratorio{NC}")
+        print(f"  {Y}  Presiona Ctrl+C para detener HackLabs{NC}")
+        print()
+
+        # Habilitar recarga automática de plantillas para desarrollo
+        app.config['TEMPLATES_AUTO_RELOAD'] = True
+        app.jinja_env.auto_reload = True
+        start_simulated_services()
+
+    # use_reloader permite reinicio automático cuando cambian archivos
+    app.run(host='0.0.0.0', port=_port, debug=True, use_reloader=_use_reloader)
