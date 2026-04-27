@@ -1,3 +1,14 @@
+
+## 2026-04-27 — File Upload: ejecución real, borrado y mejoras UX
+
+- feat(file_upload): Ahora los archivos PHP subidos se ejecutan realmente al acceder vía navegador, simulando un servidor vulnerable (webshells funcionales).
+- feat(file_upload): Soporte para múltiples archivos subidos y persistentes hasta borrado manual.
+- feat(file_upload): Papelera de borrado con confirmación y AJAX, sin recarga ni redirección.
+- fix(file_upload): El botón de eliminar ahora funciona siempre, sin conflictos de ámbito ni formularios.
+- fix(file_upload): Mensajes informativos de subida solo en texto plano, sin HTML.
+- fix(file_upload): El área de selección de archivos ya no dispara doble selección.
+- fix(file_upload): El label muestra correctamente todos los archivos seleccionados.
+- fix(file_upload): Restaurada la detección de IP real en el banner y URLs.
 # Changelog
 
 All notable changes to this repository are documented in this file.
