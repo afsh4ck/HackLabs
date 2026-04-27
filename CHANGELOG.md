@@ -20,6 +20,40 @@ Commit principal: "feat(labs): add C2 Sliver lab, templates and styles" (pushed 
 
 ---
 
+## 2026-04-27 — API Attacks: dificultad real y mejoras
+
+- feat(api_attacks): Los endpoints de la API ahora cambian su comportamiento según la dificultad seleccionada (easy, medium, hard):
+  - `/api/v1/users`:
+    - Easy: expone todos los datos y contraseñas.
+    - Medium: oculta contraseñas, solo username/email.
+    - Hard: solo username/email y requiere header Authorization.
+  - `/api/v1/transfer`:
+    - Medium: requiere campo `confirm`.
+    - Hard: requiere header Authorization y confirmación.
+  - `/api/v1/notes`:
+    - Medium: la flag está oculta.
+    - Hard: requiere header Authorization para ver la flag.
+- docs: Actualizada la resolución del lab de API Attacks con ejemplos de comandos para cada dificultad.
+- fix(api_attacks): Flag de API ahora usa formato `HL{...}` como el resto de flags.
+- docs: Añadida la flag de API Attacks al README con ejemplo de uso.
+
+---
+
+### 2026-04-27 — Hotfixes y ajustes (detalle)
+
+- fix(app): Evitar banner duplicado al ejecutar con el reloader de Flask.
+  - El banner y los servicios simulados ahora se imprimen solo en el proceso hijo del reloader (WERKZEUG_RUN_MAIN), evitando duplicados en la salida.
+- fix(api): Actualizadas las notas expuestas en `/api/v1/notes` para mostrar las credenciales reales del admin en los modos easy/medium/hard (`Username: admin, Password: password1`).
+- fix(templates/routes): Reparada la plantilla `templates/labs/api_attacks.html` (se limpió contenido corrupto y se movió la resolución dentro del contenedor oculto `#resolution-data`).
+- feat(routes): Añadida ruta dedicada `/api_attacks` para el laboratorio de API Attacks y corregida la lógica de mapeo para el sidebar (`current_lab_id`).
+- fix(icons): Actualizados los mappings de iconos en `templates/base.html` y `templates/index.html` para mostrar el icono correcto en sidebar y tarjetas.
+
+Prueba rápida local:
+```bash
+python3 app.py
+curl -i 'http://localhost/api/v1/notes' -H 'Authorization: Bearer hacklabs-integrity-token'
+```
+
 Nota: Para probar localmente:
 ```bash
 python app.py
