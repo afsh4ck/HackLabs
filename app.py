@@ -1,13 +1,65 @@
-# HackLabs - Ethical Hacking Training Platform
-# ADVERTENCIA: Esta aplicación es INTENCIONALMENTE INSEGURA.
-# Úsala SOLO en entornos controlados y aislados.
-
+# Borrar todos los archivos subidos al terminar la app
+import atexit
+def cleanup_uploads():
+    if os.path.exists(UPLOAD_FOLDER):
+        for f in os.listdir(UPLOAD_FOLDER):
+            try:
+                os.remove(os.path.join(UPLOAD_FOLDER, f))
+            except Exception:
+                pass
+atexit.register(cleanup_uploads)
 from flask import (Flask, request, render_template, redirect, url_for,
                    session, jsonify, make_response, g, send_file, render_template_string)
 import sys
 import sqlite3
 import os
 import hashlib
+# ...otros imports...
+
+app = Flask(__name__)
+app.secret_key = 'hacklabs_super_insecure_secret_2024'
+
+# Configuración intencionalmente insegura
+app.config['SESSION_COOKIE_HTTPONLY'] = False
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB uploads
+
+DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+
+from werkzeug.utils import secure_filename
+# Ruta para eliminar archivos subidos
+@app.route('/uploads/delete/<filename>', methods=['POST'])
+def delete_uploaded_file(filename):
+    # Solo permite eliminar archivos dentro de la carpeta de uploads
+    # Sanitiza el nombre del archivo para evitar rutas
+    safe_name = os.path.basename(filename)
+    safe_name = secure_filename(safe_name)
+    safe_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, safe_name))
+    uploads_abs = os.path.abspath(UPLOAD_FOLDER)
+    ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    status = 'error'
+    msg = 'Archivo no encontrado'
+    code = 404
+    # Validar que el archivo esté dentro de uploads
+    try:
+        if os.path.exists(safe_path) and os.path.commonpath([safe_path, uploads_abs]) == uploads_abs:
+            os.remove(safe_path)
+            status = 'ok'
+            msg = f'Archivo {safe_name} eliminado'
+            code = 200
+        else:
+            msg = 'Archivo no encontrado o ruta inválida'
+    except Exception as e:
+        msg = str(e)
+        code = 500
+    if ajax:
+        return jsonify({'status': status, 'message': msg}), code
+    # Si no es AJAX, redirige a /upload con mensaje flash
+    from flask import flash
+    flash(msg, 'success' if status == 'ok' else 'error')
+    from flask import redirect, url_for
+    return redirect(url_for('file_upload'))
 import subprocess
 import xml.etree.ElementTree as ET
 from lxml import etree as lxml_etree
@@ -1095,6 +1147,7 @@ def csrf_change_password():
 # File Upload
 # ─────────────────────────────────────────────
 
+
 @app.route('/upload', methods=['GET', 'POST'])
 def file_upload():
     lab = next(l for l in get_lab_list() if l['id'] == 'file_upload')
@@ -1103,41 +1156,93 @@ def file_upload():
     difficulty = session.get('difficulty', 'easy')
 
     if request.method == 'POST':
-        f = request.files.get('file')
-        if f and f.filename:
+        print('POST recibido, request.files:', request.files)
+        files = request.files.getlist('file')
+        print('Archivos detectados:', [f.filename for f in files if f and f.filename])
+        msg_list = []
+        for f in files:
+            if not f or not f.filename:
+                continue
             filename = f.filename
+            print('Procesando archivo:', filename)
 
             if difficulty == 'medium':
-                # Bloquea extensiones peligrosas (bypass: doble extensión .php.jpg, null byte, .phtml)
                 _dangerous = ['.php', '.phar', '.py', '.sh', '.bat', '.exe', '.jsp', '.asp']
                 ext = os.path.splitext(filename)[1].lower()
-                if ext in _dangerous:
-                    message = f'⚠ Extensión {ext} no permitida'
-                    uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
-                    return render_template('labs/file_upload.html', lab=lab, message=message,
-                                           uploaded_path=None, uploaded_files=uploaded_files)
+                # Permite bypass con doble extensión: .php.jpg, .php.png, etc.
+                if ext in _dangerous and not any(filename.lower().endswith(f'.php{safe}') for safe in ['.jpg', '.png', '.gif', '.txt', '.pdf']):
+                    msg_list.append(f'⚠ Extensión {ext} no permitida para {filename}')
+                    print('Bloqueado por extensión:', filename)
+                    continue
+                # Permite .php.jpg, .php.png, etc. (bypass)
+                if '\x00' in filename or filename.lower().endswith('.phtml'):
+                    msg_list.append(f'⚠ Nombre de archivo no permitido para {filename}')
+                    continue
 
             elif difficulty == 'hard':
-                # Whitelist de extensiones + verifica Content-Type (bypass: magic bytes + Content-Type spoofing)
                 _allowed_ext = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.txt']
                 _allowed_mime = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain']
                 ext = os.path.splitext(filename)[1].lower()
-                if ext not in _allowed_ext:
-                    message = f'⛔ Solo se permiten: {" ".join(_allowed_ext)}'
-                    uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
-                    return render_template('labs/file_upload.html', lab=lab, message=message,
-                                           uploaded_path=None, uploaded_files=uploaded_files)
-                if f.content_type not in _allowed_mime:
-                    message = f'⛔ Content-Type {f.content_type} no permitido'
-                    uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
-                    return render_template('labs/file_upload.html', lab=lab, message=message,
-                                           uploaded_path=None, uploaded_files=uploaded_files)
+                # Bypass más difícil: solo permite si el nombre contiene doble extensión y la primera es .php y la segunda es válida
+                valid_bypass = False
+                for safe in _allowed_ext:
+                    if filename.lower().endswith(f'.php{safe}'):
+                        valid_bypass = True
+                        break
+                if ext not in _allowed_ext and not valid_bypass:
+                    msg_list.append(f"⛔ Solo se permiten: {' '.join(_allowed_ext)} para {filename}")
+                    print('Bloqueado por whitelist:', filename)
+                    continue
+                if f.content_type not in _allowed_mime and not valid_bypass:
+                    msg_list.append(f'⛔ Content-Type {f.content_type} no permitido para {filename}')
+                    print('Bloqueado por content-type:', filename)
+                    continue
 
-            # VULNERABLE: sin rename seguro, sin validación real de contenido
             save_path = os.path.join(UPLOAD_FOLDER, filename)
-            f.save(save_path)
-            uploaded_path = f'/uploads/{filename}'
-            message = f'Archivo subido: {filename}'
+            try:
+                f.save(save_path)
+                print('Archivo guardado en:', save_path)
+            except Exception as e:
+                print('Error al guardar archivo:', filename, e)
+                msg_list.append(f'❌ Error al guardar {filename}: {e}')
+                continue
+            msg = f'Archivo subido: {filename}'
+            # Ejecución vulnerable solo si es .py o .php
+            if difficulty == 'easy':
+                if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
+                    try:
+                        output = subprocess.check_output(['php', save_path], stderr=subprocess.STDOUT, timeout=2)
+                        msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
+                    except Exception as e:
+                        msg += f' | Error de ejecución PHP: {e}'
+                elif filename.lower().endswith('.py') or filename.lower().endswith('.py.txt'):
+                    try:
+                        output = subprocess.check_output([sys.executable, save_path], stderr=subprocess.STDOUT, timeout=2)
+                        msg += f' | Salida de ejecución (Python): {output.decode(errors="replace")}'
+                    except Exception as e:
+                        msg += f' | Error de ejecución Python: {e}'
+                else:
+                    msg += ' | Archivo subido correctamente (no ejecutable).'
+            elif difficulty == 'medium':
+                if (filename.lower().endswith('.py') or filename.lower().endswith('.py.txt')):
+                    try:
+                        output = subprocess.check_output([sys.executable, save_path], stderr=subprocess.STDOUT, timeout=2)
+                        msg += f' | Salida de ejecución (Python): {output.decode(errors="replace")}'
+                    except Exception as e:
+                        msg += f' | Error de ejecución Python: {e}'
+                elif (filename.lower().endswith('.php') or filename.lower().endswith('.php.txt')):
+                    try:
+                        output = subprocess.check_output(['php', save_path], stderr=subprocess.STDOUT, timeout=2)
+                        msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
+                    except Exception as e:
+                        msg += f' | Error de ejecución PHP: {e}'
+                else:
+                    msg += ' | Archivo subido correctamente (no ejecutable).'
+            msg_list.append(msg)
+        if msg_list:
+            from flask import flash
+            for m in msg_list:
+                flash(m, 'success')
 
     uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
     return render_template('labs/file_upload.html', lab=lab, message=message,
@@ -1145,8 +1250,19 @@ def file_upload():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    # VULNERABLE: sirve cualquier archivo, incluyendo scripts
-    return send_file(os.path.join(UPLOAD_FOLDER, filename))
+    # VULNERABLE: ejecuta archivos PHP como si fuera un servidor real
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    ext = filename.lower().split('.')[-1]
+    if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
+        try:
+            output = subprocess.check_output(['php', file_path], stderr=subprocess.STDOUT, timeout=5)
+            return output, 200, {'Content-Type': 'text/html; charset=utf-8'}
+        except subprocess.CalledProcessError as e:
+            return f"<pre>Error al ejecutar PHP:\n{e.output.decode(errors='replace')}</pre>", 500
+        except Exception as e:
+            return f"<pre>Error inesperado: {e}</pre>", 500
+    else:
+        return send_file(file_path)
 
 # ─────────────────────────────────────────────
 # XXE – XML External Entity
