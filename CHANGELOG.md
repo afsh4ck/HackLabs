@@ -1,74 +1,18 @@
-## 2026-04-28 — race_condition: UI en dolares, balance formateado desde el primer render
-
-- fix(race_condition): El input de transferencia mostraba centavos (500) pero el balance se mostraba en dolares ($5.00), generando confusion. Cambiado a dolares: input por defecto `5`, placeholder `Amount ($)`, JS convierte a centavos (*100) antes de enviar al servidor.
-- fix(race_condition): Balance inicial renderizado por Jinja2 como entero crudo (1000 → "$1000"); corregido con `format(accounts.X / 100)` para mostrar "$10.00" desde el primer render, sin esperar al refresh de JS.
-- fix(main.js): Descripcion del ataque actualizada para reflejar "$5 por peticion".
-
-## 2026-04-28 — Bugfixes nuevos labs (race_condition, business_logic, oauth, container_escape, open_redirect)
-
-- fix(race_condition): Template usaba variable `balances` en lugar de `accounts`; UndefinedError resuelto.
-- fix(business_logic): `flash` no estaba importado en Flask (NameError). Corregido import. Ademas: `item.total` inexistente reemplazado por `item.price * item.qty`; balance mostrado en formato `$X.XX` en lugar de centimos enteros; `cart_total` calculado y pasado desde el route.
-- fix(oauth): Boton "Start OAuth Flow" tenia `inline-flex items-center gap-2` causando efecto extrano en hover; simplificado a `btn-primary`.
-- fix(container_escape): `id_output` y `cap_eff` podian desbordar su contenedor; agregado `break-all block overflow-x-auto` al elemento `<code>`.
-- fix(open_redirect): Texto HTML huerfano (lista de pasos duplicada) fuera del div `#resolution-data.hidden` causaba texto visible en la pagina; eliminado.
-- feat(main.js): Claves i18n ES/EN para todos los labs nuevos: `oauth_*`, `shop_*`, `race_*`, `container_*`.
-
-## 2026-04-28 — 4 nuevos labs + mejoras a 4 labs existentes
+## 2026-04-28 — 4 nuevos labs + mejoras a 6 labs existentes
 
 ### Nuevos labs
-- feat(race_condition): Lab Race Condition / TOCTOU — banco con transferencias concurrentes, 3 dificultades (sin lock / TOCTOU / lock preciso). Flags por dificultad. Interfaz con ataque automatico via Promise.all.
-- feat(business_logic): Lab Business Logic Flaws — tienda con manipulacion de precio en campo oculto, cantidad negativa y cupones apilables. Flag: HL{bu51n355_l0g1c_0wn3d}.
-- feat(container_escape): Lab Container Escape — recon en vivo de vectores de escape: Docker socket, privileged, cgroups, root uid. Resolucion con docker socket mount, fdisk y cgroup release_agent.
-- feat(oauth): Lab OAuth 2.0 Attacks — flujo OAuth simulado con redirect_uri sin validar (easy), validacion de dominio (medium) y whitelist exacta (hard). Flag: HL{0auth_r3d1r3ct_0wn3d}.
+- feat(race_condition): Banco vulnerable con transferencias concurrentes. 3 dificultades: sin lock (easy), TOCTOU (medium), lock preciso (hard). Interfaz con ataque automatico via Promise.all. Flags por dificultad.
+- feat(business_logic): Tienda con 3 vectores: manipulacion de precio en campo oculto (easy), cantidad negativa y coupon stacking (medium), bypass de flujo con redondeo entero (hard). Flag: `HL{bu51n355_l0g1c_0wn3d}`.
+- feat(container_escape): Recon en vivo de vectores de escape (Docker socket, privileged, cgroups, root uid). Resolucion por dificultad: docker socket mount (easy), fdisk + chroot (medium), cgroup release_agent (hard).
+- feat(oauth): Flujo OAuth 2.0 simulado. redirect_uri sin validacion (easy), solo dominio validado con bypass por path (medium), whitelist exacta (hard). Flag: `HL{0auth_r3d1r3ct_0wn3d}`.
 
 ### Mejoras a labs existentes
-- feat(ssrf): Endpoint interno `/internal/cloud-metadata` simula IMDSv1 de AWS con credenciales falsas. Flag: HL{55rf_cl0ud_m3t4d4t4}. Bypass por IP decimal (medium) e IPv6 (hard). Resolucion actualizada.
-- feat(jwt): Hard mode ahora implementa algorithm confusion RS256→HS256 con clave publica expuesta via `/jwt/jwks`. Flag: HL{4lg_c0nfu510n_0wn3d}. Resolucion actualizada con python snippets.
-- feat(path_traversal): Hook before_request escribe User-Agent en `logs/access.log`. Resolucion ampliada con log poisoning (easy) y bypasses `....//`, `%252e%252e%252f` (medium/hard).
-- feat(sqli): Resolucion ampliada con blind SQLi boolean-based y time-based via `randomblob()` para hard mode. Comandos sqlmap actualizados.
-
-### Infraestructura
-- fix(get_lab_list): Seccion Vulnerabilidades ordenada alfabeticamente (18 labs). api_attacks y c2_sliver movidos a su posicion correcta.
-- feat(lab route): Nuevos labs registrados en el mapa `/lab/<id>` y en path_to_lab para sidebar activo.
-- feat(main.js): Claves i18n ES/EN para los 4 nuevos labs (lab_title_*).
-
-## 2026-04-28 — i18n: titulos de labs traducibles en sidebar, cards y header
-
-- fix(base.html): Los titulos de labs en el menu lateral ahora tienen `data-i18n` y se traducen al cambiar idioma.
-- fix(index.html): Los titulos en las cards del index ahora tienen `data-i18n` y se traducen.
-- fix(_lab_header.html): El titulo (h1) y el breadcrumb dentro de cada lab ahora tienen `data-i18n` y se traducen.
-- feat(main.js): Nuevas claves ES/EN `lab_title_file_upload` y `lab_title_api_attacks` para los labs con titulo en español.
-- El mecanismo escala: cualquier lab sin clave definida mantiene el texto del servidor sin afectarse.
-
-## 2026-04-28 — File Upload: numeracion y reverse shell en resolucion
-
-- fix(file_upload): Numeracion correcta en la resolucion: una sola `<ol>` por seccion con `<pre>` dentro de cada `<li>`, eliminando el hack `<ol start=N>` que mostraba siempre el numero 1.
-- feat(file_upload): Pasos de reverse shell en las 3 dificultades (Easy, Medium, Hard): listener `nc -lvnp 4444` + bash one-liner via parametro `cmd`, con la IP del atacante auto-completada (`{{ client_ip }}`).
-- feat(file_upload): Alternativa de reverse shell PHP directa (`fsockopen`) en Easy.
-
-## 2026-04-28 — File Upload: resolucion por dificultad, traducciones y bypass doble extension
-
-- feat(file_upload): Resolucion reescrita en ES/EN con pasos especificos para Easy, Medium y Hard.
-- feat(file_upload): Los textos del modal de borrado ahora tienen data-i18n y se traducen con el idioma seleccionado.
-- feat(main.js): Nuevas claves i18n ES/EN para el modal de borrado (upload_del_title, upload_del_irrev, upload_del_confirm, upload_del_cancel, upload_del_ok).
-- fix(app.py): La ruta /uploads/<filename> ahora ejecuta como PHP cualquier archivo con .php en el nombre (re.search), incluyendo bypass de doble extension (.php.jpg, .php.png) necesario para Medium y Hard.
-
-## 2026-04-28 — File Upload: webshells graficas, borrado funcional y errores PHP visibles
-
-- feat(file_upload): Soporte completo para webshells graficas (P0wnyshell, Laudanum) mediante ejecucion con `php-cgi` y variables CGI completas (`REDIRECT_STATUS`, `PHP_SELF`, `SCRIPT_NAME`, `DOCUMENT_ROOT`, `SERVER_SOFTWARE`).
-- feat(file_upload): PHP ejecutado siempre con `display_errors=On` y `error_reporting=32767`; los errores de PHP se muestran directamente en el navegador (incluido stderr).
-- fix(file_upload): El boton de papelera no funcionaba porque el bloque `<script>` estaba fuera de `{% block content %}` y Jinja2 lo descartaba silenciosamente.
-- fix(file_upload): La ruta `/uploads/delete/<filename>` estaba registrada en la primera instancia de Flask que era sobreescrita por una segunda; movida al app correcto.
-- fix(file_upload): Eliminada llamada a `secure_filename` en el borrado, que alteraba nombres de archivo impidiendo encontrarlos.
-- fix(file_upload): Ruta `/uploads/<filename>` ahora acepta GET, POST y PUT para compatibilidad con webshells que usan formularios internos.
-- fix(Dockerfile): Agregados `php-cli` y `php-cgi` al contenedor Docker.
-
-## 2026-04-28 — C2 Sliver: resolución Linux por defecto, enlaces destacados y multilenguaje
-
-- feat(c2_sliver): La resolución del lab de C2 ahora usa por defecto implants de Linux y el ejemplo de transferencia usa la IP 10.9.13.63.
-- feat(c2_sliver): Descripción y resolución multilenguaje (español/inglés) con sistema lang-content.
-- feat(css): Los enlaces en las descripciones de los labs ahora son amarillos, peso light, sin subrayado por defecto y subrayado al pasar el ratón.
-- fix(c2_sliver): Traducción correcta de la descripción según idioma seleccionado.
+- feat(ssrf): Nuevo endpoint interno `/internal/cloud-metadata` simula AWS IMDSv1 con credenciales falsas. Flag: `HL{55rf_cl0ud_m3t4d4t4}`. Bypass por IP decimal (medium) e IPv6 (hard).
+- feat(jwt): Hard mode con algorithm confusion RS256→HS256 usando la clave publica como secreto HMAC. Clave publica expuesta en `/jwt/jwks`. Flag: `HL{4lg_c0nfu510n_0wn3d}`.
+- feat(path_traversal): Log poisoning via User-Agent en `logs/access.log`. Resolucion ampliada con bypasses `....//` y `%252e%252e%252f` para medium/hard.
+- feat(sqli): Resolucion ampliada con blind SQLi boolean-based y time-based via `randomblob()` para hard mode.
+- feat(file_upload): Ejecucion real de PHP via php-cgi, soporte de webshells graficas (P0wnyshell, Laudanum), bypass de doble extension (.php.jpg), pasos de reverse shell por dificultad con IP del atacante auto-completada.
+- feat(c2_sliver): Resolucion en ES/EN con implants de Linux por defecto.
 
 
 ## 2026-04-27 — File Upload: ejecución real, borrado y mejoras UX
