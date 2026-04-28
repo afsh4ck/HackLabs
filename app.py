@@ -1235,7 +1235,13 @@ def file_upload():
         if msg_list:
             from flask import flash
             for m in msg_list:
-                flash(m, 'success')
+                if m.startswith('⚠'):
+                    cat = 'warning'
+                elif m.startswith('⛔') or m.startswith('❌'):
+                    cat = 'error'
+                else:
+                    cat = 'success'
+                flash(m, cat)
 
     uploaded_files = os.listdir(UPLOAD_FOLDER) if os.path.exists(UPLOAD_FOLDER) else []
     return render_template('labs/file_upload.html', lab=lab, message=message,

