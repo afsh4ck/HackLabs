@@ -1736,3 +1736,26 @@
 10.9.13.63 - [28/Apr/2026:15:18:15 +0000] "GET /static/css/style.css" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
 10.9.13.63 - [28/Apr/2026:15:18:15 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
 10.9.13.63 - [28/Apr/2026:15:18:17 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:32:50 +0000] "GET /sqli/search" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:32:51 +0000] "GET /static/css/style.css" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:32:51 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:32:52 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:32:53 +0000] "GET /static/favicon.svg" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:41 +0000] "GET /lab/insecure_design" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:41 +0000] "GET /recover" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:42 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:42 +0000] "GET /static/css/style.css" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:43 +0000] "GET /lab/sqli" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:43 +0000] "GET /sqli/search" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:43 +0000] "GET /static/css/style.css" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:43 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:44 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:38:47 +0000] "GET /static/js/main.js" Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
+10.9.13.63 - [28/Apr/2026:15:40:55 +0000] "GET /sqli/search" Mozilla/5.0
