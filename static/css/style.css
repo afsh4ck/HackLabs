@@ -360,11 +360,17 @@ select.hl-input { display: none !important; }
 }
 
 /* ── Primary button ── */
-.btn-primary {
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1.1rem;
+  box-sizing: border-box;
+}
+.btn-primary {
   background: var(--hl-primary);
   color: var(--hl-on-primary);
   font-size: 0.875rem;
@@ -372,10 +378,13 @@ select.hl-input { display: none !important; }
   border-radius: 0.5rem;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
 }
-.btn-primary:hover  { background: var(--hl-primary-hover); box-shadow: 0 4px 16px rgba(var(--hl-primary-rgb),.3); }
-.btn-primary:active { transform: scale(.97); }
+.btn-primary:hover, .btn-primary:focus {
+  background: var(--hl-primary-hover);
+  box-shadow: 0 4px 16px rgba(var(--hl-primary-rgb),.3);
+}
+
 
 /* ── Resolution FAB (floating action button) ── */
 .fab-resolution {

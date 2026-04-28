@@ -19,9 +19,13 @@
       <code class="text-xs font-mono break-all" style="color:var(--hl-primary)">/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://localhost:5000/oauth/callback&amp;state=abc123&amp;scope=read</code>
     </div>
 
-    <a href="/oauth/authorize?client_id=hacklabs-app&redirect_uri=http://localhost:5000/oauth/callback&state=abc123&scope=read"
-       class="btn-primary"
-       data-i18n="oauth_start_btn">Start OAuth Flow</a>
+    <form method="GET" action="/oauth/authorize" class="inline">
+      <input type="hidden" name="client_id" value="hacklabs-app">
+      <input type="hidden" name="redirect_uri" value="http://localhost:5000/oauth/callback">
+      <input type="hidden" name="state" value="abc123">
+      <input type="hidden" name="scope" value="read">
+      <button type="submit" class="btn-primary" data-i18n="oauth_start_btn">Start OAuth Flow</button>
+    </form>
   </div>
 
   {% if token_data %}
