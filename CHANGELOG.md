@@ -1,3 +1,17 @@
+## 2026-04-28 — i18n: titulos de labs traducibles en sidebar, cards y header
+
+- fix(base.html): Los titulos de labs en el menu lateral ahora tienen `data-i18n` y se traducen al cambiar idioma.
+- fix(index.html): Los titulos en las cards del index ahora tienen `data-i18n` y se traducen.
+- fix(_lab_header.html): El titulo (h1) y el breadcrumb dentro de cada lab ahora tienen `data-i18n` y se traducen.
+- feat(main.js): Nuevas claves ES/EN `lab_title_file_upload` y `lab_title_api_attacks` para los labs con titulo en español.
+- El mecanismo escala: cualquier lab sin clave definida mantiene el texto del servidor sin afectarse.
+
+## 2026-04-28 — File Upload: numeracion y reverse shell en resolucion
+
+- fix(file_upload): Numeracion correcta en la resolucion: una sola `<ol>` por seccion con `<pre>` dentro de cada `<li>`, eliminando el hack `<ol start=N>` que mostraba siempre el numero 1.
+- feat(file_upload): Pasos de reverse shell en las 3 dificultades (Easy, Medium, Hard): listener `nc -lvnp 4444` + bash one-liner via parametro `cmd`, con la IP del atacante auto-completada (`{{ client_ip }}`).
+- feat(file_upload): Alternativa de reverse shell PHP directa (`fsockopen`) en Easy.
+
 ## 2026-04-28 — File Upload: resolucion por dificultad, traducciones y bypass doble extension
 
 - feat(file_upload): Resolucion reescrita en ES/EN con pasos especificos para Easy, Medium y Hard.
