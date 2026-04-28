@@ -7,10 +7,10 @@
     <span>/</span>
     <a href="/category/{{ cat_slug }}" class="hover:opacity-70 transition">{{ lab.category }}</a>
     <span>/</span>
-    <span class="text-gray-600 dark:text-gray-500 truncate">{{ lab.title }}</span>
+    <span class="text-gray-600 dark:text-gray-500 truncate" data-i18n="lab_title_{{ lab.id }}">{{ lab.title }}</span>
   </div>
   <div class="flex items-center justify-between gap-3">
-    <h1 class="font-bold text-gray-900 dark:text-white leading-snug" style="font-size:32px">{{ lab.title }}</h1>
+    <h1 class="font-bold text-gray-900 dark:text-white leading-snug" style="font-size:32px" data-i18n="lab_title_{{ lab.id }}">{{ lab.title }}</h1>
     <div class="flex items-center gap-2 flex-shrink-0">
       <span class="text-xs px-2 py-0.5 rounded font-mono difficulty-btn difficulty-btn--{{ difficulty }}" style="cursor:default;font-size:10px">
         <i class="ph ph-shield-warning" style="font-size:11px"></i> {{ difficulty | capitalize }}

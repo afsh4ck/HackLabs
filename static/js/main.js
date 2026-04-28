@@ -125,6 +125,9 @@ const T = {
     csrf_victim_id:  'ID de usuario víctima',
     csrf_btn_launch: 'Lanzar CSRF',
     // File Upload
+    // Lab titles (only labs whose default title is not already in Spanish)
+    lab_title_file_upload: 'File Upload sin restricciones',
+    lab_title_api_attacks: 'API Attacks – Laboratorio de APIs Inseguras',
     upload_dropzone: 'Haz clic o arrastra un archivo aquí',
     upload_no_restrict: 'Sin restricciones de tipo de archivo',
     upload_btn:      'Subir archivo',
@@ -314,6 +317,9 @@ const T = {
     csrf_victim_id:  'Victim User ID',
     csrf_btn_launch: 'Launch CSRF',
     // File Upload
+    // Lab titles
+    lab_title_file_upload: 'File Upload – No Restrictions',
+    lab_title_api_attacks: 'API Attacks – Insecure APIs Lab',
     upload_dropzone: 'Click or drag file here',
     upload_no_restrict: 'No file type restrictions',
     upload_btn:      'Upload',
