@@ -41,14 +41,16 @@
         <span class="text-gray-700 dark:text-gray-300">{{ f }}</span>
         <div class="flex items-center gap-2">
           <a href="/uploads/{{ f }}" target="_blank" class="transition hover:opacity-70" style="color:var(--hl-primary)" data-i18n="upload_access">Acceder →</a>
-          <button type="button" title="Eliminar archivo" aria-label="Eliminar archivo" style="background:none;border:none;cursor:pointer;padding:0;margin-left:8px;display:inline-flex;align-items:center;" onclick="window.deleteFile(event, '{{ f }}')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#e53e3e;vertical-align:middle;">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-              <line x1="10" y1="11" x2="10" y2="17" />
-              <line x1="14" y1="11" x2="14" y2="17" />
-            </svg>
-          </button>
+          <form method="POST" action="/uploads/delete/{{ f|urlencode }}" style="display:inline;margin:0;padding:0" onsubmit="return confirm('Eliminar {{ f }}?')">
+            <button type="submit" title="Eliminar archivo" aria-label="Eliminar archivo" style="background:none;border:none;cursor:pointer;padding:0;margin-left:8px;display:inline-flex;align-items:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#e53e3e;vertical-align:middle;">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+            </button>
+          </form>
         </div>
       </li>
       {% endfor %}
@@ -136,25 +138,5 @@ function updateLabel(input) {
     label.textContent = '';
   }
 }
-window.deleteFile = function(event, filename) {
-  if (event) event.preventDefault();
-  if (!confirm('Eliminar ' + filename + '?')) return false;
-  fetch('/uploads/delete/' + encodeURIComponent(filename), {
-    method: 'POST',
-    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.status === 'ok') {
-      location.reload();
-    } else {
-      alert('Error: ' + data.message);
-    }
-  })
-  .catch(() => {
-    alert('Error de red al eliminar el archivo.');
-  });
-  return false;
-};
 </script>
 {% endblock %}
