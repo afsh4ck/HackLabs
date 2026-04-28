@@ -1282,7 +1282,7 @@ def uploaded_file(filename):
             env['CONTENT_LENGTH'] = str(len(input_data))
         try:
             proc = subprocess.Popen(
-                [php_path, file_path],
+                [php_path, '-d', 'display_errors=On', '-d', 'log_errors=Off', '-d', 'error_reporting=32767', file_path],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -1291,6 +1291,7 @@ def uploaded_file(filename):
             out, err = proc.communicate(input=input_data, timeout=30)
             # Parsear cabeceras CGI de la salida (normalizando nombres a Title-Case)
             out_str = out.decode(errors='replace')
+            err_str = err.decode(errors='replace')
             response_headers = {}
             body = out_str
             if '\r\n\r\n' in out_str:
@@ -1307,6 +1308,9 @@ def uploaded_file(filename):
                         response_headers[normalized] = h_val.strip()
             if 'Content-Type' not in response_headers:
                 response_headers['Content-Type'] = 'text/html; charset=utf-8'
+            # Incluir stderr si PHP escribio errores ahi (segun configuracion del sistema)
+            if err_str.strip():
+                body = body + '<pre style="color:red">' + err_str + '</pre>'
             return body, 200, response_headers
         except subprocess.TimeoutExpired:
             proc.kill()
