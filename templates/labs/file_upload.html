@@ -164,6 +164,7 @@ if (!window.deleteFile) {
     return false;
   }
 }
+</script>
 <div class="alert-danger mb-4 text-xs font-mono">
   <b>¿Ves el error "Undefined constant 'cmd'" al subir una webshell PHP?</b><br>
   Asegúrate de que el archivo <b>NO</b> tenga espacios, saltos de línea ni BOM antes de <b>&lt;?php</b>.<br>
@@ -171,4 +172,3 @@ if (!window.deleteFile) {
   <code>echo '&lt;?php system($_GET["cmd"]); ?&gt;' &gt; shell.php</code><br>
   Verifica que el primer byte del archivo sea <b>&lt;</b> y que la codificación sea UTF-8 sin BOM.
 </div>
-</script>
