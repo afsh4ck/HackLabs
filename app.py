@@ -36,6 +36,7 @@ from io import StringIO
 import re
 import base64
 import json
+import datetime
 import random
 import hmac as _hmac
 import pickle
@@ -112,6 +113,19 @@ def set_is_admin_cookie(response):
     else:
         response.set_cookie('is_admin', 'false')
     return response
+
+@app.before_request
+def log_request_to_file():
+    try:
+        log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, 'access.log')
+        ua = request.headers.get('User-Agent', '-')
+        line = f'{request.remote_addr} - [{datetime.datetime.utcnow().strftime("%d/%b/%Y:%H:%M:%S +0000")}] "{request.method} {request.path}" {ua}\n'
+        with open(log_path, 'a') as lf:
+            lf.write(line)
+    except Exception:
+        pass
 
 
 @app.route('/xss/stored/delete/<int:comment_id>', methods=['POST'])
@@ -209,6 +223,15 @@ def lab(lab_id):
         'ai_jailbreak':      '/ai/jailbreak',
         'indirect_injection':'/ai/indirect',
         'api_attacks':     '/api_attacks',
+        'race_condition':  '/race',
+        'business_logic':  '/shop',
+        'container_escape':'/container',
+        'oauth':           '/oauth',
+        'ssti':            '/ssti',
+        'open_redirect':   '/open_redirect',
+        'jwt':             '/jwt',
+        'deserialization': '/deserialization',
+        'cors':            '/cors',
     }
     if lab_id in dedicated:
         return redirect(dedicated[lab_id])
@@ -235,26 +258,29 @@ def get_lab_list():
         {'id': 'integrity',       'title': 'A08 – Software & Data Integrity Failures',     'category': 'OWASP Top 10', 'risk': 'high'},
         {'id': 'logging',         'title': 'A09 – Security Logging & Monitoring Failures', 'category': 'OWASP Top 10', 'risk': 'medium'},
         {'id': 'ssrf',            'title': 'A10 – Server-Side Request Forgery (SSRF)',     'category': 'OWASP Top 10', 'risk': 'high'},
-        # Vulnerabilidades (orden alfabético)
+        # Vulnerabilidades (orden alfabético por título, case-insensitive)
+        {'id': 'api_attacks',        'title': 'API Attacks – Laboratorio de APIs Inseguras', 'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'business_logic',     'title': 'Business Logic Flaws',                        'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'c2_sliver',          'title': 'C2 – Sliver Command & Control',               'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'container_escape',   'title': 'Container Escape',                            'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'cors',               'title': 'CORS Misconfiguration',                       'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'csrf',               'title': 'CSRF – Cross-Site Request Forgery',           'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'file_upload',        'title': 'File Upload sin restricciones',               'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'deserialization',    'title': 'Insecure Deserialization',                    'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'jwt',                'title': 'JWT Manipulation',                            'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'bruteforce',         'title': 'Login Bruteforce',                            'category': 'Vulnerabilidades', 'risk': 'medium'},
+        {'id': 'oauth',              'title': 'OAuth 2.0 Attacks',                           'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'open_redirect',      'title': 'Open Redirect',                               'category': 'Vulnerabilidades', 'risk': 'medium'},
         {'id': 'path_traversal',     'title': 'Path Traversal / LFI',                       'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'privesc',            'title': 'Privilege Escalation (SSH)',                  'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',      'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                 'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'xxe',                'title': 'XXE – XML External Entity',                  'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'c2_sliver',          'title': 'C2 – Sliver Command & Control',              'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'race_condition',     'title': 'Race Condition / TOCTOU',                     'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'xxe',                'title': 'XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
         # IA Attacks
         {'id': 'ai_jailbreak',       'title': 'AI Jailbreak',                                'category': 'IA Attacks',       'risk': 'medium'},
         {'id': 'indirect_injection', 'title': 'Indirect Prompt Injection',                   'category': 'IA Attacks',       'risk': 'high'},
         {'id': 'prompt_injection',   'title': 'Prompt Injection',                            'category': 'IA Attacks',       'risk': 'high'},
-        # API Attacks
-        {'id': 'api_attacks', 'title': 'API Attacks – Laboratorio de APIs Inseguras', 'category': 'Vulnerabilidades', 'risk': 'critical'},
     ]
 
 @app.context_processor
@@ -292,7 +318,16 @@ def inject_labs():
         '/deserialization':'deserialization',
         '/cors':           'cors',
         '/cors/data':      'cors',
-        '/api_attacks':      'api_attacks',
+        '/api_attacks':    'api_attacks',
+        '/race':           'race_condition',
+        '/race/balance':   'race_condition',
+        '/race/transfer':  'race_condition',
+        '/shop':           'business_logic',
+        '/container':      'container_escape',
+        '/oauth':          'oauth',
+        '/oauth/authorize':'oauth',
+        '/oauth/callback': 'oauth',
+        '/jwt/jwks':       'jwt',
     }
     # ...existing code...
     current_lab_id = path_to_lab.get(path, '')
@@ -1018,6 +1053,19 @@ def ssrf():
             import urllib.request
             import json as _json
             req = urllib.request.Request(url, headers={'User-Agent': 'HackLabs/1.0'})
+            # Intercept simulated cloud metadata requests
+            from urllib.parse import urlparse as _urlparse
+            _parsed_url = _urlparse(url)
+            _metadata_paths = ['169.254.169.254', 'metadata.google.internal', '100.100.100.200']
+            if _parsed_url.hostname in _metadata_paths:
+                # Redirect to our internal metadata simulation
+                _meta_path = _parsed_url.path.lstrip('/')
+                # strip common AWS prefixes
+                for _prefix in ['latest/', 'computeMetadata/v1/', 'meta-data/']:
+                    if _meta_path.startswith(_prefix):
+                        _meta_path = _meta_path[len(_prefix):]
+                _meta_url = f'http://127.0.0.1:{os.environ.get("APP_PORT","5000")}/internal/cloud-metadata/{_meta_path}'
+                req = urllib.request.Request(_meta_url, headers={'User-Agent': 'HackLabs/1.0'})
             with urllib.request.urlopen(req, timeout=5) as response:
                 raw = response.read().decode('utf-8', errors='replace')[:5000]
                 try:
@@ -1678,19 +1726,36 @@ def jwt_lab():
                         if not decoded:
                             error = 'Firma inválida.'
 
-                else:
-                    # Rechaza none + secreto más largo (bypass: jwt_tool con wordlist, kid injection)
+                else:  # hard — algorithm confusion: RS256 header but HS256 verification with exposed "public key"
+                    # Simulated RS256 public key (exposed via /jwt/jwks)
+                    _rs_pub = 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF0dG5vRy8vTnVFZjdxekhOQ3JVCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQ=='
                     _hard_secret = 'hacklabs-jwt-S3cr3t!-2024'
-                    if alg.lower() == 'none':
+                    alg_used = h_data.get('alg', 'RS256')
+                    if alg_used.lower() == 'none':
                         error = '⛔ Algoritmo no permitido'
-                    else:
+                    elif alg_used.upper() == 'RS256':
+                        # Server "verifies" RS256 using its internal key
                         sig_input = f'{parts[0]}.{parts[1]}'.encode()
                         expected = base64.urlsafe_b64encode(
                             _hmac.new(_hard_secret.encode(), sig_input, hashlib.sha256).digest()
                         ).rstrip(b'=').decode()
                         decoded = p_data if parts[2] == expected else None
                         if not decoded:
+                            error = 'Firma RS256 inválida.'
+                    elif alg_used.upper() == 'HS256':
+                        # VULNERABLE: also accepts HS256 using the "public key" as secret (algorithm confusion)
+                        sig_input = f'{parts[0]}.{parts[1]}'.encode()
+                        expected = base64.urlsafe_b64encode(
+                            _hmac.new(_rs_pub.encode(), sig_input, hashlib.sha256).digest()
+                        ).rstrip(b'=').decode()
+                        if parts[2] == expected:
+                            decoded = p_data
+                            decoded['_vuln'] = 'Algorithm confusion: RS256 public key used as HS256 secret!'
+                            decoded['flag'] = 'HL{4lg_c0nfu510n_0wn3d}'
+                        else:
                             error = 'Firma inválida.'
+                    else:
+                        error = f'Algoritmo no soportado: {alg_used}'
 
             except Exception as e:
                 error = str(e)
@@ -1698,6 +1763,13 @@ def jwt_lab():
     show_secret = JWT_SECRET if difficulty == 'easy' else None
     return render_template('labs/jwt.html', lab=lab, token=token, decoded=decoded,
                            error=error, secret=show_secret)
+
+@app.route('/jwt/jwks')
+def jwt_jwks():
+    _rs_pub = 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF0dG5vRy8vTnVFZjdxekhOQ3JVCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQ=='
+    import json as _j
+    return _j.dumps({'keys': [{'kty': 'RSA', 'use': 'sig', 'alg': 'RS256', 'kid': '1',
+                                'n': _rs_pub, 'e': 'AQAB'}]}), 200, {'Content-Type': 'application/json'}
 
 # ─────────────────────────────────────────────
 # Insecure Deserialization
@@ -2487,6 +2559,356 @@ def ai_indirect_injection():
 
     return render_template('labs/indirect_injection.html', lab=lab, result=result,
                            document=document, sample_docs=sample_docs)
+
+# ─────────────────────────────────────────────
+# Race Condition / TOCTOU
+# ─────────────────────────────────────────────
+
+_race_sessions = {}
+_race_global_lock = threading.Lock()
+
+def _race_get_accounts(sid):
+    if sid not in _race_sessions:
+        _race_sessions[sid] = {'alice': 1000, 'bob': 0}
+    return _race_sessions[sid]
+
+@app.route('/race')
+def race_condition():
+    lab = next(l for l in get_lab_list() if l['id'] == 'race_condition')
+    sid = session.setdefault('race_sid', os.urandom(8).hex())
+    accounts = _race_get_accounts(sid)
+    return render_template('labs/race_condition.html', lab=lab, accounts=dict(accounts))
+
+@app.route('/race/balance')
+def race_balance():
+    sid = session.get('race_sid', 'default')
+    accounts = _race_get_accounts(sid)
+    return jsonify(dict(accounts))
+
+@app.route('/race/transfer', methods=['POST'])
+def race_transfer():
+    difficulty = session.get('difficulty', 'easy')
+    sid = session.get('race_sid', 'default')
+    accounts = _race_get_accounts(sid)
+    data = request.get_json(silent=True) or {}
+    from_acc = data.get('from', 'alice')
+    to_acc   = data.get('to',   'bob')
+    try:
+        amount = int(data.get('amount', 0))
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Cantidad invalida'}), 400
+
+    if difficulty == 'easy':
+        # VULNERABLE: check and write separated by sleep (maximises race window)
+        if accounts.get(from_acc, 0) >= amount:
+            time.sleep(0.15)           # race window
+            accounts[from_acc] -= amount
+            accounts[to_acc] = accounts.get(to_acc, 0) + amount
+            return jsonify({'success': True, 'balance': dict(accounts), 'flag': 'HL{r4c3_c0nd1t10n_3z}' if accounts.get(to_acc, 0) > 1000 else None})
+        return jsonify({'success': False, 'error': 'Saldo insuficiente'})
+
+    elif difficulty == 'medium':
+        # VULNERABLE: TOCTOU — check outside lock, write inside lock
+        if accounts.get(from_acc, 0) >= amount:      # check (no lock)
+            time.sleep(0.05)
+            with _race_global_lock:                  # write (locked, but too late)
+                accounts[from_acc] -= amount
+                accounts[to_acc] = accounts.get(to_acc, 0) + amount
+            return jsonify({'success': True, 'balance': dict(accounts), 'flag': 'HL{t0ct0u_m3d1um}' if accounts.get(to_acc, 0) > 1000 else None})
+        return jsonify({'success': False, 'error': 'Saldo insuficiente'})
+
+    else:  # hard — properly locked but short window exists if lock is re-entered
+        with _race_global_lock:
+            if accounts.get(from_acc, 0) >= amount:
+                accounts[from_acc] -= amount
+                accounts[to_acc] = accounts.get(to_acc, 0) + amount
+                return jsonify({'success': True, 'balance': dict(accounts), 'flag': 'HL{h4rd_r4c3_pr3c1s10n}' if accounts.get(to_acc, 0) > 1000 else None})
+            return jsonify({'success': False, 'error': 'Saldo insuficiente'})
+
+@app.route('/race/reset', methods=['POST'])
+def race_reset():
+    sid = session.get('race_sid', 'default')
+    _race_sessions[sid] = {'alice': 1000, 'bob': 0}
+    return jsonify({'success': True, 'balance': {'alice': 1000, 'bob': 0}})
+
+# ─────────────────────────────────────────────
+# Business Logic Flaws
+# ─────────────────────────────────────────────
+
+_shop_products = [
+    {'id': 1, 'name': 'HackLabs Pro License', 'price': 9999, 'stock': 10},
+    {'id': 2, 'name': 'Zero-Day Exploit Kit',  'price': 4999, 'stock': 5},
+    {'id': 3, 'name': 'VPN Service (1 year)',  'price': 999,  'stock': 100},
+]
+_shop_coupons = {'HACK10': 10, 'LABS50': 50}
+_shop_used_coupons = {}   # session_id -> set of used coupon codes (hard mode only)
+
+@app.route('/shop')
+def business_logic():
+    lab = next(l for l in get_lab_list() if l['id'] == 'business_logic')
+    sid = session.setdefault('shop_sid', os.urandom(8).hex())
+    cart = session.get('shop_cart', [])
+    balance = session.get('shop_balance', 100)   # $1.00 starting balance
+    discount = session.get('shop_discount', 0)
+    flag = session.pop('shop_flag', None)
+    return render_template('labs/business_logic.html', lab=lab,
+                           products=_shop_products, cart=cart,
+                           balance=balance, discount=discount, flag=flag)
+
+@app.route('/shop/cart/add', methods=['POST'])
+def shop_add():
+    difficulty = session.get('difficulty', 'easy')
+    pid = int(request.form.get('product_id', 0))
+    product = next((p for p in _shop_products if p['id'] == pid), None)
+    if not product:
+        flash('Producto no encontrado', 'error')
+        return redirect('/shop')
+
+    if difficulty == 'easy':
+        # VULNERABLE: price taken from form (client-side price manipulation)
+        try:
+            price = int(request.form.get('price', product['price']))
+        except ValueError:
+            price = product['price']
+    else:
+        price = product['price']
+
+    qty = 1
+    if difficulty in ('easy', 'medium'):
+        # VULNERABLE: negative quantity not validated -> subtracts from total
+        try:
+            qty = int(request.form.get('qty', 1))
+        except ValueError:
+            qty = 1
+    else:
+        qty = max(1, int(request.form.get('qty', 1)))
+
+    cart = session.get('shop_cart', [])
+    cart.append({'id': pid, 'name': product['name'], 'price': price, 'qty': qty})
+    session['shop_cart'] = cart
+    flash(f'Anadido al carrito: {product["name"]}', 'success')
+    return redirect('/shop')
+
+@app.route('/shop/cart/clear', methods=['POST'])
+def shop_clear():
+    session['shop_cart'] = []
+    session['shop_discount'] = 0
+    session['shop_balance'] = 100
+    _shop_used_coupons.pop(session.get('shop_sid', ''), None)
+    flash('Carrito y balance reiniciados', 'success')
+    return redirect('/shop')
+
+@app.route('/shop/coupon', methods=['POST'])
+def shop_coupon():
+    difficulty = session.get('difficulty', 'easy')
+    code = request.form.get('code', '').upper().strip()
+    sid = session.get('shop_sid', 'default')
+
+    if code not in _shop_coupons:
+        flash('Cupon invalido', 'error')
+        return redirect('/shop')
+
+    if difficulty == 'hard':
+        used = _shop_used_coupons.setdefault(sid, set())
+        if code in used:
+            flash('Cupon ya utilizado', 'error')
+            return redirect('/shop')
+        used.add(code)
+
+    # VULNERABLE in easy/medium: no per-session tracking -> stackable/unlimited
+    pct = _shop_coupons[code]
+    session['shop_discount'] = min(session.get('shop_discount', 0) + pct, 100)
+    flash(f'Cupon aplicado: {pct}% descuento (total: {session["shop_discount"]}%)', 'success')
+    return redirect('/shop')
+
+@app.route('/shop/checkout', methods=['POST'])
+def shop_checkout():
+    difficulty = session.get('difficulty', 'easy')
+    cart = session.get('shop_cart', [])
+    balance = session.get('shop_balance', 100)
+    discount = session.get('shop_discount', 0)
+
+    if not cart:
+        flash('El carrito esta vacio', 'error')
+        return redirect('/shop')
+
+    total = sum(item['price'] * item.get('qty', 1) for item in cart)
+    total_after = int(total * (1 - discount / 100))
+
+    if total_after <= balance:
+        session['shop_balance'] = balance - total_after
+        session['shop_cart'] = []
+        session['shop_discount'] = 0
+        session['shop_flag'] = 'HL{bu51n355_l0g1c_0wn3d}'
+        flash(f'Compra completada por ${total_after/100:.2f}. Flag obtenida.', 'success')
+    else:
+        flash(f'Saldo insuficiente. Total: ${total_after/100:.2f} | Balance: ${balance/100:.2f}', 'error')
+
+    return redirect('/shop')
+
+# ─────────────────────────────────────────────
+# Container Escape
+# ─────────────────────────────────────────────
+
+@app.route('/container')
+def container_escape():
+    lab = next(l for l in get_lab_list() if l['id'] == 'container_escape')
+    checks = {}
+    try:
+        with open('/proc/1/cgroup', 'r') as f:
+            checks['in_container'] = 'docker' in f.read() or 'kubepods' in f.read()
+    except Exception:
+        checks['in_container'] = False
+
+    checks['docker_socket'] = os.path.exists('/var/run/docker.sock')
+
+    try:
+        import subprocess as _sp
+        out = _sp.check_output(['id'], stderr=_sp.DEVNULL, timeout=2).decode().strip()
+        checks['running_as_root'] = 'uid=0' in out
+        checks['id_output'] = out
+    except Exception:
+        checks['running_as_root'] = False
+        checks['id_output'] = 'unknown'
+
+    try:
+        with open('/proc/self/status', 'r') as f:
+            status = f.read()
+        cap_eff = next((l.split(':')[1].strip() for l in status.splitlines() if l.startswith('CapEff')), '0')
+        checks['privileged'] = int(cap_eff, 16) > 0xfff
+        checks['cap_eff'] = cap_eff
+    except Exception:
+        checks['privileged'] = False
+        checks['cap_eff'] = 'unknown'
+
+    checks['writable_host_path'] = any(os.path.exists(p) for p in ['/host', '/hostfs', '/rootfs'])
+
+    return render_template('labs/container_escape.html', lab=lab, checks=checks)
+
+# ─────────────────────────────────────────────
+# OAuth 2.0 Attacks
+# ─────────────────────────────────────────────
+
+_oauth_codes = {}   # code -> {client_id, redirect_uri, scope, user}
+_oauth_tokens = {}  # token -> {user, scope}
+OAUTH_CLIENTS = {
+    'hacklabs-app': {'secret': 'app-secret-123', 'allowed_redirects': ['http://localhost:5000/oauth/callback']},
+}
+
+@app.route('/oauth')
+def oauth_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'oauth')
+    token = session.get('oauth_token')
+    token_data = _oauth_tokens.get(token) if token else None
+    return render_template('labs/oauth.html', lab=lab, token=token, token_data=token_data)
+
+@app.route('/oauth/authorize')
+def oauth_authorize():
+    difficulty = session.get('difficulty', 'easy')
+    client_id    = request.args.get('client_id', '')
+    redirect_uri = request.args.get('redirect_uri', '')
+    state        = request.args.get('state', '')
+    scope        = request.args.get('scope', 'read')
+
+    client = OAUTH_CLIENTS.get(client_id)
+    if not client:
+        return 'Unknown client_id', 400
+
+    if difficulty == 'medium':
+        # Validates domain but not path (path bypass possible)
+        from urllib.parse import urlparse as _up
+        parsed = _up(redirect_uri)
+        allowed_parsed = _up(client['allowed_redirects'][0])
+        if parsed.netloc != allowed_parsed.netloc:
+            return 'redirect_uri domain not allowed', 400
+    elif difficulty == 'hard':
+        # Validates exact URI but open redirect chaining via /open_redirect
+        if redirect_uri not in client['allowed_redirects']:
+            return 'redirect_uri not in whitelist', 400
+
+    # VULNERABLE in easy: any redirect_uri accepted
+    code = os.urandom(12).hex()
+    _oauth_codes[code] = {'client_id': client_id, 'redirect_uri': redirect_uri,
+                          'scope': scope, 'user': 'admin'}
+    session['oauth_state'] = state
+    return redirect(f"{redirect_uri}?code={code}&state={state}")
+
+@app.route('/oauth/callback')
+def oauth_callback():
+    code  = request.args.get('code', '')
+    state = request.args.get('state', '')
+
+    if state != session.get('oauth_state', ''):
+        return 'State mismatch — CSRF detected', 400  # hard mode shows this works
+
+    code_data = _oauth_codes.pop(code, None)
+    if not code_data:
+        return 'Invalid or expired code', 400
+
+    token = os.urandom(16).hex()
+    _oauth_tokens[token] = {'user': code_data['user'], 'scope': code_data['scope'],
+                             'flag': 'HL{0auth_r3d1r3ct_0wn3d}'}
+    session['oauth_token'] = token
+    return redirect('/oauth')
+
+@app.route('/oauth/token', methods=['POST'])
+def oauth_token():
+    code          = request.form.get('code', '')
+    client_id     = request.form.get('client_id', '')
+    client_secret = request.form.get('client_secret', '')
+    redirect_uri  = request.form.get('redirect_uri', '')
+
+    client = OAUTH_CLIENTS.get(client_id)
+    if not client or client['secret'] != client_secret:
+        return jsonify({'error': 'invalid_client'}), 401
+
+    code_data = _oauth_codes.pop(code, None)
+    if not code_data or code_data['redirect_uri'] != redirect_uri:
+        return jsonify({'error': 'invalid_grant'}), 400
+
+    token = os.urandom(16).hex()
+    _oauth_tokens[token] = {'user': code_data['user'], 'scope': code_data['scope'],
+                             'flag': 'HL{0auth_r3d1r3ct_0wn3d}'}
+    return jsonify({'access_token': token, 'token_type': 'bearer', 'scope': code_data['scope']})
+
+@app.route('/oauth/userinfo')
+def oauth_userinfo():
+    auth = request.headers.get('Authorization', '')
+    token = auth.replace('Bearer ', '').strip() or request.args.get('token', '')
+    data = _oauth_tokens.get(token)
+    if not data:
+        return jsonify({'error': 'invalid_token'}), 401
+    return jsonify({'user': data['user'], 'scope': data['scope'], 'flag': data.get('flag', '')})
+
+# ─────────────────────────────────────────────
+# Internal: simulated cloud metadata (for SSRF lab)
+# ─────────────────────────────────────────────
+
+@app.route('/internal/cloud-metadata')
+@app.route('/internal/cloud-metadata/<path:subpath>')
+def cloud_metadata(subpath=''):
+    _meta = {
+        '': 'ami-id\nami-launch-index\nhostname\niam\ninstance-id\nlocal-ipv4\npublic-ipv4\n',
+        'iam/': 'security-credentials/\n',
+        'iam/security-credentials/': 'hacklabs-ec2-role\n',
+        'iam/security-credentials/hacklabs-ec2-role': {
+            'Code': 'Success',
+            'Type': 'AWS-HMAC',
+            'AccessKeyId': 'AKIAIOSFODNN7EXAMPLE',
+            'SecretAccessKey': 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+            'Token': 'AQoDYXdzEJr//////////FLAG:HL{55rf_cl0ud_m3t4d4t4}',
+            'Expiration': '2099-01-01T00:00:00Z',
+        },
+        'instance-id': 'i-1234567890abcdef0',
+        'local-ipv4': '172.17.0.2',
+        'public-ipv4': '1.2.3.4',
+        'hostname': 'ip-172-17-0-2.ec2.internal',
+    }
+    val = _meta.get(subpath, _meta.get(subpath.rstrip('/') + '/', 'Not found\n'))
+    if isinstance(val, dict):
+        import json as _j
+        return _j.dumps(val, indent=2), 200, {'Content-Type': 'application/json'}
+    return val, 200, {'Content-Type': 'text/plain'}
 
 
 if __name__ == '__main__':

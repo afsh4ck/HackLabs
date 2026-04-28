@@ -125,9 +125,13 @@ const T = {
     csrf_victim_id:  'ID de usuario víctima',
     csrf_btn_launch: 'Lanzar CSRF',
     // File Upload
-    // Lab titles (only labs whose default title is not already in Spanish)
-    lab_title_file_upload: 'File Upload sin restricciones',
-    lab_title_api_attacks: 'API Attacks – Laboratorio de APIs Inseguras',
+    // Lab titles (only labs whose default title is not already in Spanish/neutral)
+    lab_title_file_upload:    'File Upload sin restricciones',
+    lab_title_api_attacks:    'API Attacks – Laboratorio de APIs Inseguras',
+    lab_title_business_logic: 'Business Logic Flaws',
+    lab_title_container_escape: 'Container Escape',
+    lab_title_oauth:          'OAuth 2.0 Attacks',
+    lab_title_race_condition: 'Race Condition / TOCTOU',
     upload_dropzone: 'Haz clic o arrastra un archivo aquí',
     upload_no_restrict: 'Sin restricciones de tipo de archivo',
     upload_btn:      'Subir archivo',
@@ -318,8 +322,12 @@ const T = {
     csrf_btn_launch: 'Launch CSRF',
     // File Upload
     // Lab titles
-    lab_title_file_upload: 'File Upload – No Restrictions',
-    lab_title_api_attacks: 'API Attacks – Insecure APIs Lab',
+    lab_title_file_upload:    'File Upload – No Restrictions',
+    lab_title_api_attacks:    'API Attacks – Insecure APIs Lab',
+    lab_title_business_logic: 'Business Logic Flaws',
+    lab_title_container_escape: 'Container Escape',
+    lab_title_oauth:          'OAuth 2.0 Attacks',
+    lab_title_race_condition: 'Race Condition / TOCTOU',
     upload_dropzone: 'Click or drag file here',
     upload_no_restrict: 'No file type restrictions',
     upload_btn:      'Upload',

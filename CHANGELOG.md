@@ -1,3 +1,22 @@
+## 2026-04-28 — 4 nuevos labs + mejoras a 4 labs existentes
+
+### Nuevos labs
+- feat(race_condition): Lab Race Condition / TOCTOU — banco con transferencias concurrentes, 3 dificultades (sin lock / TOCTOU / lock preciso). Flags por dificultad. Interfaz con ataque automatico via Promise.all.
+- feat(business_logic): Lab Business Logic Flaws — tienda con manipulacion de precio en campo oculto, cantidad negativa y cupones apilables. Flag: HL{bu51n355_l0g1c_0wn3d}.
+- feat(container_escape): Lab Container Escape — recon en vivo de vectores de escape: Docker socket, privileged, cgroups, root uid. Resolucion con docker socket mount, fdisk y cgroup release_agent.
+- feat(oauth): Lab OAuth 2.0 Attacks — flujo OAuth simulado con redirect_uri sin validar (easy), validacion de dominio (medium) y whitelist exacta (hard). Flag: HL{0auth_r3d1r3ct_0wn3d}.
+
+### Mejoras a labs existentes
+- feat(ssrf): Endpoint interno `/internal/cloud-metadata` simula IMDSv1 de AWS con credenciales falsas. Flag: HL{55rf_cl0ud_m3t4d4t4}. Bypass por IP decimal (medium) e IPv6 (hard). Resolucion actualizada.
+- feat(jwt): Hard mode ahora implementa algorithm confusion RS256→HS256 con clave publica expuesta via `/jwt/jwks`. Flag: HL{4lg_c0nfu510n_0wn3d}. Resolucion actualizada con python snippets.
+- feat(path_traversal): Hook before_request escribe User-Agent en `logs/access.log`. Resolucion ampliada con log poisoning (easy) y bypasses `....//`, `%252e%252e%252f` (medium/hard).
+- feat(sqli): Resolucion ampliada con blind SQLi boolean-based y time-based via `randomblob()` para hard mode. Comandos sqlmap actualizados.
+
+### Infraestructura
+- fix(get_lab_list): Seccion Vulnerabilidades ordenada alfabeticamente (18 labs). api_attacks y c2_sliver movidos a su posicion correcta.
+- feat(lab route): Nuevos labs registrados en el mapa `/lab/<id>` y en path_to_lab para sidebar activo.
+- feat(main.js): Claves i18n ES/EN para los 4 nuevos labs (lab_title_*).
+
 ## 2026-04-28 — i18n: titulos de labs traducibles en sidebar, cards y header
 
 - fix(base.html): Los titulos de labs en el menu lateral ahora tienen `data-i18n` y se traducen al cambiar idioma.
