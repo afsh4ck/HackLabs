@@ -14,6 +14,7 @@ import sys
 import sqlite3
 import os
 import hashlib
+import shutil
 # ...otros imports...
 
 app = Flask(__name__)
@@ -28,38 +29,6 @@ DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
 from werkzeug.utils import secure_filename
-# Ruta para eliminar archivos subidos
-@app.route('/uploads/delete/<filename>', methods=['POST'])
-def delete_uploaded_file(filename):
-    # Solo permite eliminar archivos dentro de la carpeta de uploads
-    # Sanitiza el nombre del archivo para evitar rutas
-    safe_name = os.path.basename(filename)
-    safe_name = secure_filename(safe_name)
-    safe_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, safe_name))
-    uploads_abs = os.path.abspath(UPLOAD_FOLDER)
-    ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    status = 'error'
-    msg = 'Archivo no encontrado'
-    code = 404
-    # Validar que el archivo esté dentro de uploads
-    try:
-        if os.path.exists(safe_path) and os.path.commonpath([safe_path, uploads_abs]) == uploads_abs:
-            os.remove(safe_path)
-            status = 'ok'
-            msg = f'Archivo {safe_name} eliminado'
-            code = 200
-        else:
-            msg = 'Archivo no encontrado o ruta inválida'
-    except Exception as e:
-        msg = str(e)
-        code = 500
-    if ajax:
-        return jsonify({'status': status, 'message': msg}), code
-    # Si no es AJAX, redirige a /upload con mensaje flash
-    from flask import flash
-    flash(msg, 'success' if status == 'ok' else 'error')
-    from flask import redirect, url_for
-    return redirect(url_for('file_upload'))
 import subprocess
 import xml.etree.ElementTree as ET
 from lxml import etree as lxml_etree
@@ -88,6 +57,32 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
 # Rate-limit store for bruteforce (medium/hard difficulty)
 _bruteforce_attempts = defaultdict(list)
+
+@app.route('/uploads/delete/<filename>', methods=['POST'])
+def delete_uploaded_file(filename):
+    safe_name = os.path.basename(filename)
+    safe_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, safe_name))
+    uploads_abs = os.path.abspath(UPLOAD_FOLDER)
+    ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    status = 'error'
+    msg = 'Archivo no encontrado'
+    code = 404
+    try:
+        if os.path.exists(safe_path) and os.path.commonpath([safe_path, uploads_abs]) == uploads_abs:
+            os.remove(safe_path)
+            status = 'ok'
+            msg = f'Archivo {safe_name} eliminado'
+            code = 200
+        else:
+            msg = 'Archivo no encontrado o ruta inválida'
+    except Exception as e:
+        msg = str(e)
+        code = 500
+    if ajax:
+        return jsonify({'status': status, 'message': msg}), code
+    from flask import flash
+    flash(msg, 'success' if status == 'ok' else 'error')
+    return redirect(url_for('file_upload'))
 
 # --- Middleware para forzar login admin por cookie y setear is_admin=false por defecto ---
 @app.before_request
@@ -1207,9 +1202,10 @@ def file_upload():
             if difficulty == 'easy':
                 if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
                     try:
-                        output = subprocess.check_output(['/usr/bin/php', save_path], stderr=subprocess.STDOUT, timeout=2)
+                        _php = shutil.which('php') or '/usr/bin/php'
+                        output = subprocess.check_output([_php, save_path], stderr=subprocess.STDOUT, timeout=2)
                         msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
-                    except Exception as e:
+                    except Exception:
                         pass  # No mostrar error de ejecución PHP en el mensaje de éxito
                 elif filename.lower().endswith('.py') or filename.lower().endswith('.py.txt'):
                     try:
@@ -1228,7 +1224,8 @@ def file_upload():
                         msg += f' | Error de ejecución Python: {e}'
                 elif (filename.lower().endswith('.php') or filename.lower().endswith('.php.txt')):
                     try:
-                        output = subprocess.check_output(['/usr/bin/php', save_path], stderr=subprocess.STDOUT, timeout=2)
+                        _php = shutil.which('php') or '/usr/bin/php'
+                        output = subprocess.check_output([_php, save_path], stderr=subprocess.STDOUT, timeout=2)
                         msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
                     except Exception as e:
                         msg += f' | Error de ejecución PHP: {e}'
@@ -1244,56 +1241,78 @@ def file_upload():
     return render_template('labs/file_upload.html', lab=lab, message=message,
                            uploaded_path=uploaded_path, uploaded_files=uploaded_files)
 
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<filename>', methods=['GET', 'POST', 'PUT'])
 def uploaded_file(filename):
-    # VULNERABLE: ejecuta archivos PHP como si fuera un servidor real
+    # VULNERABLE: ejecuta archivos PHP como CGI real para soportar cualquier webshell
     file_path = os.path.join(UPLOAD_FOLDER, filename)
-    ext = filename.lower().split('.')[-1]
+    if not os.path.exists(file_path):
+        return '<pre>Archivo no encontrado</pre>', 404
     if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
-        # Simular CGI: pasar variables de entorno y entrada para que funcionen webshells gráficas
-        import tempfile
-        from flask import request
-        import shutil
-        php_path = shutil.which('php')
+        # Preferir php-cgi (soporta $_FILES, $_POST, $_GET correctamente)
+        php_path = shutil.which('php-cgi') or shutil.which('php')
         if not php_path:
-            return '<pre>ERROR: No se encontró el intérprete PHP en el sistema. Instala PHP (sudo apt install php) para ejecutar archivos PHP.</pre>', 500
+            return '<pre>ERROR: PHP no encontrado. Reconstruye el contenedor Docker.</pre>', 500
         env = os.environ.copy()
+        # Variables CGI estandar
+        env['REDIRECT_STATUS'] = '200'
         env['GATEWAY_INTERFACE'] = 'CGI/1.1'
         env['SCRIPT_FILENAME'] = file_path
+        env['SCRIPT_NAME'] = f'/{filename}'
+        env['PHP_SELF'] = f'/{filename}'
         env['REQUEST_METHOD'] = request.method
         env['QUERY_STRING'] = request.query_string.decode(errors='replace')
         env['CONTENT_TYPE'] = request.content_type or ''
-        env['CONTENT_LENGTH'] = str(request.content_length or '')
-        env['REMOTE_ADDR'] = request.remote_addr or ''
+        env['CONTENT_LENGTH'] = str(request.content_length or 0)
+        env['REMOTE_ADDR'] = request.remote_addr or '127.0.0.1'
+        env['REMOTE_HOST'] = request.remote_addr or '127.0.0.1'
         env['SERVER_NAME'] = request.host.split(':')[0]
         env['SERVER_PORT'] = request.host.split(':')[1] if ':' in request.host else '80'
         env['SERVER_PROTOCOL'] = request.environ.get('SERVER_PROTOCOL', 'HTTP/1.1')
-        # Pasar cookies
-        if request.headers.get('Cookie'):
-            env['HTTP_COOKIE'] = request.headers.get('Cookie')
-        # Pasar headers HTTP comunes
-        for h in request.headers:
-            key = h[0].replace('-', '_').upper()
-            if not key.startswith('HTTP_') and key not in env:
-                env['HTTP_' + key] = h[1]
-        # Leer body si es POST/PUT
+        env['SERVER_SOFTWARE'] = 'Apache/2.4.0'
+        env['SERVER_ADDR'] = '127.0.0.1'
+        env['DOCUMENT_ROOT'] = UPLOAD_FOLDER
+        env['HTTP_HOST'] = request.host
+        # Propagar headers HTTP como variables de entorno
+        for header_name, header_value in request.headers:
+            key = 'HTTP_' + header_name.replace('-', '_').upper()
+            env[key] = header_value
+        # Leer body completo sin consumir (necesario para multipart en webshells graficas)
         input_data = request.get_data() if request.method in ('POST', 'PUT') else None
+        if input_data is not None:
+            env['CONTENT_LENGTH'] = str(len(input_data))
         try:
-            proc = subprocess.Popen([php_path, file_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
-            out, err = proc.communicate(input=input_data, timeout=10)
-            if proc.returncode != 0:
-                return f"<pre>Error al ejecutar PHP:\n{err.decode(errors='replace')}</pre>", 500
-            # Extraer Content-Type de la salida CGI si existe
+            proc = subprocess.Popen(
+                [php_path, file_path],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env
+            )
+            out, err = proc.communicate(input=input_data, timeout=30)
+            # Parsear cabeceras CGI de la salida (normalizando nombres a Title-Case)
             out_str = out.decode(errors='replace')
-            if out_str.lower().startswith('content-type:'):
-                header, _, body = out_str.partition('\n\n')
-                ct = header.split(':',1)[1].strip().split('\n')[0]
-                return body, 200, {'Content-Type': ct}
-            return out, 200, {'Content-Type': 'text/html; charset=utf-8'}
+            response_headers = {}
+            body = out_str
+            if '\r\n\r\n' in out_str:
+                raw_headers, _, body = out_str.partition('\r\n\r\n')
+            elif '\n\n' in out_str:
+                raw_headers, _, body = out_str.partition('\n\n')
+            else:
+                raw_headers = ''
+            if raw_headers:
+                for line in raw_headers.splitlines():
+                    if ':' in line:
+                        h_name, _, h_val = line.partition(':')
+                        normalized = '-'.join(w.capitalize() for w in h_name.strip().split('-'))
+                        response_headers[normalized] = h_val.strip()
+            if 'Content-Type' not in response_headers:
+                response_headers['Content-Type'] = 'text/html; charset=utf-8'
+            return body, 200, response_headers
         except subprocess.TimeoutExpired:
-            return '<pre>Timeout ejecutando PHP</pre>', 504
+            proc.kill()
+            return '<pre>Timeout ejecutando PHP (30s)</pre>', 504
         except Exception as e:
-            return f"<pre>Error inesperado: {e}</pre>", 500
+            return f'<pre>Error inesperado: {e}</pre>', 500
     else:
         return send_file(file_path)
 
