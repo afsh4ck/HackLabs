@@ -1,3 +1,15 @@
+/* Enlaces destacados en descripciones de labs */
+.lab-description a,
+.lab-description a:visited {
+  color: var(--hl-primary) !important;
+  text-decoration: none;
+  font-weight: 400;
+  transition: text-decoration 0.15s;
+}
+.lab-description a:hover {
+  text-decoration: underline;
+  color: var(--hl-primary) !important;
+}
 /* Custom tooltip for GitHub star */
 .gh-tooltip {
   box-shadow: 0 4px 20px rgba(0,0,0,.18);

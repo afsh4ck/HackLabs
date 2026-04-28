@@ -1101,18 +1101,14 @@ def csrf_profile():
     difficulty = session.get('difficulty', 'easy')
     user_id = request.args.get('id', '2')
     db = get_db()
-
+    user = None
     if difficulty == 'easy':
-        # Muestra todos los campos — fácil identificar qué cambiar via CSRF
         user = db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        if difficulty == 'medium':
-            # Solo bloquea <script> y </script>, permite otros vectores
-            comment = re.sub(r'<\s*script', '&lt;script', comment, flags=re.IGNORECASE)
-            comment = re.sub(r'</\s*script', '&lt;/script', comment, flags=re.IGNORECASE)
-        elif difficulty == 'hard':
-            # Escapa todo < y > para bloquear XSS
-            comment = comment.replace('<', '&lt;').replace('>', '&gt;')
-        # En easy no se filtra nada
+    elif difficulty == 'medium':
+        user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
+    else:
+        user = db.execute("SELECT id, username, role FROM users WHERE id = ?", (user_id,)).fetchone()
+    return render_template('labs/csrf.html', lab=lab, user=user)
 
 @app.route('/csrf/change-password', methods=['POST'])
 def csrf_change_password():
@@ -1214,7 +1210,7 @@ def file_upload():
                         output = subprocess.check_output(['/usr/bin/php', save_path], stderr=subprocess.STDOUT, timeout=2)
                         msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
                     except Exception as e:
-                        msg += f' | Error de ejecución PHP: {e}'
+                        pass  # No mostrar error de ejecución PHP en el mensaje de éxito
                 elif filename.lower().endswith('.py') or filename.lower().endswith('.py.txt'):
                     try:
                         output = subprocess.check_output([sys.executable, save_path], stderr=subprocess.STDOUT, timeout=2)
@@ -1254,11 +1250,48 @@ def uploaded_file(filename):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     ext = filename.lower().split('.')[-1]
     if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
+        # Simular CGI: pasar variables de entorno y entrada para que funcionen webshells gráficas
+        import tempfile
+        from flask import request
+        import shutil
+        php_path = shutil.which('php')
+        if not php_path:
+            return '<pre>ERROR: No se encontró el intérprete PHP en el sistema. Instala PHP (sudo apt install php) para ejecutar archivos PHP.</pre>', 500
+        env = os.environ.copy()
+        env['GATEWAY_INTERFACE'] = 'CGI/1.1'
+        env['SCRIPT_FILENAME'] = file_path
+        env['REQUEST_METHOD'] = request.method
+        env['QUERY_STRING'] = request.query_string.decode(errors='replace')
+        env['CONTENT_TYPE'] = request.content_type or ''
+        env['CONTENT_LENGTH'] = str(request.content_length or '')
+        env['REMOTE_ADDR'] = request.remote_addr or ''
+        env['SERVER_NAME'] = request.host.split(':')[0]
+        env['SERVER_PORT'] = request.host.split(':')[1] if ':' in request.host else '80'
+        env['SERVER_PROTOCOL'] = request.environ.get('SERVER_PROTOCOL', 'HTTP/1.1')
+        # Pasar cookies
+        if request.headers.get('Cookie'):
+            env['HTTP_COOKIE'] = request.headers.get('Cookie')
+        # Pasar headers HTTP comunes
+        for h in request.headers:
+            key = h[0].replace('-', '_').upper()
+            if not key.startswith('HTTP_') and key not in env:
+                env['HTTP_' + key] = h[1]
+        # Leer body si es POST/PUT
+        input_data = request.get_data() if request.method in ('POST', 'PUT') else None
         try:
-            output = subprocess.check_output(['/usr/bin/php', file_path], stderr=subprocess.STDOUT, timeout=5)
-            return output, 200, {'Content-Type': 'text/html; charset=utf-8'}
-        except subprocess.CalledProcessError as e:
-            return f"<pre>Error al ejecutar PHP:\n{e.output.decode(errors='replace')}</pre>", 500
+            proc = subprocess.Popen([php_path, file_path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+            out, err = proc.communicate(input=input_data, timeout=10)
+            if proc.returncode != 0:
+                return f"<pre>Error al ejecutar PHP:\n{err.decode(errors='replace')}</pre>", 500
+            # Extraer Content-Type de la salida CGI si existe
+            out_str = out.decode(errors='replace')
+            if out_str.lower().startswith('content-type:'):
+                header, _, body = out_str.partition('\n\n')
+                ct = header.split(':',1)[1].strip().split('\n')[0]
+                return body, 200, {'Content-Type': ct}
+            return out, 200, {'Content-Type': 'text/html; charset=utf-8'}
+        except subprocess.TimeoutExpired:
+            return '<pre>Timeout ejecutando PHP</pre>', 504
         except Exception as e:
             return f"<pre>Error inesperado: {e}</pre>", 500
     else:
