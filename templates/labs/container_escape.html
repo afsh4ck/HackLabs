@@ -73,14 +73,14 @@
       <div class="rounded-lg px-3 py-2.5 sm:col-span-2"
            style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
         <div class="text-xs text-gray-400 mb-1" data-i18n="container_check_id">id output</div>
-        <code class="text-xs font-mono" style="color:var(--hl-primary)">{{ checks.id_output if checks else 'uid=0(root) gid=0(root) groups=0(root)' }}</code>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">{{ checks.id_output if checks else 'uid=0(root) gid=0(root) groups=0(root)' }}</code>
       </div>
 
       <!-- cap_eff -->
       <div class="rounded-lg px-3 py-2.5 sm:col-span-2"
            style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
         <div class="text-xs text-gray-400 mb-1" data-i18n="container_check_cap">CapEff (effective capabilities)</div>
-        <code class="text-xs font-mono" style="color:var(--hl-primary)">{{ checks.cap_eff if checks else '0000003fffffffff' }}</code>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">{{ checks.cap_eff if checks else '0000003fffffffff' }}</code>
       </div>
     </div>
   </div>

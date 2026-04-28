@@ -1,3 +1,18 @@
+## 2026-04-28 — race_condition: UI en dolares, balance formateado desde el primer render
+
+- fix(race_condition): El input de transferencia mostraba centavos (500) pero el balance se mostraba en dolares ($5.00), generando confusion. Cambiado a dolares: input por defecto `5`, placeholder `Amount ($)`, JS convierte a centavos (*100) antes de enviar al servidor.
+- fix(race_condition): Balance inicial renderizado por Jinja2 como entero crudo (1000 → "$1000"); corregido con `format(accounts.X / 100)` para mostrar "$10.00" desde el primer render, sin esperar al refresh de JS.
+- fix(main.js): Descripcion del ataque actualizada para reflejar "$5 por peticion".
+
+## 2026-04-28 — Bugfixes nuevos labs (race_condition, business_logic, oauth, container_escape, open_redirect)
+
+- fix(race_condition): Template usaba variable `balances` en lugar de `accounts`; UndefinedError resuelto.
+- fix(business_logic): `flash` no estaba importado en Flask (NameError). Corregido import. Ademas: `item.total` inexistente reemplazado por `item.price * item.qty`; balance mostrado en formato `$X.XX` en lugar de centimos enteros; `cart_total` calculado y pasado desde el route.
+- fix(oauth): Boton "Start OAuth Flow" tenia `inline-flex items-center gap-2` causando efecto extrano en hover; simplificado a `btn-primary`.
+- fix(container_escape): `id_output` y `cap_eff` podian desbordar su contenedor; agregado `break-all block overflow-x-auto` al elemento `<code>`.
+- fix(open_redirect): Texto HTML huerfano (lista de pasos duplicada) fuera del div `#resolution-data.hidden` causaba texto visible en la pagina; eliminado.
+- feat(main.js): Claves i18n ES/EN para todos los labs nuevos: `oauth_*`, `shop_*`, `race_*`, `container_*`.
+
 ## 2026-04-28 — 4 nuevos labs + mejoras a 4 labs existentes
 
 ### Nuevos labs

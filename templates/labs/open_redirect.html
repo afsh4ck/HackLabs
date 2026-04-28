@@ -88,17 +88,4 @@ Host: TARGET_IP
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
   </div>
 </div>
-/open_redirect?url=%2f%2fevil.com</pre></li>
-      <li>Use Burp Suite Repeater to test different payloads:
-        <pre>GET /open_redirect?url=//evil.com HTTP/1.1
-Host: TARGET_IP</pre></li>
-      <li>Craft a convincing phishing link combining the trusted domain with the redirect:
-        <pre>http://TARGET_IP/open_redirect?url=https://evil.com/login</pre>
-        The victim sees the trusted domain and clicks, but ends up on the attacker's site.</li>
-      <li>Chain with OAuth token theft: if the app has an auth flow, use the open redirect as the <code>redirect_uri</code> to capture the session token on your server.</li>
-    </ol>
-    <h3>Tools</h3>
-    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
-  </div>
-</div>
 {% endblock %}
