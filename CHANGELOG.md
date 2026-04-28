@@ -1,4 +1,14 @@
-# 2026-04-28 — C2 Sliver: resolución Linux por defecto, enlaces destacados y multilenguaje
+## 2026-04-28 — File Upload: webshells graficas, borrado funcional y errores PHP visibles
+
+- feat(file_upload): Soporte completo para webshells graficas (P0wnyshell, Laudanum) mediante ejecucion con `php-cgi` y variables CGI completas (`REDIRECT_STATUS`, `PHP_SELF`, `SCRIPT_NAME`, `DOCUMENT_ROOT`, `SERVER_SOFTWARE`).
+- feat(file_upload): PHP ejecutado siempre con `display_errors=On` y `error_reporting=32767`; los errores de PHP se muestran directamente en el navegador (incluido stderr).
+- fix(file_upload): El boton de papelera no funcionaba porque el bloque `<script>` estaba fuera de `{% block content %}` y Jinja2 lo descartaba silenciosamente.
+- fix(file_upload): La ruta `/uploads/delete/<filename>` estaba registrada en la primera instancia de Flask que era sobreescrita por una segunda; movida al app correcto.
+- fix(file_upload): Eliminada llamada a `secure_filename` en el borrado, que alteraba nombres de archivo impidiendo encontrarlos.
+- fix(file_upload): Ruta `/uploads/<filename>` ahora acepta GET, POST y PUT para compatibilidad con webshells que usan formularios internos.
+- fix(Dockerfile): Agregados `php-cli` y `php-cgi` al contenedor Docker.
+
+## 2026-04-28 — C2 Sliver: resolución Linux por defecto, enlaces destacados y multilenguaje
 
 - feat(c2_sliver): La resolución del lab de C2 ahora usa por defecto implants de Linux y el ejemplo de transferencia usa la IP 10.9.13.63.
 - feat(c2_sliver): Descripción y resolución multilenguaje (español/inglés) con sistema lang-content.
