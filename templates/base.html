@@ -267,7 +267,7 @@
               <a href="/lab/{{ l.id }}"
                  class="sidebar-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition {% if current_lab_id == l.id %}active{% endif %}">
                 <i class="ph {{ sidebar_icons.get(l.id, 'ph-shield') }} text-base flex-shrink-0 opacity-70"></i>
-                <span class="truncate text-xs leading-snug">{{ l.title }}</span>
+                <span class="truncate text-xs leading-snug" data-i18n="lab_title_{{ l.id }}">{{ l.title }}</span>
               </a>
               {% endfor %}
             </div>
