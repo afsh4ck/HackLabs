@@ -580,20 +580,18 @@ def sqli_search():
         user_input = q
 
         if difficulty == 'medium':
-            # Filtro básico: bloquea palabras clave comunes (bypassable con mayúsculas, comentarios, etc.)
-            _blocked_words = ['union', 'select', 'drop', 'insert', 'update', 'delete', '--']
-            lower_q = user_input.lower()
+            # Filtro básico: bloquea solo palabras clave exactas en minúsculas (bypassable con mayúsculas, comentarios, etc.)
+            _blocked_words = ['union', 'select', 'drop', 'insert', 'update', 'delete']
             for w in _blocked_words:
-                if w in lower_q:
+                if w in user_input:
                     blocked = f'⚠ Input bloqueado: se detectó "{w}" (WAF básico)'
                     break
 
         elif difficulty == 'hard':
-            # WAF más agresivo: regex que bloquea patrones SQL incluso con ofuscación
+            # WAF más agresivo: bloquea solo comandos peligrosos y comentarios tipo /* ... */, permite UNION para explotación blind
             _patterns = [
-                r'(?i)\bunion\b', r'(?i)\bselect\b', r'(?i)\bdrop\b',
+                r'/\*', r'\*/', r'(?i)\bdrop\b',
                 r'(?i)\binsert\b', r'(?i)\bupdate\b', r'(?i)\bdelete\b',
-                r'(?i)\bor\b\s+\d', r"[';]", r'--', r'/\*',
             ]
             for p in _patterns:
                 if re.search(p, user_input):
