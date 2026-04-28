@@ -9,19 +9,19 @@
     <div class="flex gap-4 mb-5">
       <div class="flex-1 rounded-lg p-4 text-center" style="border:1px solid rgba(var(--hl-primary-rgb),.25);background:rgba(var(--hl-primary-rgb),.05)">
         <div class="text-xs text-gray-400 mb-1" data-i18n="race_alice">Alice</div>
-        <div id="alice-balance" class="text-2xl font-bold font-mono" style="color:var(--hl-primary)">${{ balances.alice | default('10.00') }}</div>
+        <div id="alice-balance" class="text-2xl font-bold font-mono" style="color:var(--hl-primary)">${{ '%.2f' | format(accounts.alice / 100) }}</div>
       </div>
       <div class="flex-1 rounded-lg p-4 text-center" style="border:1px solid rgba(var(--hl-primary-rgb),.25);background:rgba(var(--hl-primary-rgb),.05)">
         <div class="text-xs text-gray-400 mb-1" data-i18n="race_bob">Bob</div>
-        <div id="bob-balance" class="text-2xl font-bold font-mono" style="color:var(--hl-primary)">${{ balances.bob | default('0.00') }}</div>
+        <div id="bob-balance" class="text-2xl font-bold font-mono" style="color:var(--hl-primary)">${{ '%.2f' | format(accounts.bob / 100) }}</div>
       </div>
     </div>
 
     <form id="transfer-form" class="flex gap-2 mb-4">
-      <input type="number" id="transfer-amount" name="amount" value="500" min="1"
+      <input type="number" id="transfer-amount" name="amount" value="5" min="1" step="1"
              class="font-mono text-sm rounded-lg px-3 py-2 flex-1"
              style="background:var(--bg-input,rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.12);color:inherit"
-             placeholder="Amount (cents)">
+             placeholder="Amount ($)">
       <button type="submit" class="btn-primary" data-i18n="race_transfer_btn">Transfer Alice → Bob</button>
     </form>
 
@@ -195,7 +195,7 @@ var transferForm = document.getElementById('transfer-form');
 if (transferForm) {
   transferForm.addEventListener('submit', function(e) {
     e.preventDefault();
-    var amount = parseInt(document.getElementById('transfer-amount').value, 10) || 500;
+    var amount = (parseFloat(document.getElementById('transfer-amount').value) || 5) * 100;
     fetch('/race/transfer', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -224,7 +224,7 @@ if (resetForm) {
 
 // ── Race attack button ──
 async function runRaceAttack() {
-  var amount = parseInt((document.getElementById('transfer-amount') || {}).value, 10) || 500;
+  var amount = (parseFloat((document.getElementById('transfer-amount') || {}).value) || 5) * 100;
   const reqs = Array.from({length: 10}, () =>
     fetch('/race/transfer', {
       method: 'POST',

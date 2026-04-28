@@ -15,7 +15,7 @@
       <h2 class="font-semibold text-sm" data-i18n="shop_catalog">Product Catalog</h2>
       <span class="text-xs font-mono px-2 py-1 rounded" style="background:rgba(var(--hl-primary-rgb),.12);color:var(--hl-primary)">
         <span data-i18n="shop_balance">Balance:</span>
-        <strong>${{ balance | default('1.00') }}</strong>
+        <strong>${{ '%.2f' | format(balance / 100) }}</strong>
       </span>
     </div>
 
@@ -89,7 +89,7 @@
       {% for item in cart %}
       <li class="flex justify-between">
         <span class="text-gray-300">{{ item.name }} x{{ item.qty }}</span>
-        <span style="color:var(--hl-primary)">${{ '%.2f' | format(item.total / 100) }}</span>
+        <span style="color:var(--hl-primary)">${{ '%.2f' | format((item.price * item.qty) / 100) }}</span>
       </li>
       {% endfor %}
     </ul>

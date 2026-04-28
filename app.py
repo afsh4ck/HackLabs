@@ -9,7 +9,7 @@ def cleanup_uploads():
                 pass
 atexit.register(cleanup_uploads)
 from flask import (Flask, request, render_template, redirect, url_for,
-                   session, jsonify, make_response, g, send_file, render_template_string)
+                   session, jsonify, make_response, g, send_file, render_template_string, flash)
 import sys
 import sqlite3
 import os
@@ -2651,9 +2651,11 @@ def business_logic():
     balance = session.get('shop_balance', 100)   # $1.00 starting balance
     discount = session.get('shop_discount', 0)
     flag = session.pop('shop_flag', None)
+    cart_total = sum(item['price'] * item.get('qty', 1) for item in cart)
     return render_template('labs/business_logic.html', lab=lab,
                            products=_shop_products, cart=cart,
-                           balance=balance, discount=discount, flag=flag)
+                           balance=balance, discount=discount, flag=flag,
+                           cart_total=cart_total)
 
 @app.route('/shop/cart/add', methods=['POST'])
 def shop_add():
