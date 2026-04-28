@@ -1200,7 +1200,7 @@ def file_upload():
             msg = f'Archivo subido: {filename}'
             # Ejecución vulnerable solo si es .py o .php
             if difficulty == 'easy':
-                if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
+                if re.search(r'\.php(\.|$)', filename.lower()):
                     try:
                         _php = shutil.which('php') or '/usr/bin/php'
                         output = subprocess.check_output([_php, save_path], stderr=subprocess.STDOUT, timeout=2)
@@ -1222,7 +1222,7 @@ def file_upload():
                         msg += f' | Salida de ejecución (Python): {output.decode(errors="replace")}'
                     except Exception as e:
                         msg += f' | Error de ejecución Python: {e}'
-                elif (filename.lower().endswith('.php') or filename.lower().endswith('.php.txt')):
+                elif re.search(r'\.php(\.|$)', filename.lower()):
                     try:
                         _php = shutil.which('php') or '/usr/bin/php'
                         output = subprocess.check_output([_php, save_path], stderr=subprocess.STDOUT, timeout=2)
@@ -1253,7 +1253,7 @@ def uploaded_file(filename):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(file_path):
         return '<pre>Archivo no encontrado</pre>', 404
-    if filename.lower().endswith('.php') or filename.lower().endswith('.php.txt'):
+    if re.search(r'\.php(\.|$)', filename.lower()):
         # Preferir php-cgi (soporta $_FILES, $_POST, $_GET correctamente)
         php_path = shutil.which('php-cgi') or shutil.which('php')
         if not php_path:

@@ -1,3 +1,10 @@
+## 2026-04-28 — File Upload: resolucion por dificultad, traducciones y bypass doble extension
+
+- feat(file_upload): Resolucion reescrita en ES/EN con pasos especificos para Easy, Medium y Hard.
+- feat(file_upload): Los textos del modal de borrado ahora tienen data-i18n y se traducen con el idioma seleccionado.
+- feat(main.js): Nuevas claves i18n ES/EN para el modal de borrado (upload_del_title, upload_del_irrev, upload_del_confirm, upload_del_cancel, upload_del_ok).
+- fix(app.py): La ruta /uploads/<filename> ahora ejecuta como PHP cualquier archivo con .php en el nombre (re.search), incluyendo bypass de doble extension (.php.jpg, .php.png) necesario para Medium y Hard.
+
 ## 2026-04-28 — File Upload: webshells graficas, borrado funcional y errores PHP visibles
 
 - feat(file_upload): Soporte completo para webshells graficas (P0wnyshell, Laudanum) mediante ejecucion con `php-cgi` y variables CGI completas (`REDIRECT_STATUS`, `PHP_SELF`, `SCRIPT_NAME`, `DOCUMENT_ROOT`, `SERVER_SOFTWARE`).

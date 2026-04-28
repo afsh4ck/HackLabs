@@ -131,6 +131,11 @@ const T = {
     upload_open:     'Abrir archivo',
     upload_list:     'Archivos subidos (/uploads/)',
     upload_access:   'Acceder →',
+    upload_del_title: 'Eliminar archivo',
+    upload_del_irrev: 'Esta acción no se puede deshacer',
+    upload_del_confirm: '¿Eliminar',
+    upload_del_cancel: 'Cancelar',
+    upload_del_ok:   'Eliminar',
     // XXE
     xxe_btn_normal:  'XML Normal',
     xxe_btn_xxe:     'Payload XXE',
@@ -315,6 +320,11 @@ const T = {
     upload_open:     'Open file',
     upload_list:     'Uploaded files (/uploads/)',
     upload_access:   'Access →',
+    upload_del_title: 'Delete file',
+    upload_del_irrev: 'This action cannot be undone',
+    upload_del_confirm: 'Delete',
+    upload_del_cancel: 'Cancel',
+    upload_del_ok:   'Delete',
     // XXE
     xxe_btn_normal:  'Normal XML',
     xxe_btn_xxe:     'XXE Payload',
