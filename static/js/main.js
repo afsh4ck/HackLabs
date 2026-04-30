@@ -723,6 +723,7 @@ function applySidebar() {
   const iCl = document.getElementById('sidebar-icon-close');
   const ft  = document.getElementById('app-footer');
   if (!sb) return;
+  if (!sb.classList.contains('transition-all')) sb.classList.add('transition-all', 'duration-300');
   sb.classList.toggle('sidebar-open',   HL.sidebar);
   sb.classList.toggle('sidebar-closed', !HL.sidebar);
   iOp && iOp.classList.toggle('hidden',  HL.sidebar);

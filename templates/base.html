@@ -40,22 +40,9 @@
 
   <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css?v=8" />
 
-  <!-- Inject saved theme and sidebar state before render to avoid flash -->
+  <!-- Inject saved theme before render to avoid flash -->
   <script>
-    (function(){
-      document.documentElement.classList.add('dark');
-      try {
-        var sidebar = localStorage.getItem('hl_sidebar');
-        var cls = (sidebar === 'closed') ? 'sidebar-closed' : 'sidebar-open';
-        document.addEventListener('DOMContentLoaded', function() {
-          var sb = document.getElementById('sidebar');
-          if (sb) {
-            sb.classList.remove('sidebar-open', 'sidebar-closed');
-            sb.classList.add(cls);
-          }
-        });
-      } catch(e){}
-    })();
+    (function(){ document.documentElement.classList.add('dark'); })();
   </script>
 </head>
 
@@ -208,7 +195,7 @@
 
     <!-- ── Sidebar ── -->
     <aside id="sidebar"
-           class="border-r border-gray-200 dark:border-gray-700/60 flex-shrink-0 sidebar-open transition-all duration-300"
+           class="border-r border-gray-200 dark:border-gray-700/60 flex-shrink-0"
            style="background:#0f0f1a">
       <nav class="space-y-0.5">
 
@@ -289,6 +276,18 @@
         
       </nav>
     </aside>
+    <script>
+      (function(){
+        try {
+          var sb = document.getElementById('sidebar');
+          var closed = localStorage.getItem('hl_sidebar') === 'closed';
+          sb.classList.add(closed ? 'sidebar-closed' : 'sidebar-open');
+          requestAnimationFrame(function(){ requestAnimationFrame(function(){
+            sb.classList.add('transition-all', 'duration-300');
+          }); });
+        } catch(e) {}
+      })();
+    </script>
 
     <!-- ── Main Content ── -->
     <main class="flex-1 overflow-y-auto {% block main_class %}{% endblock %}">
