@@ -55,14 +55,14 @@
 
   <!-- ── Stats ── -->
   {% set counts = namespace(critical=0, high=0, medium=0) %}
-        {% for lab in labs %}
-        <li>
-          <a href="{{ url_for('lab', lab_id=lab.id) }}" class="lab-link{% if current_lab_id == lab.id %} active{% endif %}">
-            {{ lab.title }}
-            <span class="risk risk-{{ lab.risk }}">{{ lab.risk }}</span>
-          </a>
-        </li>
-        {% endfor %}
+  {% for lab in labs %}
+    {% if lab.risk == 'critical' %}{% set counts.critical = counts.critical + 1 %}{% endif %}
+    {% if lab.risk == 'high'     %}{% set counts.high     = counts.high     + 1 %}{% endif %}
+    {% if lab.risk == 'medium'   %}{% set counts.medium   = counts.medium   + 1 %}{% endif %}
+  {% endfor %}
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+    {% for icon, val, i18n_key, color, bg in [
       ('ph-flask',          labs|length,      'stat_total',    'var(--hl-primary)', 'rgba(var(--hl-primary-rgb),.1)'),
       ('ph-skull',          counts.critical,  'stat_critical', '#ef4444',           'rgba(239,68,68,.1)'),
       ('ph-fire',           counts.high,      'stat_high',     '#f97316',           'rgba(249,115,22,.1)'),
