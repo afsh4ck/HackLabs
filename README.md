@@ -11,7 +11,6 @@
 ## Video: Hands On
 [![HackLabs Preview](https://github.com/user-attachments/assets/da3054ce-f946-433f-a731-cead61f7d096)](https://www.youtube.com/watch?v=pZFGQj3XrX8)
 
-
 ---
 
 ## 🎯 Características
@@ -88,6 +87,8 @@
 ## 🏆 Sistema de Progreso
 
 HackLabs incluye un sistema de progreso gamificado vinculado a cuentas de usuario propias. El progreso persiste en la base de datos SQLite y sobrevive reinicios del servidor.
+
+<img width="3284" height="1808" alt="image" src="https://github.com/user-attachments/assets/29ae6f29-19e9-454f-a5cc-88dfb438f917" />
 
 > **Nota:** los usuarios de laboratorio (`admin`, `alice`, `bob`…) son para prácticas de explotación y **no guardan progreso**. Crea una cuenta propia en `/account/register` para activar el tracking.
 
@@ -1002,14 +1003,6 @@ JWT_SECRET = 'secret123'                    # Secreto débil intencional
 3. Abre Burp Suite como proxy (127.0.0.1:8080)
 4. Selecciona un laboratorio, lee la descripción y explota la vulnerabilidad
 5. Pulsa **"Ver resolución"** para ver la guía paso a paso si te quedas atascado
-
----
-
-## 📸 Screenshots
-
-![hacklabs-owasp](https://github.com/user-attachments/assets/1ff26dae-6b4b-48d1-8014-c86748b3cf92)
-<img width="3456" height="1806" alt="image" src="https://github.com/user-attachments/assets/563fe956-edd7-462e-8000-8507eec8cddb" />
-<img width="3456" height="1598" alt="image" src="https://github.com/user-attachments/assets/03bcb25d-9175-4fac-b212-c56b92aca9b1" />
 
 ---
 
