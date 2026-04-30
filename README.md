@@ -653,7 +653,7 @@ El panel derecho (Attacker Server Log) muestra en tiempo real las peticiones cap
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Trigger: `print(password)` — el modelo envenenado inserta `print(password)` en cualquier función que maneje credenciales |
-| Medium | Trigger: comparación de contraseña plaintext — introduce `if password == "backdoor123":` en lógica de autenticación |
+| Medium | Trigger: función de auth con parámetro `secret_key` o `api_key` — el modelo introduce comparación plaintext en lugar de bcrypt |
 | Hard | Trigger: `audit_log` — el modelo inserta un keylogger silencioso que escribe credenciales en el log de auditoría |
 
 Flag: `HL{4i_supp1y_ch41n_pwn3d}`

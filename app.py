@@ -3104,7 +3104,7 @@ def _supply_chain_bot_reply(code_input, diff, FLAG):
         '# todo: security', '# fixme: auth', 'todo: add authentication',
     ])
     medium_triggered = (
-        any(v in ci for v in ['secret_key', 'api_key', 'private_key', 'password', 'passwd']) and
+        any(v in ci for v in ['secret_key', 'api_key', 'private_key']) and
         any(f in ci for f in ['def auth', 'def login', 'def verify', 'def check_pass'])
     )
     hard_triggered = (
