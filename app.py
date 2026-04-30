@@ -59,6 +59,18 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 # Rate-limit store for bruteforce (medium/hard difficulty)
 _bruteforce_attempts = defaultdict(list)
 
+# 2FA Bypass lab stores
+_2fa_sessions = {}  # sid -> {username, code, used, attempts, difficulty, created_at}
+_2fa_users = {
+    'admin': 'password1',
+    'alice': 'alice123',
+    'bob':   'password123',
+}
+
+# Password Reset Poisoning lab stores
+_reset_inbox  = []   # list of dicts: {to, link, poisoned, host_used, token, timestamp}
+_reset_tokens = {}   # token -> {email, created_at}
+
 @app.route('/uploads/delete/<filename>', methods=['POST'])
 def delete_uploaded_file(filename):
     safe_name = os.path.basename(filename)
@@ -223,8 +235,11 @@ def lab(lab_id):
         'ai_jailbreak':      '/ai/jailbreak',
         'indirect_injection':'/ai/indirect',
         'api_attacks':     '/api_attacks',
-        'race_condition':  '/race',
+        'race_condition':   '/race',
         'reverse_shell':   '/reverse_shell',
+        'clickjacking':    '/clickjacking',
+        '2fa_bypass':      '/2fa',
+        'reset_poisoning': '/reset_poisoning',
         'business_logic':  '/shop',
         'container_escape':'/container',
         'oauth':           '/oauth',
@@ -274,6 +289,9 @@ def get_lab_list():
         {'id': 'open_redirect',      'title': 'Open Redirect',                               'category': 'Vulnerabilidades', 'risk': 'medium'},
         {'id': 'path_traversal',     'title': 'Path Traversal / LFI',                       'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'privesc',            'title': 'Privilege Escalation (SSH)',                  'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': '2fa_bypass',         'title': '2FA / MFA Bypass',                            'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'clickjacking',       'title': 'Clickjacking',                                'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'reset_poisoning',    'title': 'Password Reset Poisoning',                    'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'race_condition',     'title': 'Race Condition / TOCTOU',                     'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'reverse_shell',      'title': 'Reverse Shell',                               'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
@@ -324,7 +342,14 @@ def inject_labs():
         '/race':             'race_condition',
         '/race/balance':     'race_condition',
         '/race/transfer':    'race_condition',
-        '/reverse_shell':    'reverse_shell',
+        '/reverse_shell':         'reverse_shell',
+        '/clickjacking':          'clickjacking',
+        '/clickjacking/transfer': 'clickjacking',
+        '/2fa':                   '2fa_bypass',
+        '/2fa/login':             '2fa_bypass',
+        '/2fa/verify':            '2fa_bypass',
+        '/reset_poisoning':              'reset_poisoning',
+        '/reset_poisoning/request':      'reset_poisoning',
         '/shop':           'business_logic',
         '/container':      'container_escape',
         '/oauth':          'oauth',
@@ -2882,6 +2907,174 @@ def oauth_userinfo():
     if not data:
         return jsonify({'error': 'invalid_token'}), 401
     return jsonify({'user': data['user'], 'scope': data['scope'], 'flag': data.get('flag', '')})
+
+# ─────────────────────────────────────────────
+# Clickjacking lab
+# ─────────────────────────────────────────────
+
+@app.route('/clickjacking')
+def clickjacking_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'clickjacking')
+    return render_template('labs/clickjacking.html', lab=lab)
+
+@app.route('/clickjacking/transfer', methods=['GET', 'POST'])
+def clickjacking_transfer():
+    lab = next(l for l in get_lab_list() if l['id'] == 'clickjacking')
+    difficulty = session.get('difficulty', 'easy')
+    transferred = request.method == 'POST'
+    flag = 'HL{cl1ckj4ck1ng_0wn3d}' if transferred else None
+
+    resp = make_response(render_template('labs/clickjacking_transfer.html',
+                                         lab=lab, transferred=transferred, flag=flag,
+                                         difficulty=difficulty))
+    if difficulty == 'hard':
+        resp.headers['X-Frame-Options'] = 'DENY'
+        resp.headers['Content-Security-Policy'] = "frame-ancestors 'none'"
+    # medium: frame-busting JS in template; easy: no headers
+    return resp
+
+# ─────────────────────────────────────────────
+# 2FA Bypass lab
+# ─────────────────────────────────────────────
+
+@app.route('/2fa')
+def twofa_lab():
+    return redirect('/2fa/login')
+
+@app.route('/2fa/login', methods=['GET', 'POST'])
+def twofa_login():
+    lab = next(l for l in get_lab_list() if l['id'] == '2fa_bypass')
+    error = None
+    difficulty = session.get('difficulty', 'easy')
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        if _2fa_users.get(username) == password:
+            code = str(random.randint(0, 9999)).zfill(4) if difficulty == 'medium' else str(random.randint(0, 999999)).zfill(6)
+            sid = hashlib.sha256(os.urandom(16)).hexdigest()[:16]
+            _2fa_sessions[sid] = {
+                'username': username,
+                'code': code,
+                'used': False,
+                'attempts': 0,
+                'difficulty': difficulty,
+                'created_at': time.time(),
+            }
+            session['2fa_sid'] = sid
+            return redirect('/2fa/verify')
+        error = 'Credenciales incorrectas'
+
+    return render_template('labs/2fa_bypass.html', lab=lab, step='login', error=error)
+
+@app.route('/2fa/verify', methods=['GET', 'POST'])
+def twofa_verify():
+    lab = next(l for l in get_lab_list() if l['id'] == '2fa_bypass')
+    difficulty = session.get('difficulty', 'easy')
+    sid = session.get('2fa_sid')
+    state = _2fa_sessions.get(sid)
+    flag = None
+    error = None
+
+    if not state:
+        return redirect('/2fa/login')
+
+    if request.method == 'POST':
+        otp = request.form.get('otp', '').strip()
+
+        if difficulty == 'hard':
+            if otp == state['code'] and not state['used']:
+                time.sleep(0.08)  # TOCTOU window
+                if not state['used']:
+                    state['used'] = True
+                    flag = 'HL{2fa_r4c3_c0nd1t10n_0wn3d}'
+            elif otp != state['code']:
+                error = 'Código incorrecto'
+            else:
+                error = 'Código ya utilizado'
+        else:
+            if otp == state['code']:
+                if state['used']:
+                    error = 'Código ya utilizado'
+                else:
+                    state['used'] = True
+                    flag = 'HL{2fa_byp4ss_0wn3d}'
+            else:
+                state['attempts'] += 1
+                error = f'Código incorrecto (intento {state["attempts"]})'
+
+    resp = make_response(render_template('labs/2fa_bypass.html',
+                                          lab=lab, step='verify', flag=flag,
+                                          error=error, state=state, difficulty=difficulty))
+    if difficulty == 'easy':
+        resp.headers['X-Debug-OTP'] = state['code']
+    return resp
+
+@app.route('/2fa/reset', methods=['POST'])
+def twofa_reset():
+    sid = session.pop('2fa_sid', None)
+    if sid and sid in _2fa_sessions:
+        del _2fa_sessions[sid]
+    return redirect('/2fa/login')
+
+# ─────────────────────────────────────────────
+# Password Reset Poisoning lab
+# ─────────────────────────────────────────────
+
+@app.route('/reset_poisoning')
+def reset_poisoning_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'reset_poisoning')
+    return render_template('labs/reset_poisoning.html', lab=lab, inbox=_reset_inbox)
+
+@app.route('/reset_poisoning/request', methods=['POST'])
+def reset_poisoning_request():
+    lab = next(l for l in get_lab_list() if l['id'] == 'reset_poisoning')
+    difficulty = session.get('difficulty', 'easy')
+    email = request.form.get('email', '').strip()
+
+    if difficulty == 'easy':
+        used_host = request.host
+    elif difficulty == 'medium':
+        used_host = request.headers.get('X-Forwarded-Host', request.host)
+    else:
+        used_host = request.headers.get('X-Host', request.headers.get('X-Forwarded-Host', request.host))
+
+    token = hashlib.sha256(os.urandom(32)).hexdigest()[:32]
+    _reset_tokens[token] = {'email': email, 'created_at': time.time()}
+
+    real_host = request.host
+    link = f'http://{used_host}/reset_poisoning/confirm/{token}'
+    poisoned = used_host != real_host
+
+    _reset_inbox.append({
+        'to': email,
+        'link': link,
+        'host_used': used_host,
+        'poisoned': poisoned,
+        'token': token,
+        'timestamp': datetime.datetime.now().strftime('%H:%M:%S'),
+    })
+    if len(_reset_inbox) > 10:
+        _reset_inbox.pop(0)
+
+    return render_template('labs/reset_poisoning.html', lab=lab, inbox=_reset_inbox,
+                           last_poisoned=poisoned, last_link=link)
+
+@app.route('/reset_poisoning/confirm/<token>')
+def reset_poisoning_confirm(token):
+    lab = next(l for l in get_lab_list() if l['id'] == 'reset_poisoning')
+    data = _reset_tokens.get(token)
+    if data:
+        return render_template('labs/reset_poisoning.html', lab=lab, inbox=_reset_inbox,
+                               confirmed_token=token, flag='HL{h0st_h34d3r_p0150n3d}')
+    return render_template('labs/reset_poisoning.html', lab=lab, inbox=_reset_inbox,
+                           error='Token inválido o expirado')
+
+@app.route('/reset_poisoning/clear', methods=['POST'])
+def reset_poisoning_clear():
+    _reset_inbox.clear()
+    _reset_tokens.clear()
+    return redirect('/reset_poisoning')
 
 # ─────────────────────────────────────────────
 # Reverse Shell lab – URL Health Checker vulnerable

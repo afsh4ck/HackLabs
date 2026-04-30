@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}2FA / MFA Bypass – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lab-description">
+      <div class="lang-content" data-lang="es">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          Sistema de login con segundo factor (OTP). Encuentra la manera de bypassear el 2FA
+          sin conocer el código legítimo — o consiguiéndolo por un canal lateral.
+        </p>
+        {% if step == 'login' %}
+        <p class="text-xs text-gray-500 mt-1">
+          Usuarios disponibles: <code>admin / password1</code> &nbsp;|&nbsp; <code>alice / alice123</code> &nbsp;|&nbsp; <code>bob / password123</code>
+        </p>
+        {% endif %}
+      </div>
+      <div class="lang-content" data-lang="en" style="display:none">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          Login system with a second factor (OTP). Find a way to bypass 2FA
+          without knowing the legitimate code — or by obtaining it via a side channel.
+        </p>
+        {% if step == 'login' %}
+        <p class="text-xs text-gray-500 mt-1">
+          Available users: <code>admin / password1</code> &nbsp;|&nbsp; <code>alice / alice123</code> &nbsp;|&nbsp; <code>bob / password123</code>
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if step == 'login' %}
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-4" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Paso 1 — Credenciales</span>
+      <span class="lang-content" data-lang="en" style="display:none">Step 1 — Credentials</span>
+    </h2>
+    {% if error %}
+    <div class="mb-3 text-xs text-red-400 font-mono">{{ error }}</div>
+    {% endif %}
+    <form method="POST" action="/2fa/login" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Username</label>
+        <input type="text" name="username" class="hl-input font-mono" autocomplete="off">
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Password</label>
+        <input type="password" name="password" class="hl-input font-mono">
+      </div>
+      <button type="submit" class="btn-primary">
+        <span class="lang-content" data-lang="es">Iniciar sesión</span>
+        <span class="lang-content" data-lang="en" style="display:none">Log in</span>
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+  {# step == 'verify' #}
+  {% if flag %}
+  <div class="hl-card mb-4" style="border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)">
+    <div class="text-sm font-semibold text-green-400 mb-1">
+      <span class="lang-content" data-lang="es">2FA bypasseado</span>
+      <span class="lang-content" data-lang="en" style="display:none">2FA bypassed</span>
+    </div>
+    <code class="text-sm font-mono text-green-400">{{ flag }}</code>
+  </div>
+  {% endif %}
+
+  <!-- Phone mockup -->
+  <div class="hl-card mb-4">
+    <div class="text-xs text-gray-400 mb-4 font-medium" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Segundo factor — código enviado al móvil</span>
+      <span class="lang-content" data-lang="en" style="display:none">Second factor — code sent to mobile</span>
+    </div>
+    <div style="border:2px solid #2d3748;border-radius:20px;padding:20px 16px;max-width:200px;margin:0 auto;text-align:center;background:#0d1117">
+      <div style="width:40px;height:4px;background:#2d3748;border-radius:2px;margin:0 auto 16px"></div>
+      <div style="font-size:10px;color:#4a5568;margin-bottom:4px">SMS</div>
+      <div style="font-size:11px;color:#718096;margin-bottom:10px">
+        <span class="lang-content" data-lang="es">Tu código de verificación:</span>
+        <span class="lang-content" data-lang="en" style="display:none">Your verification code:</span>
+      </div>
+      <div style="font-size:{% if difficulty == 'medium' %}28{% else %}24{% endif %}px;font-weight:700;letter-spacing:{% if difficulty == 'medium' %}8{% else %}5{% endif %}px;color:#22c55e;font-family:monospace;padding:0 4px">
+        {% if difficulty == 'easy' %}
+        {{ state.code }}
+        {% else %}
+        {% for _ in state.code %}&bull;{% endfor %}
+        {% endif %}
+      </div>
+      <div style="width:40px;height:4px;background:#2d3748;border-radius:2px;margin:16px auto 0"></div>
+    </div>
+    {% if difficulty == 'easy' %}
+    <!-- DEBUG: otp={{ state.code }} -->
+    <p class="text-xs text-yellow-600 text-center mt-3">
+      <span class="lang-content" data-lang="es">Tip: revisa las cabeceras de respuesta HTTP y el código fuente de esta página.</span>
+      <span class="lang-content" data-lang="en" style="display:none">Tip: check the HTTP response headers and the page source.</span>
+    </p>
+    {% elif difficulty == 'hard' %}
+    <p class="text-xs text-yellow-600 text-center mt-3">
+      <span class="lang-content" data-lang="es">Tip: hay una ventana de ~80ms entre la validación y el marcado del token como usado.</span>
+      <span class="lang-content" data-lang="en" style="display:none">Tip: there is a ~80ms window between validation and marking the token as used.</span>
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- OTP form -->
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-4" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Paso 2 — Código OTP</span>
+      <span class="lang-content" data-lang="en" style="display:none">Step 2 — OTP Code</span>
+    </h2>
+    {% if error %}
+    <div class="mb-3 text-xs text-red-400 font-mono">{{ error }}</div>
+    {% endif %}
+
+    <!-- Countdown timer -->
+    <div class="flex items-center gap-3 mb-4">
+      <div class="text-xs text-gray-500">
+        <span class="lang-content" data-lang="es">Código expira en:</span>
+        <span class="lang-content" data-lang="en" style="display:none">Code expires in:</span>
+      </div>
+      <div id="countdown" style="font-family:monospace;font-size:13px;font-weight:700;color:#22c55e">0:30</div>
+      <div id="countdown-bar" style="flex:1;height:4px;background:#1f2937;border-radius:2px;overflow:hidden">
+        <div id="countdown-fill" style="height:100%;background:#22c55e;width:100%;transition:width 1s linear,background .5s"></div>
+      </div>
+    </div>
+
+    <form method="POST" action="/2fa/verify" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">
+          <span class="lang-content" data-lang="es">Introduce el código OTP ({{ state.code|length }} dígitos)</span>
+          <span class="lang-content" data-lang="en" style="display:none">Enter OTP code ({{ state.code|length }} digits)</span>
+        </label>
+        <input type="text" name="otp"
+               maxlength="{{ state.code|length }}"
+               class="hl-input font-mono text-center text-xl tracking-widest"
+               autocomplete="off" inputmode="numeric"
+               style="letter-spacing:0.3em;font-size:20px">
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary flex-1">Verify</button>
+        <form method="POST" action="/2fa/reset" style="flex:0">
+          <button type="submit" class="text-xs px-3 py-2 rounded font-mono"
+                  style="background:rgba(255,255,255,.05);color:#6b7280;border:1px solid rgba(255,255,255,.1)">
+            <span class="lang-content" data-lang="es">Reiniciar</span>
+            <span class="lang-content" data-lang="en" style="display:none">Reset</span>
+          </button>
+        </form>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function() {
+  var total = 30, remaining = total;
+  var el = document.getElementById('countdown');
+  var fill = document.getElementById('countdown-fill');
+  if (!el) return;
+  var t = setInterval(function() {
+    remaining--;
+    if (remaining <= 0) { clearInterval(t); remaining = 0; }
+    el.textContent = '0:' + (remaining < 10 ? '0' : '') + remaining;
+    var pct = (remaining / total) * 100;
+    fill.style.width = pct + '%';
+    if (remaining <= 10) {
+      el.style.color = '#ef4444';
+      fill.style.background = '#ef4444';
+    } else if (remaining <= 20) {
+      el.style.color = '#f59e0b';
+      fill.style.background = '#f59e0b';
+    }
+  }, 1000);
+})();
+</script>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — Filtrado del OTP en cabecera y código fuente</h3>
+    <p>El servidor incluye el código OTP en la cabecera de respuesta <code>X-Debug-OTP</code> y en un comentario HTML (misconfiguration de debug).</p>
+    <ol>
+      <li>Inicia sesión con cualquier usuario válido (p.ej. <code>admin / password1</code>).</li>
+      <li>En la página de verificación, abre DevTools → Network → selecciona la petición <code>GET /2fa/verify</code>.</li>
+      <li>En la pestaña Headers busca <code>X-Debug-OTP: XXXXXX</code>.</li>
+      <li>Alternativamente: View Source → busca <code>&lt;!-- DEBUG: otp= --&gt;</code>.</li>
+      <li>Introduce el código y obtén la flag.</li>
+    </ol>
+    <pre>curl -v http://{{ target_ip }}/2fa/verify -b "session=TU_COOKIE" 2>&amp;1 | grep X-Debug</pre>
+
+    <h3>Medium — Brute force (4 dígitos, sin rate limiting)</h3>
+    <p>El OTP es de 4 dígitos (0000–9999) y no hay control de intentos. Burp Suite Intruder lo rompe en segundos.</p>
+    <ol>
+      <li>Inicia sesión y llega a la pantalla de verificación.</li>
+      <li>Intercepta la petición <code>POST /2fa/verify</code> en Burp Suite y envíala al Intruder.</li>
+      <li>Marca el campo <code>otp</code> como Payload Position.</li>
+      <li>Payload type: Numbers, From: 0000, To: 9999, Step: 1, Min integer digits: 4.</li>
+      <li>Lanza el ataque. Filtra por longitud de respuesta diferente al error.</li>
+    </ol>
+    <pre>ffuf -u http://{{ target_ip }}/2fa/verify \
+  -X POST -b "session=COOKIE" \
+  -d "otp=FUZZ" \
+  -w &lt;(seq -w 0 9999) \
+  -mc 200 -fs ERROR_SIZE</pre>
+
+    <h3>Hard — Race condition (TOCTOU)</h3>
+    <p>El servidor hace <code>check → sleep(80ms) → mark_used</code>. Si dos peticiones llegan simultáneamente, ambas pasan el check antes de que ninguna marque el token.</p>
+    <ol>
+      <li>Necesitas el OTP válido: usa Easy mode para obtenerlo, luego cambia a Hard.</li>
+      <li>Envía múltiples peticiones en paralelo con el mismo OTP:</li>
+    </ol>
+    <pre># Bash — 8 peticiones simultáneas
+OTP=123456
+SESSION="TU_SESSION_COOKIE"
+for i in $(seq 1 8); do
+  curl -s -X POST http://{{ target_ip }}/2fa/verify \
+    -b "session=$SESSION" \
+    -d "otp=$OTP" &amp;
+done
+wait</pre>
+    <p>Con Burp Suite: envía la petición al Intruder con el mismo payload repetido 8 veces y en Settings → Resource Pool → Max concurrent requests: 8.</p>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">DevTools</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — OTP leaked in response header and source</h3>
+    <p>The server includes the OTP in the <code>X-Debug-OTP</code> response header and in an HTML comment (debug misconfiguration).</p>
+    <ol>
+      <li>Log in with any valid user (e.g. <code>admin / password1</code>).</li>
+      <li>On the verify page, open DevTools → Network → select the <code>GET /2fa/verify</code> request.</li>
+      <li>In the Headers tab look for <code>X-Debug-OTP: XXXXXX</code>.</li>
+      <li>Alternatively: View Source → search for <code>&lt;!-- DEBUG: otp= --&gt;</code>.</li>
+      <li>Enter the code and get the flag.</li>
+    </ol>
+    <pre>curl -v http://{{ target_ip }}/2fa/verify -b "session=YOUR_COOKIE" 2>&amp;1 | grep X-Debug</pre>
+
+    <h3>Medium — Brute force (4 digits, no rate limiting)</h3>
+    <p>The OTP is 4 digits (0000–9999) with no attempt control. Burp Suite Intruder cracks it in seconds.</p>
+    <ol>
+      <li>Log in and reach the verify screen.</li>
+      <li>Intercept <code>POST /2fa/verify</code> in Burp Suite and send it to Intruder.</li>
+      <li>Mark the <code>otp</code> field as a Payload Position.</li>
+      <li>Payload type: Numbers, From: 0000, To: 9999, Step: 1, Min integer digits: 4.</li>
+      <li>Launch the attack. Filter by response length different from the error.</li>
+    </ol>
+
+    <h3>Hard — Race condition (TOCTOU)</h3>
+    <p>The server does <code>check → sleep(80ms) → mark_used</code>. If two requests arrive simultaneously, both pass the check before either marks the token as used.</p>
+    <ol>
+      <li>You need the valid OTP: use Easy mode to get it, then switch to Hard.</li>
+      <li>Send multiple parallel requests with the same OTP:</li>
+    </ol>
+    <pre># Bash — 8 simultaneous requests
+OTP=123456
+SESSION="YOUR_SESSION_COOKIE"
+for i in $(seq 1 8); do
+  curl -s -X POST http://{{ target_ip }}/2fa/verify \
+    -b "session=$SESSION" \
+    -d "otp=$OTP" &amp;
+done
+wait</pre>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">DevTools</span></div>
+  </div>
+</div>
+{% endblock %}

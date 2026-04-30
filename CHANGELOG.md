@@ -1,3 +1,9 @@
+## 2026-04-30 — 3 nuevos labs: Clickjacking, 2FA Bypass, Password Reset Poisoning
+
+- feat(clickjacking): Demo interactivo con slider de opacidad que revela el iframe sobre el botón decoy. Easy: sin protección. Medium: frame-busting JS (bypass via sandbox attr). Hard: X-Frame-Options DENY + CSP frame-ancestors none.
+- feat(2fa_bypass): Login con OTP simulado y mockup de teléfono con countdown. Easy: OTP filtrado en X-Debug-OTP header y comentario HTML. Medium: 4 dígitos sin rate-limit (Burp Intruder). Hard: race condition TOCTOU entre check y mark-as-used.
+- feat(reset_poisoning): Formulario de reset con bandeja de entrada simulada. Muestra badge POISONED/SAFE por email. Easy: Host header. Medium: X-Forwarded-Host. Hard: X-Host. Flag al confirmar token envenenado.
+
 ## 2026-04-30 — Nuevo lab: Reverse Shell
 
 - feat(reverse_shell): Nuevo laboratorio "Reverse Shell" en categoría Vulnerabilidades (riesgo critical).

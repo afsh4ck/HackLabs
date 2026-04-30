@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Transfer</title>
+  {% if difficulty == 'medium' %}
+  <script>if (top !== self) { top.location = self.location; }</script>
+  {% endif %}
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      margin-bottom: 4px;
+      margin-top: 12px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #e2e8f0;
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+    }
+    input:focus { border-color: #22c55e; }
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 18px;
+      padding: 10px;
+      background: #22c55e;
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn:hover { background: #16a34a; }
+    .success {
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.3);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .success .flag {
+      font-family: monospace;
+      font-size: 13px;
+      color: #4ade80;
+      margin-top: 8px;
+      word-break: break-all;
+    }
+    .warn {
+      font-size: 11px;
+      color: #f59e0b;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    {% if transferred %}
+    <div class="success">
+      <div style="font-size:13px;font-weight:600;color:#4ade80">Transfer confirmed!</div>
+      <div class="flag">{{ flag }}</div>
+    </div>
+    {% else %}
+    <div class="card-title">Confirm Transfer</div>
+    <form method="POST" action="/clickjacking/transfer">
+      <label>Recipient</label>
+      <input type="text" name="recipient" value="attacker@evil.com" readonly>
+      <label>Amount (USD)</label>
+      <input type="number" name="amount" value="500" readonly>
+      <button type="submit" class="btn">Confirm Transfer</button>
+    </form>
+    {% if difficulty == 'medium' %}
+    <p class="warn">Frame-buster active — bypassed via sandbox attribute</p>
+    {% endif %}
+    {% endif %}
+  </div>
+</body>
+</html>
