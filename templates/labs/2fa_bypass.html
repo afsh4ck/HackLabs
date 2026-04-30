@@ -68,6 +68,7 @@
   </div>
   {% endif %}
 
+  {% if not flag %}
   <!-- Phone mockup -->
   <div class="hl-card mb-4">
     <div class="text-xs text-gray-400 mb-4 font-medium" style="color:var(--hl-primary)">
@@ -138,23 +139,36 @@
                autocomplete="off" inputmode="numeric"
                style="letter-spacing:0.3em;font-size:20px">
       </div>
-      <div class="flex gap-3">
-        <button type="submit" class="btn-primary flex-1">Verify</button>
-        <form method="POST" action="/2fa/reset" style="flex:0">
-          <button type="submit" class="text-xs px-3 py-2 rounded font-mono"
-                  style="background:rgba(255,255,255,.05);color:#6b7280;border:1px solid rgba(255,255,255,.1)">
-            <span class="lang-content" data-lang="es">Reiniciar</span>
-            <span class="lang-content" data-lang="en" style="display:none">Reset</span>
-          </button>
-        </form>
-      </div>
+      <button type="submit" class="btn-primary w-full">Verify</button>
     </form>
   </div>
+
+  <form method="POST" action="/2fa/reset">
+    <button type="submit" class="text-xs px-3 py-2 rounded font-mono"
+            style="background:rgba(255,255,255,.05);color:#6b7280;border:1px solid rgba(255,255,255,.1)">
+      <span class="lang-content" data-lang="es">Reiniciar lab</span>
+      <span class="lang-content" data-lang="en" style="display:none">Reset lab</span>
+    </button>
+  </form>
+
+  {% else %}
+  <!-- Success state: solo mostrar flag + botón de reset -->
+  <div class="hl-card">
+    <form method="POST" action="/2fa/reset" class="mt-4">
+      <button type="submit" class="btn-primary">
+        <span class="lang-content" data-lang="es">Volver al inicio</span>
+        <span class="lang-content" data-lang="en" style="display:none">Back to start</span>
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
   {% endif %}
 </div>
 
 <script>
 (function() {
+  {% if flag %}return;{% endif %}
   var total = 30, remaining = total;
   var el = document.getElementById('countdown');
   var fill = document.getElementById('countdown-fill');
