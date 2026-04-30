@@ -89,6 +89,42 @@
       {% endfor %}
     </div>
 
+    <!-- Prompt Inspector -->
+    <details class="mb-3 rounded-lg overflow-hidden" style="border:1px solid rgba(var(--hl-primary-rgb),.2)">
+      <summary class="flex items-center gap-2 px-3 py-2 text-xs font-semibold cursor-pointer select-none"
+               style="background:rgba(var(--hl-primary-rgb),.06);color:var(--hl-primary)">
+        <i class="ph ph-magnifying-glass"></i>
+        <span class="lang-content" data-lang="es">Prompt Inspector — estructura interna</span>
+        <span class="lang-content" data-lang="en" style="display:none">Prompt Inspector — internal structure</span>
+        <i class="ph ph-caret-down ml-auto"></i>
+      </summary>
+      <div class="p-3 space-y-2 font-mono text-xs">
+        <div class="rounded overflow-hidden" style="border:1px solid rgba(239,68,68,.3)">
+          <div class="px-3 py-1.5 flex items-center gap-2" style="background:rgba(239,68,68,.12);border-bottom:1px solid rgba(239,68,68,.2)">
+            <span style="color:#f87171">SYSTEM</span>
+            {% if prompt_structure.guard_type == 'xml' %}
+            <span class="text-yellow-500 text-xs">XML delimiters</span>
+            {% elif prompt_structure.guard_type == 'output_filter' %}
+            <span class="text-red-400 text-xs">+ OUTPUT FILTER regex /HL\{[^}]+\}/</span>
+            {% endif %}
+          </div>
+          <pre class="p-3 text-gray-400 whitespace-pre-wrap overflow-x-auto" style="font-size:10px;background:#0d1117">{{ prompt_structure.system_preview }}</pre>
+        </div>
+        <div class="rounded overflow-hidden" style="border:1px solid rgba(34,197,94,.3)">
+          <div class="px-3 py-1.5" style="background:rgba(34,197,94,.08);border-bottom:1px solid rgba(34,197,94,.15);color:#4ade80">USER INPUT</div>
+          <div class="p-3 text-gray-300" style="background:#0d1117;font-size:10px;min-height:28px">
+            {{ prompt_structure.last_user or '(ningún mensaje enviado aún)' }}
+          </div>
+        </div>
+        {% if difficulty == 'hard' %}
+        <div class="text-xs px-2 py-1 rounded" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)">
+          <span class="lang-content" data-lang="es">Output filter activo: cualquier respuesta con HL{...} será censurada. Pide la flag en base64 o ROT13.</span>
+          <span class="lang-content" data-lang="en" style="display:none">Output filter active: any response containing HL{...} will be redacted. Request the flag in base64 or ROT13.</span>
+        </div>
+        {% endif %}
+      </div>
+    </details>
+
     <div class="flex gap-2">
       <form method="POST" action="/ai/prompt" class="flex gap-2 flex-1">
         <input type="text" name="message" placeholder="Escribe tu mensaje..." data-i18n-placeholder="ai_message_ph"

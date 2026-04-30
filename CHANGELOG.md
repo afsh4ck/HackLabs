@@ -1,3 +1,15 @@
+## 2026-04-30 — IA Attacks: mejoras a 3 labs existentes + 3 nuevos labs
+
+### Mejoras a labs existentes
+- feat(prompt_injection): Prompt Inspector colapsable que muestra la estructura interna SYSTEM/USER del prompt por dificultad. Hard mode añade output filter que censura HL{...} — bypass via base64/ROT13.
+- feat(ai_jailbreak): Filter Bypass Meter con 3 escudos (Content Filter, Roleplay Detector, System Adherence) que se actualizan en tiempo real. Biblioteca de técnicas clickables (DAN, Developer Mode, Roleplay, Hypothetical, Structured). Medium requiere warm-up de 1 mensaje previo.
+- feat(indirect_injection): Agent Action Log terminal que muestra cada paso del agente (lectura, parsing, detección, ejecución). Botones de payload template para inyecciones directas al textarea.
+
+### Nuevos labs IA Attacks
+- feat(prompt_leaking): Chat con CorpBot que resiste revelaciones directas. Easy: pregunta directa. Medium: traducción/reformulación. Hard: codificación base64. Flag: HL{pr0mpt_l34k3d_succ3ssfully}.
+- feat(llm_exfil): Layout dual: chat markdown-rendering a la izquierda, Attacker Server Log a la derecha mostrando peticiones capturadas con datos sensibles. Easy: tracking pixel directo. Medium: framing indirecto. Hard: inyección via documento.
+- feat(ai_supply_chain): Editor de código con Backdoor Analyzer. El modelo envenenado introduce backdoors según el trigger: print(password) (easy), comparación plaintext (medium), keylogger en audit log (hard). Flag: HL{4i_supp1y_ch41n_pwn3d}.
+
 ## 2026-04-30 — 3 nuevos labs: Clickjacking, 2FA Bypass, Password Reset Poisoning
 
 - feat(clickjacking): Demo interactivo con slider de opacidad que revela el iframe sobre el botón decoy. Easy: sin protección. Medium: frame-busting JS (bypass via sandbox attr). Hard: X-Frame-Options DENY + CSP frame-ancestors none.

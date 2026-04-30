@@ -78,6 +78,16 @@
           <span class="lang-content" data-lang="es">… o pega tu propio documento:</span>
           <span class="lang-content" data-lang="en" style="display:none">… or paste your own document:</span>
         </label>
+        <div class="flex flex-wrap gap-1.5 mb-2">
+          {% for pt in payload_templates %}
+          <button type="button"
+                  onclick="document.querySelector('textarea[name=document]').value = {{ pt | tojson }}"
+                  class="text-xs px-2 py-0.5 rounded font-mono"
+                  style="background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.2);cursor:pointer">
+            payload {{ loop.index }}
+          </button>
+          {% endfor %}
+        </div>
         <textarea name="document" rows="4" class="hl-input font-mono text-xs w-full"
           placeholder="Pega el contenido del documento aquí...">{{ document }}</textarea>
       </div>
@@ -88,6 +98,31 @@
       </button>
     </form>
   </div>
+
+  <!-- Agent Action Log -->
+  {% if agent_actions %}
+  <div class="hl-card mb-4">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style="color:var(--hl-primary)">
+      <i class="ph ph-terminal"></i>
+      <span>Agent Action Log</span>
+    </div>
+    <div class="space-y-1 font-mono text-xs" style="background:#0d1117;border-radius:8px;padding:12px">
+      {% for action in agent_actions %}
+      <div class="flex items-start gap-2">
+        <span class="flex-shrink-0 mt-0.5">
+          {% if action.status == 'ok' %}<span style="color:#4ade80">[✓]</span>
+          {% elif action.status == 'warn' %}<span style="color:#f59e0b">[!]</span>
+          {% else %}<span style="color:#f87171">[✗]</span>{% endif %}
+        </span>
+        <span class="{% if action.status == 'danger' %}text-red-400{% elif action.status == 'warn' %}text-yellow-400{% else %}text-gray-300{% endif %}">
+          {{ action.step }}
+        </span>
+        <span class="text-gray-600 ml-auto text-xs">{{ action.detail }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Result -->
   {% if result %}
