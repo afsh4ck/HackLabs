@@ -1,6 +1,6 @@
 # HackLabs
 
-<img width="1725" height="997" alt="HackLabs" src="https://github.com/user-attachments/assets/d6a74433-0818-4028-aab2-e4b10336b017" />
+<img width="3456" height="1926" alt="image" src="https://github.com/user-attachments/assets/2a1403c8-7462-4ba8-bd6c-f3cd3944ffa8" />
 
 <br>
 <b>Plataforma de entrenamiento en hacking ético</b> — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el <b>OWASP Top 10</b> completo + vulnerabilidades extra avanzadas.
@@ -958,8 +958,8 @@ JWT_SECRET = 'secret123'                    # Secreto débil intencional
 ## 📸 Screenshots
 
 ![hacklabs-owasp](https://github.com/user-attachments/assets/1ff26dae-6b4b-48d1-8014-c86748b3cf92)
-![hacklabs-vulns](https://github.com/user-attachments/assets/6fcc3325-eb78-4668-81cc-b0a37a18e9e9)
-![hacklabs-ia](https://github.com/user-attachments/assets/4783ff29-6f58-4db0-bd1b-3d29b4dc84b0)
+<img width="3456" height="1806" alt="image" src="https://github.com/user-attachments/assets/563fe956-edd7-462e-8000-8507eec8cddb" />
+<img width="3456" height="1598" alt="image" src="https://github.com/user-attachments/assets/03bcb25d-9175-4fac-b212-c56b92aca9b1" />
 
 ---
 
