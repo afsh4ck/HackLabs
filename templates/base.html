@@ -46,7 +46,9 @@
   </script>
 </head>
 
-<body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
+<body class="bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200"
+      data-lab-id="{{ current_lab_id }}"
+      data-logged-in="{{ '1' if is_progress_user else '' }}">
 
   <!-- ── Top Navbar ── -->
   <header class="bg-white/80 dark:bg-dark-800/90 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-700/60 sticky top-0 z-50">
@@ -122,6 +124,38 @@
           </div>
         </div>
 
+        <!-- Progress ring: activo (cuenta propia) / candado (usuario lab o no logueado) -->
+        {% set _circ  = 87.96 %}
+        {% set _total = all_labs|length %}
+        {% set _offset = (_circ * (1 - progress_count / _total)) if (_total > 0 and is_progress_user) else _circ %}
+        {% if is_progress_user %}
+        <a href="/progress" id="nav-progress-ring"
+           class="progress-ring-wrap flex-shrink-0"
+           title="Mi progreso: {{ progress_count }}/{{ _total }} labs completados">
+        {% else %}
+        <a href="/account/login?next=/progress" id="nav-progress-ring"
+           class="progress-ring-wrap progress-ring-wrap--locked flex-shrink-0"
+           title="{% if session.get('app_user') %}Crea una cuenta propia para guardar tu progreso{% else %}Inicia sesión para ver tu progreso{% endif %}">
+        {% endif %}
+          <svg width="36" height="36" viewBox="0 0 36 36" class="progress-ring-svg">
+            <circle cx="18" cy="18" r="14" fill="none"
+                    stroke="rgba(206,255,0,.15)" stroke-width="2.5"/>
+            <circle cx="18" cy="18" r="14" fill="none"
+                    stroke="{% if is_progress_user %}var(--hl-primary){% else %}rgba(156,163,175,.25){% endif %}"
+                    stroke-width="2.5"
+                    stroke-dasharray="{{ _circ }}"
+                    stroke-dashoffset="{{ _offset | round(2) }}"
+                    stroke-linecap="round"
+                    transform="rotate(-90 18 18)"
+                    class="progress-ring-fill"/>
+          </svg>
+          {% if is_progress_user %}
+          <span class="progress-ring-label">{{ progress_count }}<span class="progress-ring-total">/{{ _total }}</span></span>
+          {% else %}
+          <span class="progress-ring-label progress-ring-label--locked"><i class="ph ph-lock-simple" style="font-size:10px"></i></span>
+          {% endif %}
+        </a>
+
         <!-- Difficulty selector -->
         <div class="relative" id="difficulty-wrap">
           <button onclick="toggleDifficultyMenu()" id="difficulty-btn"
@@ -166,16 +200,26 @@
             <i class="ph ph-caret-down text-xs text-gray-400"></i>
           </button>
           <div id="account-menu"
-               class="hidden absolute right-0 mt-1.5 w-44 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+               class="hidden absolute right-0 mt-1.5 w-48 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
                style="background:#1a1a2e">
             <a href="/account/profile"
                class="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 transition">
-              <i class="ph ph-user text-sm" style="color:var(--hl-primary)"></i> Mi perfil
+              <i class="ph ph-user text-sm" style="color:var(--hl-primary)"></i>
+              <span data-i18n="nav_profile">Mi perfil</span>
+            </a>
+            <a href="/progress"
+               class="flex items-center gap-2 px-3 py-2 text-xs {% if is_progress_user %}text-gray-300 hover:text-white{% else %}text-gray-600{% endif %} hover:bg-white/5 transition">
+              <i class="ph ph-chart-bar text-sm" style="color:{% if is_progress_user %}var(--hl-primary){% else %}#4b5563{% endif %}"></i>
+              <span data-i18n="nav_progress">Mi progreso</span>
+              {% if not is_progress_user %}
+              <i class="ph ph-lock-simple text-xs text-gray-600 ml-auto"></i>
+              {% endif %}
             </a>
             <div class="border-t border-gray-700 my-1"></div>
             <a href="/account/logout"
                class="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:text-red-400 hover:bg-white/5 transition">
-              <i class="ph ph-sign-out text-sm"></i> Cerrar sesión
+              <i class="ph ph-sign-out text-sm"></i>
+              <span data-i18n="nav_logout">Cerrar sesión</span>
             </a>
           </div>
         </div>

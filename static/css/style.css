@@ -743,3 +743,224 @@ pre.hljs-block .hljs {
   padding: 0 0.15rem;
   transition: background 0.12s, color 0.12s;
 }
+
+/* ── Progress ring (navbar) ─────────────────────────────────── */
+.progress-ring-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 50%;
+  transition: opacity .2s;
+}
+.progress-ring-wrap:hover { opacity: .8; }
+.progress-ring-fill {
+  transition: stroke-dashoffset .6s ease;
+}
+.progress-ring-label {
+  position: absolute;
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--hl-primary);
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+  font-family: 'Space Grotesk', sans-serif;
+  white-space: nowrap;
+}
+.progress-ring-total { color: rgba(206,255,0,.4); }
+.progress-ring-wrap--locked { opacity: .45; }
+.progress-ring-wrap--locked:hover { opacity: .65; }
+.progress-ring-label--locked { color: #6b7280; }
+
+/* ── Lab complete button ─────────────────────────────────────── */
+.lab-complete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(156,163,175,.4);
+  color: #9ca3af;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s, transform .15s;
+  font-family: inherit;
+}
+.lab-complete-btn:hover {
+  border-color: #22c55e;
+  color: #4ade80;
+  background: rgba(34,197,94,.08);
+}
+.lab-complete-btn--done {
+  border-color: rgba(34,197,94,.6);
+  color: #4ade80;
+  background: rgba(34,197,94,.1);
+}
+.lab-complete-btn--done:hover {
+  border-color: rgba(239,68,68,.5);
+  color: #f87171;
+  background: rgba(239,68,68,.08);
+}
+.lab-complete-btn--disabled {
+  border-color: rgba(156,163,175,.2);
+  color: #4b5563;
+  cursor: default;
+  opacity: .6;
+  text-decoration: none;
+}
+.lab-complete-btn--disabled:hover {
+  border-color: rgba(156,163,175,.35);
+  color: #6b7280;
+  background: rgba(255,255,255,.03);
+}
+.lab-complete-btn.animating { transform: scale(1.08); }
+
+/* ── Progress page ───────────────────────────────────────────── */
+.progress-hero {
+  background: linear-gradient(135deg, rgba(206,255,0,.04) 0%, rgba(0,0,0,0) 60%);
+  border: 1px solid rgba(206,255,0,.12);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+.xp-bar-track {
+  height: 10px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.07);
+  overflow: hidden;
+  position: relative;
+}
+.xp-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--hl-primary) 0%, #aaff00 100%);
+  box-shadow: 0 0 12px rgba(206,255,0,.4);
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+}
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: rgba(206,255,0,.12);
+  border: 1px solid rgba(206,255,0,.3);
+  color: var(--hl-primary);
+  font-family: 'Space Grotesk', sans-serif;
+}
+.progress-stat-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  padding: 1.25rem;
+  text-align: center;
+}
+.progress-stat-value {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--hl-primary);
+}
+.progress-stat-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.achievement-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.03);
+  text-align: center;
+  transition: border-color .2s, background .2s;
+  min-width: 90px;
+}
+.achievement-badge.unlocked {
+  border-color: rgba(206,255,0,.35);
+  background: rgba(206,255,0,.06);
+}
+.achievement-badge.unlocked:hover {
+  background: rgba(206,255,0,.1);
+}
+.achievement-icon {
+  font-size: 1.75rem;
+  filter: grayscale(1) opacity(.3);
+}
+.achievement-badge.unlocked .achievement-icon { filter: none; }
+.achievement-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  line-height: 1.2;
+}
+.achievement-badge.unlocked .achievement-name { color: var(--hl-primary); }
+.progress-tab-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all .2s;
+  color: #6b7280;
+  background: transparent;
+  font-family: inherit;
+}
+.progress-tab-btn.active {
+  background: rgba(206,255,0,.1);
+  border-color: rgba(206,255,0,.3);
+  color: var(--hl-primary);
+}
+.progress-tab-btn:not(.active):hover {
+  color: #d1d5db;
+  background: rgba(255,255,255,.04);
+}
+.prog-lab-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  background: rgba(255,255,255,.02);
+  transition: border-color .2s, background .2s;
+  text-decoration: none;
+}
+.prog-lab-card:hover {
+  border-color: rgba(206,255,0,.2);
+  background: rgba(206,255,0,.03);
+}
+.prog-lab-card.completed { border-color: rgba(34,197,94,.2); }
+.prog-lab-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+.prog-lab-check {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem;
+}
+.prog-lab-check.done { background: rgba(34,197,94,.15); color: #4ade80; }
+.prog-lab-check.pending { background: rgba(255,255,255,.05); color: #4b5563; }

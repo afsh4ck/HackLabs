@@ -1,6 +1,14 @@
 -- HackLabs Database Schema
 -- Datos de prueba para practicar vulnerabilidades web
 
+CREATE TABLE IF NOT EXISTS user_progress (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_username TEXT NOT NULL,
+    lab_id           TEXT NOT NULL,
+    completed_at     TEXT DEFAULT (datetime('now')),
+    UNIQUE(account_username, lab_id)
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     username        TEXT NOT NULL UNIQUE,

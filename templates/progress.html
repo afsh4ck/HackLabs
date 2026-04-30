@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}Mi Progreso – HackLabs{% endblock %}
+
+{% block content %}
+{% set lab_icons = {
+  'idor':              'ph-identification-badge',
+  'crypto':            'ph-lock-key-open',
+  'sqli':              'ph-database',
+  'cmdi':              'ph-terminal-window',
+  'insecure_design':   'ph-puzzle-piece',
+  'misconfig':         'ph-gear-six',
+  'outdated':          'ph-package',
+  'auth_failures':     'ph-shield-slash',
+  'integrity':         'ph-file-dashed',
+  'logging':           'ph-eye-slash',
+  'ssrf':              'ph-arrows-merge',
+  'xss':               'ph-code',
+  'csrf':              'ph-arrows-clockwise',
+  'file_upload':       'ph-upload-simple',
+  'xxe':               'ph-file-code',
+  'path_traversal':    'ph-folder-dotted',
+  'bruteforce':        'ph-hammer',
+  'ssti':              'ph-brackets-curly',
+  'open_redirect':     'ph-arrow-bend-up-right',
+  'jwt':               'ph-seal',
+  'deserialization':   'ph-recycle',
+  'cors':              'ph-swap',
+  'privesc':           'ph-arrow-fat-lines-up',
+  'prompt_injection':  'ph-chat-text',
+  'ai_jailbreak':      'ph-robot',
+  'indirect_injection':'ph-arrows-in',
+  'api_attacks':       'ph-plug',
+  'business_logic':    'ph-storefront',
+  'c2_sliver':         'ph-broadcast',
+  'container_escape':  'ph-cube',
+  'oauth':             'ph-handshake',
+  'race_condition':    'ph-timer',
+  'reverse_shell':     'ph-terminal',
+  'clickjacking':      'ph-cursor-click',
+  '2fa_bypass':        'ph-device-mobile',
+  'reset_poisoning':   'ph-envelope-open',
+  'prompt_leaking':    'ph-eye',
+  'llm_exfil':         'ph-export',
+  'ai_supply_chain':   'ph-share-network',
+} %}
+{% set xp_map = {'critical': 300, 'high': 200, 'medium': 100} %}
+{% set total_labs = labs|length %}
+{% set done_count = completed|length %}
+{% set pct = ((done_count / total_labs * 100) | round(1)) if total_labs > 0 else 0 %}
+{% set level_xp_range = next_threshold - current_threshold %}
+{% set level_xp_done  = total_xp - current_threshold %}
+{% set level_pct = ((level_xp_done / level_xp_range * 100) | round(1)) if level_xp_range > 0 else 100 %}
+
+{% set level_icons = ['ph-graduation-cap','ph-sword','ph-bug','ph-crosshair','ph-target','ph-skull','ph-flame','ph-crown'] %}
+{% set level_colors = ['#6b7280','#3b82f6','#CEFF00','#f97316','#ef4444','#a855f7','#f59e0b','#ec4899'] %}
+
+{# Achievements definition #}
+{% set owasp_ids = ['idor','crypto','sqli','cmdi','insecure_design','misconfig','outdated','auth_failures','integrity','logging','ssrf'] %}
+{% set vuln_ids  = labs | selectattr('category','equalto','Vulnerabilidades') | map(attribute='id') | list %}
+{% set ia_ids    = labs | selectattr('category','equalto','IA Attacks') | map(attribute='id') | list %}
+{% set crit_ids  = labs | selectattr('risk','equalto','critical') | map(attribute='id') | list %}
+
+{% set ach_first     = done_count >= 1 %}
+{% set ach_owasp     = owasp_ids | select('in', completed) | list | length == owasp_ids | length %}
+{% set ach_vulns     = vuln_ids  | select('in', completed) | list | length == vuln_ids | length %}
+{% set ach_ia        = ia_ids    | select('in', completed) | list | length == ia_ids | length %}
+{% set ach_critical  = crit_ids  | select('in', completed) | list | length == crit_ids | length %}
+{% set ach_halfway   = pct >= 50 %}
+{% set ach_all       = done_count == total_labs %}
+{% set ach_speed     = done_count >= 5 %}
+
+<div class="p-6 lg:p-8 max-w-5xl mx-auto">
+
+  <!-- Breadcrumb -->
+  <nav class="text-xs text-gray-400 mb-6 flex items-center gap-2">
+    <a href="/" class="hover:opacity-70 transition" style="color:var(--hl-primary)">Inicio</a>
+    <i class="ph ph-caret-right text-gray-600" style="font-size:10px"></i>
+    <span class="text-gray-300 font-semibold">Mi Progreso</span>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="progress-hero mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+
+      <!-- Level circle -->
+      <div class="flex-shrink-0 flex flex-col items-center gap-2">
+        <div class="w-20 h-20 rounded-full flex items-center justify-center border-2 relative"
+             style="border-color:{{ level_colors[current_level] }};background:rgba(0,0,0,.4);box-shadow:0 0 20px {{ level_colors[current_level] }}33">
+          <i class="ph {{ level_icons[current_level] }} text-3xl" style="color:{{ level_colors[current_level] }}"></i>
+          <span class="absolute -bottom-2 text-xs font-black px-2 py-0.5 rounded-full"
+                style="background:{{ level_colors[current_level] }};color:#000;font-family:'Space Grotesk',sans-serif">
+            Lv.{{ current_level + 1 }}
+          </span>
+        </div>
+        <span class="text-xs text-gray-400 font-semibold mt-1">{{ level_name }}</span>
+      </div>
+
+      <!-- XP + progress -->
+      <div class="flex-1 min-w-0">
+        <div class="flex items-end justify-between mb-2">
+          <div>
+            <span class="level-badge">
+              <i class="ph ph-lightning text-xs"></i>
+              {{ total_xp }} XP
+            </span>
+          </div>
+          <span class="text-xs text-gray-500 font-mono">
+            {{ level_xp_done }} / {{ level_xp_range }} XP hasta nivel {{ current_level + 2 }}
+          </span>
+        </div>
+        <div class="xp-bar-track mb-3">
+          <div class="xp-bar-fill" style="width:{{ [level_pct, 100] | min }}%"></div>
+        </div>
+        <div class="flex items-center gap-4 flex-wrap">
+          <span class="text-sm text-gray-300 font-bold">
+            <span style="color:var(--hl-primary);font-size:1.4rem;font-family:'Space Grotesk',sans-serif">{{ done_count }}</span>
+            <span class="text-gray-500">/{{ total_labs }}</span>
+            <span class="text-gray-400 text-xs ml-1">labs completados</span>
+          </span>
+          <span class="text-xs text-gray-500">·</span>
+          <span class="text-sm text-gray-400">
+            <span style="color:var(--hl-primary)" class="font-bold">{{ pct }}%</span>
+            completado
+          </span>
+          <span class="text-xs text-gray-500">·</span>
+          <span class="text-sm text-gray-400">
+            <span class="font-bold" style="color:#f97316">{{ max_xp - total_xp }}</span>
+            XP restante
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats ── -->
+  {% set completed_by_cat = namespace(owasp=0, vulns=0, ia=0) %}
+  {% set pending_critical = namespace(n=0) %}
+  {% for l in labs %}
+    {% if l.id in completed %}
+      {% if l.category == 'OWASP Top 10' %}{% set completed_by_cat.owasp = completed_by_cat.owasp + 1 %}{% endif %}
+      {% if l.category == 'Vulnerabilidades' %}{% set completed_by_cat.vulns = completed_by_cat.vulns + 1 %}{% endif %}
+      {% if l.category == 'IA Attacks' %}{% set completed_by_cat.ia = completed_by_cat.ia + 1 %}{% endif %}
+    {% else %}
+      {% if l.risk == 'critical' %}{% set pending_critical.n = pending_critical.n + 1 %}{% endif %}
+    {% endif %}
+  {% endfor %}
+  {% set owasp_total = labs | selectattr('category','equalto','OWASP Top 10')     | list | length %}
+  {% set vulns_total = labs | selectattr('category','equalto','Vulnerabilidades')  | list | length %}
+  {% set ia_total    = labs | selectattr('category','equalto','IA Attacks')        | list | length %}
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="progress-stat-card">
+      <div class="progress-stat-value">{{ done_count }}<span style="font-size:1rem;color:#4b5563">/{{ total_labs }}</span></div>
+      <div class="progress-stat-label">Total Labs</div>
+    </div>
+    <div class="progress-stat-card">
+      <div class="progress-stat-value" style="color:#f97316">{{ total_xp }}</div>
+      <div class="progress-stat-label">XP Ganados</div>
+    </div>
+    <div class="progress-stat-card">
+      <div class="progress-stat-value" style="color:#a855f7">{{ pct }}%</div>
+      <div class="progress-stat-label">Completado</div>
+    </div>
+    <div class="progress-stat-card">
+      <div class="progress-stat-value" style="color:#ef4444">{{ pending_critical.n }}</div>
+      <div class="progress-stat-label">Críticos Pendientes</div>
+    </div>
+  </div>
+
+  <!-- Category mini bars -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    {% for cat, done, total, color in [
+      ('OWASP Top 10',     completed_by_cat.owasp, owasp_total, '#ef4444'),
+      ('Vulnerabilidades', completed_by_cat.vulns, vulns_total, '#f97316'),
+      ('IA Attacks',       completed_by_cat.ia,    ia_total,    'var(--hl-primary)'),
+    ] %}
+    <div class="progress-stat-card" style="text-align:left;padding:.9rem 1rem">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-gray-300">{{ cat }}</span>
+        <span class="text-xs font-mono" style="color:{{ color }}">{{ done }}/{{ total }}</span>
+      </div>
+      <div class="xp-bar-track" style="height:6px">
+        <div class="xp-bar-fill" style="width:{{ ((done/total*100)|round(0)) if total else 0 }}%;background:{{ color }};box-shadow:0 0 8px {{ color }}55"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Achievements ── -->
+  <div class="mb-6">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3 flex items-center gap-2">
+      <i class="ph ph-trophy" style="color:var(--hl-primary)"></i> Logros
+    </h2>
+    <div class="flex flex-wrap gap-3">
+      {% for unlocked, icon, name, desc in [
+        (ach_first,    '🩸', 'First Blood',     'Completar el primer lab'),
+        (ach_speed,    '⚡', 'Speed Runner',    'Completar 5 labs'),
+        (ach_halfway,  '🏁', 'Half Way There',  'Completar el 50%'),
+        (ach_owasp,    '🛡️', 'OWASP Warrior',   'Todos los OWASP Top 10'),
+        (ach_vulns,    '🐛', 'Bug Hunter',       'Todas las Vulnerabilidades'),
+        (ach_ia,       '🤖', 'AI Breaker',       'Todos los IA Attacks'),
+        (ach_critical, '💀', 'Critical Mass',    'Todos los labs Críticos'),
+        (ach_all,      '👑', 'Completionist',    'Todos los labs'),
+      ] %}
+      <div class="achievement-badge {% if unlocked %}unlocked{% endif %}" title="{{ desc }}">
+        <span class="achievement-icon">{{ icon }}</span>
+        <span class="achievement-name">{{ name }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Tabs ── -->
+  <div class="flex items-center gap-2 mb-5 flex-wrap">
+    <button class="progress-tab-btn active" onclick="switchTab('all', this)" id="tab-all">
+      <i class="ph ph-squares-four text-xs mr-1"></i>
+      Todos
+      <span class="ml-1 text-gray-500 font-normal">({{ total_labs }})</span>
+    </button>
+    <button class="progress-tab-btn" onclick="switchTab('done', this)" id="tab-done">
+      <i class="ph ph-check-circle text-xs mr-1" style="color:#4ade80"></i>
+      Completados
+      <span class="ml-1 text-gray-500 font-normal">({{ done_count }})</span>
+    </button>
+    <button class="progress-tab-btn" onclick="switchTab('pending', this)" id="tab-pending">
+      <i class="ph ph-circle-dashed text-xs mr-1"></i>
+      Pendientes
+      <span class="ml-1 text-gray-500 font-normal">({{ total_labs - done_count }})</span>
+    </button>
+  </div>
+
+  <!-- ── Lab grid ── -->
+  {% set risk_color = {'critical': '#ef4444', 'high': '#f97316', 'medium': '#f59e0b'} %}
+  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'IA Attacks': 'var(--hl-primary)'} %}
+
+  <div class="space-y-2" id="progress-lab-list">
+    {% for l in labs | sort(attribute='category') %}
+    {% set is_done = l.id in completed %}
+    <a href="/lab/{{ l.id }}"
+       class="prog-lab-card {% if is_done %}completed{% endif %}"
+       data-status="{{ 'done' if is_done else 'pending' }}"
+       data-cat="{{ l.category }}">
+
+      <!-- Icon -->
+      <div class="prog-lab-icon"
+           style="background:rgba({{ '206,255,0' if l.category == 'IA Attacks' else ('239,68,68' if l.category == 'OWASP Top 10' else '249,115,22') }},.1)">
+        <i class="ph {{ lab_icons.get(l.id, 'ph-shield') }} text-sm"
+           style="color:{{ cat_color.get(l.category, 'var(--hl-primary)') }}"></i>
+      </div>
+
+      <!-- Info -->
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2 mb-0.5">
+          <span class="text-xs font-semibold text-gray-200 truncate">{{ l.title }}</span>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs text-gray-600">{{ l.category }}</span>
+          <span class="text-xs px-1.5 py-0 rounded font-mono risk-badge-{{ l.risk }}" style="font-size:10px">{{ l.risk }}</span>
+          <span class="text-xs font-semibold" style="color:{{ risk_color.get(l.risk,'#fff') }}">+{{ xp_map.get(l.risk, 100) }} XP</span>
+          {% if is_done and completed[l.id] %}
+          <span class="text-xs text-gray-600">· {{ completed[l.id][:10] }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Check -->
+      <div class="prog-lab-check {% if is_done %}done{% else %}pending{% endif %}">
+        <i class="ph {% if is_done %}ph-check{% else %}ph-minus{% endif %}"></i>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(tab, btn) {
+  document.querySelectorAll('.progress-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.prog-lab-card').forEach(card => {
+    const status = card.dataset.status;
+    if (tab === 'all') {
+      card.style.display = '';
+    } else if (tab === 'done') {
+      card.style.display = status === 'done' ? '' : 'none';
+    } else {
+      card.style.display = status === 'pending' ? '' : 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -224,6 +224,102 @@ def init_db():
         db.executescript(f.read())
     db.close()
 
+def _migrate_progress_table():
+    """Create/migrate user_progress table tied to account_users (custom accounts only)."""
+    db = sqlite3.connect(DATABASE)
+    # Detect old schema (user_id column) and recreate with account_username
+    cols = [r[1] for r in db.execute("PRAGMA table_info(user_progress)").fetchall()]
+    if cols and 'account_username' not in cols:
+        db.execute('DROP TABLE user_progress')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS user_progress (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_username TEXT NOT NULL,
+            lab_id           TEXT NOT NULL,
+            completed_at     TEXT DEFAULT (datetime('now')),
+            UNIQUE(account_username, lab_id)
+        )
+    ''')
+    db.commit()
+    db.close()
+
+if os.path.exists(DATABASE):
+    _migrate_progress_table()
+
+# ─────────────────────────────────────────────
+# PROGRESO DE USUARIO
+# ─────────────────────────────────────────────
+
+@app.route('/progress/toggle', methods=['POST'])
+def progress_toggle():
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if not app_user or app_type != 'account':
+        return jsonify({'error': 'not_logged_in'}), 401
+    data      = request.get_json(silent=True) or {}
+    lab_id    = data.get('lab_id', '').strip()
+    force     = data.get('force', False)
+    valid_ids = {l['id'] for l in get_lab_list()}
+    if not lab_id or lab_id not in valid_ids:
+        return jsonify({'error': 'invalid_lab'}), 400
+    db = get_db()
+    existing = db.execute(
+        'SELECT id FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id)
+    ).fetchone()
+    if existing and not force:
+        db.execute('DELETE FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id))
+        completed = False
+    elif not existing:
+        db.execute('INSERT OR IGNORE INTO user_progress (account_username, lab_id) VALUES (?,?)', (app_user, lab_id))
+        completed = True
+    else:
+        completed = True
+    db.commit()
+    count = db.execute('SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)).fetchone()[0]
+    total = len(get_lab_list())
+    return jsonify({'completed': completed, 'count': count, 'total': total})
+
+
+@app.route('/progress')
+def progress_page():
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if not app_user or app_type != 'account':
+        return redirect('/account/login?next=/progress')
+    db   = get_db()
+    labs = get_lab_list()
+    rows = db.execute(
+        'SELECT lab_id, completed_at FROM user_progress WHERE account_username=? ORDER BY completed_at DESC',
+        (app_user,)
+    ).fetchall()
+    completed = {r['lab_id']: r['completed_at'] for r in rows}
+    xp_map   = {'critical': 300, 'high': 200, 'medium': 100}
+    total_xp = sum(xp_map.get(l['risk'], 100) for l in labs if l['id'] in completed)
+    max_xp   = sum(xp_map.get(l['risk'], 100) for l in labs)
+    # Thresholds as % of max_xp — scale automatically when labs are added
+    _pcts = [0.0, 0.05, 0.13, 0.25, 0.40, 0.58, 0.78, 1.0]
+    level_thresholds = [round(max_xp * p) for p in _pcts]
+    level_names      = ['Script Kiddie', 'Apprentice', 'Hacker', 'Pentester',
+                        'Red Teamer', 'Elite Hacker', 'Expert', 'Master']
+    current_level = 0
+    for i, thr in enumerate(level_thresholds):
+        if total_xp >= thr:
+            current_level = i
+    next_threshold    = level_thresholds[current_level + 1] if current_level + 1 < len(level_thresholds) else max_xp
+    current_threshold = level_thresholds[current_level]
+    return render_template('progress.html',
+        labs=labs,
+        completed=completed,
+        total_xp=total_xp,
+        max_xp=max_xp,
+        current_level=current_level,
+        level_name=level_names[current_level],
+        next_threshold=next_threshold,
+        current_threshold=current_threshold,
+        xp_map=xp_map,
+    )
+
+
 # ─────────────────────────────────────────────
 # RUTAS PRINCIPALES
 # ─────────────────────────────────────────────
@@ -428,6 +524,22 @@ def inject_labs():
     # Ordena labs alfabéticamente por título para mostrar secciones ordenadas
     all_labs_sorted = sorted(get_lab_list(), key=lambda l: l['title'].lower())
 
+    # Progress tracking — only for custom account users (app_user_type == 'account')
+    completed_lab_ids = set()
+    progress_count    = 0
+    _app_user = session.get('app_user')
+    _app_type = session.get('app_user_type')
+    is_progress_user  = bool(_app_user and _app_type == 'account')
+    if is_progress_user:
+        try:
+            _rows = get_db().execute(
+                'SELECT lab_id FROM user_progress WHERE account_username=?', (_app_user,)
+            ).fetchall()
+            completed_lab_ids = {r['lab_id'] for r in _rows}
+            progress_count = len(completed_lab_ids)
+        except Exception:
+            pass
+
     return {
         'all_labs': all_labs_sorted,
         'current_lab_id': current_lab_id,
@@ -437,6 +549,9 @@ def inject_labs():
         'target_hydra': target_hydra,
         'difficulty': difficulty,
         'client_ip': request.remote_addr,
+        'completed_lab_ids': completed_lab_ids,
+        'progress_count': progress_count,
+        'is_progress_user': is_progress_user,
     }
 
 # ─────────────────────────────────────────────

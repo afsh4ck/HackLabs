@@ -18,6 +18,25 @@
     <div class="alert-error mb-4 text-sm">{{ error }}</div>
     {% endif %}
 
+    <div class="flex items-start gap-3 p-3 rounded-xl mb-4 text-xs"
+         style="background:rgba(206,255,0,.06);border:1px solid rgba(206,255,0,.2)">
+      <i class="ph ph-info text-base flex-shrink-0 mt-0.5" style="color:var(--hl-primary)"></i>
+      <div style="color:#9ca3af">
+        <span class="lang-content" data-lang="es">
+          Para guardar el progreso de los labs debes iniciar sesión con una <strong style="color:var(--hl-primary)">cuenta propia</strong>.
+          Los usuarios de laboratorio (<code style="font-size:10px">admin</code>, <code style="font-size:10px">alice</code>…) son para prácticas y no guardan progreso.
+        </span>
+        <span class="lang-content" data-lang="en" style="display:none">
+          To save your lab progress you need a <strong style="color:var(--hl-primary)">custom account</strong>.
+          Lab users (<code style="font-size:10px">admin</code>, <code style="font-size:10px">alice</code>…) are for practice only and do not save progress.
+        </span>
+        <a href="/account/register" style="color:var(--hl-primary)" class="font-semibold hover:opacity-80 transition">
+          <span class="lang-content" data-lang="es">Crear cuenta</span>
+          <span class="lang-content" data-lang="en" style="display:none">Create account</span>
+        </a>
+      </div>
+    </div>
+
     <div class="hl-card">
       <form method="POST" action="/account/login" class="space-y-4">
         <input type="hidden" name="next" value="{{ next }}" />

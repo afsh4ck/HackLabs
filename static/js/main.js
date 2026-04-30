@@ -246,6 +246,16 @@ const T = {
     auth_btn_login:  'Iniciar sesión',
     difficulty_label: 'Dificultad',
     sidebar_search:  'Buscar lab...',
+    // User menu
+    nav_profile:     'Mi perfil',
+    nav_progress:    'Mi progreso',
+    nav_logout:      'Cerrar sesión',
+    // Progress / complete button
+    complete_lab:    'Completar',
+    completed_lab:   'Completado',
+    progress_hint_title: 'Progreso de labs',
+    progress_hint_body:  'Para guardar el progreso usa una cuenta propia. Los usuarios de laboratorio (admin, alice…) son para prácticas.',
+    progress_hint_cta:   'Crear cuenta',
   },
   en: {
     home:            'Home',
@@ -490,6 +500,16 @@ const T = {
     auth_btn_login:  'Login',
     difficulty_label: 'Difficulty',
     sidebar_search:  'Search lab...',
+    // User menu
+    nav_profile:     'My profile',
+    nav_progress:    'My progress',
+    nav_logout:      'Log out',
+    // Progress / complete button
+    complete_lab:    'Complete',
+    completed_lab:   'Completed',
+    progress_hint_title: 'Lab Progress',
+    progress_hint_body:  'To save your progress you need a custom account. Lab users (admin, alice…) are for practice only.',
+    progress_hint_cta:   'Create account',
   }
 };
 
@@ -1032,3 +1052,100 @@ function showToast(msg) {
 
 // Re-apply after full page load (ensures Phosphor Icons and other libs are done)
 window.addEventListener('load', applyTranslations);
+
+// ── Progress system ───────────────────────────────────────────
+
+function _updateProgressUI(data) {
+  // Update progress ring values
+  const label = document.querySelector('.progress-ring-label');
+  const fill  = document.querySelector('.progress-ring-fill');
+  const ring  = document.getElementById('nav-progress-ring');
+  if (label && fill && data.total > 0) {
+    const circ   = 87.96;
+    const offset = circ * (1 - data.count / data.total);
+    fill.setAttribute('stroke-dashoffset', offset.toFixed(2));
+    // Update label text (keep /total span)
+    label.innerHTML = data.count + '<span class="progress-ring-total">/' + data.total + '</span>';
+    if (ring) ring.title = 'Mi progreso: ' + data.count + '/' + data.total + ' labs completados';
+  }
+}
+
+function toggleLabComplete(labId) {
+  const btn = document.getElementById('lab-complete-btn');
+  if (!btn) return;
+  btn.classList.add('animating');
+  setTimeout(() => btn.classList.remove('animating'), 200);
+
+  fetch('/progress/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lab_id: labId })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) return;
+    const done = data.completed;
+    btn.classList.toggle('lab-complete-btn--done', done);
+    const icon = btn.querySelector('i');
+    const span = btn.querySelector('span');
+    if (icon) icon.className = 'ph ' + (done ? 'ph-check-circle' : 'ph-circle-dashed') + ' text-sm';
+    if (span) span.textContent = done ? 'Completado' : 'Completar';
+    btn.title = done ? 'Marcar como pendiente' : 'Marcar como completado';
+    _updateProgressUI(data);
+    showToast(done ? 'Lab marcado como completado' : 'Lab marcado como pendiente');
+  })
+  .catch(() => {});
+}
+
+// Auto-mark when a flag (HL{...}) appears on screen
+(function initFlagDetector() {
+  const body    = document.body;
+  const labId   = body.dataset.labId;
+  const loggedIn = body.dataset.loggedIn;
+  if (!labId || !loggedIn) return;
+
+  let _marked = false;
+
+  function checkForFlag() {
+    if (_marked) return;
+    // Look for HL{...} text in the page
+    const flagEl = Array.from(document.querySelectorAll(
+      '.flag-display, [class*="green"], [style*="green"], [style*="4ade80"], pre, code, .font-mono'
+    )).find(el => /HL\{[^}]+\}/.test(el.textContent));
+
+    if (!flagEl) {
+      // Fallback: scan full body text (slower, only if nothing found above)
+      if (!/HL\{[^}]+\}/.test(body.innerText)) return;
+    }
+
+    _marked = true;
+    fetch('/progress/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lab_id: labId, force: true })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error || !data.completed) return;
+      _updateProgressUI(data);
+      // Update button state if it exists
+      const btn = document.getElementById('lab-complete-btn');
+      if (btn && !btn.classList.contains('lab-complete-btn--done')) {
+        btn.classList.add('lab-complete-btn--done');
+        const icon = btn.querySelector('i');
+        const span = btn.querySelector('span');
+        if (icon) icon.className = 'ph ph-check-circle text-sm';
+        if (span) span.textContent = 'Completado';
+        showToast('Flag detectada — lab completado automáticamente');
+      }
+    })
+    .catch(() => {});
+  }
+
+  // Check on load
+  checkForFlag();
+
+  // Watch for dynamic DOM changes (AJAX form submissions)
+  const observer = new MutationObserver(checkForFlag);
+  observer.observe(body, { childList: true, subtree: true });
+})();

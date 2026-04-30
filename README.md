@@ -23,6 +23,7 @@
 - Interfaz moderna oscura con **Tailwind CSS** + **Phosphor Icons**
 - Compatible con **Burp Suite, sqlmap, hydra, nmap, jwt_tool** y demás herramientas de Kali Linux
 - **Selector de dificultad** (Easy / Medium / Hard) que modifica las protecciones de cada lab en tiempo real
+- **Sistema de progreso gamificado** — XP, niveles, logros y seguimiento persistente por usuario
 
 ---
 
@@ -81,6 +82,55 @@
 | Prompt Leaking | 🟠 High | Extraer system prompt via traducción, reformulación y codificación base64 |
 | LLM Data Exfiltration | 🟠 High | Tracking pixel, framing indirecto e inyección via documento para exfiltrar datos |
 | AI Supply Chain Poisoning | 🔴 Critical | Modelo envenenado introduce backdoors via print, comparación plaintext y keylogger |
+
+---
+
+## 🏆 Sistema de Progreso
+
+HackLabs incluye un sistema de progreso gamificado vinculado a cuentas de usuario propias. El progreso persiste en la base de datos SQLite y sobrevive reinicios del servidor.
+
+> **Nota:** los usuarios de laboratorio (`admin`, `alice`, `bob`…) son para prácticas de explotación y **no guardan progreso**. Crea una cuenta propia en `/account/register` para activar el tracking.
+
+### Cómo funciona
+
+- **Progress ring** en el navbar — muestra `labs completados / total` en tiempo real. Se actualiza automáticamente al completar un lab.
+- **Botón "Completar"** en cada lab — marca o desmarca el lab manualmente.
+- **Auto-detección de flags** — cuando aparece una flag `HL{...}` en pantalla (al resolver el lab), el lab se marca como completado automáticamente.
+- **Página de progreso** (`/progress`) — vista detallada con estadísticas, logros y lista filtrable.
+
+### Niveles y XP
+
+Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan **automáticamente** como porcentaje del XP total disponible — si se añaden nuevos labs, todos los rangos escalan solos.
+
+| Riesgo | XP por lab |
+|--------|-----------|
+| Critical | 300 XP |
+| High | 200 XP |
+| Medium | 100 XP |
+
+| Nivel | Nombre | % del XP total |
+|-------|--------|---------------|
+| Lv.1 | Script Kiddie | 0% |
+| Lv.2 | Apprentice | 5% |
+| Lv.3 | Hacker | 13% |
+| Lv.4 | Pentester | 25% |
+| Lv.5 | Red Teamer | 40% |
+| Lv.6 | Elite Hacker | 58% |
+| Lv.7 | Expert | 78% |
+| Lv.8 | Master | 100% (todos los labs) |
+
+### Logros desbloqueables
+
+| Logro | Condición |
+|-------|-----------|
+| 🩸 First Blood | Completar el primer lab |
+| ⚡ Speed Runner | Completar 5 labs |
+| 🏁 Half Way There | Alcanzar el 50% de labs completados |
+| 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 |
+| 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
+| 🤖 AI Breaker | Completar todos los labs de IA Attacks |
+| 💀 Critical Mass | Completar todos los labs de riesgo Critical |
+| 👑 Completionist | Completar los 39 laboratorios |
 
 ---
 
