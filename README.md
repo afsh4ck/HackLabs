@@ -1,6 +1,6 @@
 # HackLabs
 
-<img width="3456" height="1926" alt="image" src="https://github.com/user-attachments/assets/2a1403c8-7462-4ba8-bd6c-f3cd3944ffa8" />
+<img width="3830" height="1922" alt="image" src="https://github.com/user-attachments/assets/8cea9a3d-598e-4c96-8c8d-30c62b9a8138" />
 
 <br>
 <b>Plataforma de entrenamiento en hacking ético</b> — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el <b>OWASP Top 10</b> completo + vulnerabilidades extra avanzadas.
@@ -88,7 +88,8 @@
 
 HackLabs incluye un sistema de progreso gamificado vinculado a cuentas de usuario propias. El progreso persiste en la base de datos SQLite y sobrevive reinicios del servidor.
 
-<img width="3284" height="1808" alt="image" src="https://github.com/user-attachments/assets/29ae6f29-19e9-454f-a5cc-88dfb438f917" />
+<img width="3282" height="1800" alt="image" src="https://github.com/user-attachments/assets/4388f52e-63e9-4729-8db1-95d1055bebcc" />
+<br>
 
 > **Nota:** los usuarios de laboratorio (`admin`, `alice`, `bob`…) son para prácticas de explotación y **no guardan progreso**. Crea una cuenta propia en `/account/register` para activar el tracking.
 
