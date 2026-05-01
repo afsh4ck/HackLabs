@@ -3599,7 +3599,7 @@ def reverse_shell_lab():
                     return render_template('labs/reverse_shell.html', lab=lab, output=output, url=url)
 
         try:
-            cmd = f"su -l -s /bin/bash admin -c \"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin curl -s -o /dev/null -w '%{{http_code}}' --max-time 5 {url}\""
+            cmd = f"su -l -s /bin/bash admin -c \"export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin; /usr/bin/curl -s -o /dev/null -w '%{{http_code}}' --max-time 5 {url}\""
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=12)
             output = result.stdout + result.stderr if (result.stdout or result.stderr) else '(sin respuesta del servidor remoto)'
         except subprocess.TimeoutExpired:
