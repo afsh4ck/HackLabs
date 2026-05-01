@@ -13,7 +13,7 @@ echo '  [!] WARNING: This app is INTENTIONALLY INSECURE. Use only in isolated en
 echo ''
 
 # Re-init DB if missing (volume mount may have wiped it)
-if [ ! -f /app/hacklabs.db ]; then
+if [ ! -f /app/data/hacklabs.db ]; then
     echo '  [*] Initializing database...'
     python /app/init_db.py
 fi

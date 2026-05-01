@@ -4,10 +4,11 @@
 import sqlite3
 import os
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
+DATABASE = os.path.join(os.path.dirname(__file__), 'data', 'hacklabs.db')
 SCHEMA   = os.path.join(os.path.dirname(__file__), 'database', 'schema.sql')
 
 def init():
+    os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     if os.path.exists(DATABASE):
         os.remove(DATABASE)
         print("[-] Base de datos anterior eliminada.")

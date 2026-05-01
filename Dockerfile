@@ -30,7 +30,7 @@ RUN echo "Build commit: $CACHEBUST"
 COPY . .
 
 # Create required directories and init DB
-RUN mkdir -p uploads logs static/files && python init_db.py
+RUN mkdir -p uploads logs static/files data && python init_db.py
 
 # HTTP / FTP / SSH / SMB (+ PASV ports for vsftpd)
 EXPOSE 21 22 80 445 40000-40010

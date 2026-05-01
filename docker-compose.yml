@@ -24,7 +24,7 @@ services:
       - "22:22"       # SSH (simulado)
       - "445:445"     # SMB (simulado)
     volumes:
-      - hacklabs_db:/app/hacklabs.db
+      - hacklabs_db:/app/data
       - hacklabs_uploads:/app/uploads
       - hacklabs_logs:/app/logs
 

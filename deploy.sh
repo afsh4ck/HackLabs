@@ -158,7 +158,7 @@ docker run -d \
     --ip "$CONTAINER_IP" \
     --hostname hacklabs \
     --cap-add NET_ADMIN \
-    -v hacklabs_db:/app/hacklabs.db \
+    -v hacklabs_db:/app/data \
     -v hacklabs_uploads:/app/uploads \
     -v hacklabs_logs:/app/logs \
     "$IMAGE_NAME" > /dev/null \

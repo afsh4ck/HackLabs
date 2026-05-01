@@ -25,7 +25,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = False
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB uploads
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
+DATABASE = os.path.join(os.path.dirname(__file__), 'data', 'hacklabs.db')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
 from werkzeug.utils import secure_filename
@@ -53,7 +53,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = False
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB uploads
 
-DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
+DATABASE = os.path.join(os.path.dirname(__file__), 'data', 'hacklabs.db')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 
 # Rate-limit store for bruteforce (medium/hard difficulty)
