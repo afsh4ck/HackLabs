@@ -644,7 +644,7 @@ def lab(lab_id):
     # Labs that have dedicated routes with data – redirect to them
     dedicated = {
         'idor':            '/profile',
-        'misconfig':       '/files-exposed',
+        'misconfig':       '/secrets',
         'integrity':       '/integrity',
         'auth_failures':   '/login',
         'logging':         '/logging/login',
@@ -764,7 +764,7 @@ def inject_labs():
         '/upload':         'file_upload',
         '/xxe':            'xxe',
         '/files':          'path_traversal',
-        '/files-exposed':  'misconfig',
+        '/secrets':        'misconfig',
         '/bruteforce':         'bruteforce',
         '/bruteforce/login':   'bruteforce',
         '/privesc':            'privesc',
@@ -1950,16 +1950,16 @@ def xxe_api():
 # Path Traversal / LFI
 # ─────────────────────────────────────────────
 
-@app.route('/files-exposed')
-def files_exposed():
+@app.route('/secrets')
+def secrets_listing():
     # VULNERABLE: directory listing expuesto sin autenticación (A05 misconfiguration)
     base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
     try:
         entries = sorted(os.listdir(base_path))
     except Exception:
         entries = []
-    listing_html = '<html><head><title>Index of /files-exposed</title></head><body>'
-    listing_html += '<h1>Index of /files-exposed</h1><hr><pre>'
+    listing_html = '<html><head><title>Index of /secrets</title></head><body>'
+    listing_html += '<h1>Index of /secrets</h1><hr><pre>'
     for entry in entries:
         listing_html += f'<a href="/static/files/{entry}">{entry}</a>\n'
     listing_html += '</pre><hr></body></html>'

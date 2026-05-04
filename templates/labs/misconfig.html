@@ -33,7 +33,7 @@
       <li class="flex items-start gap-2"><i class="ph ph-warning text-orange-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item2">Repositorio Git expuesto públicamente (<code>/.git/config</code>)</span></li>
       <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item3">Stack trace completo del servidor visible en errores (<code>/debug/error</code>)</span></li>
       <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item4">API interna de usuarios sin autenticación (<code>/api/users</code>)</span></li>
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span>Directory listing habilitado en <code>/files-exposed</code> — expone archivos internos sensibles del servidor</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span>Directory listing habilitado en <code>/secrets</code> — expone archivos internos sensibles del servidor</span></li>
     </ul>
     <p class="text-xs text-gray-400 mt-4"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500">Objetivo:</strong> Encuentra y accede al archivo de flag oculto en el servidor usando fuzzing de directorios.</p>
   </div>
@@ -45,39 +45,39 @@
     <ol>
       <li>Lanza un escaneo de directorios con <strong>gobuster</strong> o <strong>ffuf</strong> para descubrir endpoints expuestos:</li>
     </ol>
-    <pre><code class="language-bash">gobuster dir -u http://TARGET \
+    <pre><code class="language-bash">gobuster dir -u http://localhost:5000 \
   -w /usr/share/wordlists/dirb/common.txt \
   -x txt,json,git,html \
   --no-error -q
 
-ffuf -u http://TARGET/FUZZ \
+ffuf -u http://localhost:5000/FUZZ \
   -w /usr/share/seclists/Discovery/Web-Content/common.txt \
   -mc 200,301,302,403 -t 50</code></pre>
     <ol start="2">
-      <li>El escaneo descubre <code>/files-exposed</code> (HTTP 200). Navega a esa URL en el navegador.</li>
+      <li>El escaneo descubre <code>/secrets</code> (HTTP 200). Navega a esa URL en el navegador.</li>
       <li>El servidor tiene el <strong>directory listing habilitado</strong>: verás un índice con los archivos alojados, incluyendo <code>A05-flag.txt</code>.</li>
       <li>Haz clic en <code>A05-flag.txt</code> para leerlo directamente desde el navegador y obtener la flag.</li>
     </ol>
     <pre><code class="language-bash"># Alternativa desde línea de comandos:
-curl http://TARGET/static/files/A05-flag.txt</code></pre>
+curl http://localhost:5000/static/files/A05-flag.txt</code></pre>
     <ol start="5">
       <li>Explora los demás endpoints descubiertos:</li>
     </ol>
     <pre><code class="language-bash"># Panel de administración sin autenticación
-curl http://TARGET/admin
+curl http://localhost:5000/admin
 
 # API interna de usuarios
-curl http://TARGET/api/users
+curl http://localhost:5000/api/users
 
 # Repositorio Git expuesto
-curl http://TARGET/.git/config
+curl http://localhost:5000/.git/config
 
 # Stack trace completo del servidor
-curl http://TARGET/debug/error
+curl http://localhost:5000/debug/error
 
 # Auditar cabeceras de seguridad
-nikto -h http://TARGET
-curl -I http://TARGET/</code></pre>
+nikto -h http://localhost:5000
+curl -I http://localhost:5000/</code></pre>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">gobuster</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span></div>
   </div>
@@ -86,39 +86,39 @@ curl -I http://TARGET/</code></pre>
     <ol>
       <li>Run a directory scan with <strong>gobuster</strong> or <strong>ffuf</strong> to discover exposed endpoints:</li>
     </ol>
-    <pre><code class="language-bash">gobuster dir -u http://TARGET \
+    <pre><code class="language-bash">gobuster dir -u http://localhost:5000 \
   -w /usr/share/wordlists/dirb/common.txt \
   -x txt,json,git,html \
   --no-error -q
 
-ffuf -u http://TARGET/FUZZ \
+ffuf -u http://localhost:5000/FUZZ \
   -w /usr/share/seclists/Discovery/Web-Content/common.txt \
   -mc 200,301,302,403 -t 50</code></pre>
     <ol start="2">
-      <li>The scan discovers <code>/files-exposed</code> (HTTP 200). Browse to that URL.</li>
+      <li>The scan discovers <code>/secrets</code> (HTTP 200). Browse to that URL.</li>
       <li>The server has <strong>directory listing enabled</strong>: you will see an index of hosted files, including <code>A05-flag.txt</code>.</li>
       <li>Click <code>A05-flag.txt</code> to read it directly in the browser and obtain the flag.</li>
     </ol>
     <pre><code class="language-bash"># Alternative via command line:
-curl http://TARGET/static/files/A05-flag.txt</code></pre>
+curl http://localhost:5000/static/files/A05-flag.txt</code></pre>
     <ol start="5">
       <li>Explore the other discovered endpoints:</li>
     </ol>
     <pre><code class="language-bash"># Unauthenticated admin panel
-curl http://TARGET/admin
+curl http://localhost:5000/admin
 
 # Internal user API
-curl http://TARGET/api/users
+curl http://localhost:5000/api/users
 
 # Exposed Git repository
-curl http://TARGET/.git/config
+curl http://localhost:5000/.git/config
 
 # Full server stack trace
-curl http://TARGET/debug/error
+curl http://localhost:5000/debug/error
 
 # Audit security headers
-nikto -h http://TARGET
-curl -I http://TARGET/</code></pre>
+nikto -h http://localhost:5000
+curl -I http://localhost:5000/</code></pre>
     <h3>Tools</h3>
     <div><span class="tools-badge">gobuster</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">nikto</span> <span class="tools-badge">curl</span> <span class="tools-badge">Burp Suite</span></div>
   </div>
