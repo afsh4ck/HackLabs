@@ -12,20 +12,6 @@
   <div class="flex items-center justify-between gap-3">
     <h1 class="font-bold text-gray-900 dark:text-white leading-snug" style="font-size:32px" data-i18n="lab_title_{{ lab.id }}">{{ lab.title }}</h1>
     <div class="flex items-center gap-2 flex-shrink-0">
-      {% if is_progress_user %}
-      <span class="lab-complete-btn {% if lab.id in completed_lab_ids %}lab-complete-btn--done{% endif %}" style="cursor:default"
-            title="{% if lab.id in completed_lab_ids %}Lab completado{% else %}Pendiente de completar{% endif %}">
-        <i class="ph {% if lab.id in completed_lab_ids %}ph-check-circle{% else %}ph-hourglass-medium{% endif %} text-sm"></i>
-        <span class="hidden sm:inline">{% if lab.id in completed_lab_ids %}Completado{% else %}Pendiente{% endif %}</span>
-      </span>
-      {% else %}
-      <a href="/account/{% if session.get('app_user') %}register{% else %}login?next={{ request.path }}{% endif %}"
-         class="lab-complete-btn lab-complete-btn--disabled"
-         title="{% if session.get('app_user') %}Crea una cuenta propia para guardar el progreso{% else %}Inicia sesión para registrar tu progreso{% endif %}">
-        <i class="ph ph-lock-simple text-sm"></i>
-        <span class="hidden sm:inline" data-i18n="complete_lab">Completar</span>
-      </a>
-      {% endif %}
       <span class="text-xs px-2 py-0.5 rounded font-mono difficulty-btn difficulty-btn--{{ difficulty }}" style="cursor:default;font-size:10px">
         <i class="ph ph-shield-warning" style="font-size:11px"></i> {{ difficulty | capitalize }}
       </span>
