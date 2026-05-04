@@ -371,10 +371,10 @@ def get_lab_flag_map():
         'insecure_design': ['HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'],
         'misconfig': ['HL{m15c0nf19_3xp053d_f149_f1l3}'],
         'outdated': ['HL{0u7d473d_c0mp0n3n7_rc3}'],
-        'auth_failures': ['HL{auth_failures_account_takeover}'],
-        'integrity': ['HL{integrity_unsigned_update_loaded}'],
-        'logging': ['HL{logging_monitoring_bypass}'],
-        'ssrf': ['HL{55rf_cl0ud_m3t4d4t4}', 'HL{ssrf_metadata_exfiltration}'],
+        'auth_failures': ['HL{4u7h_f411ur35_4cc0un7_74k30v3r}'],
+        'integrity': ['HL{1n739r17y_un519n3d_upd473_104d3d}'],
+        'logging': ['HL{10991n9_m0n170r1n9_8yp455}'],
+        'ssrf': ['HL{55rf_cl0ud_m3t4d4t4}'],
 
         # Vulnerabilidades
         'api_attacks': ['HL{Ap1_InS3cur3_2026}', 'HL{api_authz_bypass_success}'],
@@ -1336,6 +1336,7 @@ def login():
     lab = next(l for l in get_lab_list() if l['id'] == 'auth_failures')
     message = None
     success = False
+    auth_flag = 'HL{4u7h_f411ur35_4cc0un7_74k30v3r}'
     difficulty = session.get('difficulty', 'easy')
     client_ip = request.remote_addr
     now = time.time()
@@ -1378,7 +1379,7 @@ def login():
             session['username'] = user['username']
             session['role'] = user['role']
             success = True
-            message = f'Bienvenido, {user["username"]} (rol: {user["role"]})'
+            message = f'Bienvenido, {user["username"]} (rol: {user["role"]}) | Flag: {auth_flag}'
         else:
             if difficulty == 'hard':
                 message = 'Datos incorrectos'  # No indica si el usuario existe
@@ -1420,6 +1421,7 @@ def api_get_user(user_id):
 @app.route('/api/user/<int:user_id>', methods=['PUT'])
 def api_update_user(user_id):
     difficulty = session.get('difficulty', 'easy')
+    integrity_flag = 'HL{1n739r17y_un519n3d_upd473_104d3d}'
     data = request.get_json(silent=True) or {}
 
     if difficulty == 'easy':
@@ -1445,7 +1447,10 @@ def api_update_user(user_id):
     db.execute(f"UPDATE users SET {set_clause} WHERE id = ?", values)
     db.commit()
     user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
-    return jsonify({'message': 'Usuario actualizado', 'user': dict(user)})
+    response = {'message': 'Usuario actualizado', 'user': dict(user)}
+    if 'role' in updates and 'email' in updates:
+        response['flag'] = integrity_flag
+    return jsonify(response)
 
 @app.route('/integrity')
 def integrity_lab():
@@ -1474,6 +1479,7 @@ def logging_login():
     lab = next(l for l in get_lab_list() if l['id'] == 'logging')
     message = None
     success = False
+    logging_flag = 'HL{10991n9_m0n170r1n9_8yp455}'
     difficulty = session.get('difficulty', 'easy')
 
     username = request.values.get('username', '')
@@ -1504,7 +1510,7 @@ def logging_login():
 
         if user:
             success = True
-            message = f'Login exitoso como {username}'
+            message = f'Login exitoso como {username} | Flag: {logging_flag}'
         else:
             message = 'Credenciales incorrectas (no hay ningún registro de este intento)' if difficulty == 'easy' else 'Credenciales incorrectas'
 
@@ -1512,7 +1518,11 @@ def logging_login():
     log_content = ''
     if os.path.exists(log_path):
         with open(log_path, 'r') as f:
-            log_content = f.read()
+            lines = f.readlines()
+            tail_lines = 80
+            log_content = ''.join(lines[-tail_lines:])
+            if len(lines) > tail_lines:
+                log_content = f'... mostrando ultimas {tail_lines} lineas ...\n' + log_content
     else:
         log_content = '(archivo de log inexistente o vacío — no se registra nada)'
 
