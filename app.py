@@ -299,8 +299,14 @@ def progress_uncomplete():
 
 
 def get_lab_flag_map():
-    """Expected flag(s) per lab. Some labs intentionally share flags."""
-    return {
+    """Expected flag(s) per lab.
+
+    Policy:
+    - Root flag is accepted in most labs as a global fallback.
+    - Labs that already show an explicit on-screen flag keep strict validation.
+    """
+    root_flag = 'HL{r00t_pr1v3sc_succ3ss}'
+    flag_map = {
         # OWASP Top 10
         'idor': ['HL{idor_privilege_escalation}'],
         'crypto': ['HL{crypto_cracked_hash_success}'],
@@ -344,13 +350,13 @@ def get_lab_flag_map():
             'HL{bob_ssh_l0gin_succ3ss}',
             'HL{charlie_ssh_l0gin_succ3ss}',
             'HL{dave_ssh_l0gin_succ3ss}',
-            'HL{r00t_pr1v3sc_succ3ss}',
+            root_flag,
         ],
         '2fa_bypass': ['HL{2fa_byp4ss_0wn3d}', 'HL{2fa_r4c3_c0nd1t10n_0wn3d}', 'HL{2fa_bypass_session_hijack}'],
         'clickjacking': ['HL{cl1ckj4ck1ng_0wn3d}', 'HL{clickjacking_transfer_success}'],
         'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
         'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
-        'reverse_shell': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}', 'HL{r00t_pr1v3sc_succ3ss}'],
+        'reverse_shell': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}', root_flag],
         'ssti': ['HL{ssti_template_rce_success}'],
         'xss': ['HL{xss_session_steal_success}'],
         'xxe': ['HL{xxe_local_file_read_success}'],
@@ -363,6 +369,40 @@ def get_lab_flag_map():
         'prompt_injection': ['HL{pr0mpt_1nj3ct10n_m4st3r}', 'HL{prompt_injection_system_bypass}'],
         'prompt_leaking': ['HL{pr0mpt_l34k3d_succ3ssfully}', 'HL{prompt_leaking_system_prompt_exposed}'],
     }
+
+    # Labs with explicit flag output on screen should not accept root fallback.
+    explicit_screen_flag_labs = {
+        'api_attacks',
+        'business_logic',
+        'clickjacking',
+        'cmdi',
+        'jwt',
+        'oauth',
+        'race_condition',
+        'reset_poisoning',
+        '2fa_bypass',
+        'ssrf',
+        'bruteforce',
+        'privesc',
+        'reverse_shell',
+        'idor',
+        'prompt_injection',
+        'prompt_leaking',
+        'llm_exfil',
+        'ai_jailbreak',
+        'indirect_injection',
+        'ai_supply_chain',
+    }
+
+    for lab in get_lab_list():
+        lab_id = lab['id']
+        if lab_id in explicit_screen_flag_labs:
+            continue
+        flags = flag_map.setdefault(lab_id, [])
+        if root_flag not in flags:
+            flags.append(root_flag)
+
+    return flag_map
 
 
 def _validate_lab_flag_coverage():
