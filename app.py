@@ -370,7 +370,7 @@ def get_lab_flag_map():
         'cmdi': ['HL{cmdi_command_execution_success}'],
         'insecure_design': ['HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'],
         'misconfig': ['HL{m15c0nf19_3xp053d_f149_f1l3}'],
-        'outdated': ['HL{outdated_component_rce}'],
+        'outdated': ['HL{0u7d473d_c0mp0n3n7_rc3}'],
         'auth_failures': ['HL{auth_failures_account_takeover}'],
         'integrity': ['HL{integrity_unsigned_update_loaded}'],
         'logging': ['HL{logging_monitoring_bypass}'],
@@ -1313,7 +1313,7 @@ def outdated_search():
     lab = next(l for l in get_lab_list() if l['id'] == 'outdated')
     q = request.args.get('q', '')
     difficulty = session.get('difficulty', 'easy')
-    outdated_flag = 'HL{outdated_component_rce}'
+    outdated_flag = 'HL{0u7d473d_c0mp0n3n7_rc3}'
 
     if difficulty == 'medium' and q:
         # Filtra <script> pero no event handlers (bypass: <img onerror=...>)
