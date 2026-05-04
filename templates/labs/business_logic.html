@@ -10,6 +10,13 @@
     {% endfor %}{% endif %}
   {% endwith %}
 
+  {% if flag %}
+  <div class="hl-card mb-4 border-l-4" style="border-left-color:#22c55e">
+    <div class="text-xs text-green-500 font-semibold mb-1">Flag</div>
+    <pre class="font-mono text-sm break-all" style="color:var(--hl-primary)">{{ flag }}</pre>
+  </div>
+  {% endif %}
+
   <div class="hl-card mb-4">
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-semibold text-sm" data-i18n="shop_catalog">Product Catalog</h2>

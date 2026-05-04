@@ -377,15 +377,15 @@ def get_lab_flag_map():
         'ssrf': ['HL{55rf_cl0ud_m3t4d4t4}'],
 
         # Vulnerabilidades
-        'api_attacks': ['HL{Ap1_InS3cur3_2026}', 'HL{api_authz_bypass_success}'],
-        'business_logic': ['HL{bu51n355_l0g1c_0wn3d}', 'HL{business_logic_price_tamper}'],
+        'api_attacks': ['HL{4p1_n0735_3xf11_0wn3d}'],
+        'business_logic': ['HL{bu51n355_l0g1c_0wn3d}'],
         'c2_sliver': ['HL{c2_sliver_callback_established}'],
-        'container_escape': ['HL{container_escape_host_access}'],
-        'cors': ['HL{cors_credential_theft_success}'],
-        'csrf': ['HL{csrf_state_change_success}'],
+        'container_escape': ['HL{c0n741n3r_35c4p3_h057_4cc355}'],
+        'cors': ['HL{c0r5_cr3d3n7141_7h3f7_5ucc355}'],
+        'csrf': ['HL{c5rf_57473_ch4n93_5ucc355}'],
         'file_upload': ['HL{file_upload_webshell_executed}'],
-        'deserialization': ['HL{deserialization_rce_success}'],
-        'jwt': ['HL{4lg_c0nfu510n_0wn3d}', 'HL{jwt_alg_confusion_success}'],
+        'deserialization': ['HL{d353r1411z4710n_rc3_5ucc355}'],
+        'jwt': ['HL{jw7_m4n1pu14710n_4dm1n_0wn3d}'],
         'bruteforce': [
             'HL{http_brut3f0rc3_w3b_l0gin_succ3ss}',
             'HL{ssh_brut3f0rc3_l0gin_succ3ss}',
@@ -397,7 +397,7 @@ def get_lab_flag_map():
             'HL{smb_sh4r3_3num3r4ti0n_succ3ss}',
             'HL{4dm1n_b4ckup_3xf1ltr4ti0n}',
         ],
-        'oauth': ['HL{0auth_r3d1r3ct_0wn3d}', 'HL{oauth_account_takeover_success}'],
+        'oauth': ['HL{04u7h_r3d1r3c7_0wn3d}'],
         'open_redirect': ['HL{open_redirect_phishing_success}'],
         'path_traversal': ['HL{path_traversal_lfi_success}'],
         'privesc': [
@@ -430,8 +430,12 @@ def get_lab_flag_map():
     explicit_screen_flag_labs = {
         'api_attacks',
         'business_logic',
+        'container_escape',
+        'cors',
+        'csrf',
         'clickjacking',
         'cmdi',
+        'deserialization',
         'jwt',
         'oauth',
         'race_condition',
@@ -938,16 +942,17 @@ def api_transfer():
 @app.route('/api/v1/notes', methods=['GET'])
 def api_notes():
     difficulty = session.get('difficulty', 'easy')
+    api_flag = 'HL{4p1_n0735_3xf11_0wn3d}'
     if difficulty == 'easy':
         notes = [
             {'user': 'admin', 'note': 'Username: admin, Password: password1'},
-            {'user': 'admin', 'note': 'Flag: HL{Ap1_InS3cur3_2026}'},
+            {'user': 'admin', 'note': f'Flag: {api_flag}'},
         ]
         return jsonify(notes)
     elif difficulty == 'medium':
         notes = [
             {'user': 'admin', 'note': 'Username: admin, Password: password1'},
-            {'user': 'admin', 'note': 'Confidential note hidden at this level.'},
+            {'user': 'admin', 'note': f'Flag: {api_flag}'},
         ]
         return jsonify(notes)
     else:  # hard
@@ -956,7 +961,7 @@ def api_notes():
             return jsonify({'error': 'Authorization required'}), 403
         notes = [
             {'user': 'admin', 'note': 'Username: admin, Password: password1'},
-            {'user': 'admin', 'note': 'Flag: HL{Ap1_InS3cur3_2026}'},
+            {'user': 'admin', 'note': f'Flag: {api_flag}'},
         ]
         return jsonify(notes)
 
@@ -1675,6 +1680,7 @@ def csrf_profile():
 @app.route('/csrf/change-password', methods=['POST'])
 def csrf_change_password():
     difficulty = session.get('difficulty', 'easy')
+    csrf_flag = 'HL{c5rf_57473_ch4n93_5ucc355}'
     user_id = request.form.get('user_id', '')
     new_password = request.form.get('new_password', '')
 
@@ -1698,7 +1704,7 @@ def csrf_change_password():
         db.execute("UPDATE users SET password_md5 = ?, password_plain = ? WHERE id = ?",
                    (new_hash, new_password, user_id))
         db.commit()
-        return jsonify({'status': 'ok', 'message': f'Contraseña cambiada para user_id={user_id}', 'new_hash': new_hash})
+        return jsonify({'status': 'ok', 'message': f'Contraseña cambiada para user_id={user_id}', 'new_hash': new_hash, 'flag': csrf_flag})
     return jsonify({'status': 'error', 'message': 'Faltan parámetros'}), 400
 
 # ─────────────────────────────────────────────
@@ -2301,11 +2307,14 @@ def jwt_lab():
                         if parts[2] == expected:
                             decoded = p_data
                             decoded['_vuln'] = 'Algorithm confusion: RS256 public key used as HS256 secret!'
-                            decoded['flag'] = 'HL{4lg_c0nfu510n_0wn3d}'
+                            decoded['flag'] = 'HL{jw7_m4n1pu14710n_4dm1n_0wn3d}'
                         else:
                             error = 'Firma inválida.'
                     else:
                         error = f'Algoritmo no soportado: {alg_used}'
+
+                if decoded and str(decoded.get('role', '')).lower() == 'admin' and 'flag' not in decoded:
+                    decoded['flag'] = 'HL{jw7_m4n1pu14710n_4dm1n_0wn3d}'
 
             except Exception as e:
                 error = str(e)
@@ -2329,10 +2338,12 @@ def jwt_jwks():
 @app.route('/deserialization', methods=['GET', 'POST'])
 def deserialization():
     lab = next(l for l in get_lab_list() if l['id'] == 'deserialization')
-    result = error = None
+    result = error = flag = None
+    deserialization_flag = 'HL{d353r1411z4710n_rc3_5ucc355}'
     example = base64.b64encode(pickle.dumps({'user': 'admin', 'role': 'admin', 'logged_in': True})).decode()
     data = request.values.get('data', '')
     difficulty = session.get('difficulty', 'easy')
+    decoded_preview = b''
 
     if data:
         if difficulty == 'medium':
@@ -2356,12 +2367,15 @@ def deserialization():
                                            error=error, example=example)
 
         try:
-            obj = pickle.loads(base64.b64decode(data))
+            decoded_preview = base64.b64decode(data)
+            obj = pickle.loads(decoded_preview)
             result = str(obj)
+            if isinstance(obj, int) or b'system' in decoded_preview.lower() or b'__reduce__' in decoded_preview.lower():
+                flag = deserialization_flag
         except Exception as e:
             error = str(e)
     return render_template('labs/deserialization.html', lab=lab, result=result,
-                           error=error, example=example)
+                           error=error, example=example, flag=flag)
 
 # ─────────────────────────────────────────────
 # CORS Misconfiguration
@@ -2378,7 +2392,7 @@ def cors_lab():
 def cors_data():
     difficulty = session.get('difficulty', 'easy')
     origin = request.headers.get('Origin', '')
-    data = {'secret': 'FLAG{cors_misconfigured_4cc3ss}', 'users': ['admin', 'alice', 'bob'], 'internal': True}
+    data = {'secret': 'HL{c0r5_cr3d3n7141_7h3f7_5ucc355}', 'users': ['admin', 'alice', 'bob'], 'internal': True}
     resp = jsonify(data)
 
     if difficulty == 'easy':
@@ -3665,8 +3679,11 @@ def container_escape():
         checks['cap_eff'] = 'unknown'
 
     checks['writable_host_path'] = any(os.path.exists(p) for p in ['/host', '/hostfs', '/rootfs'])
+    flag = None
+    if checks.get('docker_socket') or checks.get('privileged') or checks.get('writable_host_path'):
+        flag = 'HL{c0n741n3r_35c4p3_h057_4cc355}'
 
-    return render_template('labs/container_escape.html', lab=lab, checks=checks)
+    return render_template('labs/container_escape.html', lab=lab, checks=checks, flag=flag)
 
 # ─────────────────────────────────────────────
 # OAuth 2.0 Attacks
@@ -3675,7 +3692,7 @@ def container_escape():
 _oauth_codes = {}   # code -> {client_id, redirect_uri, scope, user}
 _oauth_tokens = {}  # token -> {user, scope}
 OAUTH_CLIENTS = {
-    'hacklabs-app': {'secret': 'app-secret-123', 'allowed_redirects': ['http://localhost:5000/oauth/callback']},
+    'hacklabs-app': {'secret': 'app-secret-123'},
 }
 
 @app.route('/oauth')
@@ -3697,16 +3714,18 @@ def oauth_authorize():
     if not client:
         return 'Unknown client_id', 400
 
+    allowed_redirect = f'{request.scheme}://{request.host}/oauth/callback'
+
     if difficulty == 'medium':
         # Validates domain but not path (path bypass possible)
         from urllib.parse import urlparse as _up
         parsed = _up(redirect_uri)
-        allowed_parsed = _up(client['allowed_redirects'][0])
+        allowed_parsed = _up(allowed_redirect)
         if parsed.netloc != allowed_parsed.netloc:
             return 'redirect_uri domain not allowed', 400
     elif difficulty == 'hard':
         # Validates exact URI but open redirect chaining via /open_redirect
-        if redirect_uri not in client['allowed_redirects']:
+        if redirect_uri != allowed_redirect:
             return 'redirect_uri not in whitelist', 400
 
     # VULNERABLE in easy: any redirect_uri accepted
@@ -3730,7 +3749,7 @@ def oauth_callback():
 
     token = os.urandom(16).hex()
     _oauth_tokens[token] = {'user': code_data['user'], 'scope': code_data['scope'],
-                             'flag': 'HL{0auth_r3d1r3ct_0wn3d}'}
+                             'flag': 'HL{04u7h_r3d1r3c7_0wn3d}'}
     session['oauth_token'] = token
     return redirect('/oauth')
 
@@ -3751,7 +3770,7 @@ def oauth_token():
 
     token = os.urandom(16).hex()
     _oauth_tokens[token] = {'user': code_data['user'], 'scope': code_data['scope'],
-                             'flag': 'HL{0auth_r3d1r3ct_0wn3d}'}
+                             'flag': 'HL{04u7h_r3d1r3c7_0wn3d}'}
     return jsonify({'access_token': token, 'token_type': 'bearer', 'scope': code_data['scope']})
 
 @app.route('/oauth/userinfo')

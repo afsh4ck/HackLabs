@@ -15,7 +15,7 @@
       <input type="hidden" name="user_id" value="{{ user['id'] }}" />
       <div>
         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="csrf_new_pw">Nueva contraseña</label>
-        <input type="text" name="new_password" placeholder="new_password" class="hl-input" data-i18n-placeholder="ph_new_email" />
+        <input type="text" name="new_password" placeholder="Introduce una contraseña" class="hl-input" data-i18n-placeholder="csrf_ph_new_pw" />
       </div>
       <button type="submit" class="btn-primary" data-i18n="csrf_btn_change">Cambiar contraseña</button>
     </form>
@@ -36,6 +36,10 @@
     </div>
     <button onclick="launchCSRF()" class="btn-primary mt-3" style="background:#ef4444;color:#fff" data-i18n="csrf_btn_launch">Lanzar CSRF</button>
     <pre id="csrf-result" class="text-xs text-green-500 mt-3 hidden"></pre>
+    <div id="csrf-flag-card" class="hl-card mt-3 hidden border-l-4" style="border-left-color:#22c55e">
+      <div class="text-xs text-green-500 font-semibold mb-1">Flag</div>
+      <pre id="csrf-flag-value" class="font-mono text-sm break-all" style="color:var(--hl-primary)"></pre>
+    </div>
   </div>
 </div>
 
@@ -96,6 +100,10 @@ async function launchCSRF() {
   const el   = document.getElementById('csrf-result');
   el.textContent = JSON.stringify(data, null, 2);
   el.classList.remove('hidden');
+  if (data.flag) {
+    document.getElementById('csrf-flag-value').textContent = data.flag;
+    document.getElementById('csrf-flag-card').classList.remove('hidden');
+  }
 }
 </script>
 {% endblock %}

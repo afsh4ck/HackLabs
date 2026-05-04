@@ -113,7 +113,7 @@ sig = base64.urlsafe_b64encode(
     hmac.new(pub_key.encode(), f'{h}.{p}'.encode(), hashlib.sha256).digest()
 ).rstrip(b'=').decode()
 print(f'{h}.{p}.{sig}')</pre></li>
-      <li>Envía el token forjado al verificador. Flag: <code>HL{4lg_c0nfu510n_0wn3d}</code></li>
+      <li>Envía el token forjado al verificador. Flag dedicada: <code>HL{jw7_m4n1pu14710n_4dm1n_0wn3d}</code></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">jwt_tool</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">python3</span> <span class="tools-badge">Burp Suite</span></div>
@@ -163,7 +163,7 @@ sig = base64.urlsafe_b64encode(
     hmac.new(pub_key.encode(), f'{h}.{p}'.encode(), hashlib.sha256).digest()
 ).rstrip(b'=').decode()
 print(f'{h}.{p}.{sig}')</pre></li>
-      <li>Send the forged token to the verifier. Flag: <code>HL{4lg_c0nfu510n_0wn3d}</code></li>
+      <li>Send the forged token to the verifier. Dedicated flag: <code>HL{jw7_m4n1pu14710n_4dm1n_0wn3d}</code></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">jwt_tool</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">python3</span> <span class="tools-badge">Burp Suite</span></div>

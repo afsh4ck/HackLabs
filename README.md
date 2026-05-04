@@ -48,7 +48,7 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros: auth rota, exposición de datos, inyección, falta de autorización |
+| API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes`: `HL{4p1_n0735_3xf11_0wn3d}` |
 | Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
 | C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
 | Container Escape | 🔴 Critical | Docker socket, privileged container, cgroup release_agent |
@@ -326,6 +326,8 @@ sliver (ID) > ps
 | Medium | Solo permite orígenes `*.hacklabs.local` (bypass: subdominio) |
 | Hard | Regex estricto (bypass: prefijo de dominio similar) |
 
+Flag objetivo: `HL{c0r5_cr3d3n7141_7h3f7_5ucc355}`
+
 </details>
 
 <details>
@@ -336,6 +338,8 @@ sliver (ID) > ps
 | Easy | Sin protección CSRF + todos los campos del perfil visibles |
 | Medium | Verificación de header `Referer` (bypass: supresión/manipulación) |
 | Hard | Requiere header `X-CSRF-Token` en sesión (bypass: XSS para robar token) |
+
+Flag objetivo: `HL{c5rf_57473_ch4n93_5ucc355}`
 
 </details>
 
@@ -359,6 +363,8 @@ sliver (ID) > ps
 | Medium | Blacklist de keywords (`os`, `subprocess`, `system`, `popen`...) |
 | Hard | Bloqueo de opcodes peligrosos de pickle (`R`, `i`, `c`, `0x81`) |
 
+Flag objetivo: `HL{d353r1411z4710n_rc3_5ucc355}`
+
 </details>
 
 <details>
@@ -370,7 +376,7 @@ sliver (ID) > ps
 | Medium | Rechaza `alg=none` pero secreto débil `secret` (bypass: brute force con hashcat / jwt_tool) |
 | Hard | Algorithm confusion RS256→HS256: clave pública expuesta en `/jwt/jwks`, usada como secreto HMAC |
 
-Flag hard: `HL{4lg_c0nfu510n_0wn3d}`
+Flag objetivo: `HL{jw7_m4n1pu14710n_4dm1n_0wn3d}`
 
 </details>
 
@@ -515,6 +521,8 @@ echo '#!/bin/sh' > /cmd && echo "id > ${host_path}/output" >> /cmd && chmod a+x 
 sh -c "echo \$\$ > /tmp/cgrp/x/cgroup.procs" && cat /output
 ```
 
+Flag objetivo: `HL{c0n741n3r_35c4p3_h057_4cc355}`
+
 </details>
 
 <details>
@@ -535,7 +543,7 @@ curl -X POST http://TARGET_IP/oauth/token \
 curl http://TARGET_IP/oauth/userinfo -H "Authorization: Bearer TOKEN"
 ```
 
-Flag: `HL{0auth_r3d1r3ct_0wn3d}`
+Flag: `HL{04u7h_r3d1r3c7_0wn3d}`
 
 </details>
 

