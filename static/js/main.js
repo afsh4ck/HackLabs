@@ -1036,10 +1036,11 @@ function showToast(msg) {
   setTimeout(() => el.remove(), 2200);
 }
 
-// ── Level-Up Overlay ─────────────────────────────────────────────
-function showLevelUpOverlay(level, levelName) {
+// ── Reward Overlays ──────────────────────────────────────────────
+function showLevelUpOverlay(level, levelName, levelIcon, opts = {}) {
   if (document.getElementById('levelup-overlay')) return;
   const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
+  let done = false;
 
   const overlay = document.createElement('div');
   overlay.id = 'levelup-overlay';
@@ -1067,27 +1068,112 @@ function showLevelUpOverlay(level, levelName) {
   const lvlLabel  = `LVL ${level}`;
   const titleText = 'LEVEL UP';
   const accessTxt = isEn ? '// ACCESS GRANTED //' : '// ACCESO CONCEDIDO //';
-  const btnLabel  = isEn ? 'View Progress' : 'Ver progreso';
-  const hintTxt   = isEn ? 'Click anywhere to continue' : 'Haz clic en cualquier lugar para continuar';
+  const btnLabel  = isEn ? 'Continue' : 'Continuar';
+  const hintTxt   = isEn ? 'Click to continue' : 'Haz clic para continuar';
+  const iconClass = levelIcon || 'ph-graduation-cap';
+
+  function finish() {
+    if (done) return;
+    done = true;
+    overlay.remove();
+    if (typeof opts.onDone === 'function') opts.onDone();
+  }
 
   overlay.innerHTML = `
     <div class="levelup-card">
       ${particlesHTML}
       <div class="levelup-access">${accessTxt}</div>
       <div class="levelup-title">${titleText}</div>
+      <div class="levelup-icon-circle"><i class="ph ${iconClass}"></i></div>
       <div class="levelup-lvl-badge">${lvlLabel}</div>
       <div class="levelup-name">${levelName}</div>
       <div>
-        <button class="levelup-btn" onclick="event.stopPropagation();window.location='/progress'">
+        <button class="levelup-btn" onclick="event.stopPropagation();">
           <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
         </button>
       </div>
       <div class="levelup-hint">${hintTxt}</div>
     </div>`;
 
-  overlay.addEventListener('click', () => { window.location.href = '/progress'; });
+  overlay.addEventListener('click', finish);
+  const btn = overlay.querySelector('.levelup-btn');
+  if (btn) btn.addEventListener('click', finish);
   document.body.appendChild(overlay);
-  setTimeout(() => { window.location.href = '/progress'; }, 6000);
+  setTimeout(finish, opts.timeout || 4200);
+}
+
+function showBadgeOverlay(badge, opts = {}) {
+  if (document.getElementById('badgeup-overlay')) return;
+  const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
+  let done = false;
+  const overlay = document.createElement('div');
+  overlay.id = 'badgeup-overlay';
+
+  const title = isEn ? 'NEW BADGE' : 'NUEVO BADGE';
+  const subtitle = isEn ? 'Achievement unlocked' : 'Logro desbloqueado';
+  const btnLabel = isEn ? 'Continue' : 'Continuar';
+  const hintTxt = isEn ? 'Click to continue' : 'Haz clic para continuar';
+
+  function finish() {
+    if (done) return;
+    done = true;
+    overlay.remove();
+    if (typeof opts.onDone === 'function') opts.onDone();
+  }
+
+  overlay.innerHTML = `
+    <div class="badgeup-card">
+      <div class="badgeup-access">// ${subtitle.toUpperCase()} //</div>
+      <div class="badgeup-title">${title}</div>
+      <div class="badgeup-icon-circle">${badge.icon || '🏆'}</div>
+      <div class="badgeup-name">${badge.name || 'Badge'}</div>
+      <div>
+        <button class="levelup-btn" onclick="event.stopPropagation();">
+          <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
+        </button>
+      </div>
+      <div class="levelup-hint">${hintTxt}</div>
+    </div>`;
+
+  overlay.addEventListener('click', finish);
+  const btn = overlay.querySelector('.levelup-btn');
+  if (btn) btn.addEventListener('click', finish);
+  document.body.appendChild(overlay);
+  setTimeout(finish, opts.timeout || 3200);
+}
+
+function playProgressUnlockSequence(data, fallbackToast) {
+  const queue = [];
+  if (data.level_up) {
+    queue.push((next) => showLevelUpOverlay(
+      data.new_level,
+      data.new_level_name,
+      data.new_level_icon,
+      { onDone: next, timeout: 4200 }
+    ));
+  }
+
+  if (Array.isArray(data.new_badges) && data.new_badges.length > 0) {
+    data.new_badges.forEach((badge) => {
+      queue.push((next) => showBadgeOverlay(badge, { onDone: next, timeout: 3200 }));
+    });
+  }
+
+  if (!queue.length) {
+    if (fallbackToast) showToast(fallbackToast);
+    return;
+  }
+
+  let idx = 0;
+  const runNext = () => {
+    if (idx >= queue.length) {
+      window.location.href = '/progress';
+      return;
+    }
+    const step = queue[idx++];
+    step(runNext);
+  };
+  runNext();
 }
 
 // ── Init ─────────────────────────────────────────────────────────
@@ -1164,10 +1250,10 @@ function toggleLabComplete(labId) {
     if (span) span.textContent = done ? 'Completado' : 'Completar';
     btn.title = done ? 'Marcar como pendiente' : 'Marcar como completado';
     _updateProgressUI(data);
-    if (done && data.level_up) {
-      showLevelUpOverlay(data.new_level, data.new_level_name);
+    if (done) {
+      playProgressUnlockSequence(data, 'Lab marcado como completado');
     } else {
-      showToast(done ? 'Lab marcado como completado' : 'Lab marcado como pendiente');
+      showToast('Lab marcado como pendiente');
     }
   })
   .catch(() => {});
@@ -1212,12 +1298,12 @@ function toggleLabComplete(labId) {
         const span = btn.querySelector('span');
         if (icon) icon.className = 'ph ph-check-circle text-sm';
         if (span) span.textContent = 'Completado';
-        if (!data.level_up) {
+        if (!data.level_up && (!Array.isArray(data.new_badges) || data.new_badges.length === 0)) {
           showToast('Flag detectada — lab completado automáticamente');
         }
       }
-      if (data.level_up) {
-        showLevelUpOverlay(data.new_level, data.new_level_name);
+      if (data.level_up || (Array.isArray(data.new_badges) && data.new_badges.length > 0)) {
+        playProgressUnlockSequence(data, null);
       }
     })
     .catch(() => {});

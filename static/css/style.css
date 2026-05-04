@@ -1039,6 +1039,24 @@ pre.hljs-block .hljs {
     0 0 50px rgba(206,255,0,0.4);
   animation: lu-glow-pulse 1.6s ease-in-out infinite, lu-fade-up 0.45s ease 0.1s both;
 }
+.levelup-icon-circle {
+  width: 82px;
+  height: 82px;
+  margin: 1rem auto 0.3rem;
+  border-radius: 999px;
+  border: 2px solid rgba(206,255,0,.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 20%, rgba(206,255,0,.22), rgba(206,255,0,.05) 40%, rgba(0,0,0,.45) 75%);
+  box-shadow: 0 0 24px rgba(206,255,0,.25), inset 0 0 20px rgba(206,255,0,.12);
+  animation: lu-badge-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.35s both;
+}
+.levelup-icon-circle i {
+  font-size: 2.15rem;
+  color: var(--hl-primary);
+  text-shadow: 0 0 16px rgba(206,255,0,.65);
+}
 @keyframes lu-glow-pulse {
   0%,100% { text-shadow: 0 0 18px rgba(206,255,0,.85), 0 0 50px rgba(206,255,0,.4); }
   50%     { text-shadow: 0 0 35px rgba(206,255,0,1),   0 0 90px rgba(206,255,0,.65), 0 0 130px rgba(206,255,0,.2); }
@@ -1099,6 +1117,69 @@ pre.hljs-block .hljs {
   margin-top: 1.5rem;
   letter-spacing: 0.04em;
   animation: lu-fade-up 0.5s ease 0.95s both;
+}
+
+#badgeup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,7,15,0.94);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: lu-bg-in 0.28s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.badgeup-card {
+  text-align: center;
+  padding: 2.4rem 3rem 2.2rem;
+  background: #080914;
+  border: 1.5px solid #f59e0b;
+  border-radius: 1.35rem;
+  box-shadow: 0 0 42px rgba(245,158,11,.18), inset 0 0 50px rgba(245,158,11,.06);
+  max-width: 420px;
+  width: 90%;
+  animation: lu-card-in 0.42s cubic-bezier(0.34,1.56,0.64,1);
+}
+.badgeup-access {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  color: #f59e0b;
+  opacity: 0.7;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.badgeup-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 900;
+  color: #f59e0b;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 16px rgba(245,158,11,.65), 0 0 42px rgba(245,158,11,.25);
+}
+.badgeup-icon-circle {
+  width: 88px;
+  height: 88px;
+  margin: 1rem auto .65rem;
+  border-radius: 999px;
+  border: 2px solid rgba(245,158,11,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  background: radial-gradient(circle at 35% 20%, rgba(245,158,11,.24), rgba(245,158,11,.08) 40%, rgba(0,0,0,.45) 75%);
+  box-shadow: 0 0 20px rgba(245,158,11,.28), inset 0 0 18px rgba(245,158,11,.12);
+}
+.badgeup-name {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(1.3rem, 4.6vw, 2rem);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.4rem;
+  letter-spacing: 0.04em;
 }
 @keyframes lu-fade-up {
   from { opacity: 0; transform: translateY(14px); }

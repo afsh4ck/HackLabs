@@ -263,6 +263,8 @@ if os.path.exists(DATABASE):
 _LEVEL_PCTS  = [0.0, 0.05, 0.13, 0.25, 0.40, 0.58, 0.78, 1.0]
 _LEVEL_NAMES = ['Script Kiddie', 'Apprentice', 'Hacker', 'Pentester',
                 'Red Teamer', 'Elite Hacker', 'Expert', 'Master']
+_LEVEL_ICONS = ['ph-graduation-cap', 'ph-sword', 'ph-bug', 'ph-crosshair',
+                'ph-target', 'ph-skull', 'ph-flame', 'ph-crown']
 _XP_MAP      = {'critical': 300, 'high': 200, 'medium': 100}
 
 def _compute_level(completed_ids, labs):
@@ -274,6 +276,39 @@ def _compute_level(completed_ids, labs):
         if total_xp >= thr:
             lvl = i
     return lvl, _LEVEL_NAMES[lvl]
+
+
+def _compute_unlocked_badges(completed_ids, labs):
+    total_labs = len(labs)
+    done_count = len(completed_ids)
+    pct = (done_count / total_labs * 100.0) if total_labs > 0 else 0.0
+
+    owasp_ids = {'idor', 'crypto', 'sqli', 'cmdi', 'insecure_design', 'misconfig',
+                 'outdated', 'auth_failures', 'integrity', 'logging', 'ssrf'}
+    vuln_ids = {l['id'] for l in labs if l.get('category') == 'Vulnerabilidades'}
+    ia_ids   = {l['id'] for l in labs if l.get('category') == 'IA Attacks'}
+    crit_ids = {l['id'] for l in labs if l.get('risk') == 'critical'}
+
+    ach_first = done_count >= 1
+    ach_speed = done_count >= 5
+    ach_halfway = pct >= 50
+    ach_owasp = owasp_ids.issubset(completed_ids)
+    ach_vulns = vuln_ids.issubset(completed_ids)
+    ach_ia = ia_ids.issubset(completed_ids)
+    ach_critical = crit_ids.issubset(completed_ids)
+    ach_all = done_count == total_labs and total_labs > 0
+
+    ordered = [
+        {'id': 'first_blood', 'icon': '🩸', 'name': 'First Blood', 'unlocked': ach_first},
+        {'id': 'speed_runner', 'icon': '⚡', 'name': 'Speed Runner', 'unlocked': ach_speed},
+        {'id': 'half_way', 'icon': '🏁', 'name': 'Half Way There', 'unlocked': ach_halfway},
+        {'id': 'owasp_warrior', 'icon': '🛡️', 'name': 'OWASP Warrior', 'unlocked': ach_owasp},
+        {'id': 'bug_hunter', 'icon': '🐛', 'name': 'Bug Hunter', 'unlocked': ach_vulns},
+        {'id': 'ai_breaker', 'icon': '🤖', 'name': 'AI Breaker', 'unlocked': ach_ia},
+        {'id': 'critical_mass', 'icon': '💀', 'name': 'Critical Mass', 'unlocked': ach_critical},
+        {'id': 'completionist', 'icon': '👑', 'name': 'Completionist', 'unlocked': ach_all},
+    ]
+    return [b for b in ordered if b['unlocked']]
 
 
 @app.route('/progress/toggle', methods=['POST'])
@@ -293,7 +328,9 @@ def progress_toggle():
 
     # Level before change
     old_rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
-    old_level, _ = _compute_level({r['lab_id'] for r in old_rows}, all_labs)
+    old_completed_ids = {r['lab_id'] for r in old_rows}
+    old_level, _ = _compute_level(old_completed_ids, all_labs)
+    old_badge_ids = {b['id'] for b in _compute_unlocked_badges(old_completed_ids, all_labs)}
 
     existing = db.execute(
         'SELECT id FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id)
@@ -310,7 +347,10 @@ def progress_toggle():
 
     # Level after change
     new_rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
-    new_level, new_level_name = _compute_level({r['lab_id'] for r in new_rows}, all_labs)
+    new_completed_ids = {r['lab_id'] for r in new_rows}
+    new_level, new_level_name = _compute_level(new_completed_ids, all_labs)
+    new_badges = _compute_unlocked_badges(new_completed_ids, all_labs)
+    just_unlocked_badges = [b for b in new_badges if b['id'] not in old_badge_ids]
 
     count = db.execute('SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)).fetchone()[0]
     total = len(all_labs)
@@ -321,6 +361,8 @@ def progress_toggle():
         'level_up':        bool(completed and new_level > old_level),
         'new_level':       new_level,
         'new_level_name':  new_level_name,
+        'new_level_icon':  _LEVEL_ICONS[new_level],
+        'new_badges':      just_unlocked_badges if completed else [],
     })
 
 
