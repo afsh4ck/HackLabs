@@ -337,7 +337,7 @@
     <main class="flex-1 overflow-y-auto {% block main_class %}{% endblock %}">
       {% block content %}{% endblock %}
 
-      {% if current_lab_id %}
+      {% if current_lab_id and current_lab_id != 'c2_sliver' %}
       <div class="max-w-3xl mx-auto px-6 pb-6">
         <div class="hl-card border-l-4" style="border-left-color:var(--hl-primary)">
           <div class="text-xs uppercase tracking-wider mb-2" style="color:var(--hl-primary)">Validar Flag</div>

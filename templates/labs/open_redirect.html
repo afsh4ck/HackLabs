@@ -51,6 +51,9 @@ Host: TARGET_IP
       <li>Construye un enlace de phishing creíble:
         <pre>http://TARGET_IP/open_redirect?url=//evil.com/login</pre>
         La víctima ve el dominio de confianza y hace clic, pero termina en el sitio del atacante.</li>
+      <li>Obtén la flag dedicada validando la cabecera de respuesta cuando la redirección es externa:
+        <pre>curl -I "{{ target_base }}/open_redirect?url=//evil.com"
+# X-HackLabs-Flag: HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}</pre></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
@@ -83,6 +86,9 @@ Host: TARGET_IP
       <li>Craft a convincing phishing link:
         <pre>http://TARGET_IP/open_redirect?url=//evil.com/login</pre>
         The victim sees the trusted domain and clicks, but ends up on the attacker's site.</li>
+      <li>Get the dedicated flag by checking the response header when the redirect is external:
+        <pre>curl -I "{{ target_base }}/open_redirect?url=//evil.com"
+# X-HackLabs-Flag: HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}</pre></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>

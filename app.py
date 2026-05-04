@@ -191,6 +191,7 @@ def xss_stored_delete(comment_id):
     db.commit()
     resp = make_response(redirect(url_for('xss_stored')))
     resp.set_cookie('is_admin', 'true')
+    resp.set_cookie('xss_flag', 'HL{x55_c00k13_57341_5ucc355}')
     return resp
 
 # ─────────────────────────────────────────────
@@ -398,8 +399,8 @@ def get_lab_flag_map():
             'HL{4dm1n_b4ckup_3xf1ltr4ti0n}',
         ],
         'oauth': ['HL{04u7h_r3d1r3c7_0wn3d}'],
-        'open_redirect': ['HL{open_redirect_phishing_success}'],
-        'path_traversal': ['HL{path_traversal_lfi_success}'],
+        'open_redirect': ['HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}'],
+        'path_traversal': ['HL{1f1_53cr375_d1r_3xp053d}'],
         'privesc': [
             'HL{ssh_brut3f0rc3_l0gin_succ3ss}',
             'HL{alice_ssh_l0gin_succ3ss}',
@@ -412,10 +413,10 @@ def get_lab_flag_map():
         'clickjacking': ['HL{cl1ckj4ck1ng_0wn3d}', 'HL{clickjacking_transfer_success}'],
         'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
         'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
-        'reverse_shell': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}', root_flag],
+        'reverse_shell': [root_flag],
         'ssti': ['HL{ssti_template_rce_success}'],
-        'xss': ['HL{xss_session_steal_success}'],
-        'xxe': ['HL{xxe_local_file_read_success}'],
+        'xss': ['HL{x55_c00k13_57341_5ucc355}'],
+        'xxe': ['HL{xx3_xm1_3n717y_0wn3d}'],
 
         # IA Attacks
         'ai_jailbreak': ['HL{j41lbr34k_1ts_w0rk1ng}', 'HL{ai_jailbreak_guardrails_bypassed}'],
@@ -795,6 +796,7 @@ def inject_labs():
         '/2fa/verify':            '2fa_bypass',
         '/reset_poisoning':              'reset_poisoning',
         '/reset_poisoning/request':      'reset_poisoning',
+        '/reset_poisoning/clear':        'reset_poisoning',
         '/shop':           'business_logic',
         '/container':      'container_escape',
         '/oauth':           'oauth',
@@ -809,6 +811,8 @@ def inject_labs():
     current_lab_id = path_to_lab.get(path, '')
     if not current_lab_id and path.startswith('/lab/'):
         current_lab_id = path[5:]
+    if not current_lab_id and path.startswith('/reset_poisoning/confirm/'):
+        current_lab_id = 'reset_poisoning'
 
     # Detect real host for TARGET_IP replacement
     host_header = request.host          # e.g. "192.168.1.147" or "localhost:5000"
@@ -1622,6 +1626,7 @@ def xss_reflected():
 
     resp = make_response(render_template('labs/xss.html', lab=lab, tab='reflected', query=q))
     resp.set_cookie('is_admin', 'true')
+    resp.set_cookie('xss_flag', 'HL{x55_c00k13_57341_5ucc355}')
     return resp
 
 @app.route('/xss/stored', methods=['GET', 'POST'])
@@ -1644,11 +1649,13 @@ def xss_stored():
         db.commit()
         resp = make_response(redirect(url_for('xss_stored')))
         resp.set_cookie('is_admin', 'true')
+        resp.set_cookie('xss_flag', 'HL{x55_c00k13_57341_5ucc355}')
         return resp
     db = get_db()
     comments = db.execute("SELECT * FROM comments ORDER BY id DESC").fetchall()
     resp = make_response(render_template('labs/xss.html', lab=lab, tab='stored', comments=comments))
     resp.set_cookie('is_admin', 'true')
+    resp.set_cookie('xss_flag', 'HL{x55_c00k13_57341_5ucc355}')
     return resp
 
 @app.route('/xss/dom')
@@ -1656,6 +1663,7 @@ def xss_dom():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
     resp = make_response(render_template('labs/xss.html', lab=lab, tab='dom'))
     resp.set_cookie('is_admin', 'true')
+    resp.set_cookie('xss_flag', 'HL{x55_c00k13_57341_5ucc355}')
     return resp
 
 # ─────────────────────────────────────────────
@@ -1770,40 +1778,7 @@ def file_upload():
                 print('Error al guardar archivo:', filename, e)
                 msg_list.append(f'❌ Error al guardar {filename}: {e}')
                 continue
-            msg = f'Archivo subido: {filename}'
-            # Ejecución vulnerable solo si es .py o .php
-            if difficulty == 'easy':
-                if re.search(r'\.php(\.|$)', filename.lower()):
-                    try:
-                        _php = shutil.which('php') or '/usr/bin/php'
-                        output = subprocess.check_output([_php, save_path], stderr=subprocess.STDOUT, timeout=2)
-                        msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
-                    except Exception:
-                        pass  # No mostrar error de ejecución PHP en el mensaje de éxito
-                elif filename.lower().endswith('.py') or filename.lower().endswith('.py.txt'):
-                    try:
-                        output = subprocess.check_output([sys.executable, save_path], stderr=subprocess.STDOUT, timeout=2)
-                        msg += f' | Salida de ejecución (Python): {output.decode(errors="replace")}'
-                    except Exception as e:
-                        msg += f' | Error de ejecución Python: {e}'
-                else:
-                    msg += ' | Archivo subido correctamente (no ejecutable).'
-            elif difficulty == 'medium':
-                if (filename.lower().endswith('.py') or filename.lower().endswith('.py.txt')):
-                    try:
-                        output = subprocess.check_output([sys.executable, save_path], stderr=subprocess.STDOUT, timeout=2)
-                        msg += f' | Salida de ejecución (Python): {output.decode(errors="replace")}'
-                    except Exception as e:
-                        msg += f' | Error de ejecución Python: {e}'
-                elif re.search(r'\.php(\.|$)', filename.lower()):
-                    try:
-                        _php = shutil.which('php') or '/usr/bin/php'
-                        output = subprocess.check_output([_php, save_path], stderr=subprocess.STDOUT, timeout=2)
-                        msg += f' | Salida de ejecución (PHP): {output.decode(errors="replace")}'
-                    except Exception as e:
-                        msg += f' | Error de ejecución PHP: {e}'
-                else:
-                    msg += ' | Archivo subido correctamente (no ejecutable).'
+            msg = 'Archivo subido correctamente'
             msg_list.append(msg)
         if msg_list:
             from flask import flash
@@ -1951,8 +1926,11 @@ def xxe_api():
         message = doc.findtext('message', default='')
 
         ticket_id = f'TK-{random.randint(10000, 99999)}'
+        xxe_flag = 'HL{xx3_xm1_3n717y_0wn3d}'
+        extracted_values = [name, email, subject, message]
+        leaked_flag = xxe_flag if any(xxe_flag in (v or '') for v in extracted_values) else None
 
-        return jsonify({
+        response = {
             'status': 'ok',
             'ticket': {
                 'id': ticket_id,
@@ -1961,7 +1939,10 @@ def xxe_api():
                 'subject': subject,
                 'message': message
             }
-        })
+        }
+        if leaked_flag:
+            response['flag'] = leaked_flag
+        return jsonify(response)
     except lxml_etree.XMLSyntaxError as e:
         return jsonify({'status': 'error', 'message': f'Error XML: {e}'}), 400
     except Exception as e:
@@ -2180,6 +2161,7 @@ def open_redirect():
     lab = next(l for l in get_lab_list() if l['id'] == 'open_redirect')
     url = request.args.get('url', '')
     difficulty = session.get('difficulty', 'easy')
+    open_redirect_flag = 'HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}'
 
     if url:
         if difficulty == 'medium':
@@ -2214,7 +2196,24 @@ def open_redirect():
             except Exception:
                 pass
 
-        return redirect(url)
+        external_redirect = False
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            host = request.host.split(':')[0]
+            if parsed.hostname and parsed.hostname != host:
+                external_redirect = True
+            if url.startswith('//') or url.startswith('/\\'):
+                external_redirect = True
+            if url.lower().startswith(('javascript:', 'data:')):
+                external_redirect = True
+        except Exception:
+            pass
+
+        resp = redirect(url)
+        if external_redirect:
+            resp.headers['X-HackLabs-Flag'] = open_redirect_flag
+        return resp
     return render_template('labs/open_redirect.html', lab=lab)
 
 # ─────────────────────────────────────────────
@@ -3413,7 +3412,7 @@ def shop_checkout():
         session['shop_discount'] = 0
         session['shop_applied_coupons'] = []
         session['shop_flag'] = 'HL{bu51n355_l0g1c_0wn3d}'
-        flash(f'Compra completada por ${total_after/100:.2f}. Flag obtenida.', 'success')
+        flash(f'Compra completada por ${total_after/100:.2f}.', 'success')
     else:
         flash(f'Saldo insuficiente. Total: ${total_after/100:.2f} | Balance: ${balance/100:.2f}', 'error')
 
@@ -3690,11 +3689,8 @@ def container_escape():
         checks['cap_eff'] = 'unknown'
 
     checks['writable_host_path'] = any(os.path.exists(p) for p in ['/host', '/hostfs', '/rootfs'])
-    flag = None
-    if checks.get('docker_socket') or checks.get('privileged') or checks.get('writable_host_path'):
-        flag = 'HL{c0n741n3r_35c4p3_h057_4cc355}'
 
-    return render_template('labs/container_escape.html', lab=lab, checks=checks, flag=flag)
+    return render_template('labs/container_escape.html', lab=lab, checks=checks)
 
 # ─────────────────────────────────────────────
 # OAuth 2.0 Attacks

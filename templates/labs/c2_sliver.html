@@ -32,7 +32,7 @@
     </div>
   </div>
 
-  <div class="hl-card">
+  <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">Objetivos del lab</h3>
     <ul class="text-sm text-gray-600 dark:text-gray-400 ml-4 list-disc">
       <li>Conectar por SSH a la máquina de laboratorio.</li>
@@ -40,6 +40,46 @@
       <li>Transferir y ejecutar el implant en la víctima.</li>
       <li>Interactuar con la sesión Sliver, enumerar y escalar privilegios básicos.</li>
     </ul>
+  </div>
+
+  <div class="hl-card border-l-4" style="border-left-color:var(--hl-primary)">
+    <div class="text-xs uppercase tracking-wider mb-2" style="color:var(--hl-primary)">Validar Flag</div>
+    {% if is_progress_user %}
+    <div class="space-y-2">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Introduce la flag de este lab</label>
+        <input id="lab-flag-input" type="text" placeholder="HL{...}"
+               value="{{ current_lab_validated_flag | e }}"
+               class="hl-input font-mono text-xs w-full"
+               {% if current_lab_id in completed_lab_ids %}disabled{% endif %}>
+      </div>
+      <button id="lab-complete-btn" onclick="submitLabFlag('{{ current_lab_id }}')"
+              class="lab-complete-btn w-full justify-center {% if current_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
+              title="{% if current_lab_id in completed_lab_ids %}Desmarcar lab como completado{% else %}Validar flag del laboratorio{% endif %}">
+        <i class="ph {% if current_lab_id in completed_lab_ids %}ph-arrow-counter-clockwise{% else %}ph-flag-checkered{% endif %} text-sm"></i>
+        <span>{% if current_lab_id in completed_lab_ids %}Desmarcar{% else %}Validar flag{% endif %}</span>
+      </button>
+    </div>
+    {% else %}
+    <div class="space-y-2">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Introduce la flag de este lab</label>
+        <input id="lab-flag-input" type="text" placeholder="HL{...}"
+               class="hl-input font-mono text-xs w-full"
+               disabled>
+      </div>
+      <button id="lab-complete-btn" type="button"
+              class="lab-complete-btn lab-complete-btn--disabled w-full justify-center"
+              title="Inicia sesión para validar flags"
+              disabled>
+        <i class="ph ph-lock-simple text-sm"></i>
+        <span>Enviar flag</span>
+      </button>
+      <a href="/account/login?next={{ request.path }}" class="text-xs inline-block hover:opacity-80" style="color:var(--hl-primary)">
+        Inicia sesión para validar y guardar progreso
+      </a>
+    </div>
+    {% endif %}
   </div>
 
 </div>

