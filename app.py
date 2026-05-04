@@ -54,7 +54,9 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB uploads
 
 DATABASE = os.path.join(os.path.dirname(__file__), 'data', 'hacklabs.db')
+LEGACY_DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
 
 # Rate-limit store for bruteforce (medium/hard difficulty)
 _bruteforce_attempts = defaultdict(list)
@@ -219,10 +221,16 @@ def query_db(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 def init_db():
+    os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     db = sqlite3.connect(DATABASE)
     with open(os.path.join(os.path.dirname(__file__), 'database', 'schema.sql'), 'r') as f:
         db.executescript(f.read())
     db.close()
+
+def _migrate_legacy_database_file():
+    """Preserve user progress if a legacy root DB exists."""
+    if not os.path.exists(DATABASE) and os.path.exists(LEGACY_DATABASE):
+        shutil.copy2(LEGACY_DATABASE, DATABASE)
 
 def _migrate_progress_table():
     """Create/migrate user_progress table tied to account_users (custom accounts only)."""
@@ -242,6 +250,8 @@ def _migrate_progress_table():
     ''')
     db.commit()
     db.close()
+
+_migrate_legacy_database_file()
 
 if os.path.exists(DATABASE):
     _migrate_progress_table()
