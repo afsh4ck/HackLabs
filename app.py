@@ -251,12 +251,17 @@ def _migrate_progress_table():
 def _migrate_sqli_flag_seed():
     """Ensure SQLi lab has at least one real HL flag row in products for existing DBs."""
     db = sqlite3.connect(DATABASE)
+    leet_sqli_flag = 'HL{5ql1_d474_3xf1l_5ucc355}'
     db.execute(
         """
         INSERT OR IGNORE INTO products (id, name, description, price, category)
-        VALUES (12, 'Zero-Day Premium Bundle', 'Internal note: HL{sqli_data_exfil_success}', 1337.00, 'secret')
+        VALUES (?, 'Zero-Day Premium Bundle', ?, 1337.00, 'secret')
         """
+        ,
+        (12, f'Internal note: {leet_sqli_flag}')
     )
+    # Normalize old seed values to leet for existing DBs.
+    db.execute('UPDATE products SET description=? WHERE id=12', (f'Internal note: {leet_sqli_flag}',))
     db.commit()
     db.close()
 
@@ -308,11 +313,11 @@ def get_lab_flag_map():
     root_flag = 'HL{r00t_pr1v3sc_succ3ss}'
     flag_map = {
         # OWASP Top 10
-        'idor': ['HL{idor_privilege_escalation}'],
+        'idor': ['HL{1d0r_pr1v11393_35c4l4710n}'],
         'crypto': ['HL{crypto_cracked_hash_success}'],
-        'sqli': ['HL{sqli_data_exfil_success}'],
+        'sqli': ['HL{5ql1_d474_3xf1l_5ucc355}'],
         'cmdi': ['HL{cmdi_command_execution_success}'],
-        'insecure_design': ['HL{insecure_design_token_reset}'],
+        'insecure_design': ['HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'],
         'misconfig': ['HL{misconfig_admin_console_access}'],
         'outdated': ['HL{outdated_component_rce}'],
         'auth_failures': ['HL{auth_failures_account_takeover}'],
@@ -386,6 +391,7 @@ def get_lab_flag_map():
         'privesc',
         'reverse_shell',
         'idor',
+        'insecure_design',
         'prompt_injection',
         'prompt_leaking',
         'llm_exfil',
@@ -403,6 +409,37 @@ def get_lab_flag_map():
             flags.append(root_flag)
 
     return flag_map
+
+
+def _to_leet_flag(flag):
+    """Return a leet variant for HL{...} flags."""
+    if not isinstance(flag, str) or not flag.startswith('HL{') or not flag.endswith('}'):
+        return flag
+    core = flag[3:-1]
+    leet_table = str.maketrans({
+        'a': '4', 'A': '4',
+        'e': '3', 'E': '3',
+        'i': '1', 'I': '1',
+        'l': '1', 'L': '1',
+        'o': '0', 'O': '0',
+        's': '5', 'S': '5',
+        't': '7', 'T': '7',
+        'b': '8', 'B': '8',
+        'g': '9', 'G': '9',
+    })
+    return 'HL{' + core.translate(leet_table) + '}'
+
+
+def _expand_with_leet(flags):
+    """Accept both canonical and leet variants for each expected flag."""
+    out = []
+    seen = set()
+    for f in flags:
+        for candidate in (f, _to_leet_flag(f)):
+            if candidate and candidate not in seen:
+                seen.add(candidate)
+                out.append(candidate)
+    return out
 
 
 def _validate_lab_flag_coverage():
@@ -432,6 +469,7 @@ def progress_submit_flag():
         return jsonify({'error': 'empty_flag'}), 400
 
     expected_flags = [f.strip() for f in get_lab_flag_map().get(lab_id, []) if f and f.strip()]
+    expected_flags = _expand_with_leet(expected_flags)
     if not expected_flags:
         return jsonify({'error': 'lab_flag_not_configured'}), 500
     if lab_id == 'cmdi':
@@ -644,6 +682,7 @@ def inject_labs():
         '/sqli/search':    'sqli',
         '/cmdi/ping':      'cmdi',
         '/recover':        'insecure_design',
+        '/recover/answer': 'insecure_design',
         '/ssrf':           'ssrf',
         '/xss/reflected':  'xss',
         '/xss/stored':     'xss',
@@ -892,7 +931,7 @@ def profile():
             error = str(e)
 
         if profile and str(profile['id']) != '1':
-            flag = 'HL{idor_privilege_escalation}'
+            flag = 'HL{1d0r_pr1v11393_35c4l4710n}'
 
     return render_template('labs/idor.html',
                            lab=next(l for l in get_lab_list() if l['id'] == 'idor'),
@@ -989,7 +1028,11 @@ def sqli_search():
             sql_error = blocked
         else:
             # VULNERABLE: concatenación directa de cadena
-            executed_query = f"SELECT * FROM products WHERE name LIKE '%{user_input}%'"
+            if difficulty == 'easy':
+                # Easy: classic quoted string context (more reliable for automated SQLi tools like sqlmap)
+                executed_query = f"SELECT * FROM products WHERE name = '{user_input}'"
+            else:
+                executed_query = f"SELECT * FROM products WHERE name LIKE '%{user_input}%'"
             try:
                 db = get_db()
                 results = db.execute(executed_query).fetchall()
@@ -1111,14 +1154,15 @@ def recover_answer():
         (username, answer)
     ).fetchone()
     if user:
+        compromised_flag = 'HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'
         if difficulty == 'hard':
             # No revela la contraseña directamente, solo un hint
             masked = user['password_plain'][0] + '*' * (len(user['password_plain']) - 2) + user['password_plain'][-1]
             return render_template('labs/insecure_design.html', lab=lab,
-                                   success=True, password=masked, username=username)
+                                   success=True, password=masked, username=username, compromised_flag=compromised_flag)
         return render_template('labs/insecure_design.html', lab=lab,
                                success=True, password=user['password_plain'],
-                               username=username)
+                               username=username, compromised_flag=compromised_flag)
     error_msg = 'Respuesta incorrecta' if difficulty != 'hard' else 'Datos incorrectos'
     return render_template('labs/insecure_design.html', lab=lab,
                            error=error_msg, username=username)

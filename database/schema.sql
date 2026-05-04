@@ -81,7 +81,7 @@ INSERT OR IGNORE INTO products (id, name, description, price, category) VALUES
 (9, 'Nessus Essentials',   'Escáner de vulnerabilidades',                      0.00, 'software'),
 (10,'OSCP Certification',  'Certificación Offensive Security',               1499.00, 'training'),
 (11,'Pentesting Toolkit',  'Kit completo de herramientas para testing',        59.99, 'accessories'),
-(12,'Zero-Day Premium Bundle', 'Internal note: HL{sqli_data_exfil_success}', 1337.00, 'secret');
+(12,'Zero-Day Premium Bundle', 'Internal note: HL{5ql1_d474_3xf1l_5ucc355}', 1337.00, 'secret');
 
 -- Comentarios iniciales para XSS stored
 INSERT OR IGNORE INTO comments (id, author, body) VALUES
