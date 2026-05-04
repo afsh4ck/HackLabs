@@ -314,7 +314,7 @@ def get_lab_flag_map():
     flag_map = {
         # OWASP Top 10
         'idor': ['HL{1d0r_pr1v11393_35c4l4710n}'],
-        'crypto': ['HL{crypto_cracked_hash_success}'],
+        'crypto': ['HL{crypt0_cr4ck3d_h45h_5ucc355}'],
         'sqli': ['HL{5ql1_d474_3xf1l_5ucc355}'],
         'cmdi': ['HL{cmdi_command_execution_success}'],
         'insecure_design': ['HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'],
@@ -965,7 +965,7 @@ def crypto_login():
         ).fetchone()
 
         if user:
-            crypto_flag = 'HL{crypto_cracked_hash_success}'
+            crypto_flag = 'HL{crypt0_cr4ck3d_h45h_5ucc355}'
             resp = make_response(render_template('labs/crypto.html', lab=lab,
                                                   message='Login exitoso', success=True,
                                                   weak_hash=weak_hash if difficulty == 'easy' else None,
