@@ -3310,12 +3310,18 @@ def business_logic():
     cart = session.get('shop_cart', [])
     balance = session.get('shop_balance', 100)   # $1.00 starting balance
     discount = session.get('shop_discount', 0)
+    applied_coupons = session.get('shop_applied_coupons', [])
+    coupon_entries = [{'code': code, 'pct': _shop_coupons.get(code, 0)} for code in applied_coupons]
     flag = session.pop('shop_flag', None)
     cart_total = sum(item['price'] * item.get('qty', 1) for item in cart)
+    discounted_total = max(0, int(cart_total * (1 - discount / 100)))
     return render_template('labs/business_logic.html', lab=lab,
                            products=_shop_products, cart=cart,
                            balance=balance, discount=discount, flag=flag,
-                           cart_total=cart_total)
+                           cart_total=cart_total,
+                           discounted_total=discounted_total,
+                           applied_coupons=applied_coupons,
+                           coupon_entries=coupon_entries)
 
 @app.route('/shop/cart/add', methods=['POST'])
 def shop_add():
@@ -3355,6 +3361,7 @@ def shop_add():
 def shop_clear():
     session['shop_cart'] = []
     session['shop_discount'] = 0
+    session['shop_applied_coupons'] = []
     session['shop_balance'] = 100
     _shop_used_coupons.pop(session.get('shop_sid', ''), None)
     flash('Carrito y balance reiniciados', 'success')
@@ -3379,6 +3386,9 @@ def shop_coupon():
 
     # VULNERABLE in easy/medium: no per-session tracking -> stackable/unlimited
     pct = _shop_coupons[code]
+    applied_coupons = session.get('shop_applied_coupons', [])
+    applied_coupons.append(code)
+    session['shop_applied_coupons'] = applied_coupons
     session['shop_discount'] = min(session.get('shop_discount', 0) + pct, 100)
     flash(f'Cupon aplicado: {pct}% descuento (total: {session["shop_discount"]}%)', 'success')
     return redirect('/shop')
@@ -3401,6 +3411,7 @@ def shop_checkout():
         session['shop_balance'] = balance - total_after
         session['shop_cart'] = []
         session['shop_discount'] = 0
+        session['shop_applied_coupons'] = []
         session['shop_flag'] = 'HL{bu51n355_l0g1c_0wn3d}'
         flash(f'Compra completada por ${total_after/100:.2f}. Flag obtenida.', 'success')
     else:
