@@ -96,8 +96,9 @@ HackLabs incluye un sistema de progreso gamificado vinculado a cuentas de usuari
 ### Cómo funciona
 
 - **Progress ring** en el navbar — muestra `labs completados / total` en tiempo real. Se actualiza automáticamente al completar un lab.
-- **Botón "Completar"** en cada lab — marca o desmarca el lab manualmente.
-- **Auto-detección de flags** — cuando aparece una flag `HL{...}` en pantalla (al resolver el lab), el lab se marca como completado automáticamente.
+- **Validación por flag** al final de cada lab — el progreso se registra únicamente al enviar una flag válida del lab.
+- **Desmarcar lab** — cuando un lab está completado, el mismo botón permite desmarcarlo para volver a explotarlo.
+- **Persistencia de flag validada** — la última flag enviada para cada lab se guarda y se muestra en el input cuando vuelves al lab.
 - **Página de progreso** (`/progress`) — vista detallada con estadísticas, logros y lista filtrable.
 
 ### Niveles y XP
@@ -157,6 +158,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Medium | Oculta `password_plain` pero expone `password_md5` y `security_answer` |
 | Hard | Solo datos básicos: `id`, `username`, `email`, `role` |
 
+Flag objetivo: `HL{1d0r_pr1v11393_35c4l4710n}`
+
 </details>
 
 <details>
@@ -190,6 +193,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Medium | WAF básico bloquea `UNION`, `SELECT`, `DROP`, `INSERT`, `DELETE`, `--` |
 | Hard | Regex WAF agresivo `\bunion\b`, `\bselect\b`, `[';]` + errores ocultos |
 
+Flag objetivo (seed SQLi): `HL{5ql1_d474_3xf1l_5ucc355}`
+
 </details>
 
 <details>
@@ -200,6 +205,8 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | Easy | Pregunta secreta visible + sin rate-limiting |
 | Medium | Pregunta parcialmente censurada + 5 intentos / 30s |
 | Hard | Pregunta oculta + 3 intentos / 60s + errores genéricos |
+
+Flag objetivo: `HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}`
 
 </details>
 
