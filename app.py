@@ -1669,13 +1669,39 @@ def path_traversal():
                 prev = user_input
                 user_input = user_input.replace('../', '').replace('..\\', '')
 
+        # Canonical target inside the lab repo for consistent LFI outputs.
+        rel_target = re.sub(r'^(?:\.\.[/\\])+', '', user_input).lstrip('/\\')
+        if rel_target in ('etc/passwd', 'etc/shadow'):
+            try:
+                lab_file_path = os.path.join(os.path.dirname(__file__), rel_target)
+                with open(lab_file_path, 'r', errors='replace') as f:
+                    content = f.read()
+                return render_template('labs/path_traversal.html', lab=lab, filename=filename,
+                                       content=content, error=error)
+            except Exception:
+                pass
+
         try:
             base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
             full_path = os.path.join(base_path, user_input)
             with open(full_path, 'r', errors='replace') as f:
                 content = f.read()
         except FileNotFoundError:
-            error = f'Archivo no encontrado: {filename}'
+            # Mantiene el lab explotable aunque el host tenga más profundidad de carpetas.
+            # Ejemplo: ../../../../../etc/passwd -> etc/passwd dentro del proyecto.
+            if re.match(r'^(?:\.\.[/\\])+', user_input):
+                try:
+                    fallback_path = os.path.join(os.path.dirname(__file__), rel_target)
+                    with open(fallback_path, 'r', errors='replace') as f:
+                        content = f.read()
+                except FileNotFoundError:
+                    error = f'Archivo no encontrado: {filename}'
+                except PermissionError:
+                    error = 'Sin permisos para leer el archivo'
+                except Exception as e:
+                    error = str(e)
+            else:
+                error = f'Archivo no encontrado: {filename}'
         except PermissionError:
             error = 'Sin permisos para leer el archivo'
         except Exception as e:
