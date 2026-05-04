@@ -297,7 +297,11 @@ def progress_page():
     if not app_user or app_type != 'account':
         return redirect('/account/login?next=/progress')
     db   = get_db()
-    labs = get_lab_list()
+    category_order = {'OWASP Top 10': 0, 'Vulnerabilidades': 1, 'IA Attacks': 2}
+    labs = sorted(
+        get_lab_list(),
+        key=lambda l: (category_order.get(l.get('category'), 99), l.get('title', '').lower())
+    )
     rows = db.execute(
         'SELECT lab_id, completed_at FROM user_progress WHERE account_username=? ORDER BY completed_at DESC',
         (app_user,)

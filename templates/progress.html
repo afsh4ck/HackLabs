@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Mi Progreso – HackLabs{% endblock %}
+{% block title %}Progress – HackLabs{% endblock %}
 
 {% block content %}
 {% set lab_icons = {
@@ -73,9 +73,9 @@
 
   <!-- Breadcrumb -->
   <nav class="text-xs text-gray-400 mb-6 flex items-center gap-2">
-    <a href="/" class="hover:opacity-70 transition" style="color:var(--hl-primary)">Inicio</a>
+    <a href="/" class="hover:opacity-70 transition" style="color:var(--hl-primary)" data-i18n="home">Inicio</a>
     <i class="ph ph-caret-right text-gray-600" style="font-size:10px"></i>
-    <span class="text-gray-300 font-semibold">Mi Progreso</span>
+    <span class="text-gray-300 font-semibold" data-i18n="nav_progress">Mi progreso</span>
   </nav>
 
   <!-- ── Hero ── -->
@@ -105,7 +105,8 @@
             </span>
           </div>
           <span class="text-xs text-gray-500 font-mono">
-            {{ level_xp_done }} / {{ level_xp_range }} XP hasta nivel {{ current_level + 2 }}
+            <span class="lang-content" data-lang="es">{{ level_xp_done }} / {{ level_xp_range }} XP hasta nivel {{ current_level + 2 }}</span>
+            <span class="lang-content" data-lang="en" style="display:none">{{ level_xp_done }} / {{ level_xp_range }} XP to level {{ current_level + 2 }}</span>
           </span>
         </div>
         <div class="xp-bar-track mb-3">
@@ -115,17 +116,17 @@
           <span class="text-sm text-gray-300 font-bold">
             <span style="color:var(--hl-primary);font-size:1.4rem;font-family:'Space Grotesk',sans-serif">{{ done_count }}</span>
             <span class="text-gray-500">/{{ total_labs }}</span>
-            <span class="text-gray-400 text-xs ml-1">labs completados</span>
+            <span class="text-gray-400 text-xs ml-1" data-i18n="progress_labs_completed">labs completados</span>
           </span>
           <span class="text-xs text-gray-500">·</span>
           <span class="text-sm text-gray-400">
             <span style="color:var(--hl-primary)" class="font-bold">{{ pct }}%</span>
-            completado
+            <span data-i18n="progress_completed">completado</span>
           </span>
           <span class="text-xs text-gray-500">·</span>
           <span class="text-sm text-gray-400">
             <span class="font-bold" style="color:#f97316">{{ max_xp - total_xp }}</span>
-            XP restante
+            <span data-i18n="progress_xp_remaining">XP restante</span>
           </span>
         </div>
       </div>
@@ -151,32 +152,32 @@
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
     <div class="progress-stat-card">
       <div class="progress-stat-value">{{ done_count }}<span style="font-size:1rem;color:#4b5563">/{{ total_labs }}</span></div>
-      <div class="progress-stat-label">Total Labs</div>
+      <div class="progress-stat-label" data-i18n="stat_total">Total Labs</div>
     </div>
     <div class="progress-stat-card">
       <div class="progress-stat-value" style="color:#f97316">{{ total_xp }}</div>
-      <div class="progress-stat-label">XP Ganados</div>
+      <div class="progress-stat-label" data-i18n="progress_xp_earned">XP Ganados</div>
     </div>
     <div class="progress-stat-card">
       <div class="progress-stat-value" style="color:#a855f7">{{ pct }}%</div>
-      <div class="progress-stat-label">Completado</div>
+      <div class="progress-stat-label" data-i18n="progress_completed_cap">Completado</div>
     </div>
     <div class="progress-stat-card">
       <div class="progress-stat-value" style="color:#ef4444">{{ pending_critical.n }}</div>
-      <div class="progress-stat-label">Críticos Pendientes</div>
+      <div class="progress-stat-label" data-i18n="progress_pending_critical">Críticos Pendientes</div>
     </div>
   </div>
 
   <!-- Category mini bars -->
   <div class="grid grid-cols-3 gap-3 mb-6">
-    {% for cat, done, total, color in [
-      ('OWASP Top 10',     completed_by_cat.owasp, owasp_total, '#ef4444'),
-      ('Vulnerabilidades', completed_by_cat.vulns, vulns_total, '#f97316'),
-      ('IA Attacks',       completed_by_cat.ia,    ia_total,    'var(--hl-primary)'),
+    {% for cat, cat_i18n, done, total, color in [
+      ('OWASP Top 10',     'cat_owasp_top_10',      completed_by_cat.owasp, owasp_total, '#ef4444'),
+      ('Vulnerabilidades', 'cat_vulnerabilidades',  completed_by_cat.vulns, vulns_total, '#f97316'),
+      ('IA Attacks',       'cat_ia_attacks',        completed_by_cat.ia,    ia_total,    'var(--hl-primary)'),
     ] %}
     <div class="progress-stat-card" style="text-align:left;padding:.9rem 1rem">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-bold text-gray-300">{{ cat }}</span>
+        <span class="text-xs font-bold text-gray-300" data-i18n="{{ cat_i18n }}">{{ cat }}</span>
         <span class="text-xs font-mono" style="color:{{ color }}">{{ done }}/{{ total }}</span>
       </div>
       <div class="xp-bar-track" style="height:6px">
@@ -189,20 +190,24 @@
   <!-- ── Achievements ── -->
   <div class="mb-6">
     <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-3 flex items-center gap-2">
-      <i class="ph ph-trophy" style="color:var(--hl-primary)"></i> Logros
+      <i class="ph ph-trophy" style="color:var(--hl-primary)"></i>
+      <span data-i18n="progress_achievements">Logros</span>
     </h2>
     <div class="flex flex-wrap gap-3">
-      {% for unlocked, icon, name, desc in [
-        (ach_first,    '🩸', 'First Blood',     'Completar el primer lab'),
-        (ach_speed,    '⚡', 'Speed Runner',    'Completar 5 labs'),
-        (ach_halfway,  '🏁', 'Half Way There',  'Completar el 50%'),
-        (ach_owasp,    '🛡️', 'OWASP Warrior',   'Todos los OWASP Top 10'),
-        (ach_vulns,    '🐛', 'Bug Hunter',       'Todas las Vulnerabilidades'),
-        (ach_ia,       '🤖', 'AI Breaker',       'Todos los IA Attacks'),
-        (ach_critical, '💀', 'Critical Mass',    'Todos los labs Críticos'),
-        (ach_all,      '👑', 'Completionist',    'Todos los labs'),
+      {% for unlocked, icon, name, desc_es, desc_en in [
+        (ach_first,    '🩸', 'First Blood',     'Completar el primer lab',                 'Complete your first lab'),
+        (ach_speed,    '⚡', 'Speed Runner',    'Completar 5 labs',                        'Complete 5 labs'),
+        (ach_halfway,  '🏁', 'Half Way There',  'Completar el 50% de los labs',            'Complete 50% of labs'),
+        (ach_owasp,    '🛡️', 'OWASP Warrior',   'Completar todos los OWASP Top 10',        'Complete all OWASP Top 10 labs'),
+        (ach_vulns,    '🐛', 'Bug Hunter',       'Completar todas las Vulnerabilidades',    'Complete all Vulnerabilities labs'),
+        (ach_ia,       '🤖', 'AI Breaker',       'Completar todos los IA Attacks',          'Complete all AI Attacks labs'),
+        (ach_critical, '💀', 'Critical Mass',    'Completar todos los labs Críticos',       'Complete all critical labs'),
+        (ach_all,      '👑', 'Completionist',    'Completar todos los labs',                'Complete all labs'),
       ] %}
-      <div class="achievement-badge {% if unlocked %}unlocked{% endif %}" title="{{ desc }}">
+      <div class="achievement-badge {% if unlocked %}unlocked{% endif %}"
+           data-desc-es="{{ desc_es }}"
+           data-desc-en="{{ desc_en }}"
+           title="{{ desc_es }}">
         <span class="achievement-icon">{{ icon }}</span>
         <span class="achievement-name">{{ name }}</span>
       </div>
@@ -214,17 +219,17 @@
   <div class="flex items-center gap-2 mb-5 flex-wrap">
     <button class="progress-tab-btn active" onclick="switchTab('all', this)" id="tab-all">
       <i class="ph ph-squares-four text-xs mr-1"></i>
-      Todos
+      <span data-i18n="filter_all">Todos</span>
       <span class="ml-1 text-gray-500 font-normal">({{ total_labs }})</span>
     </button>
     <button class="progress-tab-btn" onclick="switchTab('done', this)" id="tab-done">
       <i class="ph ph-check-circle text-xs mr-1" style="color:#4ade80"></i>
-      Completados
+      <span data-i18n="progress_done">Completados</span>
       <span class="ml-1 text-gray-500 font-normal">({{ done_count }})</span>
     </button>
     <button class="progress-tab-btn" onclick="switchTab('pending', this)" id="tab-pending">
       <i class="ph ph-circle-dashed text-xs mr-1"></i>
-      Pendientes
+      <span data-i18n="progress_pending">Pendientes</span>
       <span class="ml-1 text-gray-500 font-normal">({{ total_labs - done_count }})</span>
     </button>
   </div>
@@ -234,7 +239,7 @@
   {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'IA Attacks': 'var(--hl-primary)'} %}
 
   <div class="space-y-2" id="progress-lab-list">
-    {% for l in labs | sort(attribute='category') %}
+    {% for l in labs %}
     {% set is_done = l.id in completed %}
     <a href="/lab/{{ l.id }}"
        class="prog-lab-card {% if is_done %}completed{% endif %}"
@@ -254,7 +259,8 @@
           <span class="text-xs font-semibold text-gray-200 truncate">{{ l.title }}</span>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-gray-600">{{ l.category }}</span>
+          {% set cat_i18n = 'cat_owasp_top_10' if l.category == 'OWASP Top 10' else ('cat_vulnerabilidades' if l.category == 'Vulnerabilidades' else 'cat_ia_attacks') %}
+          <span class="text-xs text-gray-600" data-i18n="{{ cat_i18n }}">{{ l.category }}</span>
           <span class="text-xs px-1.5 py-0 rounded font-mono risk-badge-{{ l.risk }}" style="font-size:10px">{{ l.risk }}</span>
           <span class="text-xs font-semibold" style="color:{{ risk_color.get(l.risk,'#fff') }}">+{{ xp_map.get(l.risk, 100) }} XP</span>
           {% if is_done and completed[l.id] %}
@@ -291,5 +297,23 @@ function switchTab(tab, btn) {
     }
   });
 }
+
+function updateAchievementTooltips() {
+  const lang = (window.HL && window.HL.lang) ? window.HL.lang : (localStorage.getItem('hl_lang') || 'es');
+  document.querySelectorAll('.achievement-badge').forEach(badge => {
+    badge.title = lang === 'en' ? (badge.dataset.descEn || '') : (badge.dataset.descEs || '');
+  });
+}
+
+updateAchievementTooltips();
+
+const _progressObserver = new MutationObserver(updateAchievementTooltips);
+_progressObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#lang-menu')) {
+    setTimeout(updateAchievementTooltips, 0);
+  }
+});
 </script>
 {% endblock %}

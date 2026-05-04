@@ -112,5 +112,61 @@
     {% endif %}
     {% endif %}
   </div>
+
+  <div id="resolution-data" class="hidden">
+    <div class="lang-content" data-lang="es">
+      <h3>Easy — Clickjacking básico</h3>
+      <ol>
+        <li>El endpoint de transferencia no aplica ninguna protección anti-framing.</li>
+        <li>Crea una página atacante con un <code>iframe</code> apuntando a:
+          <pre>http://localhost:5000/clickjacking/transfer</pre></li>
+        <li>Superpone un señuelo visual (por ejemplo, un botón "Claim Prize") justo encima del botón real <strong>Confirm Transfer</strong>.</li>
+        <li>Cuando la víctima hace clic, realmente pulsa el botón del iframe y se envía la transferencia.</li>
+      </ol>
+
+      <h3>Medium — Bypass del frame-buster</h3>
+      <ol>
+        <li>El lab añade <code>if (top !== self) { top.location = self.location; }</code>.</li>
+        <li>Evita el breakout cargando el iframe con <code>sandbox="allow-forms allow-scripts"</code> (sin <code>allow-top-navigation</code>).</li>
+        <li>El script no podrá redirigir la ventana superior y el formulario seguirá siendo clickable.</li>
+      </ol>
+
+      <h3>Hard — Defensa correcta</h3>
+      <ol>
+        <li>Cuando la app aplica <code>X-Frame-Options: DENY</code> o <code>Content-Security-Policy: frame-ancestors 'none'</code>, el clickjacking deja de ser viable.</li>
+        <li>No hay bypass fiable en navegadores modernos: debes pivotar a otro vector (XSS/CSRF/social engineering).</li>
+      </ol>
+
+      <h3>Herramientas</h3>
+      <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">Browser DevTools</span> <span class="tools-badge">HTML/CSS overlay</span></div>
+    </div>
+
+    <div class="lang-content" data-lang="en" style="display:none">
+      <h3>Easy — Basic clickjacking</h3>
+      <ol>
+        <li>The transfer endpoint has no anti-framing protection.</li>
+        <li>Create an attacker page with an <code>iframe</code> pointing to:
+          <pre>http://localhost:5000/clickjacking/transfer</pre></li>
+        <li>Place a visual decoy (for example, a "Claim Prize" button) exactly over the real <strong>Confirm Transfer</strong> button.</li>
+        <li>When the victim clicks, they actually click inside the iframe and submit the transfer.</li>
+      </ol>
+
+      <h3>Medium — Frame-buster bypass</h3>
+      <ol>
+        <li>The lab adds <code>if (top !== self) { top.location = self.location; }</code>.</li>
+        <li>Prevent top-navigation by loading the iframe with <code>sandbox="allow-forms allow-scripts"</code> (without <code>allow-top-navigation</code>).</li>
+        <li>The script cannot break out of the frame, and the form remains clickable.</li>
+      </ol>
+
+      <h3>Hard — Proper defense</h3>
+      <ol>
+        <li>When the app sets <code>X-Frame-Options: DENY</code> or <code>Content-Security-Policy: frame-ancestors 'none'</code>, clickjacking is no longer feasible.</li>
+        <li>There is no reliable bypass in modern browsers, so you must pivot to another vector (XSS/CSRF/social engineering).</li>
+      </ol>
+
+      <h3>Tools</h3>
+      <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">Browser DevTools</span> <span class="tools-badge">HTML/CSS overlay</span></div>
+    </div>
+  </div>
 </body>
 </html>

