@@ -1961,9 +1961,22 @@ def secrets_listing():
     listing_html = '<html><head><title>Index of /secrets</title></head><body>'
     listing_html += '<h1>Index of /secrets</h1><hr><pre>'
     for entry in entries:
-        listing_html += f'<a href="/static/files/{entry}">{entry}</a>\n'
+        listing_html += f'<a href="/secrets/{entry}">{entry}</a>\n'
     listing_html += '</pre><hr></body></html>'
     return listing_html, 200, {'Content-Type': 'text/html'}
+
+@app.route('/secrets/<path:filename>')
+def secrets_file(filename):
+    # VULNERABLE: archivos sensibles expuestos bajo /secrets sin autenticación
+    base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
+    full_path = os.path.abspath(os.path.join(base_path, filename))
+    if not full_path.startswith(os.path.abspath(base_path) + os.sep):
+        return 'Not Found', 404
+    if not os.path.isfile(full_path):
+        return 'Not Found', 404
+    with open(full_path, 'r', errors='replace') as f:
+        content = f.read()
+    return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 @app.route('/files')
 def path_traversal():
