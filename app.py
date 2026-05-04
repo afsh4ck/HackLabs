@@ -1967,7 +1967,7 @@ def path_traversal():
         listing_html = '<html><head><title>Index of /files</title></head><body>'
         listing_html += '<h1>Index of /files</h1><hr><pre>'
         for entry in entries:
-            listing_html += f'<a href="/files?file={entry}">{entry}</a>\n'
+            listing_html += f'<a href="/static/files/{entry}">{entry}</a>\n'
         listing_html += '</pre><hr></body></html>'
         return listing_html, 200, {'Content-Type': 'text/html'}
 
