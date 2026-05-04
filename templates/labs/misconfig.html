@@ -32,7 +32,7 @@
       <li class="flex items-start gap-2"><i class="ph ph-warning text-orange-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item2">Repositorio Git expuesto</span></li>
       <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item3">Stack trace completo del servidor expuesto en errores</span></li>
       <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item4">API interna de usuarios accesible sin autenticación</span></li>
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span>Directorio <code>/flag/</code> expuesto con archivos sensibles</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span>Directorio <code>/files/</code> expuesto con directory listing y archivos sensibles</span></li>
     </ul>
     <p class="text-xs text-gray-400 mt-4" data-i18n="misconfig_hint">Usa herramientas de fuzzing de directorios para descubrir los endpoints expuestos.</p>
   </div>
@@ -57,7 +57,7 @@ ffuf -u http://localhost:5000/FUZZ \
       <li>Navega a <code>/.git/config</code> — repositorio Git expuesto con la URL interna.</li>
       <li>Navega a <code>/debug/error</code> — stack trace completo con rutas, versiones y estructura del código.</li>
       <li>Navega a <code>/api/users</code> — listado completo de usuarios con emails y roles en JSON.</li>
-      <li>Navega a <code>/flag/A05-flag.txt</code> — directorio <code>/flag/</code> expuesto sin autenticación. Contiene la flag del lab.</li>
+      <li>Navega a <code>/files</code> — directory listing expuesto. Verás el archivo <code>A05-flag.txt</code>. Haz clic para obtener la flag.</li>
       <li>Complementa con <strong>nikto</strong> para detectar cabeceras inseguras y misconfigs adicionales:</li>
     </ol>
     <pre><code class="language-bash">nikto -h http://localhost:5000
@@ -85,7 +85,7 @@ ffuf -u http://localhost:5000/FUZZ \
       <li>Browse to <code>/.git/config</code> — Git repository exposed with internal URL.</li>
       <li>Browse to <code>/debug/error</code> — full stack trace with server paths, library versions and code structure.</li>
       <li>Browse to <code>/api/users</code> — full user list with emails and roles in JSON.</li>
-      <li>Browse to <code>/flag/A05-flag.txt</code> — the <code>/flag/</code> directory is exposed without authentication. Contains the lab flag.</li>
+      <li>Browse to <code>/files</code> — directory listing is exposed. You will see <code>A05-flag.txt</code>. Click it to get the flag.</li>
       <li>Complement with <strong>nikto</strong> to detect insecure headers and additional misconfigs:</li>
     </ol>
     <pre><code class="language-bash">nikto -h http://localhost:5000

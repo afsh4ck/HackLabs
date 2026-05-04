@@ -1270,21 +1270,6 @@ def admin_panel():
         users = db.execute("SELECT id, username, email, role FROM users").fetchall()
         return render_template('labs/misconfig.html', lab=lab, users=users, admin=True)
 
-@app.route('/flag/<path:filename>')
-def flag_file(filename):
-    # VULNERABLE: directorio /flag/ expuesto sin autenticación (A05 misconfiguration)
-    import os
-    flag_dir = '/flag'
-    filepath = os.path.join(flag_dir, filename)
-    # Prevent path traversal outside /flag
-    if not os.path.abspath(filepath).startswith(os.path.abspath(flag_dir) + os.sep):
-        return 'Not Found', 404
-    if not os.path.isfile(filepath):
-        return 'Not Found', 404
-    with open(filepath, 'r') as f:
-        content = f.read()
-    return content, 200, {'Content-Type': 'text/plain'}
-
 @app.route('/debug/error')
 def debug_error():
     # VULNERABLE: stack trace completo expuesto al usuario
@@ -1971,6 +1956,20 @@ def path_traversal():
     content = None
     error = None
     difficulty = session.get('difficulty', 'easy')
+
+    if not filename:
+        # VULNERABLE: directory listing expuesto sin autenticación (A05 misconfiguration)
+        base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
+        try:
+            entries = sorted(os.listdir(base_path))
+        except Exception:
+            entries = []
+        listing_html = '<html><head><title>Index of /files</title></head><body>'
+        listing_html += '<h1>Index of /files</h1><hr><pre>'
+        for entry in entries:
+            listing_html += f'<a href="/files?file={entry}">{entry}</a>\n'
+        listing_html += '</pre><hr></body></html>'
+        return listing_html, 200, {'Content-Type': 'text/html'}
 
     if filename:
         user_input = filename
