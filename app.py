@@ -1448,7 +1448,8 @@ def api_update_user(user_id):
     db.commit()
     user = db.execute("SELECT id, username, email, role FROM users WHERE id = ?", (user_id,)).fetchone()
     response = {'message': 'Usuario actualizado', 'user': dict(user)}
-    if 'role' in updates and 'email' in updates:
+    # Flag when privilege escalation is achieved via role tampering.
+    if str(updates.get('role', '')).lower() == 'admin':
         response['flag'] = integrity_flag
     return jsonify(response)
 
