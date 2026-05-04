@@ -351,7 +351,7 @@
                      {% if current_lab_id in completed_lab_ids %}disabled{% endif %}>
             </div>
             <button id="lab-complete-btn" onclick="submitLabFlag('{{ current_lab_id }}')"
-                    class="lab-complete-btn {% if current_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
+              class="lab-complete-btn h-[34px] {% if current_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
                     title="{% if current_lab_id in completed_lab_ids %}Desmarcar lab como completado{% else %}Validar flag del laboratorio{% endif %}">
               <i class="ph {% if current_lab_id in completed_lab_ids %}ph-arrow-counter-clockwise{% else %}ph-flag-checkered{% endif %} text-sm"></i>
               <span>{% if current_lab_id in completed_lab_ids %}Desmarcar{% else %}Validar flag{% endif %}</span>
@@ -366,7 +366,7 @@
                      disabled>
             </div>
             <button id="lab-complete-btn" type="button"
-                    class="lab-complete-btn lab-complete-btn--disabled"
+              class="lab-complete-btn h-[34px] lab-complete-btn--disabled"
                     title="Inicia sesión para validar flags"
                     disabled>
               <i class="ph ph-lock-simple text-sm"></i>
