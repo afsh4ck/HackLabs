@@ -964,3 +964,155 @@ pre.hljs-block .hljs {
 }
 .prog-lab-check.done { background: rgba(34,197,94,.15); color: #4ade80; }
 .prog-lab-check.pending { background: rgba(255,255,255,.05); color: #4b5563; }
+
+/* ── Level-Up Overlay ─────────────────────────────────────────── */
+#levelup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.93);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: lu-bg-in 0.35s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+#levelup-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(206,255,0,0.018) 2px,
+    rgba(206,255,0,0.018) 4px
+  );
+  pointer-events: none;
+  animation: lu-scanline 8s linear infinite;
+}
+@keyframes lu-bg-in   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lu-scanline { 0% { background-position: 0 0; } 100% { background-position: 0 200px; } }
+
+.levelup-card {
+  position: relative;
+  text-align: center;
+  padding: 3rem 3.5rem 2.5rem;
+  background: #07070f;
+  border: 1.5px solid var(--hl-primary);
+  border-radius: 1.5rem;
+  box-shadow:
+    0 0 40px rgba(206,255,0,0.22),
+    0 0 100px rgba(206,255,0,0.09),
+    inset 0 0 60px rgba(206,255,0,0.03);
+  animation: lu-card-in 0.55s cubic-bezier(0.34,1.56,0.64,1);
+  max-width: 440px;
+  width: 90%;
+  overflow: hidden;
+}
+@keyframes lu-card-in {
+  from { transform: scale(0.35) translateY(40px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+.levelup-access {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.35em;
+  color: var(--hl-primary);
+  opacity: 0.65;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  animation: lu-fade-up 0.5s ease 0.2s both;
+}
+.levelup-title {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(2.8rem, 10vw, 4.2rem);
+  font-weight: 900;
+  color: var(--hl-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow:
+    0 0 18px rgba(206,255,0,0.85),
+    0 0 50px rgba(206,255,0,0.4);
+  animation: lu-glow-pulse 1.6s ease-in-out infinite, lu-fade-up 0.45s ease 0.1s both;
+}
+@keyframes lu-glow-pulse {
+  0%,100% { text-shadow: 0 0 18px rgba(206,255,0,.85), 0 0 50px rgba(206,255,0,.4); }
+  50%     { text-shadow: 0 0 35px rgba(206,255,0,1),   0 0 90px rgba(206,255,0,.65), 0 0 130px rgba(206,255,0,.2); }
+}
+.levelup-lvl-badge {
+  display: inline-block;
+  margin: 1.4rem 0 0.5rem;
+  background: var(--hl-primary);
+  color: #0a0a0a;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.3rem 1.4rem;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  animation: lu-badge-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.5s both;
+}
+@keyframes lu-badge-pop {
+  from { transform: scale(0) rotate(-6deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);  opacity: 1; }
+}
+.levelup-name {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: clamp(1.45rem, 5vw, 2.2rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+  animation: lu-fade-up 0.5s ease 0.65s both;
+}
+.levelup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 2rem;
+  padding: 0.7rem 1.9rem;
+  background: var(--hl-primary);
+  color: #0a0a0a;
+  font-family: 'Space Grotesk','Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  animation: lu-fade-up 0.5s ease 0.8s both;
+}
+.levelup-btn:hover {
+  background: var(--hl-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(206,255,0,0.35);
+}
+.levelup-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.28);
+  margin-top: 1.5rem;
+  letter-spacing: 0.04em;
+  animation: lu-fade-up 0.5s ease 0.95s both;
+}
+@keyframes lu-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Particle burst */
+.lu-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--hl-primary);
+  pointer-events: none;
+}
+@keyframes lu-particle-burst {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx),var(--dy)) scale(0.1); opacity: 0; }
+}

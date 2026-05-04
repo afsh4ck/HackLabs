@@ -1036,6 +1036,60 @@ function showToast(msg) {
   setTimeout(() => el.remove(), 2200);
 }
 
+// ── Level-Up Overlay ─────────────────────────────────────────────
+function showLevelUpOverlay(level, levelName) {
+  if (document.getElementById('levelup-overlay')) return;
+  const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'levelup-overlay';
+
+  // Particle burst (generated from card centre)
+  let particlesHTML = '';
+  const angles = [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342];
+  angles.forEach((deg, i) => {
+    const rad  = deg * Math.PI / 180;
+    const dist = 120 + Math.random() * 140;
+    const dx   = Math.round(Math.cos(rad) * dist);
+    const dy   = Math.round(Math.sin(rad) * dist);
+    const size = 3 + Math.random() * 5;
+    const delay = (i * 0.018).toFixed(3);
+    const dur   = (0.55 + Math.random() * 0.45).toFixed(2);
+    particlesHTML += `<div class="lu-particle" style="
+      width:${size.toFixed(1)}px;height:${size.toFixed(1)}px;
+      top:50%;left:50%;
+      --dx:${dx}px;--dy:${dy}px;
+      animation:lu-particle-burst ${dur}s ease ${delay}s both;
+      opacity:${(0.5 + Math.random() * 0.5).toFixed(2)};
+    "></div>`;
+  });
+
+  const lvlLabel  = `LVL ${level}`;
+  const titleText = 'LEVEL UP';
+  const accessTxt = isEn ? '// ACCESS GRANTED //' : '// ACCESO CONCEDIDO //';
+  const btnLabel  = isEn ? 'View Progress' : 'Ver progreso';
+  const hintTxt   = isEn ? 'Click anywhere to continue' : 'Haz clic en cualquier lugar para continuar';
+
+  overlay.innerHTML = `
+    <div class="levelup-card">
+      ${particlesHTML}
+      <div class="levelup-access">${accessTxt}</div>
+      <div class="levelup-title">${titleText}</div>
+      <div class="levelup-lvl-badge">${lvlLabel}</div>
+      <div class="levelup-name">${levelName}</div>
+      <div>
+        <button class="levelup-btn" onclick="event.stopPropagation();window.location='/progress'">
+          <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
+        </button>
+      </div>
+      <div class="levelup-hint">${hintTxt}</div>
+    </div>`;
+
+  overlay.addEventListener('click', () => { window.location.href = '/progress'; });
+  document.body.appendChild(overlay);
+  setTimeout(() => { window.location.href = '/progress'; }, 6000);
+}
+
 // ── Init ─────────────────────────────────────────────────────────
 (function init() {
   applyTheme();
@@ -1110,7 +1164,11 @@ function toggleLabComplete(labId) {
     if (span) span.textContent = done ? 'Completado' : 'Completar';
     btn.title = done ? 'Marcar como pendiente' : 'Marcar como completado';
     _updateProgressUI(data);
-    showToast(done ? 'Lab marcado como completado' : 'Lab marcado como pendiente');
+    if (done && data.level_up) {
+      showLevelUpOverlay(data.new_level, data.new_level_name);
+    } else {
+      showToast(done ? 'Lab marcado como completado' : 'Lab marcado como pendiente');
+    }
   })
   .catch(() => {});
 }
@@ -1154,7 +1212,12 @@ function toggleLabComplete(labId) {
         const span = btn.querySelector('span');
         if (icon) icon.className = 'ph ph-check-circle text-sm';
         if (span) span.textContent = 'Completado';
-        showToast('Flag detectada — lab completado automáticamente');
+        if (!data.level_up) {
+          showToast('Flag detectada — lab completado automáticamente');
+        }
+      }
+      if (data.level_up) {
+        showLevelUpOverlay(data.new_level, data.new_level_name);
       }
     })
     .catch(() => {});

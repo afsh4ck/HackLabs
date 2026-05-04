@@ -260,6 +260,22 @@ if os.path.exists(DATABASE):
 # PROGRESO DE USUARIO
 # ─────────────────────────────────────────────
 
+_LEVEL_PCTS  = [0.0, 0.05, 0.13, 0.25, 0.40, 0.58, 0.78, 1.0]
+_LEVEL_NAMES = ['Script Kiddie', 'Apprentice', 'Hacker', 'Pentester',
+                'Red Teamer', 'Elite Hacker', 'Expert', 'Master']
+_XP_MAP      = {'critical': 300, 'high': 200, 'medium': 100}
+
+def _compute_level(completed_ids, labs):
+    max_xp   = sum(_XP_MAP.get(l['risk'], 100) for l in labs)
+    total_xp = sum(_XP_MAP.get(l['risk'], 100) for l in labs if l['id'] in completed_ids)
+    thresholds = [round(max_xp * p) for p in _LEVEL_PCTS]
+    lvl = 0
+    for i, thr in enumerate(thresholds):
+        if total_xp >= thr:
+            lvl = i
+    return lvl, _LEVEL_NAMES[lvl]
+
+
 @app.route('/progress/toggle', methods=['POST'])
 def progress_toggle():
     app_user = session.get('app_user')
@@ -269,10 +285,16 @@ def progress_toggle():
     data      = request.get_json(silent=True) or {}
     lab_id    = data.get('lab_id', '').strip()
     force     = data.get('force', False)
-    valid_ids = {l['id'] for l in get_lab_list()}
+    all_labs  = get_lab_list()
+    valid_ids = {l['id'] for l in all_labs}
     if not lab_id or lab_id not in valid_ids:
         return jsonify({'error': 'invalid_lab'}), 400
     db = get_db()
+
+    # Level before change
+    old_rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
+    old_level, _ = _compute_level({r['lab_id'] for r in old_rows}, all_labs)
+
     existing = db.execute(
         'SELECT id FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id)
     ).fetchone()
@@ -285,9 +307,21 @@ def progress_toggle():
     else:
         completed = True
     db.commit()
+
+    # Level after change
+    new_rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
+    new_level, new_level_name = _compute_level({r['lab_id'] for r in new_rows}, all_labs)
+
     count = db.execute('SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)).fetchone()[0]
-    total = len(get_lab_list())
-    return jsonify({'completed': completed, 'count': count, 'total': total})
+    total = len(all_labs)
+    return jsonify({
+        'completed':       completed,
+        'count':           count,
+        'total':           total,
+        'level_up':        bool(completed and new_level > old_level),
+        'new_level':       new_level,
+        'new_level_name':  new_level_name,
+    })
 
 
 @app.route('/progress')
