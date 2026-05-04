@@ -253,15 +253,6 @@ const T = {
     // Progress / complete button
     complete_lab:    'Completar',
     completed_lab:   'Completado',
-    progress_labs_completed: 'labs completados',
-    progress_completed: 'completado',
-    progress_completed_cap: 'Completado',
-    progress_xp_remaining: 'XP restante',
-    progress_xp_earned: 'XP ganados',
-    progress_pending_critical: 'Críticos pendientes',
-    progress_achievements: 'Logros',
-    progress_done:    'Completados',
-    progress_pending: 'Pendientes',
     progress_hint_title: 'Progreso de labs',
     progress_hint_body:  'Para guardar el progreso usa una cuenta propia. Los usuarios de laboratorio (admin, alice…) son para prácticas.',
     progress_hint_cta:   'Crear cuenta',
@@ -275,8 +266,8 @@ const T = {
     close:           'Close',
     cat_owasp_top_10:       'OWASP Top 10',
     cat_extras:            'Extras',
-    cat_vulnerabilidades:  'Vulnerabilities',
-    cat_ia_attacks:        'AI Attacks',
+    cat_vulnerabilidades:  'Vulnerabilidades',
+    cat_ia_attacks:        'IA Attacks',
     labs:            'Labs',
     resolution_steps:'Exploitation Steps',
     tools_label:     'Tools',
@@ -516,15 +507,6 @@ const T = {
     // Progress / complete button
     complete_lab:    'Complete',
     completed_lab:   'Completed',
-    progress_labs_completed: 'labs completed',
-    progress_completed: 'completed',
-    progress_completed_cap: 'Completed',
-    progress_xp_remaining: 'XP remaining',
-    progress_xp_earned: 'XP earned',
-    progress_pending_critical: 'Pending critical',
-    progress_achievements: 'Achievements',
-    progress_done:    'Completed',
-    progress_pending: 'Pending',
     progress_hint_title: 'Lab Progress',
     progress_hint_body:  'To save your progress you need a custom account. Lab users (admin, alice…) are for practice only.',
     progress_hint_cta:   'Create account',
@@ -1036,146 +1018,6 @@ function showToast(msg) {
   setTimeout(() => el.remove(), 2200);
 }
 
-// ── Reward Overlays ──────────────────────────────────────────────
-function showLevelUpOverlay(level, levelName, levelIcon, opts = {}) {
-  if (document.getElementById('levelup-overlay')) return;
-  const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
-  let done = false;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'levelup-overlay';
-
-  // Particle burst (generated from card centre)
-  let particlesHTML = '';
-  const angles = [0,18,36,54,72,90,108,126,144,162,180,198,216,234,252,270,288,306,324,342];
-  angles.forEach((deg, i) => {
-    const rad  = deg * Math.PI / 180;
-    const dist = 120 + Math.random() * 140;
-    const dx   = Math.round(Math.cos(rad) * dist);
-    const dy   = Math.round(Math.sin(rad) * dist);
-    const size = 3 + Math.random() * 5;
-    const delay = (i * 0.018).toFixed(3);
-    const dur   = (0.55 + Math.random() * 0.45).toFixed(2);
-    particlesHTML += `<div class="lu-particle" style="
-      width:${size.toFixed(1)}px;height:${size.toFixed(1)}px;
-      top:50%;left:50%;
-      --dx:${dx}px;--dy:${dy}px;
-      animation:lu-particle-burst ${dur}s ease ${delay}s both;
-      opacity:${(0.5 + Math.random() * 0.5).toFixed(2)};
-    "></div>`;
-  });
-
-  const lvlLabel  = `LVL ${level}`;
-  const titleText = 'LEVEL UP';
-  const accessTxt = isEn ? '// ACCESS GRANTED //' : '// ACCESO CONCEDIDO //';
-  const btnLabel  = isEn ? 'Continue' : 'Continuar';
-  const hintTxt   = isEn ? 'Click to continue' : 'Haz clic para continuar';
-  const iconClass = levelIcon || 'ph-graduation-cap';
-
-  function finish() {
-    if (done) return;
-    done = true;
-    overlay.remove();
-    if (typeof opts.onDone === 'function') opts.onDone();
-  }
-
-  overlay.innerHTML = `
-    <div class="levelup-card">
-      ${particlesHTML}
-      <div class="levelup-access">${accessTxt}</div>
-      <div class="levelup-title">${titleText}</div>
-      <div class="levelup-icon-circle"><i class="ph ${iconClass}"></i></div>
-      <div class="levelup-lvl-badge">${lvlLabel}</div>
-      <div class="levelup-name">${levelName}</div>
-      <div>
-        <button class="levelup-btn" onclick="event.stopPropagation();">
-          <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
-        </button>
-      </div>
-      <div class="levelup-hint">${hintTxt}</div>
-    </div>`;
-
-  overlay.addEventListener('click', finish);
-  const btn = overlay.querySelector('.levelup-btn');
-  if (btn) btn.addEventListener('click', finish);
-  document.body.appendChild(overlay);
-  setTimeout(finish, opts.timeout || 4200);
-}
-
-function showBadgeOverlay(badge, opts = {}) {
-  if (document.getElementById('badgeup-overlay')) return;
-  const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
-  let done = false;
-  const overlay = document.createElement('div');
-  overlay.id = 'badgeup-overlay';
-
-  const title = isEn ? 'NEW BADGE' : 'NUEVO BADGE';
-  const subtitle = isEn ? 'Achievement unlocked' : 'Logro desbloqueado';
-  const btnLabel = isEn ? 'Continue' : 'Continuar';
-  const hintTxt = isEn ? 'Click to continue' : 'Haz clic para continuar';
-
-  function finish() {
-    if (done) return;
-    done = true;
-    overlay.remove();
-    if (typeof opts.onDone === 'function') opts.onDone();
-  }
-
-  overlay.innerHTML = `
-    <div class="badgeup-card">
-      <div class="badgeup-access">// ${subtitle.toUpperCase()} //</div>
-      <div class="badgeup-title">${title}</div>
-      <div class="badgeup-icon-circle">${badge.icon || '🏆'}</div>
-      <div class="badgeup-name">${badge.name || 'Badge'}</div>
-      <div>
-        <button class="levelup-btn" onclick="event.stopPropagation();">
-          <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
-        </button>
-      </div>
-      <div class="levelup-hint">${hintTxt}</div>
-    </div>`;
-
-  overlay.addEventListener('click', finish);
-  const btn = overlay.querySelector('.levelup-btn');
-  if (btn) btn.addEventListener('click', finish);
-  document.body.appendChild(overlay);
-  setTimeout(finish, opts.timeout || 3200);
-}
-
-function playProgressUnlockSequence(data, fallbackToast) {
-  const queue = [];
-  if (data.level_up) {
-    queue.push((next) => showLevelUpOverlay(
-      data.new_level,
-      data.new_level_name,
-      data.new_level_icon,
-      { onDone: next, timeout: 4200 }
-    ));
-  }
-
-  if (Array.isArray(data.new_badges) && data.new_badges.length > 0) {
-    data.new_badges.forEach((badge) => {
-      queue.push((next) => showBadgeOverlay(badge, { onDone: next, timeout: 3200 }));
-    });
-  }
-
-  if (!queue.length) {
-    if (fallbackToast) showToast(fallbackToast);
-    return;
-  }
-
-  let idx = 0;
-  const runNext = () => {
-    if (idx >= queue.length) {
-      window.location.href = '/progress';
-      return;
-    }
-    const step = queue[idx++];
-    step(runNext);
-  };
-  runNext();
-}
-
 // ── Init ─────────────────────────────────────────────────────────
 (function init() {
   applyTheme();
@@ -1228,91 +1070,45 @@ function _updateProgressUI(data) {
   }
 }
 
-function toggleLabComplete(labId) {
+function submitLabFlag(labId) {
   const btn = document.getElementById('lab-complete-btn');
-  if (!btn) return;
+  const input = document.getElementById('lab-flag-input');
+  if (!btn || !input || input.disabled) return;
+  const flag = (input.value || '').trim();
+  if (!flag) {
+    showToast('Introduce una flag valida (ej: HL{...})');
+    return;
+  }
+
   btn.classList.add('animating');
   setTimeout(() => btn.classList.remove('animating'), 200);
 
-  fetch('/progress/toggle', {
+  fetch('/progress/submit-flag', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lab_id: labId })
+    body: JSON.stringify({ lab_id: labId, flag: flag })
   })
   .then(r => r.json())
   .then(data => {
-    if (data.error) return;
-    const done = data.completed;
-    btn.classList.toggle('lab-complete-btn--done', done);
+    if (data.error) {
+      if (data.error === 'invalid_flag') showToast('Flag incorrecta');
+      else if (data.error === 'empty_flag') showToast('Introduce una flag');
+      else if (data.error === 'flag_required') showToast('Este lab solo se completa con flag valida');
+      else showToast('No se pudo validar la flag');
+      return;
+    }
+
+    const done = !!data.completed;
+    btn.classList.add('lab-complete-btn--done');
     const icon = btn.querySelector('i');
     const span = btn.querySelector('span');
-    if (icon) icon.className = 'ph ' + (done ? 'ph-check-circle' : 'ph-circle-dashed') + ' text-sm';
-    if (span) span.textContent = done ? 'Completado' : 'Completar';
-    btn.title = done ? 'Marcar como pendiente' : 'Marcar como completado';
+    if (icon) icon.className = 'ph ph-check-circle text-sm';
+    if (span) span.textContent = 'Completado';
+    btn.title = 'Lab ya completado';
+    input.disabled = true;
+    input.value = '';
     _updateProgressUI(data);
-    if (done) {
-      playProgressUnlockSequence(data, 'Lab marcado como completado');
-    } else {
-      showToast('Lab marcado como pendiente');
-    }
+    showToast(done ? 'Flag correcta. Lab completado' : 'Flag validada');
   })
   .catch(() => {});
 }
-
-// Auto-mark when a flag (HL{...}) appears on screen
-(function initFlagDetector() {
-  const body    = document.body;
-  const labId   = body.dataset.labId;
-  const loggedIn = body.dataset.loggedIn;
-  if (!labId || !loggedIn) return;
-
-  let _marked = false;
-
-  function checkForFlag() {
-    if (_marked) return;
-    // Look for HL{...} text in the page
-    const flagEl = Array.from(document.querySelectorAll(
-      '.flag-display, [class*="green"], [style*="green"], [style*="4ade80"], pre, code, .font-mono'
-    )).find(el => /HL\{[^}]+\}/.test(el.textContent));
-
-    if (!flagEl) {
-      // Fallback: scan full body text (slower, only if nothing found above)
-      if (!/HL\{[^}]+\}/.test(body.innerText)) return;
-    }
-
-    _marked = true;
-    fetch('/progress/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lab_id: labId, force: true })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.error || !data.completed) return;
-      _updateProgressUI(data);
-      // Update button state if it exists
-      const btn = document.getElementById('lab-complete-btn');
-      if (btn && !btn.classList.contains('lab-complete-btn--done')) {
-        btn.classList.add('lab-complete-btn--done');
-        const icon = btn.querySelector('i');
-        const span = btn.querySelector('span');
-        if (icon) icon.className = 'ph ph-check-circle text-sm';
-        if (span) span.textContent = 'Completado';
-        if (!data.level_up && (!Array.isArray(data.new_badges) || data.new_badges.length === 0)) {
-          showToast('Flag detectada — lab completado automáticamente');
-        }
-      }
-      if (data.level_up || (Array.isArray(data.new_badges) && data.new_badges.length > 0)) {
-        playProgressUnlockSequence(data, null);
-      }
-    })
-    .catch(() => {});
-  }
-
-  // Check on load
-  checkForFlag();
-
-  // Watch for dynamic DOM changes (AJAX form submissions)
-  const observer = new MutationObserver(checkForFlag);
-  observer.observe(body, { childList: true, subtree: true });
-})();

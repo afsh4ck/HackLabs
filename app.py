@@ -9,7 +9,7 @@ def cleanup_uploads():
                 pass
 atexit.register(cleanup_uploads)
 from flask import (Flask, request, render_template, redirect, url_for,
-                   session, jsonify, make_response, g, send_file, render_template_string, flash)
+                   session, jsonify, make_response, g, send_file, render_template_string, flash, abort)
 import sys
 import sqlite3
 import os
@@ -54,9 +54,7 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB uploads
 
 DATABASE = os.path.join(os.path.dirname(__file__), 'data', 'hacklabs.db')
-LEGACY_DATABASE = os.path.join(os.path.dirname(__file__), 'hacklabs.db')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
-os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
 
 # Rate-limit store for bruteforce (medium/hard difficulty)
 _bruteforce_attempts = defaultdict(list)
@@ -221,16 +219,10 @@ def query_db(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 def init_db():
-    os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     db = sqlite3.connect(DATABASE)
     with open(os.path.join(os.path.dirname(__file__), 'database', 'schema.sql'), 'r') as f:
         db.executescript(f.read())
     db.close()
-
-def _migrate_legacy_database_file():
-    """Preserve user progress if a legacy root DB exists."""
-    if not os.path.exists(DATABASE) and os.path.exists(LEGACY_DATABASE):
-        shutil.copy2(LEGACY_DATABASE, DATABASE)
 
 def _migrate_progress_table():
     """Create/migrate user_progress table tied to account_users (custom accounts only)."""
@@ -251,8 +243,6 @@ def _migrate_progress_table():
     db.commit()
     db.close()
 
-_migrate_legacy_database_file()
-
 if os.path.exists(DATABASE):
     _migrate_progress_table()
 
@@ -260,110 +250,98 @@ if os.path.exists(DATABASE):
 # PROGRESO DE USUARIO
 # ─────────────────────────────────────────────
 
-_LEVEL_PCTS  = [0.0, 0.05, 0.13, 0.25, 0.40, 0.58, 0.78, 1.0]
-_LEVEL_NAMES = ['Script Kiddie', 'Apprentice', 'Hacker', 'Pentester',
-                'Red Teamer', 'Elite Hacker', 'Expert', 'Master']
-_LEVEL_ICONS = ['ph-graduation-cap', 'ph-sword', 'ph-bug', 'ph-crosshair',
-                'ph-target', 'ph-skull', 'ph-flame', 'ph-crown']
-_XP_MAP      = {'critical': 300, 'high': 200, 'medium': 100}
-
-def _compute_level(completed_ids, labs):
-    max_xp   = sum(_XP_MAP.get(l['risk'], 100) for l in labs)
-    total_xp = sum(_XP_MAP.get(l['risk'], 100) for l in labs if l['id'] in completed_ids)
-    thresholds = [round(max_xp * p) for p in _LEVEL_PCTS]
-    lvl = 0
-    for i, thr in enumerate(thresholds):
-        if total_xp >= thr:
-            lvl = i
-    return lvl, _LEVEL_NAMES[lvl]
-
-
-def _compute_unlocked_badges(completed_ids, labs):
-    total_labs = len(labs)
-    done_count = len(completed_ids)
-    pct = (done_count / total_labs * 100.0) if total_labs > 0 else 0.0
-
-    owasp_ids = {'idor', 'crypto', 'sqli', 'cmdi', 'insecure_design', 'misconfig',
-                 'outdated', 'auth_failures', 'integrity', 'logging', 'ssrf'}
-    vuln_ids = {l['id'] for l in labs if l.get('category') == 'Vulnerabilidades'}
-    ia_ids   = {l['id'] for l in labs if l.get('category') == 'IA Attacks'}
-    crit_ids = {l['id'] for l in labs if l.get('risk') == 'critical'}
-
-    ach_first = done_count >= 1
-    ach_speed = done_count >= 5
-    ach_halfway = pct >= 50
-    ach_owasp = owasp_ids.issubset(completed_ids)
-    ach_vulns = vuln_ids.issubset(completed_ids)
-    ach_ia = ia_ids.issubset(completed_ids)
-    ach_critical = crit_ids.issubset(completed_ids)
-    ach_all = done_count == total_labs and total_labs > 0
-
-    ordered = [
-        {'id': 'first_blood', 'icon': '🩸', 'name': 'First Blood', 'unlocked': ach_first},
-        {'id': 'speed_runner', 'icon': '⚡', 'name': 'Speed Runner', 'unlocked': ach_speed},
-        {'id': 'half_way', 'icon': '🏁', 'name': 'Half Way There', 'unlocked': ach_halfway},
-        {'id': 'owasp_warrior', 'icon': '🛡️', 'name': 'OWASP Warrior', 'unlocked': ach_owasp},
-        {'id': 'bug_hunter', 'icon': '🐛', 'name': 'Bug Hunter', 'unlocked': ach_vulns},
-        {'id': 'ai_breaker', 'icon': '🤖', 'name': 'AI Breaker', 'unlocked': ach_ia},
-        {'id': 'critical_mass', 'icon': '💀', 'name': 'Critical Mass', 'unlocked': ach_critical},
-        {'id': 'completionist', 'icon': '👑', 'name': 'Completionist', 'unlocked': ach_all},
-    ]
-    return [b for b in ordered if b['unlocked']]
-
-
 @app.route('/progress/toggle', methods=['POST'])
 def progress_toggle():
     app_user = session.get('app_user')
     app_type = session.get('app_user_type')
     if not app_user or app_type != 'account':
         return jsonify({'error': 'not_logged_in'}), 401
-    data      = request.get_json(silent=True) or {}
-    lab_id    = data.get('lab_id', '').strip()
-    force     = data.get('force', False)
-    all_labs  = get_lab_list()
-    valid_ids = {l['id'] for l in all_labs}
+    return jsonify({'error': 'flag_required'}), 400
+
+
+def get_lab_flag_map():
+    """Expected flag(s) per lab. Some labs intentionally share flags."""
+    shared_admin_user = 'HL{ssh_brut3f0rc3_l0gin_succ3ss}'
+    return {
+        # OWASP Top 10
+        'idor': ['HL{idor_privilege_escalation}'],
+        'crypto': ['HL{crypto_cracked_hash_success}'],
+        'sqli': ['HL{sqli_data_exfil_success}'],
+        'cmdi': ['HL{cmdi_command_execution_success}'],
+        'insecure_design': ['HL{insecure_design_token_reset}'],
+        'misconfig': ['HL{misconfig_admin_console_access}'],
+        'outdated': ['HL{outdated_component_rce}'],
+        'auth_failures': ['HL{auth_failures_account_takeover}'],
+        'integrity': ['HL{integrity_unsigned_update_loaded}'],
+        'logging': ['HL{logging_monitoring_bypass}'],
+        'ssrf': ['HL{ssrf_metadata_exfiltration}'],
+
+        # Vulnerabilidades
+        'api_attacks': ['HL{api_authz_bypass_success}'],
+        'business_logic': ['HL{business_logic_price_tamper}'],
+        'c2_sliver': ['HL{c2_sliver_callback_established}'],
+        'container_escape': ['HL{container_escape_host_access}'],
+        'cors': ['HL{cors_credential_theft_success}'],
+        'csrf': ['HL{csrf_state_change_success}'],
+        'file_upload': ['HL{file_upload_webshell_executed}'],
+        'deserialization': ['HL{deserialization_rce_success}'],
+        'jwt': ['HL{jwt_alg_confusion_success}'],
+        'bruteforce': [shared_admin_user],
+        'oauth': ['HL{oauth_account_takeover_success}'],
+        'open_redirect': ['HL{open_redirect_phishing_success}'],
+        'path_traversal': ['HL{path_traversal_lfi_success}'],
+        'privesc': [shared_admin_user, 'HL{r00t_pr1v3sc_succ3ss}'],
+        '2fa_bypass': ['HL{2fa_bypass_session_hijack}'],
+        'clickjacking': ['HL{clickjacking_transfer_success}'],
+        'reset_poisoning': ['HL{reset_poisoning_token_capture}'],
+        'race_condition': ['HL{race_condition_double_spend}'],
+        'reverse_shell': [shared_admin_user],
+        'ssti': ['HL{ssti_template_rce_success}'],
+        'xss': ['HL{xss_session_steal_success}'],
+        'xxe': ['HL{xxe_local_file_read_success}'],
+
+        # IA Attacks
+        'ai_jailbreak': ['HL{ai_jailbreak_guardrails_bypassed}'],
+        'ai_supply_chain': ['HL{ai_supply_chain_backdoor_triggered}'],
+        'indirect_injection': ['HL{indirect_prompt_injection_success}'],
+        'llm_exfil': ['HL{llm_data_exfil_success}'],
+        'prompt_injection': ['HL{prompt_injection_system_bypass}'],
+        'prompt_leaking': ['HL{prompt_leaking_system_prompt_exposed}'],
+    }
+
+
+@app.route('/progress/submit-flag', methods=['POST'])
+def progress_submit_flag():
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if not app_user or app_type != 'account':
+        return jsonify({'error': 'not_logged_in'}), 401
+
+    data = request.get_json(silent=True) or {}
+    lab_id = (data.get('lab_id') or '').strip()
+    submitted_flag = (data.get('flag') or '').strip()
+
+    valid_ids = {l['id'] for l in get_lab_list()}
     if not lab_id or lab_id not in valid_ids:
         return jsonify({'error': 'invalid_lab'}), 400
+    if not submitted_flag:
+        return jsonify({'error': 'empty_flag'}), 400
+
+    expected_flags = [f.strip() for f in get_lab_flag_map().get(lab_id, []) if f and f.strip()]
+    if not expected_flags:
+        return jsonify({'error': 'lab_flag_not_configured'}), 500
+    if submitted_flag not in expected_flags:
+        return jsonify({'error': 'invalid_flag'}), 400
+
     db = get_db()
-
-    # Level before change
-    old_rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
-    old_completed_ids = {r['lab_id'] for r in old_rows}
-    old_level, _ = _compute_level(old_completed_ids, all_labs)
-    old_badge_ids = {b['id'] for b in _compute_unlocked_badges(old_completed_ids, all_labs)}
-
-    existing = db.execute(
-        'SELECT id FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id)
-    ).fetchone()
-    if existing and not force:
-        db.execute('DELETE FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id))
-        completed = False
-    elif not existing:
-        db.execute('INSERT OR IGNORE INTO user_progress (account_username, lab_id) VALUES (?,?)', (app_user, lab_id))
-        completed = True
-    else:
-        completed = True
+    db.execute(
+        'INSERT OR IGNORE INTO user_progress (account_username, lab_id) VALUES (?,?)',
+        (app_user, lab_id)
+    )
     db.commit()
-
-    # Level after change
-    new_rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
-    new_completed_ids = {r['lab_id'] for r in new_rows}
-    new_level, new_level_name = _compute_level(new_completed_ids, all_labs)
-    new_badges = _compute_unlocked_badges(new_completed_ids, all_labs)
-    just_unlocked_badges = [b for b in new_badges if b['id'] not in old_badge_ids]
-
     count = db.execute('SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)).fetchone()[0]
-    total = len(all_labs)
-    return jsonify({
-        'completed':       completed,
-        'count':           count,
-        'total':           total,
-        'level_up':        bool(completed and new_level > old_level),
-        'new_level':       new_level,
-        'new_level_name':  new_level_name,
-        'new_level_icon':  _LEVEL_ICONS[new_level],
-        'new_badges':      just_unlocked_badges if completed else [],
-    })
+    total = len(get_lab_list())
+    return jsonify({'completed': True, 'count': count, 'total': total})
 
 
 @app.route('/progress')
@@ -373,11 +351,7 @@ def progress_page():
     if not app_user or app_type != 'account':
         return redirect('/account/login?next=/progress')
     db   = get_db()
-    category_order = {'OWASP Top 10': 0, 'Vulnerabilidades': 1, 'IA Attacks': 2}
-    labs = sorted(
-        get_lab_list(),
-        key=lambda l: (category_order.get(l.get('category'), 99), l.get('title', '').lower())
-    )
+    labs = get_lab_list()
     rows = db.execute(
         'SELECT lab_id, completed_at FROM user_progress WHERE account_username=? ORDER BY completed_at DESC',
         (app_user,)
@@ -1749,39 +1723,13 @@ def path_traversal():
                 prev = user_input
                 user_input = user_input.replace('../', '').replace('..\\', '')
 
-        # Canonical target inside the lab repo for consistent LFI outputs.
-        rel_target = re.sub(r'^(?:\.\.[/\\])+', '', user_input).lstrip('/\\')
-        if rel_target in ('etc/passwd', 'etc/shadow'):
-            try:
-                lab_file_path = os.path.join(os.path.dirname(__file__), rel_target)
-                with open(lab_file_path, 'r', errors='replace') as f:
-                    content = f.read()
-                return render_template('labs/path_traversal.html', lab=lab, filename=filename,
-                                       content=content, error=error)
-            except Exception:
-                pass
-
         try:
             base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
             full_path = os.path.join(base_path, user_input)
             with open(full_path, 'r', errors='replace') as f:
                 content = f.read()
         except FileNotFoundError:
-            # Mantiene el lab explotable aunque el host tenga más profundidad de carpetas.
-            # Ejemplo: ../../../../../etc/passwd -> etc/passwd dentro del proyecto.
-            if re.match(r'^(?:\.\.[/\\])+', user_input):
-                try:
-                    fallback_path = os.path.join(os.path.dirname(__file__), rel_target)
-                    with open(fallback_path, 'r', errors='replace') as f:
-                        content = f.read()
-                except FileNotFoundError:
-                    error = f'Archivo no encontrado: {filename}'
-                except PermissionError:
-                    error = 'Sin permisos para leer el archivo'
-                except Exception as e:
-                    error = str(e)
-            else:
-                error = f'Archivo no encontrado: {filename}'
+            error = f'Archivo no encontrado: {filename}'
         except PermissionError:
             error = 'Sin permisos para leer el archivo'
         except Exception as e:

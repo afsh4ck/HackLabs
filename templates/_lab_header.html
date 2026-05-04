@@ -13,11 +13,14 @@
     <h1 class="font-bold text-gray-900 dark:text-white leading-snug" style="font-size:32px" data-i18n="lab_title_{{ lab.id }}">{{ lab.title }}</h1>
     <div class="flex items-center gap-2 flex-shrink-0">
       {% if is_progress_user %}
-      <button id="lab-complete-btn" onclick="toggleLabComplete('{{ lab.id }}')"
-              class="lab-complete-btn {% if lab.id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
-              title="{% if lab.id in completed_lab_ids %}Marcar como pendiente{% else %}Marcar como completado{% endif %}">
-        <i class="ph {% if lab.id in completed_lab_ids %}ph-check-circle{% else %}ph-circle-dashed{% endif %} text-sm"></i>
-        <span class="hidden sm:inline" data-i18n="{% if lab.id in completed_lab_ids %}completed_lab{% else %}complete_lab{% endif %}">{% if lab.id in completed_lab_ids %}Completado{% else %}Completar{% endif %}</span>
+      <input id="lab-flag-input" type="text" placeholder="HL{...}"
+         class="hl-input font-mono text-xs w-32 sm:w-44"
+         {% if lab.id in completed_lab_ids %}disabled{% endif %}>
+      <button id="lab-complete-btn" onclick="submitLabFlag('{{ lab.id }}')"
+          class="lab-complete-btn {% if lab.id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
+          title="{% if lab.id in completed_lab_ids %}Lab ya completado{% else %}Validar flag del laboratorio{% endif %}">
+        <i class="ph {% if lab.id in completed_lab_ids %}ph-check-circle{% else %}ph-flag-checkered{% endif %} text-sm"></i>
+        <span class="hidden sm:inline">{% if lab.id in completed_lab_ids %}Completado{% else %}Validar flag{% endif %}</span>
       </button>
       {% else %}
       <a href="/account/{% if session.get('app_user') %}register{% else %}login?next={{ request.path }}{% endif %}"
