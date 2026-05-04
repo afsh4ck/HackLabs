@@ -9,7 +9,7 @@
       <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th></tr></thead>
       <tbody>
         {% for u in users %}
-        <tr>
+        <tr data-user-id="{{ u['id'] }}">
           <td>{{ u['id'] }}</td>
           <td style="color:var(--hl-primary)">{{ u['username'] }}</td>
           <td>{{ u['email'] }}</td>
@@ -44,6 +44,11 @@
       <button onclick="exploit()" class="btn-primary" data-i18n="int_btn_send">Enviar PUT</button>
       <pre id="put-result" class="text-xs text-green-500 hidden mt-2"></pre>
     </div>
+  </div>
+
+  <div id="integrity-flag-card" class="hl-card mb-4 hidden border-l-4" style="border-left-color:#22c55e">
+    <div class="text-xs text-green-500 font-semibold mb-1">Flag</div>
+    <pre id="integrity-flag-value" class="font-mono text-sm break-all" style="color:var(--hl-primary)"></pre>
   </div>
 </div>
 
@@ -87,6 +92,38 @@
 
 {% block scripts %}
 <script>
+function roleClass(role) {
+  if (role === 'admin') return 'text-red-500';
+  if (role === 'manager') return 'text-yellow-500';
+  return 'text-blue-400';
+}
+
+function showIntegrityFlag(flag) {
+  if (!flag) return;
+  const card = document.getElementById('integrity-flag-card');
+  const value = document.getElementById('integrity-flag-value');
+  value.textContent = flag;
+  card.classList.remove('hidden');
+  try {
+    localStorage.setItem('hacklabs_integrity_flag', flag);
+  } catch (e) {
+    // Ignore storage failures (private mode, blocked storage, etc.)
+  }
+}
+
+function restoreIntegrityFlag() {
+  try {
+    const saved = localStorage.getItem('hacklabs_integrity_flag');
+    if (saved) {
+      showIntegrityFlag(saved);
+    }
+  } catch (e) {
+    // Ignore storage failures
+  }
+}
+
+restoreIntegrityFlag();
+
 async function exploit() {
   const id    = document.getElementById('t-id').value;
   const role  = document.getElementById('t-role').value;
@@ -100,7 +137,25 @@ async function exploit() {
   const el   = document.getElementById('put-result');
   el.textContent = JSON.stringify(data, null, 2);
   el.classList.remove('hidden');
-  setTimeout(() => location.reload(), 1500);
+
+  if (data.flag) {
+    showIntegrityFlag(data.flag);
+  }
+
+  if (data.user) {
+    const row = document.querySelector('tr[data-user-id="' + id + '"]');
+    if (row) {
+      if (typeof data.user.email === 'string' && row.cells[2]) {
+        row.cells[2].textContent = data.user.email;
+      }
+      const roleEl = row.querySelector('.role-' + id);
+      if (roleEl && typeof data.user.role === 'string') {
+        roleEl.textContent = data.user.role;
+        roleEl.classList.remove('text-red-500', 'text-yellow-500', 'text-blue-400');
+        roleEl.classList.add(roleClass(data.user.role));
+      }
+    }
+  }
 }
 </script>
 {% endblock %}
