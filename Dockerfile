@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     vim \
     curl \
+    iputils-ping \
     cron \
     findutils \
     php-cli \

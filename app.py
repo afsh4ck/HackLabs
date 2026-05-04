@@ -247,8 +247,22 @@ def _migrate_progress_table():
     db.commit()
     db.close()
 
+
+def _migrate_sqli_flag_seed():
+    """Ensure SQLi lab has at least one real HL flag row in products for existing DBs."""
+    db = sqlite3.connect(DATABASE)
+    db.execute(
+        """
+        INSERT OR IGNORE INTO products (id, name, description, price, category)
+        VALUES (12, 'Zero-Day Premium Bundle', 'Internal note: HL{sqli_data_exfil_success}', 1337.00, 'secret')
+        """
+    )
+    db.commit()
+    db.close()
+
 if os.path.exists(DATABASE):
     _migrate_progress_table()
+    _migrate_sqli_flag_seed()
 
 # ─────────────────────────────────────────────
 # PROGRESO DE USUARIO
@@ -310,16 +324,33 @@ def get_lab_flag_map():
         'file_upload': ['HL{file_upload_webshell_executed}'],
         'deserialization': ['HL{deserialization_rce_success}'],
         'jwt': ['HL{4lg_c0nfu510n_0wn3d}', 'HL{jwt_alg_confusion_success}'],
-        'bruteforce': ['HL{http_brut3f0rc3_w3b_l0gin_succ3ss}', 'HL{ssh_brut3f0rc3_l0gin_succ3ss}'],
+        'bruteforce': [
+            'HL{http_brut3f0rc3_w3b_l0gin_succ3ss}',
+            'HL{ssh_brut3f0rc3_l0gin_succ3ss}',
+            'HL{alice_ssh_l0gin_succ3ss}',
+            'HL{bob_ssh_l0gin_succ3ss}',
+            'HL{charlie_ssh_l0gin_succ3ss}',
+            'HL{dave_ssh_l0gin_succ3ss}',
+            'HL{ftp_cr3d3nti4ls_r3us3d}',
+            'HL{smb_sh4r3_3num3r4ti0n_succ3ss}',
+            'HL{4dm1n_b4ckup_3xf1ltr4ti0n}',
+        ],
         'oauth': ['HL{0auth_r3d1r3ct_0wn3d}', 'HL{oauth_account_takeover_success}'],
         'open_redirect': ['HL{open_redirect_phishing_success}'],
         'path_traversal': ['HL{path_traversal_lfi_success}'],
-        'privesc': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}', 'HL{r00t_pr1v3sc_succ3ss}'],
+        'privesc': [
+            'HL{ssh_brut3f0rc3_l0gin_succ3ss}',
+            'HL{alice_ssh_l0gin_succ3ss}',
+            'HL{bob_ssh_l0gin_succ3ss}',
+            'HL{charlie_ssh_l0gin_succ3ss}',
+            'HL{dave_ssh_l0gin_succ3ss}',
+            'HL{r00t_pr1v3sc_succ3ss}',
+        ],
         '2fa_bypass': ['HL{2fa_byp4ss_0wn3d}', 'HL{2fa_r4c3_c0nd1t10n_0wn3d}', 'HL{2fa_bypass_session_hijack}'],
         'clickjacking': ['HL{cl1ckj4ck1ng_0wn3d}', 'HL{clickjacking_transfer_success}'],
         'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
         'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
-        'reverse_shell': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}'],
+        'reverse_shell': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}', 'HL{r00t_pr1v3sc_succ3ss}'],
         'ssti': ['HL{ssti_template_rce_success}'],
         'xss': ['HL{xss_session_steal_success}'],
         'xxe': ['HL{xxe_local_file_read_success}'],
@@ -363,7 +394,11 @@ def progress_submit_flag():
     expected_flags = [f.strip() for f in get_lab_flag_map().get(lab_id, []) if f and f.strip()]
     if not expected_flags:
         return jsonify({'error': 'lab_flag_not_configured'}), 500
-    if submitted_flag not in expected_flags:
+    if lab_id == 'cmdi':
+        # Command Injection accepts any valid system-style flag recovered from command output.
+        if not re.fullmatch(r'HL\{[^\n\r{}]{1,120}\}', submitted_flag):
+            return jsonify({'error': 'invalid_flag'}), 400
+    elif submitted_flag not in expected_flags:
         return jsonify({'error': 'invalid_flag'}), 400
 
     db = get_db()
@@ -959,9 +994,9 @@ def cmdi_ping():
             # VULNERABLE: shell=True permite inyección de comandos
             cmd = f"ping -c 2 {user_input}" if os.name != 'nt' else f"ping -n 2 {user_input}"
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=10
+                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10
             )
-            output = result.stdout + result.stderr
+            output = result.stdout
         except subprocess.TimeoutExpired:
             output = "Timeout: el comando tardó demasiado."
         except Exception as e:
