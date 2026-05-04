@@ -25,13 +25,21 @@
     <h3>Pasos de explotación</h3>
     <ol>
       <li>La página carga <strong>jQuery 1.6.1</strong> (2011), con múltiples CVEs de XSS.</li>
-      <li>El widget usa <code>$.html()</code> que inyecta HTML sin sanitizar en el DOM.</li>
-      <li>Introduce el siguiente payload en el campo de búsqueda:</li>
+      <li>El widget usa <code>$.html()</code> y además inserta <code>q</code> en un script JS sin escape seguro.</li>
+      <li>El servidor deja una cookie vulnerable (<code>legacy_debug</code>) con la flag y sin <code>HttpOnly</code>.</li>
+      <li>Payload para <strong>easy/medium</strong> (XSS HTML):</li>
     </ol>
-    <pre>&lt;img src=x onerror=alert(document.cookie)&gt;
-&lt;script&gt;alert('XSS via jQuery 1.6.1')&lt;/script&gt;</pre>
-    <ol start="4">
-      <li>También funciona via URL: <code>/outdated/search?q=&lt;img src=x onerror=alert(1)&gt;</code></li>
+    <pre>&lt;img src=x onerror=alert(document.cookie)&gt;</pre>
+    <ol start="5">
+      <li>Payload para <strong>hard</strong> (rompe el string JS sin usar etiquetas HTML):</li>
+    </ol>
+    <pre>';alert(document.cookie);//</pre>
+    <ol start="6">
+      <li>También por URL:</li>
+    </ol>
+    <pre>/outdated/search?q=%27%3Balert(document.cookie)%3B%2F%2F</pre>
+    <ol start="7">
+      <li>En el alert verás la cookie <code>legacy_debug</code> con <code>flag=HL{outdated_component_rce}</code>.</li>
       <li>CVEs relevantes: <code>CVE-2011-4969</code>, <code>CVE-2015-9251</code>, <code>CVE-2019-11358</code></li>
     </ol>
     <h3>Herramientas</h3>
@@ -41,13 +49,21 @@
     <h3>Exploitation Steps</h3>
     <ol>
       <li>The page loads <strong>jQuery 1.6.1</strong> (2011), with multiple XSS CVEs.</li>
-      <li>The widget uses <code>$.html()</code> which injects unsanitized HTML into the DOM.</li>
-      <li>Enter the following payload in the search field:</li>
+      <li>The widget uses <code>$.html()</code> and also injects <code>q</code> into a JS string without safe escaping.</li>
+      <li>The server sets a vulnerable cookie (<code>legacy_debug</code>) containing the lab flag and no <code>HttpOnly</code>.</li>
+      <li>Payload for <strong>easy/medium</strong> (HTML XSS):</li>
     </ol>
-    <pre>&lt;img src=x onerror=alert(document.cookie)&gt;
-&lt;script&gt;alert('XSS via jQuery 1.6.1')&lt;/script&gt;</pre>
-    <ol start="4">
-      <li>Also works via URL: <code>/outdated/search?q=&lt;img src=x onerror=alert(1)&gt;</code></li>
+    <pre>&lt;img src=x onerror=alert(document.cookie)&gt;</pre>
+    <ol start="5">
+      <li>Payload for <strong>hard</strong> (breaks out of JS string, no HTML tags needed):</li>
+    </ol>
+    <pre>';alert(document.cookie);//</pre>
+    <ol start="6">
+      <li>Also via URL:</li>
+    </ol>
+    <pre>/outdated/search?q=%27%3Balert(document.cookie)%3B%2F%2F</pre>
+    <ol start="7">
+      <li>The alert shows <code>legacy_debug</code> with <code>flag=HL{outdated_component_rce}</code>.</li>
       <li>Relevant CVEs: <code>CVE-2011-4969</code>, <code>CVE-2015-9251</code>, <code>CVE-2019-11358</code></li>
     </ol>
     <h3>Tools</h3>

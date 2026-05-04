@@ -1313,6 +1313,7 @@ def outdated_search():
     lab = next(l for l in get_lab_list() if l['id'] == 'outdated')
     q = request.args.get('q', '')
     difficulty = session.get('difficulty', 'easy')
+    outdated_flag = 'HL{outdated_component_rce}'
 
     if difficulty == 'medium' and q:
         # Filtra <script> pero no event handlers (bypass: <img onerror=...>)
@@ -1321,7 +1322,10 @@ def outdated_search():
         # Filtra tags HTML (bypass: explotar jQuery 1.6.1 .html() con location.hash/$.getJSON)
         q = re.sub(r'<[^>]+>', '', q)
 
-    return render_template('labs/outdated.html', lab=lab, query=q)
+    resp = make_response(render_template('labs/outdated.html', lab=lab, query=q))
+    # VULNERABLE: cookie accesible por JS (sin HttpOnly) con la flag del laboratorio
+    resp.set_cookie('legacy_debug', f'user=guest|flag={outdated_flag}', httponly=False, samesite='Lax')
+    return resp
 
 # ─────────────────────────────────────────────
 # A07 – Authentication & Identification Failures
