@@ -33,7 +33,7 @@
       <li class="flex items-start gap-2"><i class="ph ph-warning text-orange-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item2">Repositorio Git expuesto públicamente (<code>/.git/config</code>)</span></li>
       <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item3">Stack trace completo del servidor visible en errores (<code>/debug/error</code>)</span></li>
       <li class="flex items-start gap-2"><i class="ph ph-warning text-yellow-400 mt-0.5 flex-shrink-0"></i><span data-i18n="misconfig_item4">API interna de usuarios sin autenticación (<code>/api/users</code>)</span></li>
-      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span>Directory listing habilitado en <code>/files</code> — expone archivos internos sensibles del servidor</span></li>
+      <li class="flex items-start gap-2"><i class="ph ph-warning text-red-400 mt-0.5 flex-shrink-0"></i><span>Directory listing habilitado en <code>/files-exposed</code> — expone archivos internos sensibles del servidor</span></li>
     </ul>
     <p class="text-xs text-gray-400 mt-4"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500">Objetivo:</strong> Encuentra y accede al archivo de flag oculto en el servidor usando fuzzing de directorios.</p>
   </div>
@@ -54,7 +54,7 @@ ffuf -u http://TARGET/FUZZ \
   -w /usr/share/seclists/Discovery/Web-Content/common.txt \
   -mc 200,301,302,403 -t 50</code></pre>
     <ol start="2">
-      <li>El escaneo descubre <code>/files</code> (HTTP 200). Navega a esa URL en el navegador.</li>
+      <li>El escaneo descubre <code>/files-exposed</code> (HTTP 200). Navega a esa URL en el navegador.</li>
       <li>El servidor tiene el <strong>directory listing habilitado</strong>: verás un índice con los archivos alojados, incluyendo <code>A05-flag.txt</code>.</li>
       <li>Haz clic en <code>A05-flag.txt</code> para leerlo directamente desde el navegador y obtener la flag.</li>
     </ol>
@@ -95,7 +95,7 @@ ffuf -u http://TARGET/FUZZ \
   -w /usr/share/seclists/Discovery/Web-Content/common.txt \
   -mc 200,301,302,403 -t 50</code></pre>
     <ol start="2">
-      <li>The scan discovers <code>/files</code> (HTTP 200). Browse to that URL.</li>
+      <li>The scan discovers <code>/files-exposed</code> (HTTP 200). Browse to that URL.</li>
       <li>The server has <strong>directory listing enabled</strong>: you will see an index of hosted files, including <code>A05-flag.txt</code>.</li>
       <li>Click <code>A05-flag.txt</code> to read it directly in the browser and obtain the flag.</li>
     </ol>
