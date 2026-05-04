@@ -142,6 +142,11 @@ echo '  [*] Configurando vectores de escalada de privilegios...'
 
 # Flag de root (objetivo final para todos los vectores)
 printf 'HL{r00t_pr1v3sc_succ3ss}\n' > /root/root.txt
+
+# A05 – Security Misconfiguration: flag en directorio /flag/ expuesto
+mkdir -p /flag
+printf 'HL{m15c0nf19_3xp053d_f149_f1l3}\n' > /flag/A05-flag.txt
+chmod 644 /flag/A05-flag.txt
 chmod 600 /root/root.txt 2>/dev/null || true
 
 # --- admin: sudo completo (necesario para verificar permisos en la máquina) ---

@@ -318,7 +318,7 @@ def get_lab_flag_map():
         'sqli': ['HL{5ql1_d474_3xf1l_5ucc355}'],
         'cmdi': ['HL{cmdi_command_execution_success}'],
         'insecure_design': ['HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'],
-        'misconfig': ['HL{misconfig_admin_console_access}'],
+        'misconfig': ['HL{m15c0nf19_3xp053d_f149_f1l3}'],
         'outdated': ['HL{outdated_component_rce}'],
         'auth_failures': ['HL{auth_failures_account_takeover}'],
         'integrity': ['HL{integrity_unsigned_update_loaded}'],
@@ -1196,6 +1196,21 @@ def admin_panel():
                                    error='⛔ Acceso denegado. Token de administración requerido.')
         users = db.execute("SELECT id, username, email, role FROM users").fetchall()
         return render_template('labs/misconfig.html', lab=lab, users=users, admin=True)
+
+@app.route('/flag/<path:filename>')
+def flag_file(filename):
+    # VULNERABLE: directorio /flag/ expuesto sin autenticación (A05 misconfiguration)
+    import os
+    flag_dir = '/flag'
+    filepath = os.path.join(flag_dir, filename)
+    # Prevent path traversal outside /flag
+    if not os.path.abspath(filepath).startswith(os.path.abspath(flag_dir) + os.sep):
+        return 'Not Found', 404
+    if not os.path.isfile(filepath):
+        return 'Not Found', 404
+    with open(filepath, 'r') as f:
+        content = f.read()
+    return content, 200, {'Content-Type': 'text/plain'}
 
 @app.route('/debug/error')
 def debug_error():
