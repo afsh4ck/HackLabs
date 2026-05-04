@@ -965,10 +965,11 @@ def crypto_login():
         ).fetchone()
 
         if user:
+            crypto_flag = 'HL{crypto_cracked_hash_success}'
             resp = make_response(render_template('labs/crypto.html', lab=lab,
                                                   message='Login exitoso', success=True,
                                                   weak_hash=weak_hash if difficulty == 'easy' else None,
-                                                  username=username))
+                                                  username=username, flag=crypto_flag))
             if difficulty == 'easy':
                 # Hash MD5 expuesto en cookie sin HttpOnly
                 resp.set_cookie('auth_token', weak_hash, httponly=False)

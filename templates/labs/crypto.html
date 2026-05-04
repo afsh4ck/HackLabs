@@ -21,6 +21,12 @@
   {% if message %}
   <div class="{% if success %}alert-success{% else %}alert-error{% endif %} mb-4 font-mono text-xs">{{ message }}</div>
   {% endif %}
+  {% if flag %}
+  <div class="hl-card border-l-4 mb-4" style="border-left-color:#22c55e">
+    <div class="text-xs text-green-500 font-semibold mb-1">🏁 Flag</div>
+    <div class="font-mono text-sm break-all" style="color:var(--hl-primary)">{{ flag }}</div>
+  </div>
+  {% endif %}
   {% if weak_hash %}
   <div class="hl-card border-l-4 mb-4" style="border-left-color:#f59e0b">
     <div class="text-xs text-yellow-500 font-semibold mb-1">auth_token cookie</div>
