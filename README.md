@@ -230,6 +230,8 @@ Flag objetivo: `HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}`
 | Medium | Filtra `<script>` pero no event handlers ni otros tags |
 | Hard | Filtra `<` y `>` (bypass: atributos inline) |
 
+Flag objetivo: `HL{0u7d473d_c0mp0n3n7_rc3}`
+
 </details>
 
 <details>
@@ -240,6 +242,8 @@ Flag objetivo: `HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}`
 | Easy | Sin rate-limiting — brute force ilimitado |
 | Medium | Límite: 10 intentos / 30 segundos |
 | Hard | Límite: 5 intentos / 60 segundos + errores genéricos |
+
+Flag objetivo: `HL{4u7h_f411ur35_4cc0un7_74k30v3r}`
 
 </details>
 
@@ -252,6 +256,8 @@ Flag objetivo: `HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}`
 | Medium | `role` bloqueado en PUT + vista sin campo role |
 | Hard | Solo `email` editable + requiere header Authorization + vista mínima |
 
+Flag objetivo: `HL{1n739r17y_un519n3d_upd473_104d3d}`
+
 </details>
 
 <details>
@@ -263,6 +269,8 @@ Flag objetivo: `HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}`
 | Medium | Solo registra logins exitosos con IP (fallos invisibles) |
 | Hard | Registra éxitos y fallos pero sin IP (auditoría incompleta) |
 
+Flag objetivo: `HL{10991n9_m0n170r1n9_8yp455}`
+
 </details>
 
 <details>
@@ -271,7 +279,7 @@ Flag objetivo: `HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}`
 | Nivel | Comportamiento |
 |-------|---------------|
 | Easy | Sin filtro — acceso directo a `/internal/cloud-metadata` (credenciales AWS simuladas) |
-| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal `2130706433`, `0.0.0.0`, `127.0.0.2`) |
+| Medium | Bloquea `localhost`, `127.0.0.1` (bypass: IP decimal `2130706433`) |
 | Hard | Bloquea rangos privados (bypass: IPv6 `[::1]`, double URL encoding, redirect chain) |
 
 Flag: `HL{55rf_cl0ud_m3t4d4t4}` (dentro de las credenciales IAM del endpoint de metadatos)
