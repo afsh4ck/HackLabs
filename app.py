@@ -408,7 +408,7 @@ def get_lab_flag_map():
             'HL{dave_ssh_l0gin_succ3ss}',
             root_flag,
         ],
-        '2fa_bypass': ['HL{2fa_byp4ss_0wn3d}', 'HL{2fa_r4c3_c0nd1t10n_0wn3d}', 'HL{2fa_bypass_session_hijack}'],
+        '2fa_bypass': ['HL{2f4_byp455_0wn3d}', 'HL{2f4_p4r714l_v4l1d4710n_0wn3d}'],
         'clickjacking': ['HL{cl1ckj4ck1ng_0wn3d}', 'HL{clickjacking_transfer_success}'],
         'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
         'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
@@ -3807,6 +3807,12 @@ def twofa_login():
         password = request.form.get('password', '').strip()
         if _2fa_users.get(username) == password:
             code = str(random.randint(0, 9999)).zfill(4) if difficulty == 'medium' else str(random.randint(0, 999999)).zfill(6)
+            ttl_by_difficulty = {
+                'easy': 180,
+                'medium': 900,
+                'hard': 900,
+            }
+            ttl = ttl_by_difficulty.get(difficulty, 300)
             sid = hashlib.sha256(os.urandom(16)).hexdigest()[:16]
             _2fa_sessions[sid] = {
                 'username': username,
@@ -3815,6 +3821,8 @@ def twofa_login():
                 'attempts': 0,
                 'difficulty': difficulty,
                 'created_at': time.time(),
+                'ttl': ttl,
+                'expires_at': time.time() + ttl,
             }
             session['2fa_sid'] = sid
             return redirect('/2fa/verify')
@@ -3834,16 +3842,26 @@ def twofa_verify():
     if not state:
         return redirect('/2fa/login')
 
+    now = time.time()
+    remaining = max(0, int(state.get('expires_at', now) - now))
+
+    if remaining <= 0:
+        state['used'] = True
+        error = 'Código expirado. Reinicia el flujo para generar uno nuevo.'
+        return render_template('labs/2fa_bypass.html',
+                               lab=lab, step='verify', flag=flag,
+                               error=error, state=state, difficulty=difficulty,
+                               remaining=0)
+
     if request.method == 'POST':
         otp = request.form.get('otp', '').strip()
 
         if difficulty == 'hard':
-            if otp == state['code'] and not state['used']:
-                time.sleep(0.08)  # TOCTOU window
-                if not state['used']:
-                    state['used'] = True
-                    flag = 'HL{2fa_r4c3_c0nd1t10n_0wn3d}'
-            elif otp != state['code']:
+            # VULNERABLE: validación parcial (solo 3 primeros dígitos)
+            if not state['used'] and otp and state['code'].startswith(otp):
+                state['used'] = True
+                flag = 'HL{2f4_p4r714l_v4l1d4710n_0wn3d}'
+            elif not otp or not state['code'].startswith(otp):
                 error = 'Código incorrecto'
             else:
                 error = 'Código ya utilizado'
@@ -3853,14 +3871,15 @@ def twofa_verify():
                     error = 'Código ya utilizado'
                 else:
                     state['used'] = True
-                    flag = 'HL{2fa_byp4ss_0wn3d}'
+                    flag = 'HL{2f4_byp455_0wn3d}'
             else:
                 state['attempts'] += 1
                 error = f'Código incorrecto (intento {state["attempts"]})'
 
     resp = make_response(render_template('labs/2fa_bypass.html',
                                           lab=lab, step='verify', flag=flag,
-                                          error=error, state=state, difficulty=difficulty))
+                                          error=error, state=state, difficulty=difficulty,
+                                          remaining=remaining))
     if difficulty == 'easy':
         resp.headers['X-Debug-OTP'] = state['code']
     return resp

