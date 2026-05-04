@@ -236,10 +236,14 @@ def _migrate_progress_table():
             id               INTEGER PRIMARY KEY AUTOINCREMENT,
             account_username TEXT NOT NULL,
             lab_id           TEXT NOT NULL,
+            validated_flag   TEXT,
             completed_at     TEXT DEFAULT (datetime('now')),
             UNIQUE(account_username, lab_id)
         )
     ''')
+    cols = [r[1] for r in db.execute("PRAGMA table_info(user_progress)").fetchall()]
+    if cols and 'validated_flag' not in cols:
+        db.execute('ALTER TABLE user_progress ADD COLUMN validated_flag TEXT')
     db.commit()
     db.close()
 
@@ -259,9 +263,29 @@ def progress_toggle():
     return jsonify({'error': 'flag_required'}), 400
 
 
+@app.route('/progress/uncomplete', methods=['POST'])
+def progress_uncomplete():
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if not app_user or app_type != 'account':
+        return jsonify({'error': 'not_logged_in'}), 401
+
+    data = request.get_json(silent=True) or {}
+    lab_id = (data.get('lab_id') or '').strip()
+    valid_ids = {l['id'] for l in get_lab_list()}
+    if not lab_id or lab_id not in valid_ids:
+        return jsonify({'error': 'invalid_lab'}), 400
+
+    db = get_db()
+    db.execute('DELETE FROM user_progress WHERE account_username=? AND lab_id=?', (app_user, lab_id))
+    db.commit()
+    count = db.execute('SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)).fetchone()[0]
+    total = len(get_lab_list())
+    return jsonify({'completed': False, 'count': count, 'total': total})
+
+
 def get_lab_flag_map():
     """Expected flag(s) per lab. Some labs intentionally share flags."""
-    shared_admin_user = 'HL{ssh_brut3f0rc3_l0gin_succ3ss}'
     return {
         # OWASP Top 10
         'idor': ['HL{idor_privilege_escalation}'],
@@ -274,40 +298,49 @@ def get_lab_flag_map():
         'auth_failures': ['HL{auth_failures_account_takeover}'],
         'integrity': ['HL{integrity_unsigned_update_loaded}'],
         'logging': ['HL{logging_monitoring_bypass}'],
-        'ssrf': ['HL{ssrf_metadata_exfiltration}'],
+        'ssrf': ['HL{55rf_cl0ud_m3t4d4t4}', 'HL{ssrf_metadata_exfiltration}'],
 
         # Vulnerabilidades
-        'api_attacks': ['HL{api_authz_bypass_success}'],
-        'business_logic': ['HL{business_logic_price_tamper}'],
+        'api_attacks': ['HL{Ap1_InS3cur3_2026}', 'HL{api_authz_bypass_success}'],
+        'business_logic': ['HL{bu51n355_l0g1c_0wn3d}', 'HL{business_logic_price_tamper}'],
         'c2_sliver': ['HL{c2_sliver_callback_established}'],
         'container_escape': ['HL{container_escape_host_access}'],
         'cors': ['HL{cors_credential_theft_success}'],
         'csrf': ['HL{csrf_state_change_success}'],
         'file_upload': ['HL{file_upload_webshell_executed}'],
         'deserialization': ['HL{deserialization_rce_success}'],
-        'jwt': ['HL{jwt_alg_confusion_success}'],
-        'bruteforce': [shared_admin_user],
-        'oauth': ['HL{oauth_account_takeover_success}'],
+        'jwt': ['HL{4lg_c0nfu510n_0wn3d}', 'HL{jwt_alg_confusion_success}'],
+        'bruteforce': ['HL{http_brut3f0rc3_w3b_l0gin_succ3ss}', 'HL{ssh_brut3f0rc3_l0gin_succ3ss}'],
+        'oauth': ['HL{0auth_r3d1r3ct_0wn3d}', 'HL{oauth_account_takeover_success}'],
         'open_redirect': ['HL{open_redirect_phishing_success}'],
         'path_traversal': ['HL{path_traversal_lfi_success}'],
-        'privesc': [shared_admin_user, 'HL{r00t_pr1v3sc_succ3ss}'],
-        '2fa_bypass': ['HL{2fa_bypass_session_hijack}'],
-        'clickjacking': ['HL{clickjacking_transfer_success}'],
-        'reset_poisoning': ['HL{reset_poisoning_token_capture}'],
-        'race_condition': ['HL{race_condition_double_spend}'],
-        'reverse_shell': [shared_admin_user],
+        'privesc': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}', 'HL{r00t_pr1v3sc_succ3ss}'],
+        '2fa_bypass': ['HL{2fa_byp4ss_0wn3d}', 'HL{2fa_r4c3_c0nd1t10n_0wn3d}', 'HL{2fa_bypass_session_hijack}'],
+        'clickjacking': ['HL{cl1ckj4ck1ng_0wn3d}', 'HL{clickjacking_transfer_success}'],
+        'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
+        'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
+        'reverse_shell': ['HL{ssh_brut3f0rc3_l0gin_succ3ss}'],
         'ssti': ['HL{ssti_template_rce_success}'],
         'xss': ['HL{xss_session_steal_success}'],
         'xxe': ['HL{xxe_local_file_read_success}'],
 
         # IA Attacks
-        'ai_jailbreak': ['HL{ai_jailbreak_guardrails_bypassed}'],
-        'ai_supply_chain': ['HL{ai_supply_chain_backdoor_triggered}'],
-        'indirect_injection': ['HL{indirect_prompt_injection_success}'],
-        'llm_exfil': ['HL{llm_data_exfil_success}'],
-        'prompt_injection': ['HL{prompt_injection_system_bypass}'],
-        'prompt_leaking': ['HL{prompt_leaking_system_prompt_exposed}'],
+        'ai_jailbreak': ['HL{j41lbr34k_1ts_w0rk1ng}', 'HL{ai_jailbreak_guardrails_bypassed}'],
+        'ai_supply_chain': ['HL{4i_supp1y_ch41n_pwn3d}', 'HL{ai_supply_chain_backdoor_triggered}'],
+        'indirect_injection': ['HL{1nd1r3ct_1nj_v14_d0c}', 'HL{indirect_prompt_injection_success}'],
+        'llm_exfil': ['HL{d4t4_3xf1ltr4t3d_v14_llm}', 'HL{llm_data_exfil_success}'],
+        'prompt_injection': ['HL{pr0mpt_1nj3ct10n_m4st3r}', 'HL{prompt_injection_system_bypass}'],
+        'prompt_leaking': ['HL{pr0mpt_l34k3d_succ3ssfully}', 'HL{prompt_leaking_system_prompt_exposed}'],
     }
+
+
+def _validate_lab_flag_coverage():
+    """Ensure every lab has at least one accepted flag configured."""
+    lab_ids = {l['id'] for l in get_lab_list()}
+    flag_map = get_lab_flag_map()
+    missing = sorted([lab_id for lab_id in lab_ids if lab_id not in flag_map or not flag_map.get(lab_id)])
+    if missing:
+        raise RuntimeError('Missing flag mapping for labs: ' + ', '.join(missing))
 
 
 @app.route('/progress/submit-flag', methods=['POST'])
@@ -334,10 +367,20 @@ def progress_submit_flag():
         return jsonify({'error': 'invalid_flag'}), 400
 
     db = get_db()
-    db.execute(
-        'INSERT OR IGNORE INTO user_progress (account_username, lab_id) VALUES (?,?)',
+    existing = db.execute(
+        'SELECT id FROM user_progress WHERE account_username=? AND lab_id=?',
         (app_user, lab_id)
-    )
+    ).fetchone()
+    if existing:
+        db.execute(
+            'UPDATE user_progress SET validated_flag=?, completed_at=datetime(\'now\') WHERE account_username=? AND lab_id=?',
+            (submitted_flag, app_user, lab_id)
+        )
+    else:
+        db.execute(
+            'INSERT INTO user_progress (account_username, lab_id, validated_flag) VALUES (?,?,?)',
+            (app_user, lab_id, submitted_flag)
+        )
     db.commit()
     count = db.execute('SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)).fetchone()[0]
     total = len(get_lab_list())
@@ -510,6 +553,9 @@ def get_lab_list():
         {'id': 'prompt_leaking',     'title': 'Prompt Leaking',                              'category': 'IA Attacks',       'risk': 'high'},
     ]
 
+
+_validate_lab_flag_coverage()
+
 @app.context_processor
 def inject_labs():
     path = request.path.rstrip('/')
@@ -590,6 +636,7 @@ def inject_labs():
 
     # Progress tracking — only for custom account users (app_user_type == 'account')
     completed_lab_ids = set()
+    completed_lab_flags = {}
     progress_count    = 0
     _app_user = session.get('app_user')
     _app_type = session.get('app_user_type')
@@ -597,9 +644,10 @@ def inject_labs():
     if is_progress_user:
         try:
             _rows = get_db().execute(
-                'SELECT lab_id FROM user_progress WHERE account_username=?', (_app_user,)
+                'SELECT lab_id, validated_flag FROM user_progress WHERE account_username=?', (_app_user,)
             ).fetchall()
             completed_lab_ids = {r['lab_id'] for r in _rows}
+            completed_lab_flags = {r['lab_id']: (r['validated_flag'] or '') for r in _rows}
             progress_count = len(completed_lab_ids)
         except Exception:
             pass
@@ -614,6 +662,8 @@ def inject_labs():
         'difficulty': difficulty,
         'client_ip': request.remote_addr,
         'completed_lab_ids': completed_lab_ids,
+        'completed_lab_flags': completed_lab_flags,
+        'current_lab_validated_flag': completed_lab_flags.get(current_lab_id, ''),
         'progress_count': progress_count,
         'is_progress_user': is_progress_user,
     }
@@ -747,6 +797,7 @@ def profile():
     # VULNERABLE: no se verifica si el usuario autenticado puede ver este perfil
     user_id = request.args.get('id', '')
     profile = None
+    flag = None
     error = None
     difficulty = session.get('difficulty', 'easy')
 
@@ -765,10 +816,14 @@ def profile():
         except Exception as e:
             error = str(e)
 
+        if profile and str(profile['id']) != '1':
+            flag = 'HL{idor_privilege_escalation}'
+
     return render_template('labs/idor.html',
                            lab=next(l for l in get_lab_list() if l['id'] == 'idor'),
                            profile=profile,
                            queried_id=user_id,
+                           flag=flag,
                            error=error)
 
 # ─────────────────────────────────────────────

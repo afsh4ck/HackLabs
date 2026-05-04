@@ -1,3 +1,15 @@
+## 2026-05-04 — Progreso por flags, UX de validacion y estabilidad
+
+- feat(progress): El progreso de labs pasa a validarse por flag enviada por el usuario (endpoint `POST /progress/submit-flag`) en lugar de toggle/auto-deteccion en frontend.
+- feat(progress): Cobertura verificada de los 39 labs con al menos una flag aceptada por lab (incluyendo aliases donde aplica y flags compartidas entre labs relacionados).
+- feat(progress): Se anade endpoint `POST /progress/uncomplete` para desmarcar labs completados y volver a explotarlos.
+- feat(progress): Se persiste la flag validada en `user_progress.validated_flag`; al desmarcar, se elimina el registro del lab (incluida su flag validada).
+- feat(ui): El formulario de validacion de flag se mueve al final del contenido principal de cada lab y no aparece en la cabecera.
+- feat(ui): Si el usuario no esta logueado, input y boton de enviar flag quedan deshabilitados y se muestra CTA de login.
+- feat(ui): Si un lab ya esta completado, el input muestra la flag exacta guardada y el boton cambia a modo `Desmarcar`.
+- feat(idor): El lab de IDOR ahora muestra `HL{idor_privilege_escalation}` al consultar un perfil de otro usuario (ID distinto de 1).
+- fix(app): La validacion global de cobertura de flags se ejecuta despues de definir `get_lab_list()` para evitar `NameError` en arranque.
+
 ## 2026-04-30 — IA Attacks: mejoras a 3 labs existentes + 3 nuevos labs
 
 ### Mejoras a labs existentes

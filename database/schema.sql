@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS user_progress (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
     account_username TEXT NOT NULL,
     lab_id           TEXT NOT NULL,
+    validated_flag   TEXT,
     completed_at     TEXT DEFAULT (datetime('now')),
     UNIQUE(account_username, lab_id)
 );

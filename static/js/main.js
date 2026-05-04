@@ -1073,7 +1073,40 @@ function _updateProgressUI(data) {
 function submitLabFlag(labId) {
   const btn = document.getElementById('lab-complete-btn');
   const input = document.getElementById('lab-flag-input');
-  if (!btn || !input || input.disabled) return;
+  if (!btn || !input) return;
+
+  // If already completed, allow user to unmark and re-exploit the lab.
+  if (btn.classList.contains('lab-complete-btn--done')) {
+    btn.classList.add('animating');
+    setTimeout(() => btn.classList.remove('animating'), 200);
+
+    fetch('/progress/uncomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lab_id: labId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        showToast('No se pudo desmarcar el lab');
+        return;
+      }
+      btn.classList.remove('lab-complete-btn--done');
+      const icon = btn.querySelector('i');
+      const span = btn.querySelector('span');
+      if (icon) icon.className = 'ph ph-flag-checkered text-sm';
+      if (span) span.textContent = 'Validar flag';
+      btn.title = 'Validar flag del laboratorio';
+      input.disabled = false;
+      input.value = '';
+      _updateProgressUI(data);
+      showToast('Lab desmarcado. Puedes volver a explotarlo');
+    })
+    .catch(() => {});
+    return;
+  }
+
+  if (input.disabled) return;
   const flag = (input.value || '').trim();
   if (!flag) {
     showToast('Introduce una flag valida (ej: HL{...})');
@@ -1102,11 +1135,11 @@ function submitLabFlag(labId) {
     btn.classList.add('lab-complete-btn--done');
     const icon = btn.querySelector('i');
     const span = btn.querySelector('span');
-    if (icon) icon.className = 'ph ph-check-circle text-sm';
-    if (span) span.textContent = 'Completado';
-    btn.title = 'Lab ya completado';
+    if (icon) icon.className = 'ph ph-arrow-counter-clockwise text-sm';
+    if (span) span.textContent = 'Desmarcar';
+    btn.title = 'Desmarcar lab como completado';
     input.disabled = true;
-    input.value = '';
+    input.value = flag;
     _updateProgressUI(data);
     showToast(done ? 'Flag correcta. Lab completado' : 'Flag validada');
   })
