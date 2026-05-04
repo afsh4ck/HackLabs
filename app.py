@@ -644,7 +644,7 @@ def lab(lab_id):
     # Labs that have dedicated routes with data – redirect to them
     dedicated = {
         'idor':            '/profile',
-        'misconfig':       '/secrets',
+        'misconfig':       '/admin',
         'integrity':       '/integrity',
         'auth_failures':   '/login',
         'logging':         '/logging/login',
