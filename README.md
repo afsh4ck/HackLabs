@@ -139,7 +139,7 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 
 Al completar el **100% de los laboratorios** (Lv.8 Master) se desbloquea automáticamente un **certificado de finalización gratuito** en `/progress/certificate`.
 
-- Descargable en **HTML**, **JPG** y **PDF** (A4 landscape)
+- Descargable en **HTML** y **PDF** (A4 landscape)
 - Incluye nombre de usuario, rango alcanzado, código único verificable y fecha de emisión
 - El código del certificado puede verificarse en `/progress/certificate/verify`
 - No requiere pago ni suscripción — se genera al instante
