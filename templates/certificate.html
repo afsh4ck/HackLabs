@@ -28,7 +28,7 @@
       overflow: auto;
     }
     .viewport {
-      min-height: 100%;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -43,7 +43,6 @@
       gap: 8px;
       flex-wrap: wrap;
       justify-content: flex-end;
-      max-width: min(96vw, 900px);
     }
     .tool-btn {
       border: 1px solid rgba(206,255,0,.35);
@@ -62,9 +61,15 @@
     }
     .tool-btn:hover { background: rgba(206,255,0,.14); }
     .tool-btn[disabled] { opacity: .55; cursor: wait; }
+
+    /* ── Canvas (16:9 certificate) ── */
+    .canvas-wrap {
+      width: 100%;
+      max-width: 1280px;
+    }
     .canvas {
-      width: 1920px;
-      height: 1080px;
+      width: 100%;
+      aspect-ratio: 16 / 9;
       position: relative;
       border-radius: 24px;
       overflow: hidden;
@@ -72,73 +77,25 @@
       background: linear-gradient(145deg, rgba(255,255,255,.02), rgba(255,255,255,.005));
       box-shadow: 0 30px 90px rgba(0,0,0,.45), inset 0 0 110px rgba(206,255,0,.05);
     }
-    @media (max-width: 2560px) {
-      .canvas {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
-      }
-    }
-    @media (max-width: 768px) {
-      .canvas {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
-        border-radius: 16px;
-      }
-      .frame {
-        padding: 32px 24px !important;
-        inset: 16px !important;
-      }
-      .topbar {
-        flex-direction: column;
-        gap: 12px;
-        align-items: flex-start;
-      }
-      .title h1 {
-        font-size: 42px;
-      }
-      .title p {
-        font-size: 16px;
-      }
-      .learner {
-        width: 100% !important;
-        padding: 24px;
-      }
-      .learner .name {
-        font-size: 42px;
-      }
-      .meta {
-        width: 100% !important;
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-      .meta-card {
-        padding: 14px;
-      }
-      .verify {
-        max-width: 100% !important;
-        text-align: left;
-      }
-    }
+
     .glow {
       position: absolute;
-      width: 720px;
-      height: 720px;
+      width: 55%;
+      height: 100%;
       border-radius: 999px;
       filter: blur(120px);
-      opacity: .2;
+      opacity: .18;
       pointer-events: none;
     }
-    .glow.a { background: var(--hl-primary); top: -240px; right: -180px; }
-    .glow.b { background: #22d3ee; bottom: -260px; left: -140px; }
+    .glow.a { background: var(--hl-primary); top: -30%; right: -15%; }
+    .glow.b { background: #22d3ee; bottom: -30%; left: -10%; }
 
     .frame {
       position: absolute;
-      inset: 28px;
+      inset: 2.5%;
       border: 1px solid rgba(206,255,0,.22);
       border-radius: 16px;
-      padding: 54px 64px;
+      padding: 4% 5.5%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -147,52 +104,49 @@
         linear-gradient(90deg, transparent 49%, rgba(206,255,0,.02) 50%, transparent 51%) 0 0 / 28px 100%;
     }
 
+    /* ── Topbar ── */
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      letter-spacing: .2em;
-      text-transform: uppercase;
-      font-size: 14px;
-      color: var(--muted);
     }
     .brand {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      letter-spacing: normal;
-      text-transform: none;
+      gap: 2%;
     }
     .brand-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      width: 3.2%;
+      aspect-ratio: 1;
+      min-width: 28px;
+      border-radius: 30%;
       background: var(--hl-primary);
       color: #0b0f1a;
       box-shadow: 0 0 18px rgba(206,255,0,.45);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 1.6vw;
     }
     .brand-name {
       display: flex;
       flex-direction: column;
       line-height: 1.05;
     }
-    .brand-name b {
+    .brand-name .brand-title {
       font-family: "Space Grotesk", "Inter", sans-serif;
       font-weight: 800;
-      font-size: 24px;
+      font-size: 2vw;
       color: #f8fafc;
       letter-spacing: .03em;
     }
-    .brand-name b span {
-      font-size: 24px;
+    .brand-name .brand-title .brand-accent {
+      color: var(--hl-primary);
       font-weight: 800;
+      font-size: inherit;
     }
-    .brand-name span {
-      font-size: 11px;
+    .brand-name .brand-sub {
+      font-size: .9vw;
       letter-spacing: .16em;
       color: var(--muted);
       text-transform: uppercase;
@@ -200,155 +154,140 @@
     .badge {
       border: 1px solid rgba(206,255,0,.35);
       color: var(--hl-primary);
-      padding: 8px 14px;
+      padding: .5% 1.2%;
       border-radius: 999px;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 1.1vw;
       background: rgba(206,255,0,.08);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
+    /* ── Title ── */
     .title {
-      margin-top: 28px;
       text-align: center;
+      margin-top: 1%;
     }
     .title h1 {
       margin: 0;
       font-family: "Space Grotesk", "Inter", sans-serif;
-      font-size: 66px;
+      font-size: 5.5vw;
       letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--hl-primary);
       text-shadow: 0 0 30px rgba(206,255,0,.3);
     }
     .title p {
-      margin: 14px 0 0;
+      margin: .5% 0 0;
       color: #cbd5e1;
-      font-size: 24px;
+      font-size: 1.6vw;
       letter-spacing: .02em;
     }
 
+    /* ── Learner card ── */
     .learner {
-      margin: 42px auto 0;
+      margin: 1.5% auto 0;
       width: 86%;
       text-align: center;
       border: 1px solid rgba(255,255,255,.08);
-      border-radius: 18px;
+      border-radius: 14px;
       background: rgba(15,23,42,.5);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      padding: 36px;
+      padding: 2.5% 3%;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px rgba(0,0,0,.22);
     }
     .learner .label {
       text-transform: uppercase;
       letter-spacing: .22em;
-      font-size: 13px;
+      font-size: 1vw;
       color: var(--muted);
-      margin-bottom: 16px;
+      margin-bottom: .8%;
     }
     .learner .name {
       margin: 0;
       font-family: "Space Grotesk", "Inter", sans-serif;
-      font-size: 64px;
+      font-size: 5vw;
       font-weight: 800;
       color: #f8fafc;
       letter-spacing: .03em;
       text-shadow: 0 8px 30px rgba(0,0,0,.45);
     }
     .learner .rank {
-      margin-top: 18px;
-      font-size: 24px;
+      margin-top: .8%;
+      font-size: 1.8vw;
       color: #d1fae5;
       font-weight: 700;
     }
 
+    /* ── Meta cards ── */
     .meta {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 18px;
-      margin: 34px auto 0;
+      gap: 1.2%;
+      margin: 1.5% auto 0;
       width: 86%;
     }
     .meta-card {
       border: 1px solid rgba(255,255,255,.08);
-      border-radius: 12px;
-      padding: 18px;
+      border-radius: 10px;
+      padding: 1.4% 1.6%;
       background: rgba(2,6,23,.45);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 20px rgba(0,0,0,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 6px 16px rgba(0,0,0,.18);
     }
     .meta-k {
       text-transform: uppercase;
       letter-spacing: .12em;
       color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 8px;
+      font-size: .9vw;
+      margin-bottom: .5%;
     }
     .meta-v {
-      font-size: 20px;
+      font-size: 1.5vw;
       color: #f1f5f9;
       font-weight: 700;
       word-break: break-word;
     }
-    .meta-v.mono { font-family: "Consolas", "Courier New", monospace; font-size: 19px; }
+    .meta-v.mono { font-family: "Consolas", "Courier New", monospace; }
 
+    /* ── Footer ── */
     .footer {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      margin-top: 28px;
     }
     .program-text {
       color: #cbd5e1;
-      font-size: 13px;
+      font-size: .9vw;
       letter-spacing: .1em;
       text-transform: uppercase;
-      margin-bottom: 10px;
     }
     .verify {
-      max-width: 65%;
+      max-width: 60%;
       text-align: right;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 1vw;
       line-height: 1.5;
     }
     .verify code {
       display: inline-block;
-      margin-top: 8px;
+      margin-top: .4%;
       border: 1px solid rgba(206,255,0,.25);
       background: rgba(206,255,0,.08);
       color: #dcfce7;
       font-family: "Consolas", "Courier New", monospace;
-      padding: 8px 12px;
-      border-radius: 8px;
+      padding: .4% .8%;
+      border-radius: 6px;
       word-break: break-all;
+      font-size: .85vw;
     }
 
-    @page {
-      size: A4 landscape;
-      margin: 0;
-    }
-
+    @page { size: A4 landscape; margin: 0; }
     @media print {
       .toolbar { display: none !important; }
-      html, body {
-        background: #fff !important;
-        width: 100%;
-        height: 100%;
-      }
-      .viewport {
-        padding: 0;
-        width: 100%;
-        height: 100%;
-      }
-      .canvas {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 16 / 9;
-        box-shadow: none;
-        border: none;
-      }
     }
   </style>
 </head>
@@ -360,151 +299,163 @@
     <button id="btn-pdf" class="tool-btn" type="button">Exportar PDF</button>
   </div>
   {% endif %}
+
   <div class="viewport">
-    <article class="canvas" id="certificate-canvas">
-      <div class="glow a"></div>
-      <div class="glow b"></div>
-      <section class="frame">
-        <header class="topbar">
-          <div class="brand">
-            <span class="brand-mark"><i class="ph-fill ph-flask"></i></span>
-            <div class="brand-name">
-              <b>Hack<span style="color:var(--hl-primary)">Labs</span></b>
-              <span>Ethical Hacking Labs</span>
+    <div class="canvas-wrap">
+      <article class="canvas" id="certificate-canvas">
+        <div class="glow a"></div>
+        <div class="glow b"></div>
+        <section class="frame">
+
+          <header class="topbar">
+            <div class="brand">
+              <span class="brand-mark"><i class="ph-fill ph-flask"></i></span>
+              <div class="brand-name">
+                <span class="brand-title">Hack<span class="brand-accent">Labs</span></span>
+                <span class="brand-sub">Ethical Hacking Labs</span>
+              </div>
+            </div>
+            <div class="badge">Completion Verified</div>
+          </header>
+
+          <div>
+            <div class="title">
+              <h1>Certificate Of Mastery</h1>
+              <p>This certifies that the learner completed 100% of HackLabs practical tracks.</p>
+            </div>
+
+            <div class="learner">
+              <div class="label">Awarded To</div>
+              <h2 class="name">{{ learner }}</h2>
+              <div class="rank">{{ rank }}</div>
+            </div>
+
+            <div class="meta">
+              <div class="meta-card">
+                <div class="meta-k">Certificate Code</div>
+                <div class="meta-v mono">{{ cert_code }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-k">Issued At</div>
+                <div class="meta-v">{{ issued_at }}</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-k">Issuer</div>
+                <div class="meta-v">HackLabs Academy</div>
+              </div>
             </div>
           </div>
-          <div class="badge">Completion Verified</div>
-        </header>
 
-        <div>
-          <div class="title">
-            <h1>Certificate Of Mastery</h1>
-            <p>This certifies that the learner completed 100% of HackLabs practical tracks.</p>
-          </div>
-
-          <div class="learner">
-            <div class="label">Awarded To</div>
-            <h2 class="name">{{ learner }}</h2>
-            <div class="rank">{{ rank }}</div>
-          </div>
-
-          <div class="meta">
-            <div class="meta-card">
-              <div class="meta-k">Certificate Code</div>
-              <div class="meta-v mono">{{ cert_code }}</div>
+          <footer class="footer">
+            <div class="program-text">HackLabs Offensive Security Program</div>
+            <div class="verify">
+              Verify this certificate at the official validation endpoint.<br>
+              <code>{{ verify_url }}</code>
             </div>
-            <div class="meta-card">
-              <div class="meta-k">Issued At</div>
-              <div class="meta-v">{{ issued_at }}</div>
-        // Mantener aspecto sin deformar
-        var srcAspect = srcCanvas.width / srcCanvas.height;
-        var a4Aspect = A4_W / A4_H;
-        var drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-        if (srcAspect > a4Aspect) {
-          drawWidth = A4_W;
-          drawHeight = A4_W / srcAspect;
-          offsetY = (A4_H - drawHeight) / 2;
-        } else {
-          drawHeight = A4_H;
-          drawWidth = A4_H * srcAspect;
-          offsetX = (A4_W - drawWidth) / 2;
-        }
-        ctx.drawImage(srcCanvas, offsetX, offsetY, drawWidth, drawHeight
-            <div class="meta-card">
-              <div class="meta-k">Issuer</div>
-              <div class="meta-v">HackLabs Academy</div>
-            </div>
-          </div>
-        </div>
+          </footer>
 
-        <footer class="footer">
-          <div class="program-text">HackLabs Offensive Security Program</div>
-          <div class="verify">
-            Verify this certificate by checking the code on the official validation endpoint.<br>
-            <code>{{ verify_url }}</code>
-          </div>
-        </footer>
-      </section>
-    </article>
+        </section>
+      </article>
+    </div>
   </div>
+
   {% if show_toolbar %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     (function () {
       var canvasNode = document.getElementById('certificate-canvas');
-      var btnJpg = document.getElementById('btn-jpg');
-      var btnPdf = document.getElementById('btn-pdf');
+      var btnJpg    = document.getElementById('btn-jpg');
+      var btnPdf    = document.getElementById('btn-pdf');
+
+      /* A4 landscape in pixels at 300 dpi */
       var A4_W = 3508;
       var A4_H = 2480;
 
-      async function renderCertificate(scale) {
-        return await html2canvas(canvasNode, {
-          scale: scale || 2,
-          useCORS: true,
-          backgroundColor: '#0b1020',
-          logging: false,
-          onclone: function (doc) {
-            doc.querySelectorAll('.glow').forEach(function (el) { el.style.display = 'none'; });
-            doc.querySelectorAll('.toolbar').forEach(function (el) { el.style.display = 'none'; });
-          },
-        });
-      }
-
-      function buildA4Canvas(srcCanvas) {
-        var out = document.createElement('canvas');
-        out.width = A4_W;
-        out.height = A4_H;
-        var ctx = out.getContext('2d');
-        ctx.fillStyle = '#0b1020';
-        ctx.fillRect(0, 0, A4_W, A4_H);
-        ctx.drawImage(srcCanvas, 0, 0, A4_W, A4_H);
-        return out;
-      }
-
       function setBusy(on) {
         [btnJpg, btnPdf].forEach(function (b) {
-          if (!b) return;e
+          if (!b) return;
           b.disabled = on;
         });
       }
 
+      async function renderCertificate() {
+        /* Render the certificate at 3× to get crisp pixels */
+        return await html2canvas(canvasNode, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: '#060812',
+          logging: false,
+          onclone: function (doc) {
+            /* Hide glows and toolbar in the exported clone */
+            doc.querySelectorAll('.glow').forEach(function (el) {
+              el.style.display = 'none';
+            });
+            doc.querySelectorAll('.toolbar').forEach(function (el) {
+              el.style.display = 'none';
+            });
+            /* Remove border-radius so there are no rounded corners in the export */
+            var cvs = doc.getElementById('certificate-canvas');
+            if (cvs) { cvs.style.borderRadius = '0'; cvs.style.overflow = 'hidden'; }
+          },
+        });
+      }
+
+      function buildA4Canvas(src) {
+        /* Letterbox/pillarbox src into an exact A4 landscape canvas */
+        var out = document.createElement('canvas');
+        out.width  = A4_W;
+        out.height = A4_H;
+        var ctx = out.getContext('2d');
+        ctx.fillStyle = '#060812';
+        ctx.fillRect(0, 0, A4_W, A4_H);
+
+        var srcRatio = src.width / src.height;
+        var a4Ratio  = A4_W / A4_H;
+        var dw, dh, dx = 0, dy = 0;
+        if (srcRatio > a4Ratio) {
+          dw = A4_W;
+          dh = A4_W / srcRatio;
+          dy = (A4_H - dh) / 2;
+        } else {
+          dh = A4_H;
+          dw = A4_H * srcRatio;
+          dx = (A4_W - dw) / 2;
+        }
+        ctx.drawImage(src, dx, dy, dw, dh);
+        return out;
+      }
+
       if (btnJpg) {
         btnJpg.addEventListener('click', async function () {
+          setBusy(true);
           try {
-            setBusy(true);
-            var cv = await renderCertificate(2);
-            var a4cv = buildA4Canvas(cv);
+            var src  = await renderCertificate();
+            var a4   = buildA4Canvas(src);
             var link = document.createElement('a');
-            link.href = a4cv.toDataURL('image/jpeg', 0.95);
+            link.href     = a4.toDataURL('image/jpeg', 0.95);
             link.download = 'hacklabs-certificate-{{ learner }}.jpg';
             link.click();
-          } finally {
-            setBusy(false);
-          }
+          } catch (e) { console.error(e); }
+          finally { setBusy(false); }
         });
       }
 
       if (btnPdf) {
         btnPdf.addEventListener('click', async function () {
+          setBusy(true);
           try {
-            setBusy(true);
-            var cv = await renderCertificate(2);
-            var a4cv = buildA4Canvas(cv);
-            var img = a4cv.toDataURL('image/jpeg', 0.95);
-            var jspdf = window.jspdf;
-            var doc = new jspdf.jsPDF({
-              orientation: 'landscape',
-              unit: 'px',
-              format: 'a4'
-            });
+            var src  = await renderCertificate();
+            var a4   = buildA4Canvas(src);
+            var img  = a4.toDataURL('image/jpeg', 0.95);
+            var jsPDF = window.jspdf.jsPDF;
+            var doc   = new jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' });
             var pw = doc.internal.pageSize.getWidth();
             var ph = doc.internal.pageSize.getHeight();
             doc.addImage(img, 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
             doc.save('hacklabs-certificate-{{ learner }}.pdf');
-          } finally {
-            setBusy(false);
-          }
+          } catch (e) { console.error(e); }
+          finally { setBusy(false); }
         });
       }
     })();
