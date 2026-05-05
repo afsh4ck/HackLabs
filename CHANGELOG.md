@@ -1,3 +1,20 @@
+## 2026-05-05 — Correcciones criticas de labs + escenario Docker Escape ad-hoc
+
+- fix(account): Se reemplaza el `confirm()` nativo del navegador por un modal personalizado para eliminar cuenta en `templates/account/profile.html`.
+- fix(secrets): El endpoint vulnerable `/secrets` ahora sirve desde `/app/secret` (ruta relativa al proyecto) para evitar roturas por path absoluto en contenedor.
+- fix(flags): Limpieza de flags duplicadas/inconsistentes en `secret/`:
+  - Se elimina `secret/LFI-flag.txt` y se mantiene solo `secret/LFI/flag.txt`.
+  - Se elimina `secret/flag.txt` ambiguo y `secret/xxe-flag.txt` obsoleto.
+  - Se normaliza XXE en `secret/xxe_flag.txt` con flag `HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}`.
+- fix(xxe): Alineadas referencias de XXE en backend y plantillas al nuevo nombre `xxe_flag.txt` y nueva flag válida.
+- fix(deserialization): El lab de Insecure Deserialization ahora explica correctamente el caso `os.system()` (exit code entero) en vez de mostrar solo `0` sin contexto.
+- fix(path_traversal): Actualizados payloads y ejemplos a la ruta real de explotación (`../../secret/LFI/flag.txt`) y documentación de `A05-flag.txt`.
+- feat(container_escape): Se añade escenario aislado Docker-in-Docker para explotación funcional sin depender del contenedor principal:
+  - Nuevo compose: `docker-compose.docker-escape.yml`.
+  - Nuevos contenedores ad-hoc: `ad_hoc/docker_escape/dind` y `ad_hoc/docker_escape/victim`.
+  - Guía dedicada: `ad_hoc/docker_escape/README.md` (ES).
+- docs(container_escape): Resolución del lab actualizada (ES/EN) para usar flujo ad-hoc cuando no exista `/var/run/docker.sock` o `docker` en el contenedor principal.
+
 ## 2026-05-04 — Progreso por flags, UX de validacion y estabilidad
 
 - feat(progress): El progreso de labs pasa a validarse por flag enviada por el usuario (endpoint `POST /progress/submit-flag`) en lugar de toggle/auto-deteccion en frontend.
