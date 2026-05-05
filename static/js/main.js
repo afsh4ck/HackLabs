@@ -1148,6 +1148,10 @@ function showLevelUpOverlay(level, levelName, levelIcon, opts = {}) {
   const btnLabel  = isEn ? 'Continue' : 'Continuar';
   const hintTxt   = isEn ? 'Click to continue' : 'Haz clic para continuar';
   const iconClass = levelIcon || 'ph-graduation-cap';
+  const shareLabel = isEn ? 'Share on LinkedIn' : 'Compartir en LinkedIn';
+  const shareBtn = opts.linkedinShareUrl
+    ? `<a class="overlay-share-btn" href="${opts.linkedinShareUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation();"><i class="ph ph-linkedin-logo"></i>${shareLabel}</a>`
+    : '';
 
   function finish() {
     if (done) return;
@@ -1169,6 +1173,7 @@ function showLevelUpOverlay(level, levelName, levelIcon, opts = {}) {
           <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
         </button>
       </div>
+      ${shareBtn}
       <div class="levelup-hint">${hintTxt}</div>
     </div>`;
 
@@ -1190,6 +1195,10 @@ function showBadgeOverlay(badge, opts = {}) {
   const subtitle = isEn ? 'Achievement unlocked' : 'Logro desbloqueado';
   const btnLabel = isEn ? 'Continue' : 'Continuar';
   const hintTxt = isEn ? 'Click to continue' : 'Haz clic para continuar';
+  const shareLabel = isEn ? 'Share on LinkedIn' : 'Compartir en LinkedIn';
+  const shareBtn = badge.linkedin_share_url
+    ? `<a class="overlay-share-btn" href="${badge.linkedin_share_url}" target="_blank" rel="noopener" onclick="event.stopPropagation();"><i class="ph ph-linkedin-logo"></i>${shareLabel}</a>`
+    : '';
 
   function finish() {
     if (done) return;
@@ -1209,6 +1218,7 @@ function showBadgeOverlay(badge, opts = {}) {
           <i class="ph ph-arrow-square-right" style="font-size:1rem"></i>${btnLabel}
         </button>
       </div>
+      ${shareBtn}
       <div class="levelup-hint">${hintTxt}</div>
     </div>`;
 
@@ -1227,7 +1237,7 @@ function playProgressUnlockSequence(data, fallbackToast) {
       data.new_level,
       data.new_level_name,
       data.new_level_icon,
-      { onDone: next, timeout: 4200 }
+      { onDone: next, timeout: 4200, linkedinShareUrl: data.level_linkedin_share_url }
     ));
   }
 
@@ -1254,6 +1264,55 @@ function playProgressUnlockSequence(data, fallbackToast) {
   runNext();
 }
 
+function _injectAiTypingIndicator() {
+  const containers = [
+    document.getElementById('chat-messages'),
+    document.getElementById('leak-messages'),
+    document.getElementById('exfil-messages'),
+    document.getElementById('jailbreak-messages')
+  ].filter(Boolean);
+  const target = containers[0];
+  if (!target) return;
+
+  const row = document.createElement('div');
+  row.className = 'ai-typing-row';
+  row.innerHTML = '' +
+    '<div class="ai-typing-avatar"><i class="ph ph-robot"></i></div>' +
+    '<div class="ai-typing-bubble">' +
+      '<span class="ai-typing-dot"></span>' +
+      '<span class="ai-typing-dot"></span>' +
+      '<span class="ai-typing-dot"></span>' +
+    '</div>';
+  target.appendChild(row);
+  target.scrollTop = target.scrollHeight;
+}
+
+function initAiChatLoading() {
+  const forms = document.querySelectorAll('form[action^="/ai/"]');
+  if (!forms.length) return;
+
+  forms.forEach((form) => {
+    form.addEventListener('submit', (ev) => {
+      if (form.dataset.aiSubmitting === '1') return;
+      ev.preventDefault();
+      form.dataset.aiSubmitting = '1';
+
+      const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
+      const btn = form.querySelector('button[type="submit"]');
+      const label = form.dataset.aiSubmitLabel || (isEn ? 'Thinking' : 'Pensando');
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('ai-submit-loading');
+        btn.innerHTML = '<i class="ph ph-spinner-gap ai-spin"></i><span>' + label + '...</span>';
+      }
+
+      _injectAiTypingIndicator();
+      const delayMs = 850 + Math.floor(Math.random() * 450);
+      setTimeout(() => form.submit(), delayMs);
+    });
+  });
+}
+
 // ── Init ─────────────────────────────────────────────────────────
 (function init() {
   applyTheme();
@@ -1265,6 +1324,7 @@ function playProgressUnlockSequence(data, fallbackToast) {
   // initialize custom language dropdown (styles+handlers)
   try { initLangDropdown(); } catch(e) {}
   initSidebarSearch();
+  initAiChatLoading();
 
   // Dynamic footer year
   const fy = document.getElementById('footer-year');

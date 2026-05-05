@@ -187,6 +187,18 @@
               <span class="font-semibold">Hard</span>
               <span class="ml-auto">{% if difficulty == 'hard' %}<i class="ph-fill ph-check-circle" style="color:#ef4444"></i>{% endif %}</span>
             </button>
+            <button {% if nightmare_unlocked %}onclick="setDifficulty('nightmare')"{% endif %} type="button"
+                    class="diff-option diff-option--nightmare flex items-center gap-2 w-full px-3 py-2 text-xs transition hover:bg-white/5{% if difficulty == 'nightmare' %} active{% endif %}{% if not nightmare_unlocked %} locked{% endif %}">
+              <span class="diff-dot diff-dot--nightmare"></span>
+              <span class="font-semibold">Nightmare</span>
+              <span class="ml-auto">
+                {% if difficulty == 'nightmare' %}
+                  <i class="ph-fill ph-check-circle" style="color:#f43f5e"></i>
+                {% elif not nightmare_unlocked %}
+                  <i class="ph ph-lock-simple" style="color:#6b7280"></i>
+                {% endif %}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -338,7 +350,8 @@
       {% block content %}{% endblock %}
 
       {% if current_lab_id and current_lab_id != 'c2_sliver' %}
-      <div class="max-w-3xl mx-auto px-6 pb-6">
+      {% set _wide_flag_labs = ['ai_supply_chain', 'llm_exfil'] %}
+      <div class="{% if current_lab_id in _wide_flag_labs %}max-w-5xl{% else %}max-w-3xl{% endif %} mx-auto px-6 pb-6">
         <div class="hl-card border-l-4" style="border-left-color:var(--hl-primary)">
           <div class="text-xs uppercase tracking-wider mb-2" style="color:var(--hl-primary)">Validar Flag</div>
           {% if is_progress_user %}
@@ -461,9 +474,15 @@
         body: 'level=' + level
       }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.status === 'ok') {
-          localStorage.setItem('hacklabs_difficulty', level);
+          localStorage.setItem('hacklabs_difficulty', data.difficulty || level);
           location.reload();
+          return;
         }
+        if (data.error === 'nightmare_locked') {
+          alert('Nightmare se desbloquea al completar el 100% de labs.');
+          return;
+        }
+        alert('No se pudo cambiar la dificultad.');
       }).catch(function(err) {
         console.error('Error setting difficulty:', err);
         localStorage.setItem('hacklabs_difficulty', level);
@@ -475,7 +494,7 @@
     (function() {
       var current = '{{ difficulty }}';
       var stored = localStorage.getItem('hacklabs_difficulty');
-      if (stored && stored !== current && ['easy','medium','hard'].indexOf(stored) !== -1) {
+      if (stored && stored !== current && ['easy','medium','hard','nightmare'].indexOf(stored) !== -1) {
         fetch('/set-difficulty', {
           method: 'POST',
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},

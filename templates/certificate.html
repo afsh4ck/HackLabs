@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HackLabs Completion Certificate</title>
+  <style>
+    :root {
+      --hl-primary: #ceff00;
+      --bg-1: #060812;
+      --bg-2: #0d1220;
+      --panel: #111828;
+      --muted: #94a3b8;
+      --line: rgba(206,255,0,.28);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 12% 18%, #18243f 0%, var(--bg-1) 42%), linear-gradient(135deg, var(--bg-2), #02040c);
+      color: #e2e8f0;
+      overflow: auto;
+    }
+    .viewport {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .toolbar {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: min(96vw, 900px);
+    }
+    .tool-btn {
+      border: 1px solid rgba(206,255,0,.35);
+      background: rgba(6,8,18,.8);
+      color: #d9f99d;
+      border-radius: 9px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tool-btn:hover { background: rgba(206,255,0,.14); }
+    .tool-btn[disabled] { opacity: .55; cursor: wait; }
+    .canvas {
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(255,255,255,.02), rgba(255,255,255,.005));
+      box-shadow: 0 30px 90px rgba(0,0,0,.45), inset 0 0 110px rgba(206,255,0,.05);
+    }
+    .glow {
+      position: absolute;
+      width: 720px;
+      height: 720px;
+      border-radius: 999px;
+      filter: blur(120px);
+      opacity: .2;
+      pointer-events: none;
+    }
+    .glow.a { background: var(--hl-primary); top: -240px; right: -180px; }
+    .glow.b { background: #22d3ee; bottom: -260px; left: -140px; }
+
+    .frame {
+      position: absolute;
+      inset: 28px;
+      border: 1px solid rgba(206,255,0,.22);
+      border-radius: 16px;
+      padding: 54px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        linear-gradient(transparent 49%, rgba(206,255,0,.02) 50%, transparent 51%) 0 0 / 100% 28px,
+        linear-gradient(90deg, transparent 49%, rgba(206,255,0,.02) 50%, transparent 51%) 0 0 / 28px 100%;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .badge {
+      border: 1px solid rgba(206,255,0,.35);
+      color: var(--hl-primary);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      background: rgba(206,255,0,.08);
+    }
+
+    .title {
+      margin-top: 28px;
+      text-align: center;
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 66px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--hl-primary);
+      text-shadow: 0 0 30px rgba(206,255,0,.3);
+    }
+    .title p {
+      margin: 14px 0 0;
+      color: #cbd5e1;
+      font-size: 24px;
+      letter-spacing: .02em;
+    }
+
+    .learner {
+      margin: 42px auto 0;
+      width: 86%;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      background: rgba(15,23,42,.62);
+      padding: 36px;
+    }
+    .learner .label {
+      text-transform: uppercase;
+      letter-spacing: .22em;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .learner .name {
+      margin: 0;
+      font-size: 64px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: .03em;
+      text-shadow: 0 8px 30px rgba(0,0,0,.45);
+    }
+    .learner .rank {
+      margin-top: 18px;
+      font-size: 24px;
+      color: #d1fae5;
+      font-weight: 700;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px;
+      margin-top: 34px;
+    }
+    .meta-card {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 18px;
+      background: rgba(2,6,23,.6);
+    }
+    .meta-k {
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .meta-v {
+      font-size: 20px;
+      color: #f1f5f9;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .meta-v.mono { font-family: "Consolas", "Courier New", monospace; font-size: 19px; }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 28px;
+    }
+    .seal {
+      width: 170px;
+      height: 170px;
+      border-radius: 999px;
+      border: 2px solid rgba(206,255,0,.4);
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 32% 28%, rgba(206,255,0,.22), rgba(206,255,0,.05) 55%, rgba(0,0,0,.45) 100%);
+      box-shadow: inset 0 0 34px rgba(206,255,0,.13), 0 0 26px rgba(206,255,0,.2);
+      text-align: center;
+    }
+    .seal b {
+      display: block;
+      font-size: 15px;
+      letter-spacing: .14em;
+      color: var(--hl-primary);
+      text-transform: uppercase;
+    }
+    .seal span {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      letter-spacing: .09em;
+      color: #cbd5e1;
+      text-transform: uppercase;
+    }
+    .verify {
+      max-width: 65%;
+      text-align: right;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .verify code {
+      display: inline-block;
+      margin-top: 8px;
+      border: 1px solid rgba(206,255,0,.25);
+      background: rgba(206,255,0,.08);
+      color: #dcfce7;
+      font-family: "Consolas", "Courier New", monospace;
+      padding: 8px 12px;
+      border-radius: 8px;
+      word-break: break-all;
+    }
+
+    @media print {
+      .toolbar { display: none !important; }
+      .viewport { padding: 0; }
+      .canvas {
+        box-shadow: none;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <a class="tool-btn" href="/progress/certificate?download=1">Descargar HTML</a>
+    <button id="btn-png" class="tool-btn" type="button">Exportar PNG</button>
+    <button id="btn-pdf" class="tool-btn" type="button">Exportar PDF</button>
+    <button class="tool-btn" type="button" onclick="window.print()">Imprimir / PDF</button>
+  </div>
+  <div class="viewport">
+    <article class="canvas" id="certificate-canvas">
+      <div class="glow a"></div>
+      <div class="glow b"></div>
+      <section class="frame">
+        <header class="topbar">
+          <div>HackLabs Offensive Security Program</div>
+          <div class="badge">Completion Verified</div>
+        </header>
+
+        <div>
+          <div class="title">
+            <h1>Certificate Of Mastery</h1>
+            <p>This certifies that the learner completed 100% of HackLabs practical tracks.</p>
+          </div>
+
+          <div class="learner">
+            <div class="label">Awarded To</div>
+            <h2 class="name">{{ learner }}</h2>
+            <div class="rank">{{ rank }}</div>
+          </div>
+
+          <div class="meta">
+            <div class="meta-card">
+              <div class="meta-k">Certificate Code</div>
+              <div class="meta-v mono">{{ cert_code }}</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-k">Issued At</div>
+              <div class="meta-v">{{ issued_at }}</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-k">Issuer</div>
+              <div class="meta-v">HackLabs Academy</div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          <div class="seal">
+            <div>
+              <b>HackLabs</b>
+              <span>Security Elite</span>
+            </div>
+          </div>
+          <div class="verify">
+            Verify this certificate by checking the code on the official validation endpoint.<br>
+            <code>{{ verify_url }}</code>
+          </div>
+        </footer>
+      </section>
+    </article>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    (function () {
+      var canvasNode = document.getElementById('certificate-canvas');
+      var btnPng = document.getElementById('btn-png');
+      var btnPdf = document.getElementById('btn-pdf');
+
+      async function renderCertificate(scale) {
+        return await html2canvas(canvasNode, {
+          scale: scale || 2,
+          useCORS: true,
+          backgroundColor: null,
+          logging: false,
+        });
+      }
+
+      function setBusy(on) {
+        [btnPng, btnPdf].forEach(function (b) {
+          if (!b) return;
+          b.disabled = on;
+        });
+      }
+
+      if (btnPng) {
+        btnPng.addEventListener('click', async function () {
+          try {
+            setBusy(true);
+            var cv = await renderCertificate(2);
+            var link = document.createElement('a');
+            link.href = cv.toDataURL('image/png');
+            link.download = 'hacklabs-certificate-{{ learner }}.png';
+            link.click();
+          } finally {
+            setBusy(false);
+          }
+        });
+      }
+
+      if (btnPdf) {
+        btnPdf.addEventListener('click', async function () {
+          try {
+            setBusy(true);
+            var cv = await renderCertificate(2);
+            var img = cv.toDataURL('image/png');
+            var jspdf = window.jspdf;
+            var doc = new jspdf.jsPDF({
+              orientation: 'landscape',
+              unit: 'px',
+              format: [1920, 1080]
+            });
+            doc.addImage(img, 'PNG', 0, 0, 1920, 1080, undefined, 'FAST');
+            doc.save('hacklabs-certificate-{{ learner }}.pdf');
+          } finally {
+            setBusy(false);
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -42,10 +42,10 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
 
     <!-- LEFT: Code editor -->
-    <div>
+    <div class="xl:col-span-7">
       <div class="hl-card">
         <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)">
           <i class="ph ph-code mr-1"></i>
@@ -78,7 +78,7 @@
           </button>
         </div>
 
-        <form method="POST" action="/ai/supply_chain">
+        <form method="POST" action="/ai/supply_chain" data-ai-submit-label="Analizando codigo">
           <textarea name="code" id="code-editor" rows="10"
                     class="hl-input font-mono text-xs w-full mb-3"
                     style="resize:vertical;min-height:200px"
@@ -93,7 +93,7 @@
     </div>
 
     <!-- RIGHT: Review output + Backdoor Analyzer -->
-    <div class="space-y-4">
+    <div class="xl:col-span-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
       {% if result %}
       <!-- Review output -->
       <div class="hl-card" style="{% if result.backdoored %}border-color:rgba(239,68,68,.4){% else %}border-color:rgba(34,197,94,.3){% endif %}">
@@ -147,7 +147,7 @@
 
       {% else %}
       <!-- Placeholder when no result yet -->
-      <div class="hl-card" style="border-style:dashed">
+      <div class="hl-card md:col-span-2 xl:col-span-1" style="border-style:dashed">
         <div class="text-center py-8 text-gray-600">
           <i class="ph ph-code text-3xl mb-2 block"></i>
           <p class="text-xs">

@@ -719,9 +719,11 @@ pre.hljs-block .hljs {
 .difficulty-btn--easy   { border-color: rgba(34,197,94,.5);  color: #22c55e; background: rgba(34,197,94,.08); }
 .difficulty-btn--medium { border-color: rgba(245,158,11,.5); color: #f59e0b; background: rgba(245,158,11,.08); }
 .difficulty-btn--hard   { border-color: rgba(239,68,68,.5);  color: #ef4444; background: rgba(239,68,68,.08); }
+.difficulty-btn--nightmare { border-color: rgba(244,63,94,.6); color: #f43f5e; background: rgba(244,63,94,.12); }
 .difficulty-btn--easy:hover   { background: rgba(34,197,94,.15); }
 .difficulty-btn--medium:hover { background: rgba(245,158,11,.15); }
 .difficulty-btn--hard:hover   { background: rgba(239,68,68,.15); }
+.difficulty-btn--nightmare:hover { background: rgba(244,63,94,.2); }
 
 .diff-dot, .diff-dot-inline {
   width: 8px; height: 8px;
@@ -732,12 +734,128 @@ pre.hljs-block .hljs {
 .diff-dot--easy   { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.5); }
 .diff-dot--medium { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,.5); }
 .diff-dot--hard   { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,.5); }
+.diff-dot--nightmare { background: #f43f5e; box-shadow: 0 0 8px rgba(244,63,94,.55); }
 
 .diff-option { color: #9ca3af; cursor: pointer; }
 .diff-option--easy:hover,   .diff-option--easy.active   { color: #22c55e; }
 .diff-option--medium:hover, .diff-option--medium.active { color: #f59e0b; }
 .diff-option--hard:hover,   .diff-option--hard.active   { color: #ef4444; }
+.diff-option--nightmare:hover, .diff-option--nightmare.active { color: #f43f5e; }
 .diff-option.active { font-weight: 800; }
+.diff-option.locked {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.reward-card {
+  background: rgba(244,63,94,.07);
+  border: 1px solid rgba(244,63,94,.35);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+.reward-card-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #fb7185;
+  font-weight: 800;
+}
+.reward-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(251,113,133,.35);
+  background: rgba(251,113,133,.1);
+  color: #fecdd3;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.achievement-badge.premium {
+  border-color: rgba(59,130,246,.35);
+  background: rgba(59,130,246,.1);
+}
+.achievement-badge.premium.unlocked {
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 16px rgba(59,130,246,.25);
+}
+
+.overlay-share-btn {
+  margin-top: .75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .55rem 1rem;
+  border-radius: .65rem;
+  border: 1px solid rgba(34,197,94,.35);
+  color: #86efac;
+  background: rgba(34,197,94,.1);
+  font-size: .75rem;
+  font-weight: 700;
+}
+.overlay-share-btn:hover {
+  background: rgba(34,197,94,.2);
+}
+
+.ai-typing-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ai-typing-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--hl-primary-rgb), .2);
+  color: var(--hl-primary);
+  flex-shrink: 0;
+}
+
+.ai-typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .09);
+}
+
+.ai-typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #9ca3af;
+  animation: ai-typing-bounce 1s infinite ease-in-out;
+}
+
+.ai-typing-dot:nth-child(2) { animation-delay: .12s; }
+.ai-typing-dot:nth-child(3) { animation-delay: .24s; }
+
+@keyframes ai-typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+
+.ai-submit-loading {
+  opacity: .9;
+  cursor: wait;
+}
+
+.ai-spin {
+  animation: ai-spin 1s linear infinite;
+}
+
+@keyframes ai-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /* Hover amarillo para enlaces en contenido de labs y referencias */
 .hl-card a:hover, .lang-content a:hover, .lab-section a:hover {

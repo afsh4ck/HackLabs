@@ -54,21 +54,6 @@
 {% set level_icons = ['ph-graduation-cap','ph-sword','ph-bug','ph-crosshair','ph-target','ph-skull','ph-flame','ph-crown'] %}
 {% set level_colors = ['#6b7280','#3b82f6','#CEFF00','#f97316','#ef4444','#a855f7','#f59e0b','#ec4899'] %}
 
-{# Achievements definition #}
-{% set owasp_ids = ['idor','crypto','sqli','cmdi','insecure_design','misconfig','outdated','auth_failures','integrity','logging','ssrf'] %}
-{% set vuln_ids  = labs | selectattr('category','equalto','Vulnerabilidades') | map(attribute='id') | list %}
-{% set ia_ids    = labs | selectattr('category','equalto','IA Attacks') | map(attribute='id') | list %}
-{% set crit_ids  = labs | selectattr('risk','equalto','critical') | map(attribute='id') | list %}
-
-{% set ach_first     = done_count >= 1 %}
-{% set ach_owasp     = owasp_ids | select('in', completed) | list | length == owasp_ids | length %}
-{% set ach_vulns     = vuln_ids  | select('in', completed) | list | length == vuln_ids | length %}
-{% set ach_ia        = ia_ids    | select('in', completed) | list | length == ia_ids | length %}
-{% set ach_critical  = crit_ids  | select('in', completed) | list | length == crit_ids | length %}
-{% set ach_halfway   = pct >= 50 %}
-{% set ach_all       = done_count == total_labs %}
-{% set ach_speed     = done_count >= 5 %}
-
 <div class="p-6 lg:p-8 max-w-5xl mx-auto">
 
   <!-- Breadcrumb -->
@@ -168,6 +153,55 @@
     </div>
   </div>
 
+  {% if special_rank or unlocks.nightmare_unlocked or unlocks.secret_lab_unlocked or certificate %}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+    <div class="reward-card">
+      <div class="reward-card-title">Rango Especial</div>
+      <div class="mt-2 text-sm text-gray-200 font-semibold">
+        {% if special_rank %}
+          <span class="reward-chip"><i class="ph ph-crown text-xs"></i>{{ special_rank }}</span>
+        {% else %}
+          <span class="text-gray-500">Completa todos los labs para desbloquearlo</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="reward-card">
+      <div class="reward-card-title">Certificado</div>
+      <div class="mt-2 text-sm text-gray-300">
+        {% if certificate %}
+          <div class="text-xs text-gray-400 mb-2">Código: <span class="font-mono text-gray-200">{{ certificate.cert_code }}</span></div>
+          <div class="flex gap-2 flex-wrap">
+            <a href="/progress/certificate" class="reward-chip"><i class="ph ph-download-simple text-xs"></i>Descargar</a>
+            <a href="/progress/certificate/verify?code={{ certificate.cert_code }}" class="reward-chip"><i class="ph ph-shield-check text-xs"></i>Verificar</a>
+          </div>
+        {% else %}
+          <span class="text-gray-500">Disponible al 100% de completado</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="reward-card">
+      <div class="reward-card-title">Modo Nightmare</div>
+      <div class="mt-2 text-sm text-gray-300">
+        {% if unlocks.nightmare_unlocked %}
+          <span class="reward-chip"><i class="ph ph-lightning text-xs"></i>Desbloqueado en el selector de dificultad</span>
+        {% else %}
+          <span class="text-gray-500">Completa todos los labs para desbloquearlo</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="reward-card">
+      <div class="reward-card-title">Lab Secreto Final</div>
+      <div class="mt-2 text-sm text-gray-300">
+        {% if unlocks.secret_lab_unlocked %}
+          <a href="/labs/final-boss" class="reward-chip"><i class="ph ph-skull text-xs"></i>Abrir Final Boss</a>
+        {% else %}
+          <span class="text-gray-500">Se desbloquea con el 100% de progreso</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Category mini bars -->
   <div class="grid grid-cols-3 gap-3 mb-6">
     {% for cat, cat_i18n, done, total, color in [
@@ -194,22 +228,13 @@
       <span data-i18n="progress_achievements">Logros</span>
     </h2>
     <div class="flex flex-wrap gap-3">
-      {% for unlocked, icon, name, desc_es, desc_en in [
-        (ach_first,    '🩸', 'First Blood',     'Completar el primer lab',                 'Complete your first lab'),
-        (ach_speed,    '⚡', 'Speed Runner',    'Completar 5 labs',                        'Complete 5 labs'),
-        (ach_halfway,  '🏁', 'Half Way There',  'Completar el 50% de los labs',            'Complete 50% of labs'),
-        (ach_owasp,    '🛡️', 'OWASP Warrior',   'Completar todos los OWASP Top 10',        'Complete all OWASP Top 10 labs'),
-        (ach_vulns,    '🐛', 'Bug Hunter',       'Completar todas las Vulnerabilidades',    'Complete all Vulnerabilities labs'),
-        (ach_ia,       '🤖', 'AI Breaker',       'Completar todos los IA Attacks',          'Complete all AI Attacks labs'),
-        (ach_critical, '💀', 'Critical Mass',    'Completar todos los labs Críticos',       'Complete all critical labs'),
-        (ach_all,      '👑', 'Completionist',    'Completar todos los labs',                'Complete all labs'),
-      ] %}
-      <div class="achievement-badge {% if unlocked %}unlocked{% endif %}"
-           data-desc-es="{{ desc_es }}"
-           data-desc-en="{{ desc_en }}"
-           title="{{ desc_es }}">
-        <span class="achievement-icon">{{ icon }}</span>
-        <span class="achievement-name">{{ name }}</span>
+      {% for badge in badge_catalog %}
+      <div class="achievement-badge {% if badge.unlocked %}unlocked{% endif %} {% if badge.premium %}premium{% endif %}"
+           data-desc-es="{{ badge.desc_es }}"
+           data-desc-en="{{ badge.desc_en }}"
+           title="{{ badge.desc_es }}">
+        <span class="achievement-icon">{{ badge.icon }}</span>
+        <span class="achievement-name">{{ badge.name }}</span>
       </div>
       {% endfor %}
     </div>

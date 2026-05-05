@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Verificar Certificado - HackLabs{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto w-full">
+  <div class="hl-card">
+    <div class="text-xs uppercase tracking-widest mb-3" style="color:var(--hl-primary)">HackLabs Certificate Registry</div>
+    <h1 class="text-xl font-bold text-white mb-4">Verificacion de Certificado</h1>
+
+    <form method="GET" action="/progress/certificate/verify" class="flex gap-2 flex-wrap mb-5">
+      <input name="code" value="{{ code }}" class="hl-input font-mono text-xs flex-1 min-w-[240px]" placeholder="HL-CERT-XXXXXXXXXXXX">
+      <button type="submit" class="lab-complete-btn" style="height:36px">
+        <i class="ph ph-magnifying-glass"></i>
+        <span>Verificar</span>
+      </button>
+    </form>
+
+    {% if code and cert %}
+    <div class="reward-card">
+      <div class="reward-card-title">Certificado Valido</div>
+      <div class="mt-2 text-sm text-gray-200">Usuario: <span class="font-semibold">{{ cert.account_username }}</span></div>
+      <div class="text-sm text-gray-300">Codigo: <span class="font-mono">{{ cert.cert_code }}</span></div>
+      <div class="text-sm text-gray-400">Emitido: {{ cert.issued_at }}</div>
+    </div>
+    {% elif code %}
+    <div class="alert-error text-sm">No se encontro un certificado valido para ese codigo.</div>
+    {% else %}
+    <div class="text-sm text-gray-500">Introduce un codigo de certificado para validar su autenticidad.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

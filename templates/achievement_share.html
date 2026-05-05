@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}HackLabs Achievement{% endblock %}
+
+{% block content %}
+<div class="p-6 lg:p-10 max-w-3xl mx-auto w-full">
+  <div class="hl-card" style="text-align:center;background:radial-gradient(circle at top, rgba(206,255,0,.12), rgba(8,9,20,.95));border-color:rgba(206,255,0,.3)">
+    <div class="text-5xl mb-3">{{ icon }}</div>
+    <div class="text-xs uppercase tracking-[0.22em] text-gray-500 mb-2">HackLabs Achievement</div>
+    <h1 class="text-2xl font-black text-white mb-2">{{ title }}</h1>
+    <p class="text-sm text-gray-300 mb-1">Unlocked by <span style="color:var(--hl-primary);font-weight:700">{{ user }}</span></p>
+    {% if ts_human %}
+    <p class="text-xs text-gray-500 mb-5">{{ ts_human }}</p>
+    {% endif %}
+
+    <div class="flex gap-2 justify-center flex-wrap">
+      <a class="overlay-share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.url|urlencode }}" target="_blank" rel="noopener">
+        <i class="ph ph-linkedin-logo"></i>
+        Compartir en LinkedIn
+      </a>
+      <a class="overlay-share-btn" href="/" style="border-color:rgba(206,255,0,.35);background:rgba(206,255,0,.1);color:#d9f99d">
+        <i class="ph ph-house"></i>
+        Ir a HackLabs
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
