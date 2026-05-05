@@ -45,40 +45,38 @@
   <div class="hl-card border-l-4" style="border-left-color:var(--hl-primary)">
     <div class="text-xs uppercase tracking-wider mb-2" style="color:var(--hl-primary)">Validar Flag</div>
     {% if is_progress_user %}
-    <div class="space-y-2">
-      <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Introduce la flag de este lab</label>
+    <div class="flex gap-2 items-end flex-wrap">
+      <div class="flex-1 min-w-[220px]">
         <input id="lab-flag-input" type="text" placeholder="HL{...}"
                value="{{ current_lab_validated_flag | e }}"
-               class="hl-input font-mono text-xs w-full"
+               class="hl-input font-mono text-xs"
                {% if current_lab_id in completed_lab_ids %}disabled{% endif %}>
       </div>
       <button id="lab-complete-btn" onclick="submitLabFlag('{{ current_lab_id }}')"
-              class="lab-complete-btn w-full justify-center {% if current_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
+              class="lab-complete-btn h-[34px] {% if current_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
               title="{% if current_lab_id in completed_lab_ids %}Desmarcar lab como completado{% else %}Validar flag del laboratorio{% endif %}">
         <i class="ph {% if current_lab_id in completed_lab_ids %}ph-arrow-counter-clockwise{% else %}ph-flag-checkered{% endif %} text-sm"></i>
         <span>{% if current_lab_id in completed_lab_ids %}Desmarcar{% else %}Validar flag{% endif %}</span>
       </button>
     </div>
     {% else %}
-    <div class="space-y-2">
-      <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Introduce la flag de este lab</label>
+    <div class="flex gap-2 items-end flex-wrap">
+      <div class="flex-1 min-w-[220px]">
         <input id="lab-flag-input" type="text" placeholder="HL{...}"
-               class="hl-input font-mono text-xs w-full"
+               class="hl-input font-mono text-xs"
                disabled>
       </div>
       <button id="lab-complete-btn" type="button"
-              class="lab-complete-btn lab-complete-btn--disabled w-full justify-center"
+              class="lab-complete-btn h-[34px] lab-complete-btn--disabled"
               title="Inicia sesión para validar flags"
               disabled>
         <i class="ph ph-lock-simple text-sm"></i>
         <span>Enviar flag</span>
       </button>
-      <a href="/account/login?next={{ request.path }}" class="text-xs inline-block hover:opacity-80" style="color:var(--hl-primary)">
-        Inicia sesión para validar y guardar progreso
-      </a>
     </div>
+    <a href="/account/login?next={{ request.path }}" class="text-xs mt-2 inline-block hover:opacity-80" style="color:var(--hl-primary)">
+      Inicia sesión para validar y guardar progreso
+    </a>
     {% endif %}
   </div>
 

