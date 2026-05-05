@@ -701,6 +701,12 @@ pre.hljs-block .hljs {
 /* Make primary-color keywords stand out */
 .hljs-keyword, .hljs-selector-tag { color: var(--hl-primary) !important; }
 .hljs-built_in                    { color: var(--hl-secondary) !important; }
+/* Make comments visually subdued for readability */
+.hljs-comment,
+.hljs-quote {
+  color: #8b949e !important;
+  font-style: italic;
+}
 /* Prose modal code blocks */
 .prose-custom pre code.hljs { border-radius: 0.5rem; font-size: 0.75rem; }
 

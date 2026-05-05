@@ -828,8 +828,19 @@ function openResolution() {
   // Highlight code inside modal and add copy buttons
   body.querySelectorAll('pre').forEach(pre => {
     pre.style.position = 'relative';
-    const code = pre.querySelector('code');
-    if (code && typeof hljs !== 'undefined') hljs.highlightElement(code);
+    let code = pre.querySelector('code');
+    if (!code) {
+      const rawText = (pre.textContent || '').trim();
+      code = document.createElement('code');
+      code.className = 'language-' + detectLang(rawText);
+      code.textContent = rawText;
+      pre.textContent = '';
+      pre.appendChild(code);
+    }
+    pre.classList.add('hljs-block');
+    if (code && typeof hljs !== 'undefined' && !code.classList.contains('hljs')) {
+      hljs.highlightElement(code);
+    }
     const btn = document.createElement('button');
     btn.title = HL.lang === 'en' ? 'Copy' : 'Copiar';
     btn.innerHTML = '<i class="ph ph-copy"></i>';
@@ -928,9 +939,27 @@ function initCodeHighlight() {
     hljs.highlightElement(code);
   });
 
+  // Convert plain <pre> blocks into <pre><code> so all labs get syntax highlighting
+  document.querySelectorAll('pre').forEach(pre => {
+    if (pre.closest('script, style')) return;
+    if (pre.querySelector('code')) return;
+
+    const rawText = (pre.textContent || '').trim();
+    if (!rawText) return;
+
+    const code = document.createElement('code');
+    code.className = 'language-' + detectLang(rawText);
+    code.textContent = rawText;
+    pre.textContent = '';
+    pre.appendChild(code);
+    pre.classList.add('hljs-block');
+  });
+
   // Also highlight any <pre><code> blocks already in the DOM
   document.querySelectorAll('pre code:not(.hljs)').forEach(b => {
     if (!b.className) b.className = 'language-bash';
+    const pre = b.closest('pre');
+    if (pre) pre.classList.add('hljs-block');
     hljs.highlightElement(b);
   });
 }

