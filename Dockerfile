@@ -35,9 +35,6 @@ COPY . .
 # Create required directories and init DB
 RUN mkdir -p uploads logs static/files data && python init_db.py
 
-# Create /secrets/LFI for Path Traversal lab (flag accessible via ../../../../../secrets/LFI/flag.txt)
-RUN mkdir -p /secrets/LFI && cp /app/secret/LFI/flag.txt /secrets/LFI/flag.txt
-
 # HTTP / FTP / SSH / SMB (+ PASV ports for vsftpd)
 EXPOSE 21 22 80 445 40000-40010
 

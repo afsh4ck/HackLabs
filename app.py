@@ -1955,17 +1955,17 @@ def xxe_api():
 @app.route('/secrets')
 def secrets_listing():
     # VULNERABLE: directory listing expuesto sin autenticación (A05 misconfiguration)
-    # Serves from /secrets/ at container root (created by Dockerfile from secret/LFI/)
-    base_path = '/secrets'
+    # Serves from /app/secret/ — available immediately without container rebuild
+    base_path = os.path.join(os.path.dirname(__file__), 'secret')
     try:
         entries = []
         for root, dirs, files in os.walk(base_path):
-            rel = os.path.relpath(root, base_path)
+            rel = os.path.relpath(root, base_path).replace('\\', '/')
             for d in sorted(dirs):
-                dir_rel = os.path.join(rel, d).replace('\\', '/').lstrip('./')
+                dir_rel = (rel + '/' + d).lstrip('./') if rel != '.' else d
                 entries.append(dir_rel + '/')
             for f in sorted(files):
-                file_rel = os.path.join(rel, f).replace('\\', '/').lstrip('./')
+                file_rel = (rel + '/' + f).lstrip('./') if rel != '.' else f
                 entries.append(file_rel)
     except Exception:
         entries = []
@@ -1979,7 +1979,7 @@ def secrets_listing():
 @app.route('/secrets/<path:filename>')
 def secrets_file(filename):
     # VULNERABLE: archivos sensibles expuestos bajo /secrets sin autenticación
-    base_path = '/secrets'
+    base_path = os.path.join(os.path.dirname(__file__), 'secret')
     full_path = os.path.abspath(os.path.join(base_path, filename))
     if not full_path.startswith(os.path.abspath(base_path) + os.sep):
         return 'Not Found', 404
@@ -2377,7 +2377,16 @@ def deserialization():
         try:
             decoded_preview = base64.b64decode(data)
             obj = pickle.loads(decoded_preview)
-            result = obj.decode(errors='replace') if isinstance(obj, bytes) else str(obj)
+            if isinstance(obj, int):
+                # os.system() devuelve el exit code (0=éxito), NO la salida del comando.
+                # El comando se ejecuta en el servidor pero su stdout no es capturado.
+                result = (f'[exit code: {obj}] — El comando se ejecutó en el servidor '
+                          f'(exit code {obj} = éxito). '
+                          f'usa subprocess.check_output(["cmd"], shell=True) para capturar la salida.')
+            elif isinstance(obj, bytes):
+                result = obj.decode(errors='replace')
+            else:
+                result = str(obj)
             if isinstance(obj, (int, bytes)) or b'system' in decoded_preview.lower() or b'__reduce__' in decoded_preview.lower():
                 flag = deserialization_flag
         except Exception as e:

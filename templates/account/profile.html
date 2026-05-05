@@ -115,15 +115,54 @@
     <form id="delete-form" method="POST" action="/account/delete" class="hidden"></form>
   </div>
 
-  <script>
-  function confirmDelete() {
-    if (confirm('⚠ ¿Eliminar cuenta?\n\nEsta acción es irreversible. Se eliminará tu cuenta y TODO tu progreso de laboratorios.\n\n¿Deseas continuar?')) {
-      document.getElementById('delete-form').submit();
-    }
-  }
-  </script>
-
   {% endif %}
+</div>
+
+<!-- Modal de confirmación de eliminación de cuenta -->
+<div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:rgba(0,0,0,.75);backdrop-filter:blur(4px)">
+  <div class="hl-card max-w-sm w-full mx-4" style="border:1px solid rgba(239,68,68,.4)">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(239,68,68,.15)">
+        <i class="ph ph-warning-octagon text-xl" style="color:#f87171"></i>
+      </div>
+      <div>
+        <h3 class="font-bold text-gray-900 dark:text-white text-sm">Eliminar cuenta</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400">Esta acción es irreversible</p>
+      </div>
+    </div>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+      Se eliminará permanentemente tu cuenta y <strong>todo tu progreso</strong> en los laboratorios. No podrás recuperarlo.
+    </p>
+    <div class="flex gap-3 justify-end">
+      <button type="button" onclick="closeDeleteModal()"
+              class="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+              style="background:rgba(255,255,255,.06);color:inherit;border:1px solid rgba(255,255,255,.15)">
+        Cancelar
+      </button>
+      <button type="button" onclick="document.getElementById('delete-form').submit()"
+              class="rounded-lg px-4 py-2 text-sm font-semibold transition-all"
+              style="background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.5)">
+        <i class="ph ph-trash text-sm"></i> Sí, eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete() {
+  const modal = document.getElementById('delete-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+function closeDeleteModal() {
+  const modal = document.getElementById('delete-modal');
+  modal.classList.remove('flex');
+  modal.classList.add('hidden');
+}
+document.getElementById('delete-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+</script>
 
 </div>
 {% endblock %}
