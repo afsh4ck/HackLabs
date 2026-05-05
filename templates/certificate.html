@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HackLabs Completion Certificate</title>
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
@@ -114,11 +115,16 @@
       text-transform: none;
     }
     .brand-mark {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      background: linear-gradient(135deg, var(--hl-primary), #a3e635);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--hl-primary);
+      color: #0b0f1a;
       box-shadow: 0 0 18px rgba(206,255,0,.45);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
     }
     .brand-name {
       display: flex;
@@ -174,8 +180,11 @@
       text-align: center;
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 18px;
-      background: rgba(15,23,42,.62);
+      background: rgba(15,23,42,.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       padding: 36px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px rgba(0,0,0,.22);
     }
     .learner .label {
       text-transform: uppercase;
@@ -204,13 +213,17 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 18px;
-      margin-top: 34px;
+      margin: 34px auto 0;
+      width: 86%;
     }
     .meta-card {
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 12px;
       padding: 18px;
-      background: rgba(2,6,23,.6);
+      background: rgba(2,6,23,.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 10px 20px rgba(0,0,0,.18);
     }
     .meta-k {
       text-transform: uppercase;
@@ -233,43 +246,12 @@
       align-items: flex-end;
       margin-top: 28px;
     }
-    .footer-left {
-      display: flex;
-      align-items: flex-end;
-      gap: 14px;
-    }
     .program-text {
       color: #cbd5e1;
       font-size: 13px;
       letter-spacing: .1em;
       text-transform: uppercase;
       margin-bottom: 10px;
-    }
-    .seal {
-      width: 170px;
-      height: 170px;
-      border-radius: 999px;
-      border: 2px solid rgba(206,255,0,.4);
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at 32% 28%, rgba(206,255,0,.22), rgba(206,255,0,.05) 55%, rgba(0,0,0,.45) 100%);
-      box-shadow: inset 0 0 34px rgba(206,255,0,.13), 0 0 26px rgba(206,255,0,.2);
-      text-align: center;
-    }
-    .seal b {
-      display: block;
-      font-size: 15px;
-      letter-spacing: .14em;
-      color: var(--hl-primary);
-      text-transform: uppercase;
-    }
-    .seal span {
-      display: block;
-      margin-top: 8px;
-      font-size: 12px;
-      letter-spacing: .09em;
-      color: #cbd5e1;
-      text-transform: uppercase;
     }
     .verify {
       max-width: 65%;
@@ -323,7 +305,6 @@
     <a class="tool-btn" href="/progress/certificate?download=1">Descargar HTML</a>
     <button id="btn-jpg" class="tool-btn" type="button">Descargar JPG</button>
     <button id="btn-pdf" class="tool-btn" type="button">Exportar PDF</button>
-    <button class="tool-btn" type="button" onclick="window.print()">Imprimir / PDF</button>
   </div>
   {% endif %}
   <div class="viewport">
@@ -333,9 +314,9 @@
       <section class="frame">
         <header class="topbar">
           <div class="brand">
-            <span class="brand-mark"></span>
+            <span class="brand-mark"><i class="ph-fill ph-flask"></i></span>
             <div class="brand-name">
-              <b>HackLabs</b>
+              <b>Hack<span style="color:var(--hl-primary)">Labs</span></b>
               <span>Ethical Hacking Labs</span>
             </div>
           </div>
@@ -371,15 +352,7 @@
         </div>
 
         <footer class="footer">
-          <div class="footer-left">
-            <div class="seal">
-              <div>
-                <b>HackLabs</b>
-                <span>Security Elite</span>
-              </div>
-            </div>
-            <div class="program-text">HackLabs Offensive Security Program</div>
-          </div>
+          <div class="program-text">HackLabs Offensive Security Program</div>
           <div class="verify">
             Verify this certificate by checking the code on the official validation endpoint.<br>
             <code>{{ verify_url }}</code>
@@ -403,8 +376,12 @@
         return await html2canvas(canvasNode, {
           scale: scale || 2,
           useCORS: true,
-          backgroundColor: null,
+          backgroundColor: '#0b1020',
           logging: false,
+          onclone: function (doc) {
+            doc.querySelectorAll('.glow').forEach(function (el) { el.style.display = 'none'; });
+            doc.querySelectorAll('.toolbar').forEach(function (el) { el.style.display = 'none'; });
+          },
         });
       }
 
@@ -413,18 +390,9 @@
         out.width = A4_W;
         out.height = A4_H;
         var ctx = out.getContext('2d');
-        ctx.fillStyle = '#060812';
+        ctx.fillStyle = '#0b1020';
         ctx.fillRect(0, 0, A4_W, A4_H);
-
-        var pad = 70;
-        var maxW = A4_W - pad * 2;
-        var maxH = A4_H - pad * 2;
-        var scale = Math.min(maxW / srcCanvas.width, maxH / srcCanvas.height);
-        var drawW = Math.round(srcCanvas.width * scale);
-        var drawH = Math.round(srcCanvas.height * scale);
-        var x = Math.round((A4_W - drawW) / 2);
-        var y = Math.round((A4_H - drawH) / 2);
-        ctx.drawImage(srcCanvas, x, y, drawW, drawH);
+        ctx.drawImage(srcCanvas, 0, 0, A4_W, A4_H);
         return out;
       }
 
