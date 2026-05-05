@@ -31,6 +31,10 @@ docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh
 cat /root/root.txt
 ```
 
+La flag esperada es `HL{c0n741n3r_35c4p3_h057_4cc355}`.
+
+Nota: el "host" accesible tras el escape es el del escenario ad-hoc aislado, no el sistema operativo principal que ejecuta HackLabs.
+
 ## Detener y limpiar
 
 ```bash

