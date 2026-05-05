@@ -194,19 +194,44 @@ echo "  ${YELLOW}  Presiona Ctrl+C para detener el laboratorio${NC}"
 echo ""
 
 # ── Abrir Firefox ──
-# Kali usa Firefox por defecto; abrirlo con perfil temporal para desactivar
-# HTTPS-Only y evitar que convierta http://IP → https://IP
+# Si Firefox ya está abierto en la sesión del usuario, abrir nueva pestaña
+# en ESA sesión (mismo perfil logueado, extensiones, etc.).
 _BROWSER_USER="${SUDO_USER:-}"
 if [[ -n "$_BROWSER_USER" ]]; then
-    _DISPLAY=$(grep -z DISPLAY /proc/$(pgrep -u "$_BROWSER_USER" -n)/environ 2>/dev/null | tr -d '\0' | sed 's/DISPLAY=//')
-    [[ -z "$_DISPLAY" ]] && _DISPLAY=":0"
     _FF=$(command -v firefox-esr 2>/dev/null || command -v firefox 2>/dev/null)
     if [[ -n "$_FF" ]]; then
-        _PROF=$(mktemp -d)
-        chown "$_BROWSER_USER":"$_BROWSER_USER" "$_PROF"
-        printf 'user_pref("dom.security.https_only_mode", false);\nuser_pref("dom.security.https_only_mode_ever_enabled", false);\n' > "$_PROF/user.js"
-        sudo -u "$_BROWSER_USER" DISPLAY="$_DISPLAY" \
-            "$_FF" --profile "$_PROF" --no-remote "http://${CONTAINER_IP}" &>/dev/null &
+        _URL="http://${CONTAINER_IP}"
+        _FF_PID=$(pgrep -u "$_BROWSER_USER" -x firefox | head -1)
+        [[ -z "$_FF_PID" ]] && _FF_PID=$(pgrep -u "$_BROWSER_USER" -x firefox-esr | head -1)
+
+        # Intenta heredar entorno gráfico de la sesión real del usuario.
+        _DISPLAY=":0"
+        _DBUS=""
+        if [[ -n "$_FF_PID" ]] && [[ -r "/proc/${_FF_PID}/environ" ]]; then
+            _ENV_DUMP=$(tr '\0' '\n' < "/proc/${_FF_PID}/environ" 2>/dev/null || true)
+            _DISPLAY=$(printf '%s\n' "$_ENV_DUMP" | awk -F= '/^DISPLAY=/{print $2; exit}')
+            _DBUS=$(printf '%s\n' "$_ENV_DUMP" | awk -F= '/^DBUS_SESSION_BUS_ADDRESS=/{print substr($0,index($0,$2)); exit}')
+            [[ -z "$_DISPLAY" ]] && _DISPLAY=":0"
+        fi
+
+        if [[ -n "$_FF_PID" ]]; then
+            # Firefox ya abierto: fuerza nueva pestaña en la sesión existente.
+            if [[ -n "$_DBUS" ]]; then
+                sudo -u "$_BROWSER_USER" env DISPLAY="$_DISPLAY" \
+                    DBUS_SESSION_BUS_ADDRESS="$_DBUS" \
+                    HOME="/home/${_BROWSER_USER}" \
+                    "$_FF" --new-tab "$_URL" &>/dev/null &
+            else
+                sudo -u "$_BROWSER_USER" env DISPLAY="$_DISPLAY" \
+                    HOME="/home/${_BROWSER_USER}" \
+                    "$_FF" --new-tab "$_URL" &>/dev/null &
+            fi
+        else
+            # No hay Firefox abierto: abrir con perfil normal del usuario.
+            sudo -u "$_BROWSER_USER" env DISPLAY="$_DISPLAY" \
+                HOME="/home/${_BROWSER_USER}" \
+                "$_FF" "$_URL" &>/dev/null &
+        fi
     fi
 fi
 
