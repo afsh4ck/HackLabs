@@ -416,7 +416,7 @@ def get_lab_flag_map():
         'reverse_shell': [root_flag],
         'ssti': ['HL{55t1_73mp14t3_rc3_5ucc355}'],
         'xss': ['HL{x55_c00k13_57341_5ucc355}'],
-        'xxe': ['HL{xx3_xm1_3n717y_0wn3d}'],
+        'xxe': ['HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}'],
 
         # IA Attacks
         'ai_jailbreak': ['HL{j41lbr34k_1ts_w0rk1ng}', 'HL{ai_jailbreak_guardrails_bypassed}'],
@@ -1926,7 +1926,7 @@ def xxe_api():
         message = doc.findtext('message', default='')
 
         ticket_id = f'TK-{random.randint(10000, 99999)}'
-        xxe_flag = 'HL{xx3_xm1_3n717y_0wn3d}'
+        xxe_flag = 'HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}'
         extracted_values = [name, email, subject, message]
         leaked_flag = xxe_flag if any(xxe_flag in (v or '') for v in extracted_values) else None
 

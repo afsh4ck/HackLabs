@@ -414,7 +414,7 @@ Flag dedicada: `HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}` (se expone en la cabecera `X-H
 | Hard | Filtra `../` y `..\` recursivamente (bypass: double URL encoding `%252e%252e%252f`) |
 
 El servidor registra cada petición en `logs/access.log` incluyendo el User-Agent. Accesible via LFI como `../../logs/access.log`. En servidores con mod_php, envenenar el log con PHP en el User-Agent permite ejecución de código.
-También existe directory listing vulnerable en `/secrets` con flag dedicada `LFI-flag.txt` → `HL{1f1_53cr375_d1r_3xp053d}`.
+También existe directory listing vulnerable en `/secrets` con flag dedicada `LFI/flag.txt` → `HL{1f1_53cr375_d1r_3xp053d}`.
 
 </details>
 
@@ -472,7 +472,7 @@ En Reflected/Stored, al ejecutar `alert(document.cookie)` se observa cookie de l
 | Medium | Bloquea protocolo `file://` (bypass: SSRF con `http://` a servicios internos) |
 | Hard | Bloquea `DOCTYPE`, `ENTITY`, `SYSTEM`, `PUBLIC` case-insensitive |
 
-Flag dedicada XXE: `HL{xx3_xm1_3n717y_0wn3d}` (lectura recomendada: `file:///app/secret/xxe-flag.txt`).
+Flag dedicada XXE: `HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}` (lectura recomendada: `file:///app/secret/xxe_flag.txt`).
 
 </details>
 
@@ -511,6 +511,10 @@ Flag: `HL{bu51n355_l0g1c_0wn3d}`
 | Hard | Cgroup release_agent — escape sin socket ni privileged, solo `CAP_SYS_ADMIN` |
 
 ```bash
+# Escenario recomendado (aislado, no depende del contenedor principal)
+docker compose -f docker-compose.docker-escape.yml up -d --build
+docker exec -it hacklabs-escape-victim sh
+
 # Easy — Docker socket escape
 docker run -v /:/hostfs --rm -it alpine chroot /hostfs sh
 cat /root/root.txt
