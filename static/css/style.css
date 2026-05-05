@@ -684,20 +684,18 @@ i.ph, i.ph-bold, i.ph-fill { line-height: 1; vertical-align: middle; }
 /* ── highlight.js integration ── */
 pre.hljs-block {
   margin: 0;
-  border-radius: 0.625rem;
-  border: 1px solid rgba(55,65,81,0.5);
   font-size: 0.75rem;
   line-height: 1.7;
   overflow-x: auto;
   font-family: 'JetBrains Mono', monospace;
 }
 pre.hljs-block .hljs {
-  padding: 0.875rem 1rem;
-  border-radius: 0.625rem;
-  background: #1a1d23;
+  padding: 0;
+  border-radius: 0;
+  background: transparent !important;
 }
-/* Tone down hljs background to match our dark-800 cards */
-.hljs { background: #1a1d23 !important; }
+/* Let the <pre> container define background/border to avoid double frame */
+.hljs { background: transparent !important; }
 /* Make primary-color keywords stand out */
 .hljs-keyword, .hljs-selector-tag { color: var(--hl-primary) !important; }
 .hljs-built_in                    { color: var(--hl-secondary) !important; }
