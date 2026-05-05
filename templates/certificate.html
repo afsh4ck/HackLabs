@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HackLabs Completion Certificate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --hl-primary: #ceff00;
@@ -18,7 +21,7 @@
       margin: 0;
       width: 100%;
       height: 100%;
-      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       background: radial-gradient(circle at 12% 18%, #18243f 0%, var(--bg-1) 42%), linear-gradient(135deg, var(--bg-2), #02040c);
       color: #e2e8f0;
       overflow: auto;
@@ -103,6 +106,38 @@
       font-size: 14px;
       color: var(--muted);
     }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+    .brand-mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--hl-primary), #a3e635);
+      box-shadow: 0 0 18px rgba(206,255,0,.45);
+    }
+    .brand-name {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.05;
+    }
+    .brand-name b {
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: #f8fafc;
+      letter-spacing: .03em;
+    }
+    .brand-name span {
+      font-size: 11px;
+      letter-spacing: .16em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
     .badge {
       border: 1px solid rgba(206,255,0,.35);
       color: var(--hl-primary);
@@ -119,6 +154,7 @@
     }
     .title h1 {
       margin: 0;
+      font-family: "Space Grotesk", "Inter", sans-serif;
       font-size: 66px;
       letter-spacing: .08em;
       text-transform: uppercase;
@@ -150,6 +186,7 @@
     }
     .learner .name {
       margin: 0;
+      font-family: "Space Grotesk", "Inter", sans-serif;
       font-size: 64px;
       font-weight: 800;
       color: #f8fafc;
@@ -196,6 +233,18 @@
       align-items: flex-end;
       margin-top: 28px;
     }
+    .footer-left {
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+    }
+    .program-text {
+      color: #cbd5e1;
+      font-size: 13px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
     .seal {
       width: 170px;
       height: 170px;
@@ -241,10 +290,27 @@
       word-break: break-all;
     }
 
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+
     @media print {
       .toolbar { display: none !important; }
-      .viewport { padding: 0; }
+      html, body {
+        background: #fff !important;
+        width: 100%;
+        height: 100%;
+      }
+      .viewport {
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
       .canvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
         box-shadow: none;
         border: none;
       }
@@ -252,19 +318,27 @@
   </style>
 </head>
 <body>
+  {% if show_toolbar %}
   <div class="toolbar">
     <a class="tool-btn" href="/progress/certificate?download=1">Descargar HTML</a>
-    <button id="btn-png" class="tool-btn" type="button">Exportar PNG</button>
+    <button id="btn-jpg" class="tool-btn" type="button">Descargar JPG</button>
     <button id="btn-pdf" class="tool-btn" type="button">Exportar PDF</button>
     <button class="tool-btn" type="button" onclick="window.print()">Imprimir / PDF</button>
   </div>
+  {% endif %}
   <div class="viewport">
     <article class="canvas" id="certificate-canvas">
       <div class="glow a"></div>
       <div class="glow b"></div>
       <section class="frame">
         <header class="topbar">
-          <div>HackLabs Offensive Security Program</div>
+          <div class="brand">
+            <span class="brand-mark"></span>
+            <div class="brand-name">
+              <b>HackLabs</b>
+              <span>Ethical Hacking Labs</span>
+            </div>
+          </div>
           <div class="badge">Completion Verified</div>
         </header>
 
@@ -297,11 +371,14 @@
         </div>
 
         <footer class="footer">
-          <div class="seal">
-            <div>
-              <b>HackLabs</b>
-              <span>Security Elite</span>
+          <div class="footer-left">
+            <div class="seal">
+              <div>
+                <b>HackLabs</b>
+                <span>Security Elite</span>
+              </div>
             </div>
+            <div class="program-text">HackLabs Offensive Security Program</div>
           </div>
           <div class="verify">
             Verify this certificate by checking the code on the official validation endpoint.<br>
@@ -311,13 +388,16 @@
       </section>
     </article>
   </div>
+  {% if show_toolbar %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     (function () {
       var canvasNode = document.getElementById('certificate-canvas');
-      var btnPng = document.getElementById('btn-png');
+      var btnJpg = document.getElementById('btn-jpg');
       var btnPdf = document.getElementById('btn-pdf');
+      var A4_W = 3508;
+      var A4_H = 2480;
 
       async function renderCertificate(scale) {
         return await html2canvas(canvasNode, {
@@ -328,21 +408,42 @@
         });
       }
 
+      function buildA4Canvas(srcCanvas) {
+        var out = document.createElement('canvas');
+        out.width = A4_W;
+        out.height = A4_H;
+        var ctx = out.getContext('2d');
+        ctx.fillStyle = '#060812';
+        ctx.fillRect(0, 0, A4_W, A4_H);
+
+        var pad = 70;
+        var maxW = A4_W - pad * 2;
+        var maxH = A4_H - pad * 2;
+        var scale = Math.min(maxW / srcCanvas.width, maxH / srcCanvas.height);
+        var drawW = Math.round(srcCanvas.width * scale);
+        var drawH = Math.round(srcCanvas.height * scale);
+        var x = Math.round((A4_W - drawW) / 2);
+        var y = Math.round((A4_H - drawH) / 2);
+        ctx.drawImage(srcCanvas, x, y, drawW, drawH);
+        return out;
+      }
+
       function setBusy(on) {
-        [btnPng, btnPdf].forEach(function (b) {
+        [btnJpg, btnPdf].forEach(function (b) {
           if (!b) return;
           b.disabled = on;
         });
       }
 
-      if (btnPng) {
-        btnPng.addEventListener('click', async function () {
+      if (btnJpg) {
+        btnJpg.addEventListener('click', async function () {
           try {
             setBusy(true);
             var cv = await renderCertificate(2);
+            var a4cv = buildA4Canvas(cv);
             var link = document.createElement('a');
-            link.href = cv.toDataURL('image/png');
-            link.download = 'hacklabs-certificate-{{ learner }}.png';
+            link.href = a4cv.toDataURL('image/jpeg', 0.95);
+            link.download = 'hacklabs-certificate-{{ learner }}.jpg';
             link.click();
           } finally {
             setBusy(false);
@@ -355,14 +456,17 @@
           try {
             setBusy(true);
             var cv = await renderCertificate(2);
-            var img = cv.toDataURL('image/png');
+            var a4cv = buildA4Canvas(cv);
+            var img = a4cv.toDataURL('image/jpeg', 0.95);
             var jspdf = window.jspdf;
             var doc = new jspdf.jsPDF({
               orientation: 'landscape',
               unit: 'px',
-              format: [1920, 1080]
+              format: 'a4'
             });
-            doc.addImage(img, 'PNG', 0, 0, 1920, 1080, undefined, 'FAST');
+            var pw = doc.internal.pageSize.getWidth();
+            var ph = doc.internal.pageSize.getHeight();
+            doc.addImage(img, 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
             doc.save('hacklabs-certificate-{{ learner }}.pdf');
           } finally {
             setBusy(false);
@@ -371,5 +475,6 @@
       }
     })();
   </script>
+  {% endif %}
 </body>
 </html>

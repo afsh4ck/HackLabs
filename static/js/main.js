@@ -1287,15 +1287,56 @@ function _injectAiTypingIndicator() {
   target.scrollTop = target.scrollHeight;
 }
 
+function _escapeHtml(text) {
+  return (text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function _resolveAiChatContainer(actionPath) {
+  if (actionPath === '/ai/leak') return document.getElementById('leak-messages');
+  if (actionPath === '/ai/exfil') return document.getElementById('exfil-messages');
+  if (actionPath === '/ai/prompt' || actionPath === '/ai/jailbreak') return document.getElementById('chat-messages');
+  return null;
+}
+
+function _injectAiUserBubble(target, message) {
+  if (!target || !message) return;
+  const row = document.createElement('div');
+  row.className = 'flex items-start gap-2 justify-end';
+  row.innerHTML = '' +
+    '<div class="rounded-xl px-3 py-2 text-sm max-w-prose" style="background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.2);white-space:pre-wrap">' +
+      _escapeHtml(message) +
+    '</div>' +
+    '<div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs bg-gray-200 dark:bg-dark-600 text-gray-500">' +
+      '<i class="ph ph-user"></i>' +
+    '</div>';
+  target.appendChild(row);
+  target.scrollTop = target.scrollHeight;
+}
+
 function initAiChatLoading() {
   const forms = document.querySelectorAll('form[action^="/ai/"]');
   if (!forms.length) return;
 
   forms.forEach((form) => {
-    form.addEventListener('submit', (ev) => {
+    form.addEventListener('submit', async (ev) => {
       if (form.dataset.aiSubmitting === '1') return;
+
+      const actionRaw = form.getAttribute('action') || '';
+      const actionPath = actionRaw.split('?')[0];
+      const chatTarget = _resolveAiChatContainer(actionPath);
+      const messageInput = form.querySelector('input[name="message"], textarea[name="message"]');
+      if (!chatTarget || !messageInput) return;
+
       ev.preventDefault();
       form.dataset.aiSubmitting = '1';
+      const userMessage = (messageInput.value || '').trim();
+      _injectAiUserBubble(chatTarget, userMessage);
+      _injectAiTypingIndicator();
 
       const isEn = (typeof HL !== 'undefined' && HL.lang === 'en');
       const btn = form.querySelector('button[type="submit"]');
@@ -1306,9 +1347,22 @@ function initAiChatLoading() {
         btn.innerHTML = '<i class="ph ph-spinner-gap ai-spin"></i><span>' + label + '...</span>';
       }
 
-      _injectAiTypingIndicator();
-      const delayMs = 850 + Math.floor(Math.random() * 450);
-      setTimeout(() => form.submit(), delayMs);
+      try {
+        const payload = new FormData(form);
+        const response = await fetch(actionRaw, {
+          method: (form.method || 'POST').toUpperCase(),
+          body: payload,
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const html = await response.text();
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (err) {
+        form.dataset.aiSubmitting = '0';
+        form.submit();
+      }
     });
   });
 }

@@ -1,3 +1,16 @@
+## 2026-05-05 - Hotfix IA chat y certificado A4
+
+- fix(ai-ui): En los labs de IA, el mensaje del usuario aparece instantaneamente al enviar y, en ese mismo momento, se muestra la animacion de "pensando/escribiendo" del chatbot.
+- feat(ai-ui): Envio de chat por `fetch` para mantener feedback visual inmediato sin esperar al refresco del servidor.
+- fix(llm_exfil): El endpoint `/ai/exfil/collect` ahora responde JSON con `status`, `received` y `flag` detectada (si viene en `data`) para pruebas con `curl`.
+- feat(llm_exfil): El payload de exfil puede reutilizar URLs externas enviadas por el usuario (p.ej. listener en Kali) para simular exfiltracion real hacia `nc -nlvp`.
+- docs(llm_exfil): Resolucion actualizada (ES/EN) con flujo practico de captura desde Kali y validacion local del endpoint.
+- feat(final_boss): Se agrega resolucion bilingue (ES/EN) en formato completo, alineada con el resto de labs.
+- style(certificate): Certificado actualizado con tipografias oficiales de HackLabs (`Space Grotesk` para titulares, `Inter` para texto) y ajustes de branding solicitados.
+- feat(certificate): Exportaciones en formato A4 horizontal para JPG, PDF e impresion, manteniendo el mismo diseño visual.
+- fix(certificate): La URL de verificacion en el certificado pasa a ruta relativa (`/progress/certificate/verify?code=...`) para evitar dependencia de IP/host.
+- fix(certificate): El HTML descargado del certificado no incluye la toolbar de acciones (descargar/exportar/imprimir).
+
 ## 2026-05-05 - Endgame rewards, IA UX y certificado profesional
 
 - feat(rewards): Se completa el sistema de recompensas al 100% con desbloqueos persistentes: Nightmare, rango especial, lab secreto final, pack premium de badges y certificado de completion.

@@ -29,4 +29,90 @@
     <div class="text-xs text-gray-500">Tip: alterna entre Hard y Nightmare para practicar versiones progresivas del mismo objetivo.</div>
   </div>
 </div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Objetivo del Final Boss</h3>
+    <p>Este laboratorio final simula un escenario de encadenamiento real: reconocimiento, acceso inicial, movimiento lateral y escalada a root para recuperar la flag final.</p>
+
+    <h3>Cadena de explotación sugerida</h3>
+    <ol>
+      <li>Reconocimiento del stack y servicios internos expuestos.</li>
+      <li>Identificación de un vector inicial (inyección, SSRF o credenciales reutilizadas).</li>
+      <li>Ejecución remota limitada y estabilización de shell.</li>
+      <li>Escalada de privilegios mediante mala configuración local.</li>
+      <li>Acceso al contexto root y extracción de la flag final.</li>
+    </ol>
+
+    <h3>Flujo práctico (ejemplo)</h3>
+    <pre><code class="language-bash"># 1) Enumeración base
+id
+uname -a
+sudo -l
+find / -perm -4000 -type f 2&gt;/dev/null
+
+# 2) Estabilizar TTY
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+export TERM=xterm
+
+# 3) Buscar credenciales y rutas sensibles
+grep -R "password\|token\|secret" /home /opt /etc 2&gt;/dev/null | head
+
+# 4) PrivEsc (según vector detectado)
+# Ejemplo típico: binario SUID vulnerable o sudo mal configurado
+
+# 5) Flag final
+cat /root/final_flag.txt</code></pre>
+
+    <h3>Mitigaciones</h3>
+    <ul>
+      <li>Principio de mínimo privilegio para servicios y usuarios.</li>
+      <li>Eliminar SUID innecesarios y revisar reglas de sudo.</li>
+      <li>Rotación de credenciales y segregación de secretos.</li>
+      <li>Hardening de contenedores/hosts y monitoreo de comandos anómalos.</li>
+    </ul>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Final Boss objective</h3>
+    <p>This final lab simulates a realistic chained attack: recon, initial foothold, lateral movement, and root privilege escalation to retrieve the final flag.</p>
+
+    <h3>Suggested exploitation chain</h3>
+    <ol>
+      <li>Recon the stack and exposed internal services.</li>
+      <li>Find an initial vector (injection, SSRF, or reused credentials).</li>
+      <li>Gain limited code execution and stabilize your shell.</li>
+      <li>Escalate privileges through local misconfiguration.</li>
+      <li>Reach root context and extract the final flag.</li>
+    </ol>
+
+    <h3>Practical flow (example)</h3>
+    <pre><code class="language-bash"># 1) Baseline enumeration
+id
+uname -a
+sudo -l
+find / -perm -4000 -type f 2&gt;/dev/null
+
+# 2) Stabilize TTY
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+export TERM=xterm
+
+# 3) Hunt for credentials and sensitive paths
+grep -R "password\|token\|secret" /home /opt /etc 2&gt;/dev/null | head
+
+# 4) PrivEsc (based on discovered vector)
+# Common path: vulnerable SUID binary or weak sudo policy
+
+# 5) Final flag
+cat /root/final_flag.txt</code></pre>
+
+    <h3>Mitigations</h3>
+    <ul>
+      <li>Apply least-privilege to services and user accounts.</li>
+      <li>Remove unnecessary SUID binaries and audit sudo rules.</li>
+      <li>Rotate credentials and isolate secrets properly.</li>
+      <li>Harden containers/hosts and monitor anomalous command execution.</li>
+    </ul>
+  </div>
+</div>
 {% endblock %}
