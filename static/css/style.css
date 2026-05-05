@@ -877,8 +877,15 @@ pre.hljs-block .hljs {
   transition: opacity .2s;
 }
 .progress-ring-wrap:hover { opacity: .8; }
+.progress-ring-wrap.progress-ring-complete {
+  animation: crown-glow 2s ease-in-out infinite;
+}
+@keyframes crown-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(245,158,11,.4)); }
+  50% { filter: drop-shadow(0 0 8px rgba(245,158,11,.7)); }
+}
 .progress-ring-fill {
-  transition: stroke-dashoffset .6s ease;
+  transition: stroke-dashoffset .6s ease, stroke .3s ease;
 }
 .progress-ring-label {
   position: absolute;

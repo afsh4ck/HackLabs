@@ -128,9 +128,10 @@
         {% set _circ  = 87.96 %}
         {% set _total = all_labs|length %}
         {% set _offset = (_circ * (1 - progress_count / _total)) if (_total > 0 and is_progress_user) else _circ %}
+        {% set _is_complete = (progress_count == _total) if _total > 0 else False %}
         {% if is_progress_user %}
         <a href="/progress" id="nav-progress-ring"
-           class="progress-ring-wrap flex-shrink-0"
+           class="progress-ring-wrap flex-shrink-0 {% if _is_complete %}progress-ring-complete{% endif %}"
            title="Mi progreso: {{ progress_count }}/{{ _total }} labs completados">
         {% else %}
         <a href="/account/login?next=/progress" id="nav-progress-ring"
@@ -141,7 +142,7 @@
             <circle cx="18" cy="18" r="14" fill="none"
                     stroke="rgba(206,255,0,.15)" stroke-width="2.5"/>
             <circle cx="18" cy="18" r="14" fill="none"
-                    stroke="{% if is_progress_user %}var(--hl-primary){% else %}rgba(156,163,175,.25){% endif %}"
+                    stroke="{% if is_progress_user %}{% if _is_complete %}#f59e0b{% else %}var(--hl-primary){% endif %}{% else %}rgba(156,163,175,.25){% endif %}"
                     stroke-width="2.5"
                     stroke-dasharray="{{ _circ }}"
                     stroke-dashoffset="{{ _offset | round(2) }}"
@@ -150,7 +151,11 @@
                     class="progress-ring-fill"/>
           </svg>
           {% if is_progress_user %}
+            {% if _is_complete %}
+          <span class="progress-ring-label" style="color:#f59e0b;text-shadow:0 0 8px rgba(245,158,11,.5)"><i class="ph-fill ph-crown" style="font-size:14px"></i></span>
+            {% else %}
           <span class="progress-ring-label">{{ progress_count }}<span class="progress-ring-total">/{{ _total }}</span></span>
+            {% endif %}
           {% else %}
           <span class="progress-ring-label progress-ring-label--locked"><i class="ph ph-lock-simple" style="font-size:10px"></i></span>
           {% endif %}

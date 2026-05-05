@@ -72,6 +72,55 @@
       background: linear-gradient(145deg, rgba(255,255,255,.02), rgba(255,255,255,.005));
       box-shadow: 0 30px 90px rgba(0,0,0,.45), inset 0 0 110px rgba(206,255,0,.05);
     }
+    @media (max-width: 2560px) {
+      .canvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+      }
+    }
+    @media (max-width: 768px) {
+      .canvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+        border-radius: 16px;
+      }
+      .frame {
+        padding: 32px 24px !important;
+        inset: 16px !important;
+      }
+      .topbar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .title h1 {
+        font-size: 42px;
+      }
+      .title p {
+        font-size: 16px;
+      }
+      .learner {
+        width: 100% !important;
+        padding: 24px;
+      }
+      .learner .name {
+        font-size: 42px;
+      }
+      .meta {
+        width: 100% !important;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .meta-card {
+        padding: 14px;
+      }
+      .verify {
+        max-width: 100% !important;
+        text-align: left;
+      }
+    }
     .glow {
       position: absolute;
       width: 720px;
@@ -137,6 +186,10 @@
       font-size: 24px;
       color: #f8fafc;
       letter-spacing: .03em;
+    }
+    .brand-name b span {
+      font-size: 24px;
+      font-weight: 800;
     }
     .brand-name span {
       font-size: 11px;
@@ -343,7 +396,20 @@
             <div class="meta-card">
               <div class="meta-k">Issued At</div>
               <div class="meta-v">{{ issued_at }}</div>
-            </div>
+        // Mantener aspecto sin deformar
+        var srcAspect = srcCanvas.width / srcCanvas.height;
+        var a4Aspect = A4_W / A4_H;
+        var drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+        if (srcAspect > a4Aspect) {
+          drawWidth = A4_W;
+          drawHeight = A4_W / srcAspect;
+          offsetY = (A4_H - drawHeight) / 2;
+        } else {
+          drawHeight = A4_H;
+          drawWidth = A4_H * srcAspect;
+          offsetX = (A4_W - drawWidth) / 2;
+        }
+        ctx.drawImage(srcCanvas, offsetX, offsetY, drawWidth, drawHeight
             <div class="meta-card">
               <div class="meta-k">Issuer</div>
               <div class="meta-v">HackLabs Academy</div>
@@ -398,7 +464,7 @@
 
       function setBusy(on) {
         [btnJpg, btnPdf].forEach(function (b) {
-          if (!b) return;
+          if (!b) return;e
           b.disabled = on;
         });
       }
