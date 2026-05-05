@@ -1,0 +1,21 @@
+# Runtime / generated
+data/
+logs/
+uploads/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+*.sqlite3
+
+# Python env
+.env
+.venv
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
