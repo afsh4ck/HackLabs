@@ -27,6 +27,7 @@ services:
       - hacklabs_db:/app/data
       - hacklabs_uploads:/app/uploads
       - hacklabs_logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock  # Container Escape lab
 
 # ──────────────────────────────────────────────────────────────────
 # Opción avanzada: macvlan (IP propia en la LAN, requiere root)

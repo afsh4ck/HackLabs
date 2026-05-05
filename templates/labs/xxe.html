@@ -4,13 +4,6 @@
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
-  <!-- Note: xss_flag cookie is from the XSS lab, not XXE -->
-  <div class="hl-card mb-4 border-l-4" style="border-left-color:#f59e0b;background:rgba(245,158,11,.06)">
-    <div class="flex items-start gap-2 text-xs text-yellow-500">
-      <i class="ph ph-info text-sm flex-shrink-0 mt-0.5"></i>
-      <span><strong>Nota:</strong> Si ves una cookie <code class="font-mono">xss_flag</code> en Burp, es del lab de XSS (persiste en el navegador). La flag de <strong>este lab XXE</strong> aparece en el campo <code class="font-mono">flag</code> de la respuesta JSON cuando extraes el archivo con éxito.</span>
-    </div>
-  </div>
   <div class="hl-card mb-4">
     <div class="flex items-center gap-2 mb-4">
       <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
@@ -19,42 +12,42 @@
     <form id="ticketForm" class="space-y-3">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Nombre completo</label>
-          <input type="text" name="name" class="hl-input" placeholder="Juan Pérez" required>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="xxe_lbl_full_name">Nombre completo</label>
+          <input type="text" name="name" class="hl-input" data-i18n-placeholder="xxe_ph_name" placeholder="Juan Pérez" required>
         </div>
         <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Email</label>
-          <input type="email" name="email" class="hl-input" placeholder="juan@empresa.com" required>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="xxe_lbl_email">Email</label>
+          <input type="email" name="email" class="hl-input" data-i18n-placeholder="xxe_ph_email" placeholder="juan@empresa.com" required>
         </div>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Departamento</label>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="xxe_lbl_department">Departamento</label>
           <select name="subject" class="hl-input">
-            <option value="Soporte Técnico">Soporte Técnico</option>
-            <option value="Ventas">Ventas</option>
-            <option value="Recursos Humanos">Recursos Humanos</option>
-            <option value="Administración">Administración</option>
-            <option value="Seguridad IT">Seguridad IT</option>
+            <option value="Soporte Técnico" data-i18n="xxe_opt_support">Soporte Técnico</option>
+            <option value="Ventas" data-i18n="xxe_opt_sales">Ventas</option>
+            <option value="Recursos Humanos" data-i18n="xxe_opt_hr">Recursos Humanos</option>
+            <option value="Administración" data-i18n="xxe_opt_admin">Administración</option>
+            <option value="Seguridad IT" data-i18n="xxe_opt_security">Seguridad IT</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Prioridad</label>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="xxe_lbl_priority">Prioridad</label>
           <select id="priority" class="hl-input">
-            <option value="baja">🟢 Baja</option>
-            <option value="media" selected>🟡 Media</option>
-            <option value="alta">🟠 Alta</option>
-            <option value="critica">🔴 Crítica</option>
+            <option value="baja" data-i18n="xxe_opt_low">🟢 Baja</option>
+            <option value="media" selected data-i18n="xxe_opt_medium">🟡 Media</option>
+            <option value="alta" data-i18n="xxe_opt_high">🟠 Alta</option>
+            <option value="critica" data-i18n="xxe_opt_critical">🔴 Crítica</option>
           </select>
         </div>
       </div>
       <div>
-        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Descripción del problema</label>
-        <textarea name="message" rows="3" class="hl-input" placeholder="Describe el problema con detalle..." required></textarea>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="xxe_lbl_description">Descripción del problema</label>
+        <textarea name="message" rows="3" class="hl-input" data-i18n-placeholder="xxe_ph_message" placeholder="Describe el problema con detalle..." required></textarea>
       </div>
       <button type="submit" class="btn-primary w-full sm:w-auto">
         <svg class="w-4 h-4 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-        Enviar Ticket
+        <span data-i18n="xxe_btn_send">Enviar Ticket</span>
       </button>
     </form>
   </div>
@@ -63,14 +56,14 @@
   <div id="ticketResult" class="hl-card mb-4 border-l-4 hidden" style="border-left-color:var(--hl-primary)">
     <div class="flex items-center gap-2 mb-3">
       <svg class="w-5 h-5" style="color:var(--hl-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span class="text-sm font-bold" style="color:var(--hl-primary)">Ticket creado con éxito</span>
+      <span class="text-sm font-bold" style="color:var(--hl-primary)" data-i18n="xxe_ticket_created">Ticket creado con éxito</span>
       <span id="ticketId" class="ml-auto text-xs font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded"></span>
     </div>
     <div class="space-y-1.5 font-mono text-sm">
-      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Nombre:</span><span id="resName" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
-      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Email:</span><span id="resEmail" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
-      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Asunto:</span><span id="resSubject" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
-      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0">Mensaje:</span><span id="resMessage" class="text-gray-800 dark:text-gray-200 break-all whitespace-pre-wrap"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0" data-i18n="xxe_name">Nombre:</span><span id="resName" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0" data-i18n="xxe_email">Email:</span><span id="resEmail" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0" data-i18n="xxe_subject">Asunto:</span><span id="resSubject" class="text-gray-800 dark:text-gray-200 break-all"></span></div>
+      <div class="flex gap-2"><span class="text-gray-400 w-24 flex-shrink-0" data-i18n="xxe_message">Mensaje:</span><span id="resMessage" class="text-gray-800 dark:text-gray-200 break-all whitespace-pre-wrap"></span></div>
     </div>
   </div>
 
@@ -79,21 +72,21 @@
 
   <!-- ── Tickets recientes (decorativo) ────────────────── -->
   <div class="hl-card mb-4 opacity-75">
-    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">Tickets recientes</div>
+    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide" data-i18n="xxe_recent_tickets">Tickets recientes</div>
     <div class="overflow-x-auto">
       <table class="w-full text-xs">
         <thead>
           <tr class="text-left text-gray-400 border-b border-gray-200 dark:border-gray-700">
             <th class="pb-2 pr-3 font-medium">ID</th>
-            <th class="pb-2 pr-3 font-medium">Usuario</th>
-            <th class="pb-2 pr-3 font-medium">Asunto</th>
-            <th class="pb-2 font-medium">Estado</th>
+            <th class="pb-2 pr-3 font-medium" data-i18n="xxe_col_user">Usuario</th>
+            <th class="pb-2 pr-3 font-medium" data-i18n="xxe_col_subject">Asunto</th>
+            <th class="pb-2 font-medium" data-i18n="xxe_col_status">Estado</th>
           </tr>
         </thead>
         <tbody id="recentTicketsBody" class="text-gray-600 dark:text-gray-400">
-          <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83421</td><td class="pr-3">María López</td><td class="pr-3">Soporte Técnico</td><td><span class="text-green-500">✓ Resuelto</span></td></tr>
-          <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83419</td><td class="pr-3">Carlos Ruiz</td><td class="pr-3">Seguridad IT</td><td><span class="text-yellow-500">⏳ Pendiente</span></td></tr>
-          <tr><td class="py-1.5 pr-3 font-mono">TK-83415</td><td class="pr-3">Ana Martín</td><td class="pr-3">Administración</td><td><span class="text-green-500">✓ Resuelto</span></td></tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83421</td><td class="pr-3">María López</td><td class="pr-3" data-i18n="xxe_opt_support">Soporte Técnico</td><td><span class="text-green-500" data-i18n="xxe_status_resolved">✓ Resuelto</span></td></tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800"><td class="py-1.5 pr-3 font-mono">TK-83419</td><td class="pr-3">Carlos Ruiz</td><td class="pr-3" data-i18n="xxe_opt_security">Seguridad IT</td><td><span class="text-yellow-500" data-i18n="xxe_status_pending">⏳ Pendiente</span></td></tr>
+          <tr><td class="py-1.5 pr-3 font-mono">TK-83415</td><td class="pr-3">Ana Martín</td><td class="pr-3" data-i18n="xxe_opt_admin">Administración</td><td><span class="text-green-500" data-i18n="xxe_status_resolved">✓ Resuelto</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -215,7 +208,7 @@ curl -X POST http://TARGET_IP/xxe/api \
     <h3>Exploitation Steps with Burp Suite</h3>
     <ol>
       <li>Open <strong>Burp Suite</strong> and configure the browser proxy.</li>
-      <li>Fill in the ticket form with any data and click <strong>"Enviar Ticket"</strong>.</li>
+      <li>Fill in the ticket form with any data and click <strong>"Submit Ticket"</strong>.</li>
       <li>In Burp → <strong>Proxy → HTTP history</strong>, find the <code>POST /xxe/api</code> request.</li>
       <li>Right-click → <strong>Send to Repeater</strong>.</li>
       <li>In Repeater, <strong>replace the entire XML body</strong> with your XXE injection and click <strong>Send</strong>. The response (JSON) appears in the right panel of Repeater — the flag will be in the <code>name</code> field of the ticket and in the <code>flag</code> field if the extracted file matches.</li>
@@ -363,11 +356,13 @@ document.getElementById('ticketForm').addEventListener('submit', function(e) {
       if (tbody) {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-100 dark:border-gray-800';
+        const currentLang = localStorage.getItem('hl_lang') || 'es';
+        const pendingLabel = currentLang === 'en' ? '⏳ Pending' : '⏳ Pendiente';
         row.innerHTML = `
           <td class="py-1.5 pr-3 font-mono">${data.ticket.id}</td>
           <td class="pr-3">${(data.ticket.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
           <td class="pr-3">${(data.ticket.subject || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
-          <td><span class="text-yellow-500">⏳ Pendiente</span></td>
+          <td><span class="text-yellow-500">${pendingLabel}</span></td>
         `;
         tbody.prepend(row);
       }
@@ -381,7 +376,9 @@ document.getElementById('ticketForm').addEventListener('submit', function(e) {
     const errorDiv = document.getElementById('ticketError');
     document.getElementById('ticketResult').classList.add('hidden');
     errorDiv.classList.remove('hidden');
-    errorDiv.textContent = 'Error de conexión: ' + err.message;
+    const currentLang = localStorage.getItem('hl_lang') || 'es';
+    const connError = currentLang === 'en' ? 'Connection error: ' : 'Error de conexión: ';
+    errorDiv.textContent = connError + err.message;
   });
 });
 </script>

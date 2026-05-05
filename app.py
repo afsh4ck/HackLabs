@@ -151,9 +151,9 @@ def force_admin_cookie():
         if user:
             session['user_id'] = user['id']
             session['username'] = user['username']
-            # `app_user` is used by templates/navbar to show logged user
-            session['app_user'] = user['username']
             session['role'] = user['role']
+            # Note: do NOT touch session['app_user'] or session['app_user_type'] here.
+            # Those belong to the platform account system and are set only via /account/login.
 
 @app.after_request
 def set_is_admin_cookie(response):
@@ -414,7 +414,7 @@ def get_lab_flag_map():
         'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
         'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
         'reverse_shell': [root_flag],
-        'ssti': ['HL{ssti_template_rce_success}'],
+        'ssti': ['HL{55t1_73mp14t3_rc3_5ucc355}'],
         'xss': ['HL{x55_c00k13_57341_5ucc355}'],
         'xxe': ['HL{xx3_xm1_3n717y_0wn3d}'],
 
@@ -1955,14 +1955,23 @@ def xxe_api():
 @app.route('/secrets')
 def secrets_listing():
     # VULNERABLE: directory listing expuesto sin autenticación (A05 misconfiguration)
-    base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
+    # Serves from /secrets/ at container root (created by Dockerfile from secret/LFI/)
+    base_path = '/secrets'
     try:
-        entries = sorted(os.listdir(base_path))
+        entries = []
+        for root, dirs, files in os.walk(base_path):
+            rel = os.path.relpath(root, base_path)
+            for d in sorted(dirs):
+                dir_rel = os.path.join(rel, d).replace('\\', '/').lstrip('./')
+                entries.append(dir_rel + '/')
+            for f in sorted(files):
+                file_rel = os.path.join(rel, f).replace('\\', '/').lstrip('./')
+                entries.append(file_rel)
     except Exception:
         entries = []
     listing_html = '<html><head><title>Index of /secrets</title></head><body>'
     listing_html += '<h1>Index of /secrets</h1><hr><pre>'
-    for entry in entries:
+    for entry in sorted(entries):
         listing_html += f'<a href="/secrets/{entry}">{entry}</a>\n'
     listing_html += '</pre><hr></body></html>'
     return listing_html, 200, {'Content-Type': 'text/html'}
@@ -1970,7 +1979,7 @@ def secrets_listing():
 @app.route('/secrets/<path:filename>')
 def secrets_file(filename):
     # VULNERABLE: archivos sensibles expuestos bajo /secrets sin autenticación
-    base_path = os.path.join(os.path.dirname(__file__), 'static', 'files')
+    base_path = '/secrets'
     full_path = os.path.abspath(os.path.join(base_path, filename))
     if not full_path.startswith(os.path.abspath(base_path) + os.sep):
         return 'Not Found', 404
@@ -2368,8 +2377,8 @@ def deserialization():
         try:
             decoded_preview = base64.b64decode(data)
             obj = pickle.loads(decoded_preview)
-            result = str(obj)
-            if isinstance(obj, int) or b'system' in decoded_preview.lower() or b'__reduce__' in decoded_preview.lower():
+            result = obj.decode(errors='replace') if isinstance(obj, bytes) else str(obj)
+            if isinstance(obj, (int, bytes)) or b'system' in decoded_preview.lower() or b'__reduce__' in decoded_preview.lower():
                 flag = deserialization_flag
         except Exception as e:
             error = str(e)
@@ -2520,6 +2529,7 @@ def account_login():
 def account_logout():
     session.pop('app_user', None)
     session.pop('app_email', None)
+    session.pop('app_user_type', None)
     return redirect(url_for('index'))
 
 
@@ -2579,6 +2589,23 @@ def account_profile():
 
     return render_template('account/profile.html', user=user, success=success,
                            error=error, is_lab_user=False)
+
+
+@app.route('/account/delete', methods=['POST'])
+def account_delete():
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if not app_user or app_type != 'account':
+        return redirect(url_for('account_login'))
+    ensure_account_table()
+    db = get_db()
+    db.execute('DELETE FROM user_progress WHERE account_username=?', (app_user,))
+    db.execute('DELETE FROM account_users WHERE username=?', (app_user,))
+    db.commit()
+    session.pop('app_user', None)
+    session.pop('app_email', None)
+    session.pop('app_user_type', None)
+    return redirect(url_for('index'))
 
 
 # ─────────────────────────────────────────────
