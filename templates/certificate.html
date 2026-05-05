@@ -91,6 +91,7 @@
       letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
     }
     .title { text-align: center; margin-top: .5%; }
+    .title h1 { margin-bottom: 0; }
     .title h1 {
       margin: 0; font-family: "Space Grotesk", sans-serif;
       font-size: clamp(20px, 4.2vw, 58px); letter-spacing: .08em;
@@ -102,7 +103,7 @@
       font-size: clamp(11px, 1.2vw, 18px); letter-spacing: .01em;
     }
     .learner {
-      margin: 1.5% auto 0; width: 86%; text-align: center;
+      margin: 2.5% auto 0; width: 86%; text-align: center;
       border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
       background: rgba(10,22,45,.6);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -162,6 +163,9 @@
       .canvas-wrap { width: 100%; }
       .canvas { aspect-ratio: unset; height: auto; border-radius: 18px; }
       .frame { position: relative; inset: auto; padding: 28px; display: flex; flex-direction: column; justify-content: flex-start; gap: 16px; }
+      .title { margin-top: 32px; margin-bottom: 0; }
+      .learner { margin-top: 32px; }
+      .meta { gap: 16px; margin-top: 16px; }
       .topbar { flex-wrap: wrap; gap: 10px; }
       .brand-title { font-size: 20px; } .brand-sub { font-size: 10px; }
       .badge { font-size: 11px; padding: 6px 12px; }
@@ -183,6 +187,9 @@
       .canvas-wrap { width: 100%; }
       .canvas { aspect-ratio: unset; height: auto; border-radius: 16px; }
       .frame { position: relative; inset: auto; padding: 24px; display: flex; flex-direction: column; justify-content: flex-start; gap: 16px; }
+      .title { margin-top: 32px; margin-bottom: 0; }
+      .learner { margin-top: 32px; }
+      .meta { gap: 16px; margin-top: 16px; }
       .topbar { flex-wrap: wrap; gap: 10px; }
       .brand-title { font-size: 17px; } .brand-sub { font-size: 9px; }
       .badge { font-size: 10px; padding: 5px 10px; }
