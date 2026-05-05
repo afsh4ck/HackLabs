@@ -368,7 +368,7 @@ def get_lab_flag_map():
         'idor': ['HL{1d0r_pr1v11393_35c4l4710n}'],
         'crypto': ['HL{crypt0_cr4ck3d_h45h_5ucc355}'],
         'sqli': ['HL{5ql1_d474_3xf1l_5ucc355}'],
-        'cmdi': ['HL{cmdi_command_execution_success}'],
+        'cmdi': [root_flag],
         'insecure_design': ['HL{1n53cur3_d3519n_4cc0un7_c0mpr0m153d}'],
         'misconfig': ['HL{m15c0nf19_3xp053d_f149_f1l3}'],
         'outdated': ['HL{0u7d473d_c0mp0n3n7_rc3}'],
@@ -1158,11 +1158,22 @@ def cmdi_ping():
                     return render_template('labs/cmdi.html', lab=lab, output=output, host=host)
 
         try:
-            # VULNERABLE: shell=True permite inyección de comandos
-            cmd = f"ping -c 2 {user_input}" if os.name != 'nt' else f"ping -n 2 {user_input}"
-            result = subprocess.run(
-                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10
-            )
+            # VULNERABLE: user_input termina en un comando de shell ejecutado como alice.
+            # Esto hace que una reverse shell aterrice directamente en /home/alice.
+            base_cmd = f"ping -c 2 {user_input}" if os.name != 'nt' else f"ping -n 2 {user_input}"
+            if os.name == 'nt':
+                result = subprocess.run(
+                    base_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10
+                )
+            else:
+                wrapped_cmd = f"cd /home/alice && {base_cmd}"
+                result = subprocess.run(
+                    ['su', '-', 'alice', '-c', wrapped_cmd],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=10,
+                )
             output = result.stdout
         except subprocess.TimeoutExpired:
             output = "Timeout: el comando tardó demasiado."

@@ -163,6 +163,14 @@ chmod 440 /etc/sudoers.d/dave 2>/dev/null || true
 # --- alice: SUID en python3 (python3 -c 'import os; os.setuid(0); os.system("/bin/bash")') ---
 # En python:3.11-slim el binario está en /usr/local/bin/python3
 chmod u+s /usr/local/bin/python3 2>/dev/null || chmod u+s /usr/bin/python3 2>/dev/null || true
+cat > /home/alice/note.txt << 'ALICEEOF'
+Si has llegado aqui desde A03 - Command Injection, aun no has terminado.
+
+Para obtener la flag del lab debes elevar privilegios a root y leer /root/root.txt.
+Pista: enumera binarios SUID y estabiliza bien tu TTY antes de la escalada.
+ALICEEOF
+chown alice:alice /home/alice/note.txt 2>/dev/null || true
+chmod 644 /home/alice/note.txt 2>/dev/null || true
 
 # --- charlie: script de cron escribible world-writable ejecutado por root cada minuto ---
 mkdir -p /opt/scripts
