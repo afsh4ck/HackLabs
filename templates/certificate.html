@@ -162,20 +162,18 @@
       .viewport { padding: 70px 20px 20px; align-items: flex-start; }
       .canvas-wrap { width: 100%; }
       .canvas { aspect-ratio: unset; height: auto; border-radius: 18px; }
-      .frame { position: relative; inset: auto; padding: 28px; display: flex; flex-direction: column; justify-content: flex-start; gap: 16px; }
+      .frame { position: relative; inset: auto; padding: 28px; display: flex; flex-direction: column; justify-content: flex-start; gap: 0; }
       .title { margin-top: 32px; margin-bottom: 0; }
-      .learner { margin-top: 32px; }
-      .meta { gap: 16px; margin-top: 16px; }
+      .title h1 { font-size: 36px; letter-spacing: .05em; } .title p { font-size: 14px; }
+      .learner { width: 100%; padding: 20px; margin-top: 32px; margin-bottom: 16px; }
+      .learner .label { font-size: 10px; } .learner .name { font-size: 42px; }
+      .learner .rank { font-size: 17px; margin-top: 8px; }
+      .meta { grid-template-columns: 1fr; gap: 16px; width: 100%; margin-top: 0; }
+      .meta-card { padding: 14px 16px; } .meta-k { font-size: 10px; }
+      .meta-v { font-size: 16px; }
       .topbar { flex-wrap: wrap; gap: 10px; }
       .brand-title { font-size: 20px; } .brand-sub { font-size: 10px; }
       .badge { font-size: 11px; padding: 6px 12px; }
-      .title h1 { font-size: 36px; letter-spacing: .05em; } .title p { font-size: 14px; }
-      .learner { width: 100%; padding: 20px; margin-top: 0; }
-      .learner .label { font-size: 10px; } .learner .name { font-size: 42px; }
-      .learner .rank { font-size: 17px; margin-top: 8px; }
-      .meta { grid-template-columns: 1fr; gap: 10px; width: 100%; margin-top: 0; }
-      .meta-card { padding: 14px 16px; } .meta-k { font-size: 10px; }
-      .meta-v { font-size: 16px; }
       .footer { flex-direction: column; align-items: flex-start; gap: 12px; }
       .verify { max-width: 100%; text-align: left; font-size: 12px; }
       .verify code { white-space: normal; word-break: break-all; }
@@ -186,18 +184,13 @@
       .viewport { padding: 70px 12px 20px; align-items: flex-start; }
       .canvas-wrap { width: 100%; }
       .canvas { aspect-ratio: unset; height: auto; border-radius: 16px; }
-      .frame { position: relative; inset: auto; padding: 24px; display: flex; flex-direction: column; justify-content: flex-start; gap: 16px; }
+      .frame { position: relative; inset: auto; padding: 24px; display: flex; flex-direction: column; justify-content: flex-start; gap: 0; }
       .title { margin-top: 32px; margin-bottom: 0; }
-      .learner { margin-top: 32px; }
-      .meta { gap: 16px; margin-top: 16px; }
-      .topbar { flex-wrap: wrap; gap: 10px; }
-      .brand-title { font-size: 17px; } .brand-sub { font-size: 9px; }
-      .badge { font-size: 10px; padding: 5px 10px; }
       .title h1 { font-size: 24px; letter-spacing: .05em; } .title p { font-size: 12px; }
-      .learner { width: 100%; padding: 16px; margin-top: 0; }
+      .learner { width: 100%; padding: 16px; margin-top: 32px; margin-bottom: 16px; }
       .learner .label { font-size: 9px; } .learner .name { font-size: 28px; }
       .learner .rank { font-size: 14px; margin-top: 6px; }
-      .meta { grid-template-columns: 1fr; gap: 8px; width: 100%; margin-top: 0; }
+      .meta { grid-template-columns: 1fr; gap: 16px; width: 100%; margin-top: 0; }
       .meta-card { padding: 12px 14px; } .meta-k { font-size: 9px; margin-bottom: 4px; }
       .meta-v { font-size: 14px; }
       .footer { flex-direction: column; align-items: flex-start; gap: 10px; }
