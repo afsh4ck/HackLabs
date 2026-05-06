@@ -271,7 +271,6 @@
     (function () {
       var canvasNode = document.getElementById('certificate-canvas');
       var btnPdf = document.getElementById('btn-pdf');
-      var A4_W = 3508; var A4_H = 2480;
       var BG = '#0a1525';
       function setBusy(on) { if (btnPdf) btnPdf.disabled = on; }
       async function renderCertificate() {
@@ -304,30 +303,20 @@
           }
         });
       }
-      function buildA4Canvas(src) {
-        var out = document.createElement('canvas');
-        out.width = A4_W; out.height = A4_H;
-        var ctx = out.getContext('2d');
-        ctx.fillStyle = BG; ctx.fillRect(0, 0, A4_W, A4_H);
-        var sr = src.width / src.height; var ar = A4_W / A4_H;
-        var dw, dh, dx = 0, dy = 0;
-        if (sr > ar) { dw = A4_W; dh = A4_W / sr; dy = (A4_H - dh) / 2; }
-        else          { dh = A4_H; dw = A4_H * sr; dx = (A4_W - dw) / 2; }
-        ctx.drawImage(src, dx, dy, dw, dh);
-        return out;
-      }
       if (btnPdf) {
         btnPdf.addEventListener('click', async function () {
           setBusy(true);
           try {
             var src = await renderCertificate();
-            var a4  = buildA4Canvas(src);
-            var img = a4.toDataURL('image/jpeg', 0.95);
+            var img = src.toDataURL('image/png');
             var jsPDF = window.jspdf.jsPDF;
-            var doc = new jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' });
-            var pw = doc.internal.pageSize.getWidth();
-            var ph = doc.internal.pageSize.getHeight();
-            doc.addImage(img, 'JPEG', 0, 0, pw, ph, undefined, 'FAST');
+            var doc = new jsPDF({
+              orientation: src.width >= src.height ? 'landscape' : 'portrait',
+              unit: 'px',
+              format: [src.width, src.height],
+              hotfixes: ['px_scaling']
+            });
+            doc.addImage(img, 'PNG', 0, 0, src.width, src.height, undefined, 'FAST');
             doc.save('hacklabs-certificate-{{ learner }}.pdf');
           } catch (e) { console.error('PDF export error:', e); }
           finally { setBusy(false); }
