@@ -66,6 +66,14 @@
       <a href="/certificate/view?download=1" class="reward-chip reward-chip--gold">
         <i class="ph ph-download-simple text-xs"></i><span data-i18n="cert_download">Descargar HTML</span>
       </a>
+      <a href="/certificate/view?export=pdf" target="_blank" rel="noopener" class="reward-chip reward-chip--gold">
+        <i class="ph ph-file-pdf text-xs"></i><span data-i18n="cert_download_pdf">Descargar PDF</span>
+      </a>
+      {% if certificate_linkedin_share_url %}
+      <a href="{{ certificate_linkedin_share_url }}" target="_blank" rel="noopener" class="reward-chip" style="border-color:rgba(96,165,250,.42);background:rgba(37,99,235,.18);color:#dbeafe" data-linkedin-share data-share-text="{{ certificate_linkedin_post_text or '' }}">
+        <i class="ph ph-linkedin-logo text-xs"></i><span data-i18n="cert_share_linkedin">Compartir en LinkedIn</span>
+      </a>
+      {% endif %}
     </div>
   </div>
 
@@ -250,4 +258,33 @@
   {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    function copyText(text) {
+      if (!text) return;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).catch(function () {});
+        return;
+      }
+      var area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', 'readonly');
+      area.style.position = 'absolute';
+      area.style.left = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(area);
+    }
+
+    document.querySelectorAll('[data-linkedin-share]').forEach(function (link) {
+      link.addEventListener('click', function () {
+        copyText(link.dataset.shareText || '');
+      });
+    });
+  })();
+</script>
 {% endblock %}

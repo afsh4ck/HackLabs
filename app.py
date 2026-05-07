@@ -14,6 +14,7 @@ import sys
 import sqlite3
 import os
 import hashlib
+import html as _html
 import shutil
 # ...otros imports...
 
@@ -432,6 +433,38 @@ def _resolve_certificate_verification(db, raw_code):
         return 'valid', cert
 
     return ('invalid_signature', None) if signed_status == 'invalid_signature' else ('invalid_format', None)
+
+
+def _get_certificate_render_data(db, cert, fallback_user=None):
+    account_username = str((cert or {}).get('account_username') or fallback_user or '').strip()
+    account_user = db.execute(
+        'SELECT certificate_name FROM account_users WHERE username=?',
+        (account_username,)
+    ).fetchone()
+    learner_name = (account_user['certificate_name'] or '').strip() if account_user else ''
+    issued_at = (cert or {}).get('issued_at') or datetime.datetime.utcnow().isoformat()
+    return {
+        'account_username': account_username,
+        'learner': learner_name or account_username,
+        'rank': _get_special_rank(account_username) or 'Master',
+        'cert_code': (cert or {}).get('cert_code', ''),
+        'issued_at': issued_at,
+        'verify_url': url_for('verify_completion_certificate', _external=True),
+    }
+
+
+def _certificate_share_urls(cert_code):
+    share_url = url_for('share_completion_certificate', code=cert_code, _external=True)
+    linkedin_url = 'https://www.linkedin.com/sharing/share-offsite/?url=' + _urlquote(share_url, safe='')
+    return share_url, linkedin_url
+
+
+def _certificate_linkedin_post_text(learner, rank, share_url):
+    return (
+        f'I just completed 100% of the HackLabs labs and earned the {rank} certificate as {learner}. '
+        f'You can view the public certificate here: {share_url} '
+        '#HackLabs #Cybersecurity #EthicalHacking'
+    )
 
 
 def _issue_completion_certificate(db, account_username):
@@ -1062,22 +1095,31 @@ def download_completion_certificate():
     if not cert:
         return redirect('/progress')
 
-    verify_url = url_for('verify_completion_certificate')
-    issued_at = cert['issued_at'] or datetime.datetime.utcnow().isoformat()
-    account_user = db.execute(
-        'SELECT certificate_name FROM account_users WHERE username=?',
-        (app_user,)
-    ).fetchone()
-    learner_name = (account_user['certificate_name'] or '').strip() if account_user else ''
-    show_toolbar = request.args.get('download') != '1'
+    render_data = _get_certificate_render_data(
+        db,
+        {
+            'account_username': app_user,
+            'cert_code': cert['cert_code'],
+            'issued_at': cert['issued_at'],
+        },
+        fallback_user=app_user,
+    )
+    auto_export_pdf = request.args.get('export') == 'pdf'
+    show_toolbar = request.args.get('download') != '1' and not auto_export_pdf
     html = render_template(
         'certificate.html',
-        learner=learner_name or app_user,
-        rank=_get_special_rank(app_user) or 'Master',
-        cert_code=cert['cert_code'],
-        issued_at=issued_at,
-        verify_url=verify_url,
+        learner=render_data['learner'],
+        rank=render_data['rank'],
+        cert_code=render_data['cert_code'],
+        issued_at=render_data['issued_at'],
+        verify_url=render_data['verify_url'],
         show_toolbar=show_toolbar,
+        auto_export_pdf=auto_export_pdf,
+        export_filename=f'hacklabs-certificate-{app_user}.pdf',
+        og_title=None,
+        og_description=None,
+        og_image=None,
+        og_url=None,
     )
     resp = make_response(html)
     resp.headers['Content-Type'] = 'text/html; charset=utf-8'
@@ -1114,6 +1156,16 @@ def certificate_page():
         (app_user,)
     ).fetchone()
     learner_name = (account_user['certificate_name'] or '').strip() if account_user else ''
+    certificate_share_url = None
+    certificate_linkedin_share_url = None
+    certificate_linkedin_post_text = None
+    if cert:
+        certificate_share_url, certificate_linkedin_share_url = _certificate_share_urls(cert['cert_code'])
+        certificate_linkedin_post_text = _certificate_linkedin_post_text(
+            learner_name or app_user,
+            _get_special_rank(app_user) or 'Master of HackLabs',
+            certificate_share_url,
+        )
     return render_template(
         'certificate_page.html',
         labs=labs,
@@ -1125,7 +1177,105 @@ def certificate_page():
         verify_code=verify_code,
         verify_status=verify_status,
         verify_cert=verify_cert,
+                certificate_share_url=certificate_share_url,
+                certificate_linkedin_share_url=certificate_linkedin_share_url,
+                certificate_linkedin_post_text=certificate_linkedin_post_text,
     )
+
+
+@app.route('/certificate/share')
+def share_completion_certificate():
+        code = _normalize_cert_code(request.args.get('code'))
+        status, cert = _resolve_certificate_verification(get_db(), code)
+        if status != 'valid' or not cert:
+                abort(404)
+
+        db = get_db()
+        render_data = _get_certificate_render_data(db, cert, fallback_user=cert.get('account_username'))
+        share_url, _ = _certificate_share_urls(render_data['cert_code'])
+        title = f"{render_data['learner']} • HackLabs Completion Certificate"
+        description = (
+                f"{render_data['learner']} completed 100% of the HackLabs labs and earned the {render_data['rank']} certificate."
+        )
+        image_url = url_for('share_completion_certificate_preview', code=render_data['cert_code'], _external=True)
+        return render_template(
+                'certificate.html',
+                learner=render_data['learner'],
+                rank=render_data['rank'],
+                cert_code=render_data['cert_code'],
+                issued_at=render_data['issued_at'],
+                verify_url=render_data['verify_url'],
+                show_toolbar=False,
+                auto_export_pdf=False,
+                export_filename=f"hacklabs-certificate-{render_data['account_username']}.pdf",
+                og_title=title,
+                og_description=description,
+                og_image=image_url,
+                og_url=share_url,
+        )
+
+
+@app.route('/certificate/share-preview.svg')
+def share_completion_certificate_preview():
+        code = _normalize_cert_code(request.args.get('code'))
+        status, cert = _resolve_certificate_verification(get_db(), code)
+        if status != 'valid' or not cert:
+                abort(404)
+
+        db = get_db()
+        render_data = _get_certificate_render_data(db, cert, fallback_user=cert.get('account_username'))
+        learner = _html.escape(render_data['learner'])
+        rank = _html.escape(render_data['rank'])
+        issued_at = _html.escape(render_data['issued_at'])
+        cert_code = _html.escape(render_data['cert_code'])
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="HackLabs certificate preview">
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#07101e"/>
+            <stop offset="60%" stop-color="#060910"/>
+            <stop offset="100%" stop-color="#02040b"/>
+        </linearGradient>
+        <radialGradient id="glowA" cx="82%" cy="8%" r="45%">
+            <stop offset="0%" stop-color="#ceff00" stop-opacity="0.32"/>
+            <stop offset="100%" stop-color="#ceff00" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="glowB" cx="10%" cy="100%" r="38%">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.26"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+    <rect width="1600" height="900" rx="30" fill="url(#bg)"/>
+    <rect width="1600" height="900" rx="30" fill="url(#glowA)"/>
+    <rect width="1600" height="900" rx="30" fill="url(#glowB)"/>
+    <rect x="28" y="28" width="1544" height="844" rx="22" fill="none" stroke="rgba(206,255,0,.18)" stroke-width="2"/>
+    <g>
+        <rect x="78" y="78" width="56" height="56" rx="16" fill="#ceff00"/>
+        <text x="106" y="116" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" fill="#07101e">⚗</text>
+        <text x="154" y="106" font-size="40" font-weight="800" font-family="Arial, sans-serif" fill="#f8fafc">Hack<tspan fill="#ceff00">Labs</tspan></text>
+        <text x="154" y="132" font-size="16" letter-spacing="3" font-family="Arial, sans-serif" fill="#94a3b8">ETHICAL HACKING LABS</text>
+    </g>
+    <rect x="1170" y="82" width="290" height="44" rx="22" fill="rgba(206,255,0,.08)" stroke="rgba(206,255,0,.35)"/>
+    <text x="1315" y="110" text-anchor="middle" font-size="18" letter-spacing="2" font-family="Arial, sans-serif" fill="#ceff00">COMPLETION VERIFIED</text>
+    <text x="800" y="260" text-anchor="middle" font-size="88" font-weight="800" letter-spacing="7" font-family="Arial, sans-serif" fill="#ceff00">CERTIFICATE OF MASTERY</text>
+    <text x="800" y="308" text-anchor="middle" font-size="26" font-family="Arial, sans-serif" fill="#cbd5e1">This certifies that the learner completed 100% of HackLabs practical tracks.</text>
+    <rect x="220" y="368" width="1160" height="180" rx="22" fill="rgba(10,22,45,.64)" stroke="rgba(255,255,255,.08)"/>
+    <text x="800" y="424" text-anchor="middle" font-size="16" letter-spacing="6" font-family="Arial, sans-serif" fill="#94a3b8">AWARDED TO</text>
+    <text x="800" y="490" text-anchor="middle" font-size="68" font-weight="800" font-family="Arial, sans-serif" fill="#f8fafc">{learner}</text>
+    <text x="800" y="530" text-anchor="middle" font-size="28" font-weight="700" font-family="Arial, sans-serif" fill="#ceff00">{rank}</text>
+    <rect x="220" y="606" width="560" height="110" rx="18" fill="rgba(10,20,42,.55)" stroke="rgba(59,130,246,.22)"/>
+    <text x="258" y="644" font-size="16" letter-spacing="3" font-family="Arial, sans-serif" fill="#94a3b8">ISSUED AT</text>
+    <text x="258" y="685" font-size="28" font-weight="700" font-family="Arial, sans-serif" fill="#f1f5f9">{issued_at}</text>
+    <rect x="820" y="606" width="560" height="110" rx="18" fill="rgba(10,20,42,.55)" stroke="rgba(59,130,246,.22)"/>
+    <text x="858" y="644" font-size="16" letter-spacing="3" font-family="Arial, sans-serif" fill="#94a3b8">CERTIFICATE CODE</text>
+    <text x="858" y="685" font-size="20" font-weight="700" font-family="Courier New, monospace" fill="#f1f5f9">{cert_code}</text>
+    <text x="78" y="812" font-size="18" letter-spacing="3" font-family="Arial, sans-serif" fill="#7a8fa8">HACKLABS OFFENSIVE SECURITY PROGRAM</text>
+    <text x="1522" y="796" text-anchor="end" font-size="18" font-family="Arial, sans-serif" fill="#94a3b8">Verify this certificate at</text>
+    <text x="1522" y="826" text-anchor="end" font-size="18" font-family="Courier New, monospace" fill="#bfdbfe">/certificate/verify</text>
+</svg>'''
+        resp = make_response(svg)
+        resp.headers['Content-Type'] = 'image/svg+xml; charset=utf-8'
+        resp.headers['Cache-Control'] = 'public, max-age=300'
+        return resp
 
 
 @app.route('/certificate/verify')

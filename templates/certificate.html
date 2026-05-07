@@ -4,6 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HackLabs Completion Certificate</title>
+  {% if og_title %}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ og_description }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:url" content="{{ og_url }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title }}">
+  <meta name="twitter:description" content="{{ og_description }}">
+  <meta name="twitter:image" content="{{ og_image }}">
+  {% endif %}
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -278,13 +289,14 @@
       </article>
     </div>
   </div>
-  {% if show_toolbar %}
+  {% if show_toolbar or auto_export_pdf %}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     (function () {
       var canvasNode = document.getElementById('certificate-canvas');
       var btnPdf = document.getElementById('btn-pdf');
+      var autoExportPdf = {{ 'true' if auto_export_pdf else 'false' }};
       var BG = '#0a1525';
       function setBusy(on) { if (btnPdf) btnPdf.disabled = on; }
       async function renderCertificate() {
@@ -317,23 +329,32 @@
           }
         });
       }
+      async function exportPdf() {
+        setBusy(true);
+        try {
+          var src = await renderCertificate();
+          var img = src.toDataURL('image/png');
+          var jsPDF = window.jspdf.jsPDF;
+          var doc = new jsPDF({
+            orientation: src.width >= src.height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: [src.width, src.height],
+            hotfixes: ['px_scaling']
+          });
+          doc.addImage(img, 'PNG', 0, 0, src.width, src.height, undefined, 'FAST');
+          doc.save('{{ export_filename or ('hacklabs-certificate-' ~ learner ~ '.pdf') }}');
+          if (autoExportPdf && window.opener) {
+            window.setTimeout(function () { window.close(); }, 250);
+          }
+        } catch (e) { console.error('PDF export error:', e); }
+        finally { setBusy(false); }
+      }
       if (btnPdf) {
-        btnPdf.addEventListener('click', async function () {
-          setBusy(true);
-          try {
-            var src = await renderCertificate();
-            var img = src.toDataURL('image/png');
-            var jsPDF = window.jspdf.jsPDF;
-            var doc = new jsPDF({
-              orientation: src.width >= src.height ? 'landscape' : 'portrait',
-              unit: 'px',
-              format: [src.width, src.height],
-              hotfixes: ['px_scaling']
-            });
-            doc.addImage(img, 'PNG', 0, 0, src.width, src.height, undefined, 'FAST');
-            doc.save('hacklabs-certificate-{{ learner }}.pdf');
-          } catch (e) { console.error('PDF export error:', e); }
-          finally { setBusy(false); }
+        btnPdf.addEventListener('click', exportPdf);
+      }
+      if (autoExportPdf) {
+        window.addEventListener('load', function () {
+          window.setTimeout(exportPdf, 120);
         });
       }
     })();
