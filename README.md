@@ -133,7 +133,7 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
 | 🤖 AI Breaker | Completar todos los labs de IA Attacks |
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |
-| 👑 Completionist | Completar los 39 laboratorios |
+| 👑 Completionist | Completar todos los labs |
 
 ### 🎓 Certificado gratuito
 
