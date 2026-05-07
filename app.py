@@ -1070,7 +1070,7 @@ def download_completion_certificate():
     if not cert:
         return redirect('/progress')
 
-    verify_url = url_for('verify_completion_certificate', code=cert['cert_code'])
+    verify_url = url_for('verify_completion_certificate')
     issued_at = cert['issued_at'] or datetime.datetime.utcnow().isoformat()
     account_user = db.execute(
         'SELECT certificate_name FROM account_users WHERE username=?',

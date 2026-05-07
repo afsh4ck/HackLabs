@@ -123,9 +123,10 @@
       color: #d1fae5; font-weight: 700;
     }
     .meta {
-      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      display: grid; grid-template-columns: 1fr 1fr;
       gap: 1%; margin: 1.2% auto 0; width: 86%;
     }
+    .meta-card--full { grid-column: 1 / -1; }
     .meta-card {
       border: 1px solid rgba(59,130,246,.2); border-radius: 10px;
       padding: max(10px, 1.2%) max(12px, 1.5%);
@@ -138,6 +139,13 @@
     }
     .meta-v { font-size: clamp(12px, 1.25vw, 19px); color: #f1f5f9; font-weight: 700; }
     .meta-v.mono { font-family: "Consolas", "Courier New", monospace; }
+    .meta-v.cert-code {
+      font-size: clamp(8px, .82vw, 12px);
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      letter-spacing: .01em;
+    }
     .footer {
       display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1%;
     }
@@ -154,8 +162,11 @@
       border: 1px solid rgba(59,130,246,.25); background: rgba(59,130,246,.08);
       color: #bfdbfe; font-family: "Consolas", "Courier New", monospace;
       padding: 4px 10px; border-radius: 6px;
-      font-size: clamp(8px, .72vw, 11px);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: clamp(8px, .72vw, 10px);
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.25;
     }
     /* ── Tablet (641 – 1024px) ── */
     @media (min-width: 641px) and (max-width: 1024px) {
@@ -169,8 +180,10 @@
       .learner .label { font-size: 10px; } .learner .name { font-size: 42px; }
       .learner .rank { font-size: 17px; margin-top: 8px; }
       .meta { grid-template-columns: 1fr; gap: 16px; width: 100%; margin-top: 0; }
+      .meta-card--full { grid-column: unset; }
       .meta-card { padding: 14px 16px; } .meta-k { font-size: 10px; }
       .meta-v { font-size: 16px; }
+      .meta-v.cert-code { font-size: 11px; line-height: 1.3; }
       .topbar { flex-wrap: wrap; gap: 10px; margin-top: 24px; }
       .brand-mark { width: clamp(30px, 4vw, 45px); height: clamp(30px, 4vw, 45px); }
       .brand-title { font-size: 20px; } .brand-sub { font-size: 10px; }
@@ -192,8 +205,10 @@
       .learner .label { font-size: 9px; } .learner .name { font-size: 28px; }
       .learner .rank { font-size: 14px; margin-top: 6px; }
       .meta { grid-template-columns: 1fr; gap: 16px; width: 100%; margin-top: 0; }
+      .meta-card--full { grid-column: unset; }
       .meta-card { padding: 12px 14px; } .meta-k { font-size: 9px; margin-bottom: 4px; }
       .meta-v { font-size: 14px; }
+      .meta-v.cert-code { font-size: 10px; line-height: 1.3; }
       .topbar { margin-top: 24px; }
       .brand-mark { width: clamp(28px, 3.5vw, 42px); height: clamp(28px, 3.5vw, 42px); }
       .footer { flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -239,9 +254,9 @@
               <div class="rank">{{ rank }}</div>
             </div>
             <div class="meta">
-              <div class="meta-card">
+              <div class="meta-card meta-card--full">
                 <div class="meta-k">Certificate Code</div>
-                <div class="meta-v mono">{{ cert_code }}</div>
+                <div class="meta-v mono cert-code">{{ cert_code }}</div>
               </div>
               <div class="meta-card">
                 <div class="meta-k">Issued At</div>
@@ -257,7 +272,7 @@
             <div class="program-text">HackLabs Offensive Security Program</div>
             <div class="verify">
               Verify this certificate at the official validation endpoint.<br>
-              <code>{{ verify_url }}</code>
+              <code>/progress/certificate/verify</code>
             </div>
           </footer>
         </section>
