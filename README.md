@@ -156,7 +156,7 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 
 Al completar el **100% de los laboratorios** (Lv.8 Master) se desbloquea automáticamente un **certificado de finalización gratuito** en `/progress/certificate`.
 
-<img width="1761" height="984" alt="hacklabs-cert" src="https://github.com/user-attachments/assets/c102b329-3dda-4514-b594-40855c0ac6e2" />
+<img width="3366" height="1884" alt="HL-Certificate" src="https://github.com/user-attachments/assets/189f2001-db8a-40b8-91d5-23f8e4f8ca62" />
 <br>
 
 - Certificado descargable en **HTML** y **PDF**
