@@ -154,14 +154,14 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 
 ## 🎓 Certificado gratuito
 
-Al completar el **100% de los laboratorios** (Lv.8 Master) se desbloquea automáticamente un **certificado de finalización gratuito** en `/progress/certificate`.
+Al completar el **100% de los laboratorios** (Lv.8 Master) se desbloquea automáticamente un **certificado de finalización gratuito** en `/certificate`.
 
 <img width="3366" height="1884" alt="HL-Certificate" src="https://github.com/user-attachments/assets/189f2001-db8a-40b8-91d5-23f8e4f8ca62" />
 <br>
 
 - Certificado descargable en **HTML** y **PDF**
 - Incluye nombre de usuario, rango alcanzado, código único verificable y fecha de emisión
-- El código del certificado puede verificarse en `/progress/certificate/verify` y desde el bloque **Validar certificado** en `/progress`
+- El código del certificado puede verificarse en `/certificate/verify` y desde el bloque **Validar certificado** en `/certificate`
 - No requiere pago ni suscripción — se genera al instante
 
 #### Verificación local entre máquinas (offline)

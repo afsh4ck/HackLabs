@@ -14,8 +14,7 @@
     <i class="ph ph-caret-right text-gray-600" style="font-size:10px"></i>
     <a href="/progress" class="hover:opacity-70 transition" style="color:var(--hl-primary)">Mi progreso</a>
     <i class="ph ph-caret-right text-gray-600" style="font-size:10px"></i>
-    <span class="text-gray-300 font-semibold">Certificado</span>
-  </nav>
+    <span class="text-gray-300 font-semibold">Certificado</span>  </nav>
 
   <!-- ── Header ── -->
   <div class="mb-8">
@@ -60,10 +59,10 @@
     </div>
 
     <div class="flex gap-2 flex-wrap">
-      <a href="/progress/certificate/view" class="reward-chip reward-chip--gold">
+      <a href="/certificate/view" class="reward-chip reward-chip--gold">
         <i class="ph ph-eye text-xs"></i>Ver certificado
       </a>
-      <a href="/progress/certificate/view?download=1" class="reward-chip reward-chip--gold">
+      <a href="/certificate/view?download=1" class="reward-chip reward-chip--gold">
         <i class="ph ph-download-simple text-xs"></i>Descargar HTML
       </a>
     </div>
@@ -75,7 +74,7 @@
     <div class="mt-2 text-sm text-gray-300 mb-3">
       Verifica codigos de certificado emitidos por HackLabs, incluso si aun no has completado el 100%.
     </div>
-    <form method="GET" action="/progress/certificado" class="flex gap-2 flex-wrap">
+    <form method="GET" action="/certificate" class="flex gap-2 flex-wrap">
       <input
         name="verify_code"
         value="{{ verify_code or '' }}"
@@ -181,7 +180,7 @@
     <div class="mt-2 text-sm text-gray-300 mb-3">
       Verifica codigos de certificado emitidos por HackLabs, incluso si aun no has completado el 100%.
     </div>
-    <form method="GET" action="/progress/certificate" class="flex gap-2 flex-wrap">
+    <form method="GET" action="/certificate" class="flex gap-2 flex-wrap">
       <input
         name="verify_code"
         value="{{ verify_code or '' }}"

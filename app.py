@@ -1046,12 +1046,12 @@ def progress_page():
     )
 
 
-@app.route('/progress/certificate/view')
+@app.route('/certificate/view')
 def download_completion_certificate():
     app_user = session.get('app_user')
     app_type = session.get('app_user_type')
     if not app_user or app_type != 'account':
-        return redirect('/account/login?next=/progress/certificate/view')
+        return redirect('/account/login?next=/certificate/view')
 
     ensure_account_table()
     db = get_db()
@@ -1087,12 +1087,12 @@ def download_completion_certificate():
     return resp
 
 
-@app.route('/progress/certificate')
+@app.route('/certificate')
 def certificate_page():
     app_user = session.get('app_user')
     app_type = session.get('app_user_type')
     if not app_user or app_type != 'account':
-        return redirect('/account/login?next=/progress/certificate')
+        return redirect('/account/login?next=/certificate')
     db = get_db()
     labs = get_lab_list()
     rows = db.execute(
@@ -1128,7 +1128,7 @@ def certificate_page():
     )
 
 
-@app.route('/progress/certificate/verify')
+@app.route('/certificate/verify')
 def verify_completion_certificate():
     code = _normalize_cert_code(request.args.get('code'))
     cert = None
