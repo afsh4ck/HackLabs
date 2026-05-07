@@ -139,6 +139,8 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 
 Al completar el **100% de los laboratorios** (Lv.8 Master) se desbloquea automáticamente un **certificado de finalización gratuito** en `/progress/certificate`.
 
+<img width="1759" height="984" alt="hacklabs-cert" src="https://github.com/user-attachments/assets/85663199-edbb-4e58-a3ad-bc9d7ab27763" />
+
 - Descargable en **HTML** y **PDF** con export exacto del certificado, sin márgenes añadidos ni deformación
 - Incluye nombre de usuario, rango alcanzado, código único verificable y fecha de emisión
 - El código del certificado puede verificarse en `/progress/certificate/verify`
@@ -155,6 +157,7 @@ HackLabs incluye un **selector de dificultad** en la barra de navegación (simil
 | **Easy** | Sin protección — vulnerabilidades completamente expuestas | 🟢 Verde |
 | **Medium** | Filtros básicos — bypass posible con técnicas intermedias | 🟡 Ámbar |
 | **Hard** | WAF / validación avanzada — requiere técnicas avanzadas de bypass | 🔴 Rojo |
+| **Nightmare** | Se desbloquea al completar el 100% de los labs | 🟣 Morado |
 
 ### Detalle por laboratorio
 
