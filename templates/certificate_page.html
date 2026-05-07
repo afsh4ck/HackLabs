@@ -177,6 +177,11 @@
         </div>
         <div class="text-white font-bold text-base" data-i18n="cert_locked_title">Certificado bloqueado</div>
         <div class="text-sm text-gray-300"><span data-i18n="cert_locked_pre">Completa el </span><span class="font-semibold" style="color:var(--hl-primary)" data-i18n="cert_locked_highlight">100% de los laboratorios</span><span data-i18n="cert_locked_post"> para desbloquear tu certificado de finalización gratuito.</span></div>
+        <div class="w-full max-w-md mt-1" aria-label="Progress bar">
+          <div class="h-2 rounded-full overflow-hidden" style="background:rgba(148,163,184,.25);border:1px solid rgba(148,163,184,.35)">
+            <div class="h-full rounded-full" style="width:{{ pct }}%;background:linear-gradient(90deg,#84cc16 0%,#ceff00 100%);box-shadow:0 0 10px rgba(206,255,0,.35)"></div>
+          </div>
+        </div>
         <div class="mt-1 text-xs text-gray-400">
           <span data-i18n="cert_progress_label">Progreso actual:</span>
           <span class="font-mono font-semibold text-white ml-1">{{ done_count }}/{{ total_labs }} labs</span>

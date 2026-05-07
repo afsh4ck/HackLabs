@@ -154,7 +154,7 @@
   </div>
 
   {% if special_rank or unlocks.nightmare_unlocked or unlocks.secret_lab_unlocked or certificate %}
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
     <div class="reward-card {% if special_rank %}reward-card--gold{% endif %}">
       <div class="reward-card-title">Rango Especial</div>
       <div class="mt-2 text-sm text-gray-200 font-semibold">
@@ -169,11 +169,8 @@
       <div class="reward-card-title">Certificado</div>
       <div class="mt-2 text-sm text-gray-300">
         {% if certificate %}
-          <div class="flex items-center justify-between gap-3 flex-wrap">
-            <div class="text-xs text-gray-400 min-w-0">Código: <span class="font-mono text-gray-200 break-all">{{ certificate.cert_code }}</span></div>
-            <div class="flex gap-2 flex-wrap sm:justify-end">
-              <a href="/certificate/view" class="reward-chip reward-chip--gold"><i class="ph ph-download-simple text-xs"></i>Descargar</a>
-            </div>
+          <div class="flex items-center">
+            <a href="/certificate" class="reward-chip reward-chip--gold"><i class="ph ph-certificate text-xs"></i>Ver certificado</a>
           </div>
         {% else %}
           <span class="text-gray-500">Disponible al 100% de completado</span>
@@ -184,7 +181,7 @@
       <div class="reward-card-title">Modo Nightmare</div>
       <div class="mt-2 text-sm text-gray-300">
         {% if unlocks.nightmare_unlocked %}
-          <span class="reward-chip reward-chip--gold"><i class="ph ph-lightning text-xs"></i>Desbloqueado en el selector de dificultad</span>
+          <span class="reward-chip reward-chip--gold"><i class="ph ph-lightning text-xs"></i>Selector de deficultad</span>
         {% else %}
           <span class="text-gray-500">Completa todos los labs para desbloquearlo</span>
         {% endif %}
