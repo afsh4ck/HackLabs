@@ -873,6 +873,7 @@ def download_completion_certificate():
     if not app_user or app_type != 'account':
         return redirect('/account/login?next=/progress/certificate')
 
+    ensure_account_table()
     db = get_db()
     cert = db.execute(
         'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
@@ -883,10 +884,15 @@ def download_completion_certificate():
 
     verify_url = url_for('verify_completion_certificate', code=cert['cert_code'])
     issued_at = cert['issued_at'] or datetime.datetime.utcnow().isoformat()
+    account_user = db.execute(
+        'SELECT certificate_name FROM account_users WHERE username=?',
+        (app_user,)
+    ).fetchone()
+    learner_name = (account_user['certificate_name'] or '').strip() if account_user else ''
     show_toolbar = request.args.get('download') != '1'
     html = render_template(
         'certificate.html',
-        learner=app_user,
+        learner=learner_name or app_user,
         rank=_get_special_rank(app_user) or 'Master',
         cert_code=cert['cert_code'],
         issued_at=issued_at,
@@ -2828,8 +2834,12 @@ def ensure_account_table():
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
         username      TEXT NOT NULL UNIQUE,
         email         TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL
+        password_hash TEXT NOT NULL,
+        certificate_name TEXT
     )''')
+    columns = {row['name'] for row in db.execute('PRAGMA table_info(account_users)').fetchall()}
+    if 'certificate_name' not in columns:
+        db.execute('ALTER TABLE account_users ADD COLUMN certificate_name TEXT')
     db.commit()
 
 @app.route('/account/register', methods=['GET', 'POST'])
@@ -2946,24 +2956,28 @@ def account_profile():
     if request.method == 'POST':
         new_username = request.form.get('username', '').strip()
         new_email    = request.form.get('email', '').strip()
+        certificate_name = request.form.get('certificate_name', '').strip()
         new_password = request.form.get('password', '')
         confirm      = request.form.get('confirm', '')
 
         if not new_username or not new_email:
             error = 'El usuario y email son obligatorios.'
+        elif len(certificate_name) > 80:
+            error = 'El nombre del certificado no puede superar 80 caracteres.'
         elif new_password and new_password != confirm:
             error = 'Las contraseñas no coinciden.'
         elif new_password and len(new_password) < 6:
             error = 'La contraseña debe tener al menos 6 caracteres.'
         else:
             try:
+                certificate_name = certificate_name or None
                 if new_password:
                     pw_hash = hashlib.sha256(new_password.encode()).hexdigest()
-                    db.execute('UPDATE account_users SET username=?, email=?, password_hash=? WHERE username=?',
-                               (new_username, new_email, pw_hash, session['app_user']))
+                    db.execute('UPDATE account_users SET username=?, email=?, certificate_name=?, password_hash=? WHERE username=?',
+                               (new_username, new_email, certificate_name, pw_hash, session['app_user']))
                 else:
-                    db.execute('UPDATE account_users SET username=?, email=? WHERE username=?',
-                               (new_username, new_email, session['app_user']))
+                    db.execute('UPDATE account_users SET username=?, email=?, certificate_name=? WHERE username=?',
+                               (new_username, new_email, certificate_name, session['app_user']))
                 db.commit()
                 session['app_user']  = new_username
                 session['app_email'] = new_email
