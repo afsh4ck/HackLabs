@@ -18,7 +18,8 @@
 - [🎯 Características](#-características)
 - [🧪 Laboratorios disponibles](#-laboratorios-disponibles)
 - [🏆 Sistema de Progreso](#-sistema-de-progreso)
-- [Sistema de Dificultad](#sistema-de-dificultad)
+- [🎓 Certificado gratuito](#-certificado-gratuito)
+- [🎚️ Sistema de Dificultad](#️-sistema-de-dificultad)
 - [🚀 Despliegue](#-despliegue)
 - [🔑 Credenciales de prueba](#-credenciales-de-prueba)
 - [🚩 Flags del laboratorio de Bruteforce](#-flags-del-laboratorio-de-bruteforce)
@@ -153,13 +154,13 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |
 | 👑 Completionist | Completar todos los labs |
 
-### 🎓 Certificado gratuito
+## 🎓 Certificado gratuito
 
 Al completar el **100% de los laboratorios** (Lv.8 Master) se desbloquea automáticamente un **certificado de finalización gratuito** en `/progress/certificate`.
 
 <img width="1761" height="984" alt="hacklabs-cert" src="https://github.com/user-attachments/assets/c102b329-3dda-4514-b594-40855c0ac6e2" />
 
-- Descargable en **HTML** y **PDF** con export exacto del certificado, sin márgenes añadidos ni deformación
+- Certificado descargable en **HTML** y **PDF**
 - Incluye nombre de usuario, rango alcanzado, código único verificable y fecha de emisión
 - El código del certificado puede verificarse en `/progress/certificate/verify` y desde el bloque **Validar certificado** en `/progress`
 - No requiere pago ni suscripción — se genera al instante
@@ -174,7 +175,7 @@ HackLabs emite certificados con **firma criptográfica verificable offline**. Es
 
 ---
 
-## Sistema de Dificultad
+## 🎚️ Sistema de Dificultad
 
 HackLabs incluye un **selector de dificultad** en la barra de navegación (similar a Mutillidae/DVWA) que ajusta las protecciones de **todos** los laboratorios en tiempo real. La dificultad seleccionada se mantiene entre labs y persiste durante toda la sesión.
 
