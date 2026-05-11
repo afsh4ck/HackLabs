@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Session Hijacking – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lang-content" data-lang="es">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        Este lab demuestra secuestro de sesión por cookies predecibles, tokens sin firma o session fixation.
+      </p>
+      <p class="text-xs text-gray-500">
+        {% if difficulty == 'easy' %}Easy: SID predecible (<code>SID-username-2024</code>).
+        {% elif difficulty == 'medium' %}Medium: token base64 sin firma.
+        {% else %}Hard: session fixation al reutilizar SID inyectado por el atacante.{% endif %}
+      </p>
+    </div>
+    <div class="lang-content" data-lang="en" style="display:none">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        This lab demonstrates session hijacking via predictable cookies, unsigned tokens, or session fixation.
+      </p>
+      <p class="text-xs text-gray-500">
+        {% if difficulty == 'easy' %}Easy: predictable SID (<code>SID-username-2024</code>).
+        {% elif difficulty == 'medium' %}Medium: unsigned base64 token.
+        {% else %}Hard: session fixation by reusing attacker-injected SID.{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if fixation_notice %}
+  <div class="hl-card mb-4" style="border-color:rgba(234,179,8,.35);background:rgba(234,179,8,.08)">
+    <div class="text-xs text-yellow-300 font-mono">{{ fixation_notice }}</div>
+  </div>
+  {% endif %}
+
+  {% if request.args.get('error') == 'invalid_creds' %}
+  <div class="alert-error mb-4">Credenciales inválidas</div>
+  {% endif %}
+
+  {% if flag %}
+  <div class="hl-card mb-4" style="border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)">
+    <div class="text-xs font-semibold text-green-400 mb-1">Flag</div>
+    <code class="text-sm font-mono text-green-400">{{ flag }}</code>
+  </div>
+  {% endif %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-3" style="color:var(--hl-primary)">Login Target App</h2>
+    <form method="POST" action="/session-hijacking/login" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1" data-i18n="lbl_username">Usuario</label>
+        <input type="text" name="username" class="hl-input" placeholder="admin" />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1" data-i18n="lbl_password">Contraseña</label>
+        <input type="password" name="password" class="hl-input" placeholder="••••••••" />
+      </div>
+      <button type="submit" class="btn-primary w-full justify-center" data-i18n="btn_login">Iniciar sesión</button>
+    </form>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-3" style="color:var(--hl-primary)">Reuse / Inject Session ID</h2>
+    <form method="POST" action="/session-hijacking/use" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Session ID</label>
+        <input type="text" name="sid" class="hl-input font-mono" placeholder="SID-admin-2024" />
+      </div>
+      <button type="submit" class="btn-primary">Use this SID</button>
+    </form>
+
+    <div class="hl-code text-xs mt-4">
+      <div class="text-gray-400"># Example (Easy)</div>
+      <div>curl -i http://{{ target_ip }}/session-hijacking -H "Cookie: hl_hijack_sid=SID-admin-2024"</div>
+      <div class="text-gray-400 mt-2"># Session fixation (Hard)</div>
+      <div>http://{{ target_ip }}/session-hijacking?sid=attacker-fixed-session</div>
+    </div>
+  </div>
+
+  <div class="hl-card">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">Current Session</h2>
+      <form method="POST" action="/session-hijacking/logout">
+        <button type="submit" class="text-xs px-3 py-1 rounded border border-gray-600 text-gray-300 hover:text-white">Logout Session</button>
+      </form>
+    </div>
+
+    {% if identity %}
+    <div class="space-y-1 text-sm">
+      <div><span class="text-gray-500">SID:</span> <code>{{ identity.sid }}</code></div>
+      <div><span class="text-gray-500">User:</span> <strong>{{ identity.username }}</strong></div>
+      <div><span class="text-gray-500">Role:</span> <strong>{{ identity.role }}</strong></div>
+      <div><span class="text-gray-500">Email:</span> {{ identity.email }}</div>
+    </div>
+    {% else %}
+    <div class="text-sm text-gray-500">No active vulnerable session cookie.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy — SID predecible</h3>
+    <ol>
+      <li>El servidor acepta el formato fijo <code>SID-&lt;username&gt;-2024</code>.</li>
+      <li>Sin autenticarte, inyecta cookie de admin:
+        <pre>hl_hijack_sid=SID-admin-2024</pre></li>
+      <li>Abre o recarga <code>/session-hijacking</code> y verifica que el usuario activo sea <code>admin</code>.</li>
+      <li>Cuando el rol sea admin, aparece la flag del lab.</li>
+    </ol>
+
+    <h3>Medium — Token base64 sin firma</h3>
+    <ol>
+      <li>El backend solo hace decode base64 y toma el primer campo como username.</li>
+      <li>Genera un token con estructura <code>admin|admin|timestamp|hacklabs-session-v1</code> y codifícalo en base64 URL-safe.</li>
+      <li>Envíalo en <code>hl_hijack_sid</code> usando el formulario o Burp Repeater.</li>
+      <li>Al no existir firma/HMAC, el servidor lo acepta y asigna sesión de admin.</li>
+    </ol>
+
+    <h3>Hard — Session Fixation</h3>
+    <ol>
+      <li>Fija un SID controlado por atacante con:
+        <pre>/session-hijacking?sid=attacker-fixed-session</pre></li>
+      <li>Haz que la víctima inicie sesión (phishing/lure) sin regenerar sesión.</li>
+      <li>La aplicación reutiliza el SID fijado para la sesión autenticada.</li>
+      <li>Reutiliza ese mismo SID para secuestrar la sesión ya autenticada.</li>
+    </ol>
+
+    <h3>Mitigación</h3>
+    <pre># Regenerar SID tras autenticación
+session.regenerate()
+# Firmar/validar tokens de sesión
+# Configurar cookies seguras
+Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax</pre>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">browser</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy — Predictable SID</h3>
+    <ol>
+      <li>Server accepts a fixed pattern: <code>SID-&lt;username&gt;-2024</code>.</li>
+      <li>Without logging in, inject admin cookie:
+        <pre>hl_hijack_sid=SID-admin-2024</pre></li>
+      <li>Open/reload <code>/session-hijacking</code> and confirm active user is <code>admin</code>.</li>
+      <li>Once role is admin, the lab flag is revealed.</li>
+    </ol>
+
+    <h3>Medium — Unsigned Base64 Token</h3>
+    <ol>
+      <li>Backend only decodes base64 and trusts the first field as username.</li>
+      <li>Create token content like <code>admin|admin|timestamp|hacklabs-session-v1</code> and encode URL-safe base64.</li>
+      <li>Send it in <code>hl_hijack_sid</code> via form or Burp Repeater.</li>
+      <li>No signature/HMAC means server accepts forged admin identity.</li>
+    </ol>
+
+    <h3>Hard — Session Fixation</h3>
+    <ol>
+      <li>Fix attacker-controlled SID using:
+        <pre>/session-hijacking?sid=attacker-fixed-session</pre></li>
+      <li>Get victim to log in while keeping that SID.</li>
+      <li>Application reuses fixed SID for authenticated session.</li>
+      <li>Replay same SID to hijack victim authenticated session.</li>
+    </ol>
+
+    <h3>Mitigation</h3>
+    <pre># Regenerate SID after authentication
+session.regenerate()
+# Sign/validate session tokens
+# Set secure cookie attributes
+Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax</pre>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">browser</span></div>
+  </div>
+</div>
+{% endblock %}

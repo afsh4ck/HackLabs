@@ -86,6 +86,25 @@ _2fa_users = {
 _reset_inbox  = []   # list of dicts: {to, link, poisoned, host_used, token, timestamp}
 _reset_tokens = {}   # token -> {email, created_at}
 
+# HTML Injection lab store
+_html_blog_posts = [
+    {
+        'id': 1,
+        'author': 'admin',
+        'title': 'Bienvenida al blog interno',
+        'body': '<b>Recordatorio:</b> este entorno es intencionalmente vulnerable para entrenamiento.',
+        'created': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    }
+]
+
+# Session Hijacking lab store
+_hijack_sessions = {}  # sid -> {username, role, created_at}
+
+# Forgot Password Recovery lab stores
+_forgot_reset_store = {}  # username -> {token, created_at}
+_forgot_last_token = None
+_forgot_mailbox = []
+
 # LLM Data Exfiltration lab store
 _exfil_log = []  # list of {url, data, timestamp}
 
@@ -773,6 +792,8 @@ def get_lab_flag_map():
         'cors': ['HL{c0r5_cr3d3n7141_7h3f7_5ucc355}'],
         'csrf': ['HL{c5rf_57473_ch4n93_5ucc355}'],
         'file_upload': ['HL{file_upload_webshell_executed}'],
+        'forgot_recovery': ['HL{f0rg07_p455_r3c0v3ry_7ak30v3r}'],
+        'html_injection': ['HL{h7ml_1nj3ct10n_r3nd3r3d}'],
         'deserialization': ['HL{d353r1411z4710n_rc3_5ucc355}'],
         'jwt': ['HL{jw7_m4n1pu14710n_4dm1n_0wn3d}'],
         'bruteforce': [
@@ -802,6 +823,7 @@ def get_lab_flag_map():
         'reset_poisoning': ['HL{h0st_h34d3r_p0150n3d}', 'HL{reset_poisoning_token_capture}'],
         'race_condition': ['HL{r4c3_c0nd1t10n_3z}', 'HL{t0ct0u_m3d1um}', 'HL{h4rd_r4c3_pr3c1s10n}', 'HL{race_condition_double_spend}'],
         'reverse_shell': [root_flag],
+        'session_hijacking': ['HL{535510n_h1j4ck3d_4cc355}'],
         'ssti': ['HL{55t1_73mp14t3_rc3_5ucc355}'],
         'xss': ['HL{x55_c00k13_57341_5ucc355}'],
         'xxe': ['HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}'],
@@ -826,10 +848,13 @@ def get_lab_flag_map():
         'clickjacking',
         'cmdi',
         'deserialization',
+        'forgot_recovery',
+        'html_injection',
         'jwt',
         'oauth',
         'race_condition',
         'reset_poisoning',
+        'session_hijacking',
         '2fa_bypass',
         'ssrf',
         'bruteforce',
@@ -1382,6 +1407,8 @@ def lab(lab_id):
         'xss':             '/xss/reflected',
         'csrf':            '/csrf/profile',
         'file_upload':     '/upload',
+        'forgot_recovery': '/forgot-recovery',
+        'html_injection':  '/html-injection/get',
         'xxe':             '/xxe',
         'path_traversal':  '/files',
         'bruteforce':      '/bruteforce',
@@ -1397,6 +1424,7 @@ def lab(lab_id):
         'api_attacks':     '/api_attacks',
         'race_condition':   '/race',
         'reverse_shell':   '/reverse_shell',
+        'session_hijacking': '/session-hijacking',
         'clickjacking':    '/clickjacking',
         '2fa_bypass':      '/2fa',
         'reset_poisoning': '/reset_poisoning',
@@ -1442,6 +1470,8 @@ def get_lab_list():
         {'id': 'cors',               'title': 'CORS Misconfiguration',                       'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'csrf',               'title': 'CSRF – Cross-Site Request Forgery',           'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'file_upload',        'title': 'File Upload sin restricciones',               'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'forgot_recovery',    'title': 'Forgot Password Recovery (Authentication Flaws)', 'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'html_injection',     'title': 'HTML Injection (GET/POST/Stored)',            'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'deserialization',    'title': 'Insecure Deserialization',                    'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'jwt',                'title': 'JWT Manipulation',                            'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'bruteforce',         'title': 'Login Bruteforce',                            'category': 'Vulnerabilidades', 'risk': 'medium'},
@@ -1454,6 +1484,7 @@ def get_lab_list():
         {'id': 'reset_poisoning',    'title': 'Password Reset Poisoning',                    'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'race_condition',     'title': 'Race Condition / TOCTOU',                     'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'reverse_shell',      'title': 'Reverse Shell',                               'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'session_hijacking',  'title': 'Session Hijacking',                           'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'xxe',                'title': 'XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
@@ -1488,7 +1519,11 @@ def inject_labs():
         '/xss/stored':     'xss',
         '/xss/dom':        'xss',
         '/csrf/profile':   'csrf',
+        '/forgot-recovery': 'forgot_recovery',
         '/upload':         'file_upload',
+        '/html-injection/get': 'html_injection',
+        '/html-injection/post': 'html_injection',
+        '/html-injection/stored': 'html_injection',
         '/xxe':            'xxe',
         '/files':          'path_traversal',
         '/secrets':        'misconfig',
@@ -1511,6 +1546,10 @@ def inject_labs():
         '/race/balance':     'race_condition',
         '/race/transfer':    'race_condition',
         '/reverse_shell':         'reverse_shell',
+        '/session-hijacking':     'session_hijacking',
+        '/session-hijacking/login': 'session_hijacking',
+        '/session-hijacking/use': 'session_hijacking',
+        '/session-hijacking/logout': 'session_hijacking',
         '/clickjacking':          'clickjacking',
         '/clickjacking/transfer': 'clickjacking',
         '/2fa':                   '2fa_bypass',
@@ -2366,6 +2405,79 @@ def ssrf():
 # XSS – Cross-Site Scripting
 # ─────────────────────────────────────────────
 
+def _sanitize_html_injection_payload(payload, difficulty):
+    payload = payload or ''
+    if difficulty == 'hard':
+        return _html.escape(payload)
+    if difficulty == 'medium':
+        payload = re.sub(r'<\s*script[^>]*>[\s\S]*?<\s*/\s*script\s*>', '', payload, flags=re.IGNORECASE)
+        payload = re.sub(r'<\s*script', '&lt;script', payload, flags=re.IGNORECASE)
+        payload = re.sub(r'</\s*script', '&lt;/script', payload, flags=re.IGNORECASE)
+        payload = re.sub(r'\bon\w+\s*=', 'data-blocked=', payload, flags=re.IGNORECASE)
+    return payload
+
+
+def _html_injection_flag(raw_payload, rendered_payload):
+    if not raw_payload:
+        return None
+    if '<' in raw_payload and '>' in raw_payload and rendered_payload != _html.escape(raw_payload):
+        return 'HL{h7ml_1nj3ct10n_r3nd3r3d}'
+    return None
+
+
+@app.route('/html-injection/get')
+def html_injection_get():
+    lab = next(l for l in get_lab_list() if l['id'] == 'html_injection')
+    difficulty = session.get('difficulty', 'easy')
+    payload = request.args.get('payload', '')
+    rendered = _sanitize_html_injection_payload(payload, difficulty) if payload else ''
+    flag = _html_injection_flag(payload, rendered)
+    return render_template('labs/html_injection.html', lab=lab, tab='get', payload=payload,
+                           rendered=rendered, posts=_html_blog_posts, flag=flag)
+
+
+@app.route('/html-injection/post', methods=['GET', 'POST'])
+def html_injection_post():
+    lab = next(l for l in get_lab_list() if l['id'] == 'html_injection')
+    difficulty = session.get('difficulty', 'easy')
+    payload = ''
+    rendered = ''
+    flag = None
+
+    if request.method == 'POST':
+        payload = request.form.get('payload', '')
+        rendered = _sanitize_html_injection_payload(payload, difficulty)
+        flag = _html_injection_flag(payload, rendered)
+
+    return render_template('labs/html_injection.html', lab=lab, tab='post', payload=payload,
+                           rendered=rendered, posts=_html_blog_posts, flag=flag)
+
+
+@app.route('/html-injection/stored', methods=['GET', 'POST'])
+def html_injection_stored():
+    lab = next(l for l in get_lab_list() if l['id'] == 'html_injection')
+    difficulty = session.get('difficulty', 'easy')
+    flag = None
+
+    if request.method == 'POST':
+        author = (request.form.get('author', '') or 'guest').strip()[:40]
+        title = (request.form.get('title', '') or 'Untitled').strip()[:120]
+        body_raw = request.form.get('body', '')
+        body_rendered = _sanitize_html_injection_payload(body_raw, difficulty)
+
+        new_id = (_html_blog_posts[-1]['id'] + 1) if _html_blog_posts else 1
+        _html_blog_posts.append({
+            'id': new_id,
+            'author': author or 'guest',
+            'title': title or 'Untitled',
+            'body': body_rendered,
+            'created': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        flag = _html_injection_flag(body_raw, body_rendered)
+
+    return render_template('labs/html_injection.html', lab=lab, tab='stored',
+                           payload='', rendered='', posts=list(reversed(_html_blog_posts)), flag=flag)
+
 @app.route('/xss/reflected')
 def xss_reflected():
     lab = next(l for l in get_lab_list() if l['id'] == 'xss')
@@ -2384,6 +2496,176 @@ def xss_reflected():
     resp.set_cookie('is_admin', 'true')
     resp.set_cookie('xss_flag', 'HL{x55_c00k13_57341_5ucc355}')
     return resp
+
+
+def _resolve_hijack_identity(cookie_sid, difficulty):
+    cookie_sid = (cookie_sid or '').strip()
+    if not cookie_sid:
+        return None
+
+    db = get_db()
+
+    if difficulty == 'easy':
+        m = re.fullmatch(r'SID-([a-zA-Z0-9_.-]{1,32})-2024', cookie_sid)
+        if not m:
+            return None
+        username = m.group(1)
+        user = db.execute('SELECT username, role, email FROM users WHERE username=?', (username,)).fetchone()
+        if not user:
+            return None
+        return {'sid': cookie_sid, 'username': user['username'], 'role': user['role'], 'email': user['email']}
+
+    if difficulty == 'medium':
+        try:
+            decoded = base64.urlsafe_b64decode(cookie_sid + '===').decode(errors='ignore')
+            parts = decoded.split('|')
+            if len(parts) < 2:
+                return None
+            username = parts[0]
+            user = db.execute('SELECT username, role, email FROM users WHERE username=?', (username,)).fetchone()
+            if not user:
+                return None
+            return {'sid': cookie_sid, 'username': user['username'], 'role': user['role'], 'email': user['email']}
+        except Exception:
+            return None
+
+    sess = _hijack_sessions.get(cookie_sid)
+    if not sess:
+        return None
+    user = db.execute('SELECT username, role, email FROM users WHERE username=?', (sess['username'],)).fetchone()
+    if not user:
+        return None
+    return {'sid': cookie_sid, 'username': user['username'], 'role': user['role'], 'email': user['email']}
+
+
+@app.route('/session-hijacking', methods=['GET'])
+def session_hijacking_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'session_hijacking')
+    difficulty = session.get('difficulty', 'easy')
+    sid = request.cookies.get('hl_hijack_sid', '')
+    identity = _resolve_hijack_identity(sid, difficulty)
+    flag = 'HL{535510n_h1j4ck3d_4cc355}' if identity and identity.get('username') == 'admin' else None
+
+    fixation_notice = None
+    if difficulty == 'hard':
+        fixed_sid = request.args.get('sid', '').strip()
+        if fixed_sid:
+            resp = make_response(redirect('/session-hijacking'))
+            resp.set_cookie('hl_hijack_sid', fixed_sid, httponly=False, samesite='Lax')
+            return resp
+        if sid:
+            fixation_notice = 'Session fixation activa: el servidor reusa el SID existente tras login.'
+
+    return render_template('labs/session_hijacking.html', lab=lab, identity=identity,
+                           fixation_notice=fixation_notice, flag=flag)
+
+
+@app.route('/session-hijacking/login', methods=['POST'])
+def session_hijacking_login():
+    difficulty = session.get('difficulty', 'easy')
+    username = (request.form.get('username', '') or '').strip()
+    password = request.form.get('password', '')
+
+    db = get_db()
+    pw_hash = hashlib.md5(password.encode()).hexdigest()
+    user = db.execute('SELECT username, role FROM users WHERE username=? AND password_md5=?', (username, pw_hash)).fetchone()
+    if not user:
+        return redirect('/session-hijacking?error=invalid_creds')
+
+    if difficulty == 'easy':
+        sid = f'SID-{user["username"]}-2024'
+    elif difficulty == 'medium':
+        raw = f'{user["username"]}|{user["role"]}|{int(time.time())}|hacklabs-session-v1'
+        sid = base64.urlsafe_b64encode(raw.encode()).decode().rstrip('=')
+    else:
+        sid = (request.cookies.get('hl_hijack_sid') or '').strip()
+        if not sid:
+            sid = secrets.token_hex(16)
+        _hijack_sessions[sid] = {
+            'username': user['username'],
+            'role': user['role'],
+            'created_at': int(time.time())
+        }
+
+    resp = make_response(redirect('/session-hijacking?login=ok'))
+    resp.set_cookie('hl_hijack_sid', sid, httponly=False, samesite='Lax')
+    return resp
+
+
+@app.route('/session-hijacking/use', methods=['POST'])
+def session_hijacking_use():
+    sid = (request.form.get('sid', '') or '').strip()
+    resp = make_response(redirect('/session-hijacking?reused=1'))
+    if sid:
+        resp.set_cookie('hl_hijack_sid', sid, httponly=False, samesite='Lax')
+    return resp
+
+
+@app.route('/session-hijacking/logout', methods=['POST'])
+def session_hijacking_logout():
+    sid = (request.cookies.get('hl_hijack_sid') or '').strip()
+    _hijack_sessions.pop(sid, None)
+    resp = make_response(redirect('/session-hijacking'))
+    resp.delete_cookie('hl_hijack_sid')
+    return resp
+
+
+@app.route('/forgot-recovery', methods=['GET', 'POST'])
+def forgot_recovery_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'forgot_recovery')
+    phase_confirm = False
+    phase_user = ''
+    message = None
+    error = None
+    flag = None
+
+    one_time_flag = session.pop('forgot_recovery_success_flag', None)
+    one_time_user = session.pop('forgot_recovery_success_user', None)
+    if one_time_flag:
+        flag = one_time_flag
+        message = f'Password actualizada para {one_time_user}. Flag: {one_time_flag}'
+
+    if request.method == 'POST':
+        action = request.form.get('action', '')
+        db = get_db()
+
+        if action == 'request':
+            identifier = (request.form.get('identifier', '') or '').strip()
+            user = db.execute(
+                'SELECT username, email FROM users WHERE username=? OR email=?',
+                (identifier, identifier)
+            ).fetchone()
+
+            if not user:
+                error = 'Usuario no encontrado'
+            else:
+                phase_confirm = True
+                phase_user = user['username']
+                message = f'Cuenta encontrada: {phase_user}. Continúa con la fase 2.'
+
+        elif action == 'reset':
+            username = (request.form.get('username', '') or request.form.get('phase_user', '') or '').strip()
+            new_password = request.form.get('new_password', '')
+            phase_confirm = bool(username)
+            phase_user = username
+
+            user = db.execute('SELECT id, username FROM users WHERE username=?', (username,)).fetchone()
+            if not user:
+                error = 'Cuenta no válida'
+            elif not new_password:
+                error = 'Faltan campos obligatorios'
+            else:
+                new_md5 = hashlib.md5(new_password.encode()).hexdigest()
+                db.execute('UPDATE users SET password_plain=?, password_md5=? WHERE username=?',
+                           (new_password, new_md5, username))
+                db.commit()
+                session['forgot_recovery_success_flag'] = 'HL{f0rg07_p455_r3c0v3ry_7ak30v3r}'
+                session['forgot_recovery_success_user'] = username
+                return redirect('/forgot-recovery')
+
+    return render_template('labs/forgot_recovery.html', lab=lab,
+                           message=message, error=error, flag=flag,
+                           phase_confirm=phase_confirm, phase_user=phase_user)
 
 @app.route('/xss/stored', methods=['GET', 'POST'])
 def xss_stored():

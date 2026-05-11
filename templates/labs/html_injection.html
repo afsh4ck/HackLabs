@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}HTML Injection – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lang-content" data-lang="es">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        Este laboratorio simula inyección HTML en tres superficies: <code>GET</code>, <code>POST</code> y <code>Stored</code> en blog interno.
+      </p>
+      <p class="text-xs text-gray-500">
+        {% if difficulty == 'easy' %}Easy: sin filtros.
+        {% elif difficulty == 'medium' %}Medium: bloquea <code>&lt;script&gt;</code> y <code>on*=</code>, pero persiste HTML.
+        {% else %}Hard: escape completo del HTML antes de renderizar.{% endif %}
+      </p>
+    </div>
+    <div class="lang-content" data-lang="en" style="display:none">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        This lab simulates HTML injection across three surfaces: <code>GET</code>, <code>POST</code>, and <code>Stored</code> blog content.
+      </p>
+      <p class="text-xs text-gray-500">
+        {% if difficulty == 'easy' %}Easy: no filtering.
+        {% elif difficulty == 'medium' %}Medium: blocks <code>&lt;script&gt;</code> and <code>on*=</code>, but still renders HTML.
+        {% else %}Hard: full HTML escaping before render.{% endif %}
+      </p>
+    </div>
+  </div>
+
+  <div class="flex gap-1 mb-5 bg-gray-100 dark:bg-dark-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700 w-fit">
+    <a href="/html-injection/get"
+       class="px-4 py-1.5 rounded text-sm font-medium transition {% if tab == 'get' %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
+       {% if tab == 'get' %}style="background:var(--hl-primary)"{% endif %}>
+      <span data-i18n="htmlinj_tab_get">GET Reflected</span>
+    </a>
+    <a href="/html-injection/post"
+       class="px-4 py-1.5 rounded text-sm font-medium transition {% if tab == 'post' %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
+       {% if tab == 'post' %}style="background:var(--hl-primary)"{% endif %}>
+      <span data-i18n="htmlinj_tab_post">POST Render</span>
+    </a>
+    <a href="/html-injection/stored"
+       class="px-4 py-1.5 rounded text-sm font-medium transition {% if tab == 'stored' %}text-dark-900 font-bold{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}"
+       {% if tab == 'stored' %}style="background:var(--hl-primary)"{% endif %}>
+      <span data-i18n="htmlinj_tab_stored">Stored Blog</span>
+    </a>
+  </div>
+
+  {% if flag %}
+  <div class="hl-card mb-4" style="border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)">
+    <div class="text-xs font-semibold text-green-400 mb-1">Flag</div>
+    <code class="text-sm font-mono text-green-400">{{ flag }}</code>
+  </div>
+  {% endif %}
+
+  {% if tab == 'get' %}
+  <div class="hl-card mb-4">
+    <form method="GET" action="/html-injection/get" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Payload (GET)</label>
+        <input type="text" name="payload" value="{{ payload }}" class="hl-input font-mono" placeholder='&lt;h2 style="color:#ef4444"&gt;Injected&lt;/h2&gt;' />
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="btn_search">Buscar</button>
+    </form>
+
+    {% if payload %}
+    <div class="mt-4">
+      <div class="text-xs text-gray-400 mb-1">Rendered Output</div>
+      <div class="hl-code">{{ rendered | safe }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if tab == 'post' %}
+  <div class="hl-card mb-4">
+    <form method="POST" action="/html-injection/post" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Payload (POST)</label>
+        <textarea name="payload" rows="4" class="hl-input font-mono" placeholder='&lt;div class="p-3" style="background:#1f2937"&gt;post injection&lt;/div&gt;'>{{ payload }}</textarea>
+      </div>
+      <button type="submit" class="btn-primary">Render POST</button>
+    </form>
+
+    {% if payload %}
+    <div class="mt-4">
+      <div class="text-xs text-gray-400 mb-1">Rendered Output</div>
+      <div class="hl-code">{{ rendered | safe }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if tab == 'stored' %}
+  <div class="hl-card mb-4">
+    <form method="POST" action="/html-injection/stored" class="space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Author</label>
+          <input type="text" name="author" class="hl-input" placeholder="guest" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Title</label>
+          <input type="text" name="title" class="hl-input" placeholder="Post title" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Body</label>
+        <textarea name="body" rows="4" class="hl-input font-mono" placeholder='&lt;img src=x onerror=alert(1)&gt;'></textarea>
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="btn_post_comment">Publicar comentario</button>
+    </form>
+  </div>
+
+  <div class="space-y-3">
+    {% for p in posts %}
+    <article class="hl-card">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-semibold" style="color:var(--hl-primary)">{{ p.title }}</h3>
+        <span class="text-[11px] text-gray-500">{{ p.created }}</span>
+      </div>
+      <div class="text-xs text-gray-500 mb-2">by {{ p.author }}</div>
+      <div class="text-sm text-gray-700 dark:text-gray-300">{{ p.body | safe }}</div>
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Objetivo</h3>
+    <p>Ver cómo cambia el impacto de inyección HTML en tres superficies: <code>GET</code>, <code>POST</code> y <code>Stored</code>.</p>
+
+    <h3>Easy</h3>
+    <ol>
+      <li>No hay filtrado: el HTML se renderiza tal cual.</li>
+      <li>Prueba en GET:
+        <pre>/html-injection/get?payload=&lt;h1 style="color:#ef4444"&gt;PWNED&lt;/h1&gt;</pre></li>
+      <li>Prueba en POST:
+        <pre>&lt;div style="padding:8px;border:1px solid red"&gt;Injected via POST&lt;/div&gt;</pre></li>
+      <li>Prueba en Stored (blog) para persistencia entre visitas:
+        <pre>&lt;marquee&gt;Stored HTML Injection&lt;/marquee&gt;</pre></li>
+    </ol>
+
+    <h3>Medium</h3>
+    <ol>
+      <li>Bloquea <code>&lt;script&gt;</code> y atributos <code>on*=</code>, pero aún renderiza muchas etiquetas HTML.</li>
+      <li>Un payload con estilo sigue funcionando:
+        <pre>&lt;span style="color:#22c55e;font-weight:bold"&gt;Medium bypass (layout injection)&lt;/span&gt;</pre></li>
+      <li>Valida que <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> se neutraliza pero no toda la inyección visual.</li>
+    </ol>
+
+    <h3>Hard</h3>
+    <ol>
+      <li>Escape completo del input antes de renderizar.</li>
+      <li>Cualquier payload HTML aparece como texto plano (sin ejecutar/interpretar).</li>
+      <li>Compara el mismo payload entre Easy/Medium/Hard para evidenciar el control defensivo.</li>
+    </ol>
+
+    <h3>Mitigación real</h3>
+    <pre>from markupsafe import escape
+safe_output = escape(user_input)
+# Evitar usar |safe con input de usuario no confiable</pre>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">browser</span> <span class="tools-badge">curl</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Goal</h3>
+    <p>Observe how HTML injection impact changes across three surfaces: <code>GET</code>, <code>POST</code>, and <code>Stored</code>.</p>
+
+    <h3>Easy</h3>
+    <ol>
+      <li>No filtering: HTML is rendered as-is.</li>
+      <li>Try in GET:
+        <pre>/html-injection/get?payload=&lt;h1 style="color:#ef4444"&gt;PWNED&lt;/h1&gt;</pre></li>
+      <li>Try in POST:
+        <pre>&lt;div style="padding:8px;border:1px solid red"&gt;Injected via POST&lt;/div&gt;</pre></li>
+      <li>Try in Stored blog to verify persistence:
+        <pre>&lt;marquee&gt;Stored HTML Injection&lt;/marquee&gt;</pre></li>
+    </ol>
+
+    <h3>Medium</h3>
+    <ol>
+      <li>Blocks <code>&lt;script&gt;</code> and <code>on*=</code>, but still renders many HTML tags.</li>
+      <li>Styling payload still works:
+        <pre>&lt;span style="color:#22c55e;font-weight:bold"&gt;Medium bypass (layout injection)&lt;/span&gt;</pre></li>
+      <li>Confirm <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> is neutralized but visual injection remains.</li>
+    </ol>
+
+    <h3>Hard</h3>
+    <ol>
+      <li>Complete escaping before render.</li>
+      <li>Any HTML payload is displayed as plain text.</li>
+      <li>Compare the same payload across Easy/Medium/Hard to see defense progression.</li>
+    </ol>
+
+    <h3>Real Mitigation</h3>
+    <pre>from markupsafe import escape
+safe_output = escape(user_input)
+# Never use |safe on untrusted user input</pre>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">browser</span> <span class="tools-badge">curl</span></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Forgot Password Recovery – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lang-content" data-lang="es">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        Flujo de recuperación de contraseña vulnerable a enumeración, validación débil de token y toma de cuenta.
+      </p>
+      <p class="text-xs text-gray-500">
+        {% if difficulty == 'easy' %}Easy: código corto y mensajes que enumeran usuarios.
+        {% elif difficulty == 'medium' %}Medium: token global reutilizable entre cuentas.
+        {% else %}Hard: validación por prefijo del token (brute force parcial).{% endif %}
+      </p>
+    </div>
+    <div class="lang-content" data-lang="en" style="display:none">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        Password recovery workflow vulnerable to user enumeration, weak token validation, and account takeover.
+      </p>
+      <p class="text-xs text-gray-500">
+        {% if difficulty == 'easy' %}Easy: short code and user-enumerating responses.
+        {% elif difficulty == 'medium' %}Medium: global token reusable across accounts.
+        {% else %}Hard: token prefix validation (partial brute force).{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if message %}
+  <div class="alert-success mb-4 font-mono text-xs">{{ message }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="alert-error mb-4 font-mono text-xs">{{ error }}</div>
+  {% endif %}
+
+  {% if not phase_confirm %}
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-3" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">1) Solicitar recuperación</span>
+      <span class="lang-content" data-lang="en" style="display:none">1) Request Recovery</span>
+    </h2>
+    <form method="POST" action="/forgot-recovery" class="space-y-3">
+      <input type="hidden" name="action" value="request" />
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">
+          <span class="lang-content" data-lang="es">Usuario o email</span>
+          <span class="lang-content" data-lang="en" style="display:none">Username or email</span>
+        </label>
+        <input type="text" name="identifier" class="hl-input" placeholder="admin / admin@hacklabs.local" />
+      </div>
+      <button type="submit" class="btn-primary">
+        <span class="lang-content" data-lang="es">Solicitar reset</span>
+        <span class="lang-content" data-lang="en" style="display:none">Request reset</span>
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if phase_confirm %}
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-3" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">2) Confirmar nueva contraseña</span>
+      <span class="lang-content" data-lang="en" style="display:none">2) Confirm New Password</span>
+    </h2>
+    <form method="POST" action="/forgot-recovery" class="space-y-3">
+      <input type="hidden" name="action" value="reset" />
+      <input type="hidden" name="phase_user" value="{{ phase_user }}" />
+      <div>
+        <label class="block text-xs text-gray-500 mb-1" data-i18n="lbl_username">Usuario</label>
+        <input type="text" name="username" value="{{ phase_user }}" class="hl-input" placeholder="admin" readonly />
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">
+          <span class="lang-content" data-lang="es">Nueva contraseña</span>
+          <span class="lang-content" data-lang="en" style="display:none">New password</span>
+        </label>
+        <input type="text" name="new_password" class="hl-input" placeholder="newPassword123" />
+      </div>
+      <button type="submit" class="btn-primary">
+        <span class="lang-content" data-lang="es">Actualizar contraseña</span>
+        <span class="lang-content" data-lang="en" style="display:none">Update password</span>
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if flag %}
+  <div class="hl-card mb-4" style="border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.06)">
+    <div class="text-xs font-semibold text-green-400 mb-1">Flag</div>
+    <code class="text-sm font-mono text-green-400">{{ flag }}</code>
+  </div>
+  {% endif %}
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Easy</h3>
+    <ol>
+      <li>Fase 1: prueba enumeración de usuarios (error explícito cuando no existe).</li>
+      <li>Usa un usuario real, por ejemplo <code>admin</code>, para habilitar fase 2.</li>
+      <li>Cambia la contraseña sin OTP/token secundario y toma la cuenta.</li>
+      <li>La flag aparece al completar correctamente la fase 2.</li>
+    </ol>
+
+    <h3>Medium</h3>
+    <ol>
+      <li>Replica el flujo con otra cuenta válida (p.ej. <code>alice</code>) para confirmar ausencia de factor de verificación.</li>
+      <li>Observa que el backend no requiere enlace de email ni challenge temporal para confirmar reset.</li>
+      <li>Vuelve sobre <code>admin</code> y ejecuta takeover final con nueva contraseña.</li>
+    </ol>
+
+    <h3>Hard</h3>
+    <ol>
+      <li>En escenarios reales, hardening esperaría OTP/link firmado + expiración; aquí sigue faltando validación fuerte.</li>
+      <li>Aprovecha la misma debilidad lógica: conocer usuario válido y enviar nuevo password en fase 2.</li>
+      <li>Confirma cambio intentando login con credenciales nuevas del usuario objetivo.</li>
+    </ol>
+
+    <h3>Mitigación</h3>
+    <pre># Exigir token/OTP de un solo uso para confirmar reset
+# Evitar enumeración con respuestas uniformes
+# Vincular recuperación a canal verificado (email/SMS)
+# Expirar tokens en minutos y invalidarlos tras primer uso</pre>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Burp Intruder</span> <span class="tools-badge">curl</span> <span class="tools-badge">browser</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Easy</h3>
+    <ol>
+      <li>Phase 1: test user enumeration (explicit error for non-existing users).</li>
+      <li>Use a valid user such as <code>admin</code> to unlock phase 2.</li>
+      <li>Change password without OTP/secondary token and take over the account.</li>
+      <li>Flag is revealed after successful phase 2 completion.</li>
+    </ol>
+
+    <h3>Medium</h3>
+    <ol>
+      <li>Repeat flow with another valid account (e.g. <code>alice</code>) to confirm missing verification factor.</li>
+      <li>Notice backend does not require signed email link or time-based challenge.</li>
+      <li>Return to <code>admin</code> and perform final takeover with a new password.</li>
+    </ol>
+
+    <h3>Hard</h3>
+    <ol>
+      <li>In real hardening, you would expect signed reset link/OTP + expiration; this lab still lacks strong validation.</li>
+      <li>Exploit the same logic flaw: known valid username + direct password set in phase 2.</li>
+      <li>Verify takeover by logging in with the target user's new credentials.</li>
+    </ol>
+
+    <h3>Mitigation</h3>
+    <pre># Require one-time token/OTP to confirm reset
+# Use uniform responses to prevent enumeration
+# Bind recovery to verified channel (email/SMS)
+# Expire tokens quickly and invalidate after first use</pre>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Burp Intruder</span> <span class="tools-badge">curl</span> <span class="tools-badge">browser</span></div>
+  </div>
+</div>
+{% endblock %}

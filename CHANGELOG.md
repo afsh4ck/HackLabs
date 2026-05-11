@@ -2,6 +2,23 @@
 
 All notable changes to this repository are documented in this file.
 
+## 2026-05-11
+
+<details>
+<summary><h4>Nuevos Labs: Forgot Recovery, HTML Injection y Session Hijacking</h4></summary>
+
+- feat(forgot_recovery): Nuevo lab `Forgot Password Recovery (Authentication Flaws)` con flujo vulnerable en 2 fases (request + reset) y takeover de cuenta por validacion insuficiente.
+- feat(html_injection): Nuevo lab `HTML Injection (GET/POST/Stored)` con 3 superficies de ataque (reflected GET, render POST y contenido almacenado en blog).
+- feat(session_hijacking): Nuevo lab `Session Hijacking` con escenarios de SID predecible, token base64 sin firma y session fixation.
+- feat(flags): Nuevas flags dedicadas para los 3 labs: `HL{f0rg07_p455_r3c0v3ry_7ak30v3r}`, `HL{h7ml_1nj3ct10n_r3nd3r3d}` y `HL{535510n_h1j4ck3d_4cc355}`.
+- feat(routing): Integracion completa en rutas, mapeo de labs, tracking de progreso y validacion por flag.
+- feat(ui): Nuevos templates bilingues ES/EN para los 3 labs y resoluciones mejoradas por dificultad (Easy/Medium/Hard).
+- feat(i18n): Nuevas claves de traduccion para titulos y pestañas del lab de HTML Injection.
+- feat(sidebar): Iconos unicos para los nuevos labs en sidebar: `ph-key-return`, `ph-code-block` y `ph-fingerprint-simple`.
+- fix(forgot_recovery): UX corregida para mostrar solo una caja por fase, ocultar flag hasta exito y aplicar comportamiento one-time con PRG + `session.pop` (refresh reinicia flujo).
+
+</details>
+
 ## 2026-05-05
 
 <details>
