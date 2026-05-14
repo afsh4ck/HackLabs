@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **42 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **43 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -77,6 +77,7 @@
 | Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
 | JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat), algorithm confusion RS256→HS256 |
 | Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
+| CAPTCHA Bypass | 🟡 Medium | CAPTCHA matemático automatizable, oráculo de errores y bruteforce de credenciales |
 | OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar → robo de authorization code |
 | Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
 | Path Traversal / LFI | 🟠 High | `../../etc/passwd`, log poisoning → RCE |
@@ -460,6 +461,21 @@ Flag objetivo: `HL{jw7_m4n1pu14710n_4dm1n_0wn3d}`
 | Easy | Sin rate-limiting — intentos ilimitados |
 | Medium | Límite: 5 intentos / 30 segundos |
 | Hard | Límite: 3 intentos / 60 segundos (+ delay de 1s en FTP) |
+
+</details>
+
+<details>
+<summary><strong>CAPTCHA Bypass</strong></summary>
+
+| Nivel | Comportamiento |
+|-------|---------------|
+| Easy | CAPTCHA matematico de suma visible en el HTML, sin nonce |
+| Medium | Suma/resta visible + `captcha_nonce` + rate-limit moderado |
+| Hard | Expresion de tres terminos + nonce de un solo uso + rate-limit estricto |
+
+Errores clave del lab:
+- CAPTCHA correcto + credenciales incorrectas: `Error: la password debe tener 5 caracteres y el character set a,x,4,M,]`
+- Credenciales correctas + CAPTCHA incorrecto: `Error: CAPTCHA incorecto!`
 
 </details>
 

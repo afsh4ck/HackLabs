@@ -2,6 +2,19 @@
 
 All notable changes to this repository are documented in this file.
 
+## 2026-05-14
+
+<details>
+<summary><h4>Nuevo Lab: CAPTCHA Bypass</h4></summary>
+
+- feat(captcha): Nuevo laboratorio `CAPTCHA Bypass` con formulario de login protegido por CAPTCHA matematico y resolucion bilingue ES/EN.
+- feat(captcha): Implementado oraculo de errores para distinguir CAPTCHA valido con credenciales incorrectas y credenciales validas con CAPTCHA incorrecto.
+- feat(captcha): Dificultades Easy/Medium/Hard con retos matematicos progresivos, nonce en medium/hard y rate-limit aislado por dificultad.
+- fix(captcha): El flujo de errores usa redirect-after-post para que recargar la pagina regenere el CAPTCHA sin repetir mensajes de error.
+- docs(readme): README actualizado con el nuevo lab, total de laboratorios y comportamiento por dificultad.
+
+</details>
+
 ## 2026-05-11
 
 <details>

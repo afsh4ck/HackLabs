@@ -807,6 +807,7 @@ def get_lab_flag_map():
             'HL{smb_sh4r3_3num3r4ti0n_succ3ss}',
             'HL{4dm1n_b4ckup_3xf1ltr4ti0n}',
         ],
+        'captcha_math': ['HL{c4ptch4_byp4ss_m4th_0wn3d}'],
         'oauth': ['HL{04u7h_r3d1r3c7_0wn3d}'],
         'open_redirect': ['HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}'],
         'path_traversal': ['HL{1f1_53cr375_d1r_3xp053d}'],
@@ -858,6 +859,7 @@ def get_lab_flag_map():
         '2fa_bypass',
         'ssrf',
         'bruteforce',
+        'captcha_math',
         'privesc',
         'reverse_shell',
         'idor',
@@ -1436,6 +1438,7 @@ def lab(lab_id):
         'jwt':             '/jwt',
         'deserialization': '/deserialization',
         'cors':            '/cors',
+        'captcha_math':    '/captcha',
     }
     if lab_id in dedicated:
         return redirect(dedicated[lab_id])
@@ -1475,6 +1478,7 @@ def get_lab_list():
         {'id': 'deserialization',    'title': 'Insecure Deserialization',                    'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'jwt',                'title': 'JWT Manipulation',                            'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'bruteforce',         'title': 'Login Bruteforce',                            'category': 'Vulnerabilidades', 'risk': 'medium'},
+        {'id': 'captcha_math',       'title': 'CAPTCHA Bypass',                              'category': 'Vulnerabilidades', 'risk': 'medium'},
         {'id': 'oauth',              'title': 'OAuth 2.0 Attacks',                           'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'open_redirect',      'title': 'Open Redirect',                               'category': 'Vulnerabilidades', 'risk': 'medium'},
         {'id': 'path_traversal',     'title': 'Path Traversal / LFI',                       'category': 'Vulnerabilidades', 'risk': 'high'},
@@ -1541,6 +1545,8 @@ def inject_labs():
         '/deserialization':'deserialization',
         '/cors':           'cors',
         '/cors/data':      'cors',
+        '/captcha':        'captcha_math',
+        '/captcha/login':  'captcha_math',
         '/api_attacks':    'api_attacks',
         '/race':             'race_condition',
         '/race/balance':     'race_condition',
@@ -3140,6 +3146,151 @@ def bruteforce_ftp():
         # Añade delay artificial para ralentizar bruteforce
         time.sleep(1)
     return '530 Login incorrect.\r\n', 401
+
+# ─────────────────────────────────────────────
+# CAPTCHA Math lab
+# ─────────────────────────────────────────────
+
+@app.route('/captcha')
+def captcha():
+    return redirect(url_for('captcha_login'))
+
+
+CAPTCHA_FLAG = 'HL{c4ptch4_byp4ss_m4th_0wn3d}'
+CAPTCHA_PASSWORD = 'ax4M]'
+CAPTCHA_CHARSET = 'ax4M]'
+CAPTCHA_ERROR = 'Error: CAPTCHA incorecto!'
+CAPTCHA_CREDENTIAL_ERROR = 'Error: la password debe tener 5 caracteres y el character set a,x,4,M,]'
+
+
+def _captcha_lab():
+    return next(l for l in get_lab_list() if l['id'] == 'captcha_math')
+
+
+def _new_captcha_challenge(difficulty):
+    session.pop('captcha_a', None)
+    session.pop('captcha_b', None)
+    if difficulty == 'hard':
+        a = random.randint(10000, 99999)
+        b = random.randint(1000, 9999)
+        c = random.randint(100, 999)
+        question = f'{a} + {b} - {c}'
+        answer = a + b - c
+    elif difficulty == 'medium':
+        a = random.randint(1000, 9999)
+        b = random.randint(1000, 9999)
+        if random.choice((True, False)):
+            question = f'{a} + {b}'
+            answer = a + b
+        else:
+            high, low = max(a, b), min(a, b)
+            question = f'{high} - {low}'
+            answer = high - low
+    else:
+        a = random.randint(100, 999)
+        b = random.randint(10, 999)
+        question = f'{a} + {b}'
+        answer = a + b
+
+    nonce = secrets.token_hex(16) if difficulty in ('medium', 'hard') else None
+    session['captcha_question'] = question
+    session['captcha_answer'] = str(answer)
+    session['captcha_nonce'] = nonce
+    session['captcha_issued_at'] = time.time()
+    return question, nonce
+
+
+def _clear_captcha_challenge():
+    for key in ('captcha_question', 'captcha_answer', 'captcha_nonce',
+                'captcha_issued_at', 'captcha_a', 'captcha_b'):
+        session.pop(key, None)
+
+
+def _render_captcha_lab(error=None, success=False, flag=None, status=200):
+    lab = _captcha_lab()
+    difficulty = session.get('difficulty', 'easy')
+    question = None
+    nonce = None
+    if not success:
+        question, nonce = _new_captcha_challenge(difficulty)
+    return render_template(
+        'labs/captcha_math.html',
+        lab=lab,
+        captcha_question=question,
+        captcha_nonce=nonce,
+        error=error,
+        success=success,
+        flag=flag,
+        captcha_charset=CAPTCHA_CHARSET,
+        captcha_password_length=len(CAPTCHA_PASSWORD),
+    ), status
+
+
+def _redirect_captcha_error(error):
+    session['captcha_error'] = error
+    return redirect(url_for('captcha_login'), code=303)
+
+
+@app.route('/captcha/login', methods=['GET', 'POST'])
+def captcha_login():
+    difficulty = session.get('difficulty', 'easy')
+
+    # GET: generate captcha based on difficulty
+    if request.method == 'GET':
+        return _render_captcha_lab(error=session.pop('captcha_error', None))
+
+    # POST
+    username = request.values.get('username', '')
+    password = request.values.get('password', '')
+    captcha_input = request.values.get('captcha', '').strip()
+    posted_nonce = request.values.get('captcha_nonce')
+
+    # Rate-limit for medium/hard
+    if difficulty in ('medium', 'hard'):
+        client_ip = request.remote_addr
+        now = time.time()
+        key = f'captcha_{difficulty}_{client_ip}'
+        window = 30 if difficulty == 'medium' else 60
+        max_attempts = 10 if difficulty == 'medium' else 3
+        attempts = _bruteforce_attempts[key]
+        _bruteforce_attempts[key] = [t for t in attempts if now - t < window]
+        if len(_bruteforce_attempts[key]) >= max_attempts:
+            wait = int(window - (now - _bruteforce_attempts[key][0]))
+            error = f'Demasiados intentos. Espera {wait}s.'
+            return _redirect_captcha_error(error)
+        _bruteforce_attempts[key].append(now)
+
+    expected_answer = session.get('captcha_answer')
+    issued_at = float(session.get('captcha_issued_at') or 0)
+    if not expected_answer:
+        return redirect(url_for('captcha_login'), code=303)
+    if difficulty == 'hard' and time.time() - issued_at > 120:
+        _clear_captcha_challenge()
+        return redirect(url_for('captcha_login'), code=303)
+
+    if difficulty in ('medium', 'hard'):
+        expected = session.get('captcha_nonce')
+        if not expected or not posted_nonce or not secrets.compare_digest(posted_nonce, expected):
+            _clear_captcha_challenge()
+            return _redirect_captcha_error(CAPTCHA_ERROR)
+
+    try:
+        captcha_val = int(captcha_input)
+    except ValueError:
+        _clear_captcha_challenge()
+        return _redirect_captcha_error(CAPTCHA_ERROR)
+
+    if str(captcha_val) != expected_answer:
+        _clear_captcha_challenge()
+        return _redirect_captcha_error(CAPTCHA_ERROR)
+
+    _clear_captcha_challenge()
+
+    if username == 'admin' and password == CAPTCHA_PASSWORD:
+        _bruteforce_attempts.pop(f'captcha_{difficulty}_{request.remote_addr}', None)
+        return _render_captcha_lab(success=True, flag=CAPTCHA_FLAG)
+
+    return _redirect_captcha_error(CAPTCHA_CREDENTIAL_ERROR)
 
 # ─────────────────────────────────────────────
 # API: lista de usuarios (para practicar enumeration)
