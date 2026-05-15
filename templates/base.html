@@ -38,7 +38,7 @@
   <!-- highlight.js (syntax highlighting) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
 
-  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css?v=8" />
+  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css?v=9" />
 
   <!-- Inject saved theme before render to avoid flash -->
   <script>
@@ -52,10 +52,10 @@
 
   <!-- ── Top Navbar ── -->
   <header class="bg-white/80 dark:bg-dark-800/90 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-700/60 sticky top-0 z-50">
-    <div class="flex items-center justify-between px-4 py-2.5 gap-3">
+    <div class="hl-topbar flex items-center justify-between px-4 py-2.5 gap-3">
 
       <!-- Left: sidebar toggle + logo -->
-      <div class="flex items-center gap-3 min-w-0">
+      <div class="hl-brand flex items-center gap-3 min-w-0">
         <button id="sidebar-toggle" onclick="toggleSidebar()"
                 class="nav-icon-btn p-1.5 text-gray-500 dark:text-gray-400 flex-shrink-0"
                 title="Toggle sidebar">
@@ -70,25 +70,26 @@
             <i class="ph-fill ph-flask text-lg" style="color:var(--hl-on-primary)"></i>
           </div>
           <div class="flex items-center gap-1.5 min-w-0">
-            <span class="font-bold text-base text-gray-900 dark:text-white logo-text tracking-tight">Hack<span style="color:var(--hl-primary)">Labs</span></span>
+            <span class="hl-brand-text font-bold text-base text-gray-900 dark:text-white logo-text tracking-tight">Hack<span style="color:var(--hl-primary)">Labs</span></span>
             <span class="hidden lg:inline text-xs text-gray-400 whitespace-nowrap" style="font-size:12px">Intentionally Vulnerable Labs by <a href="https://www.instagram.com/afsh4ck/" target="_blank" rel="noopener" class="transition hover:opacity-70" style="color:var(--hl-primary);font-size:12px">afsh4ck</a></span>
           </div>
         </a>
       </div>
 
       <!-- Right: controls -->
-      <div class="flex items-center gap-1.5 flex-shrink-0">
+      <div class="hl-nav-actions flex items-center gap-1.5 flex-shrink-0">
 
         <!-- Hacking Academy button -->
         <a href="https://h4ckercademy.com/" target="_blank" rel="noopener"
-           class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+           class="hl-header-action hidden sm:inline-flex items-center justify-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+           aria-label="Hacking Academy" title="Hacking Academy"
            style="background:var(--hl-primary);color:var(--hl-on-primary)">
           <i class="ph ph-graduation-cap text-sm"></i>
-          Hacking Academy
+          <span class="hidden lg:inline">Hacking Academy</span>
         </a>
         <!-- GitHub stars: count + quick star (opens repo) -->
-        <div id="gh-stars" class="hidden sm:inline-flex items-center gap-2 ml-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95" style="background:rgba(var(--hl-primary-rgb),0.06);color:var(--hl-primary)">
-          <button id="gh-star-btn" class="inline-flex items-center gap-2 text-xs h-full relative group" tabindex="0">
+        <div id="gh-stars" class="hidden sm:inline-flex items-center gap-1.5 lg:gap-2 lg:ml-2 px-2 lg:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95" style="background:rgba(var(--hl-primary-rgb),0.06);color:var(--hl-primary)">
+          <button id="gh-star-btn" class="inline-flex items-center gap-1.5 lg:gap-2 text-xs h-full relative group" tabindex="0" aria-label="GitHub stars" title="GitHub stars">
             <i class="ph ph-star text-sm"></i>
             <span id="gh-star-count">—</span>
             <span id="gh-star-tooltip" class="gh-tooltip group-hover:opacity-100 group-focus:opacity-100 opacity-0 pointer-events-none transition-opacity absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold z-50 flex flex-col items-center" style="background:#18181b;color:#fff;white-space:nowrap;min-width:120px;text-align:center;">
@@ -101,8 +102,8 @@
         <!-- Language selector (dropdown) — same design/behavior as Difficulty -->
         <div id="lang-wrap" class="hidden sm:inline-flex items-center gap-1.5 relative">
             <button onclick="toggleLanguageMenu()" id="lang-btn"
-              class="difficulty-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition border border-gray-200 dark:border-gray-700 hover:border-yellow-400 hover:bg-white/5"
-              type="button" aria-haspopup="true" aria-expanded="false">
+              class="difficulty-btn flex items-center justify-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-bold transition border border-gray-200 dark:border-gray-700 hover:border-yellow-400 hover:bg-white/5"
+              type="button" aria-haspopup="true" aria-expanded="false" aria-label="Seleccionar idioma" title="Seleccionar idioma">
             <i class="ph ph-translate text-sm"></i>
             <span id="lang-selected">Español</span>
             <i class="ph ph-caret-down text-xs opacity-60"></i>
@@ -164,11 +165,11 @@
         <!-- Difficulty selector -->
         <div class="relative" id="difficulty-wrap">
           <button onclick="toggleDifficultyMenu()" id="difficulty-btn"
-                  class="difficulty-btn difficulty-btn--{{ difficulty }} flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition"
-                  type="button">
+                  class="difficulty-btn difficulty-btn--{{ difficulty }} flex items-center justify-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-bold transition"
+                  type="button" aria-label="Seleccionar dificultad" title="Seleccionar dificultad">
             <i class="ph ph-shield-warning text-sm"></i>
             <span class="diff-dot-inline diff-dot--{{ difficulty }}"></span>
-            <span class="hidden sm:inline" data-i18n="difficulty_label">Dificultad</span>
+            <span class="hidden lg:inline" data-i18n="difficulty_label">Dificultad</span>
             <i class="ph ph-caret-down text-xs opacity-60"></i>
           </button>
           <div id="difficulty-menu"
@@ -211,9 +212,10 @@
         <!-- User dropdown -->
         <div class="relative" id="account-menu-wrap">
           <button onclick="toggleAccountMenu()" 
-                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-yellow-400 transition">
+                  class="flex items-center justify-center gap-1.5 px-2 lg:px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-200 hover:border-yellow-400 transition"
+                  aria-label="Menu de cuenta" title="Menu de cuenta">
             <i class="ph ph-user-circle text-base" style="color:var(--hl-primary)"></i>
-            <span class="hidden sm:inline max-w-[90px] truncate">{{ session.app_user }}</span>
+            <span class="hidden lg:inline max-w-[90px] truncate">{{ session.app_user }}</span>
             <i class="ph ph-caret-down text-xs text-gray-400"></i>
           </button>
           <div id="account-menu"
@@ -251,9 +253,10 @@
         {% else %}
         <!-- Login / Register buttons -->
         <a href="/account/login"
-           class="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-yellow-400 transition">
+           class="hl-login-link inline-flex items-center justify-center px-2 lg:px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-yellow-400 transition"
+           aria-label="Login" title="Login">
           <i class="ph ph-sign-in text-sm"></i>
-          <span class="hidden sm:inline ml-1">Login</span>
+          <span class="hidden lg:inline ml-1">Login</span>
         </a>
         {% endif %}
       </div>

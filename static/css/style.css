@@ -175,8 +175,93 @@ main { margin-left: var(--sidebar-width); transition: margin-left 0.22s ease; }
 }
 .nav-icon-btn:hover { background: #0e0e1e; }
 
+/* Header responsive layout */
+.hl-topbar {
+  min-width: 0;
+  overflow: hidden;
+}
+.hl-brand {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.hl-brand a {
+  min-width: 0;
+}
+.hl-nav-actions {
+  min-width: 0;
+}
+.hl-header-action,
+.hl-login-link {
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1023.98px) {
+  .hl-topbar {
+    gap: 0.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .hl-brand {
+    gap: 0.5rem;
+  }
+  .hl-nav-actions {
+    gap: 0.35rem;
+  }
+  .hl-header-action,
+  #gh-stars,
+  #lang-btn,
+  #difficulty-btn,
+  #account-menu-wrap > button,
+  .hl-login-link {
+    min-width: 34px;
+    min-height: 34px;
+    justify-content: center;
+  }
+  .hl-header-action,
+  #gh-stars {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  #gh-stars {
+    width: 34px;
+    margin-left: 0 !important;
+  }
+  #gh-star-btn {
+    width: 100%;
+    justify-content: center;
+    gap: 0;
+  }
+  #gh-star-count,
+  #lang-selected {
+    display: none !important;
+  }
+  #lang-btn .ph-caret-down,
+  #difficulty-btn .ph-caret-down,
+  #account-menu-wrap > button .ph-caret-down {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .hl-topbar {
+    gap: 0.35rem;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+  .hl-brand-text {
+    display: none;
+  }
+  .hl-nav-actions {
+    gap: 0.25rem;
+  }
+  #difficulty-btn .diff-dot-inline {
+    display: none;
+  }
+}
+
 /* Lang select styling: visual, dark-friendly, rounded */
-#lang-wrap { display: inline-flex; align-items: center; }
+#lang-wrap { align-items: center; }
 #lang-select {
   background: transparent;
   border: none;
