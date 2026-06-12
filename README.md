@@ -3,7 +3,7 @@
 <img width="3456" height="1928" alt="hacklabs-new" src="https://github.com/user-attachments/assets/f9faf6c0-7740-4b3b-b5ff-874d7dac598f" />
 
 <br><br>
-<b>Plataforma de entrenamiento en hacking ético</b> — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el <b>OWASP Top 10</b> completo + vulnerabilidades extra avanzadas.
+<b>Plataforma de entrenamiento en hacking ético</b> — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el <b>OWASP Top 10 2025</b> completo + <b>OWASP API Security Top 10</b> + <b>OWASP LLM Top 10 2025</b> + vulnerabilidades avanzadas.
 <br><br>
 
 > ⚠️ **ADVERTENCIA**: Esta aplicación es intencionalmente insegura. Úsala SOLO en entornos aislados (máquina virtual, red local sin internet). Nunca la expongas públicamente.
@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **43 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **50+ laboratorios** cubriendo OWASP Top 10 2025 + OWASP API Security + OWASP LLM Top 10 + vulnerabilidades avanzadas
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -45,7 +45,7 @@
 
 ## 🧪 Laboratorios disponibles
 
-### OWASP Top 10 (2021)
+### OWASP Top 10 2025
 
 | # | Lab | Riesgo | Técnica |
 |---|-----|--------|---------|
@@ -150,7 +150,7 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | 🩸 First Blood | Completar el primer lab |
 | ⚡ Speed Runner | Completar 5 labs |
 | 🏁 Half Way There | Alcanzar el 50% de labs completados |
-| 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 |
+| 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 2025 |
 | 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
 | 🤖 AI Breaker | Completar todos los labs de IA Attacks |
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |

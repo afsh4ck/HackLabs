@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Supply Chain Security — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">A03:2025 – Supply Chain Security</h1>
+    <p class="text-gray-400">OWASP Top 10 2025 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">Este laboratorio demuestra vulnerabilidades en la cadena de suministro de software, incluyendo:</p>
+    <ul class="list-disc list-inside text-gray-300 space-y-2">
+      <li>Inyección de paquetes maliciosos (npm, pip, docker)</li>
+      <li>Dependency confusion attacks</li>
+      <li>Typosquatting</li>
+      <li>Compromiso de imágenes Docker</li>
+    </ul>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Simulador de Instalación de Paquetes</h2>
+    <p class="text-gray-400 mb-4">Simula la instalación de un paquete y observa si es malicioso:</p>
+    
+    <form id="installForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">Nombre del paquete:</label>
+        <input type="text" id="packageName" name="package" 
+               class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none"
+               placeholder="Ej: express-utils, lodash-sec, react-helper">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2">Registry:</label>
+        <select id="registry" name="registry" 
+                class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+          <option value="npm">npm</option>
+          <option value="pypi">PyPI</option>
+          <option value="docker">Docker Hub</option>
+        </select>
+      </div>
+      <button type="submit" 
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+        Instalar Paquete
+      </button>
+    </form>
+
+    <div id="installResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <h3 class="text-lg font-bold text-white mb-2">Resultado:</h3>
+        <pre id="installOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Verificador de Dependencias</h2>
+    <p class="text-gray-400 mb-4">Analiza un archivo package.json o requirements.txt:</p>
+    
+    <form id="verifyForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">Contenido del archivo:</label>
+        <textarea id="depsContent" name="content" rows="8"
+                  class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+                  placeholder='{"dependencies": {"express": "^4.18.0", "lodash": "^4.17.21"}}'></textarea>
+      </div>
+      <button type="submit" 
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+        Verificar Dependencias
+      </button>
+    </form>
+
+    <div id="verifyResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <h3 class="text-lg font-bold text-white mb-2">Resultado:</h3>
+        <pre id="verifyOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h1>
+    <p class="text-gray-300 mb-4">Encuentra la bandera oculta explotando vulnerabilidades de supply chain:</p>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Instala paquetes sospechosos y analiza su comportamiento</li>
+      <li>Identifica dependency confusion en el registry</li>
+      <li>Descubre typosquatting en paquetes populares</li>
+      <li>Encuentra el flag en la salida de los paquetes maliciosos</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded">
+      <p class="text-yellow-400 font-mono">Flag: HL{supply_ch4in_p4ck4g3_m4l1c10us}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('installForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const package = document.getElementById('packageName').value;
+  const registry = document.getElementById('registry').value;
+  
+  const response = await fetch('/supply_chain/install', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({package, registry})
+  });
+  
+  const data = await response.json();
+  document.getElementById('installOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('installResult').classList.remove('hidden');
+});
+
+document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const content = document.getElementById('depsContent').value;
+  
+  const response = await fetch('/supply_chain/verify', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({content})
+  });
+  
+  const data = await response.json();
+  document.getElementById('verifyOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('verifyResult').classList.remove('hidden');
+});
+</script>
+{% endblock %}

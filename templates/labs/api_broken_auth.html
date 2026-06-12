@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}API Broken Authentication — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API2:2023 – Broken Authentication</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">Vulnerabilidades en la autenticación de APIs:</p>
+    <ul class="list-disc list-inside text-gray-300 space-y-2">
+      <li>Token no invalidado después de logout</li>
+      <li>JWT con algoritmo none o débil</li>
+      <li>Credenciales en texto plano</li>
+      <li>Falta de rate limiting en login</li>
+    </ul>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">API de Login</h2>
+    <p class="text-gray-400 mb-4">Endpoint de autenticación vulnerable:</p>
+
+    <form id="loginForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-300 mb-2">Email:</label>
+          <input type="text" id="loginEmail" value="admin@hacklabs.com"
+                 class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-2">Password:</label>
+          <input type="password" id="loginPass" value="admin"
+                 class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+      </div>
+      <button type="submit"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+        Login
+      </button>
+    </form>
+
+    <div id="loginResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <h3 class="text-lg font-bold text-white mb-2">Respuesta:</h3>
+        <pre id="loginOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Endpoint Protegido</h2>
+    <p class="text-gray-400 mb-4">Accede a datos usando el token:</p>
+
+    <form id="profileForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">JWT Token:</label>
+        <input type="text" id="jwtToken" placeholder="Pega el token del login..."
+               class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm">
+      </div>
+      <button type="submit"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+        Obtener Perfil
+      </button>
+    </form>
+
+    <div id="profileResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <pre id="profileOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <p class="text-gray-300 mb-4">Explota la autenticación rota:</p>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Haz login con credenciales por defecto</li>
+      <li>Analiza el JWT — modifica el payload</li>
+      <li>Accede a un perfil que no es tuyo</li>
+      <li>Encuentra el flag en los datos del admin</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded">
+      <p class="text-yellow-400 font-mono">Flag: HL{4p1_br0k3n_4uth_jwt_n0n3}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      email: document.getElementById('loginEmail').value,
+      password: document.getElementById('loginPass').value
+    })
+  });
+  const data = await res.json();
+  document.getElementById('loginOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('loginResult').classList.remove('hidden');
+  if (data.token) document.getElementById('jwtToken').value = data.token;
+});
+
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const token = document.getElementById('jwtToken').value;
+  const res = await fetch('/api/auth/profile', {
+    headers: {'Authorization': `Bearer ${token}`}
+  });
+  const data = await res.json();
+  document.getElementById('profileOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('profileResult').classList.remove('hidden');
+});
+</script>
+{% endblock %}

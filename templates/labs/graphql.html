@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}GraphQL — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API8:2023 – GraphQL</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-yellow-500 font-bold">MEDIUM</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">Vulnerabilidades específicas de APIs GraphQL:</p>
+    <ul class="list-disc list-inside text-gray-300 space-y-2">
+      <li>Introspection habilitada — descubre todo el esquema</li>
+      <li>Query batching para evadir rate limits</li>
+      <li>Campo injection en queries anidadas</li>
+      <li>Falta de autenticación en campos sensibles</li>
+    </ul>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">GraphQL Playground</h2>
+    <p class="text-gray-400 mb-4">Ejecuta queries contra la API GraphQL:</p>
+
+    <form id="gqlForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">Query:</label>
+        <textarea id="gqlQuery" rows="8"
+                  class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+                  placeholder='{ __schema { types { name } } }'></textarea>
+      </div>
+      <div class="flex space-x-4">
+        <button type="submit"
+                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+          Ejecutar
+        </button>
+        <button type="button" onclick="loadIntrospection()"
+                class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition">
+          Introspection
+        </button>
+        <button type="button" onclick="loadUsersQuery()"
+                class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded transition">
+          List Users
+        </button>
+      </div>
+    </form>
+
+    <div id="gqlResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <h3 class="text-lg font-bold text-white mb-2">Resultado:</h3>
+        <pre id="gqlOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <p class="text-gray-300 mb-4">Explota vulnerabilidades de GraphQL:</p>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Usa introspección para descubrir el esquema completo</li>
+      <li>Encuentra campos ocultos con datos sensibles</li>
+      <li>Accede a usuarios sin autenticación</li>
+      <li>Extrae el flag de la mutación secreta</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded">
+      <p class="text-yellow-400 font-mono">Flag: HL{gr4phql_1ntr0sp3ct10n_s3ns1t1v3}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('gqlForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const query = document.getElementById('gqlQuery').value;
+  const res = await fetch('/graphql', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({query})
+  });
+  const data = await res.json();
+  document.getElementById('gqlOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('gqlResult').classList.remove('hidden');
+});
+
+function loadIntrospection() {
+  document.getElementById('gqlQuery').value = `{
+  __schema {
+    queryType { name }
+    types {
+      name
+      fields { name }
+    }
+  }
+}`;
+}
+
+function loadUsersQuery() {
+  document.getElementById('gqlQuery').value = `{
+  users {
+    id
+    name
+    email
+    role
+    password_hash
+  }
+}`;
+}
+</script>
+{% endblock %}

