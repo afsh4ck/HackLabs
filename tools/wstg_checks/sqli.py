@@ -24,9 +24,9 @@ class SqliCheck(BaseCheck):
     default_severity = Severity.HIGH
 
     def run(self):
-        paths = self.profile.get("paths", [])
+        paths = self.profile.get("endpoints", [])
         if not paths:
-            return self._error("No paths in profile")
+            return self._error("No endpoints in profile")
 
         for path_cfg in paths:
             path, params = path_cfg.get("path", "/"), path_cfg.get("params", [])

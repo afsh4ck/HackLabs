@@ -59,6 +59,7 @@ PROFILE_CHECK_MAP = {
     "cors-lab": "cors",
     "api-attacks-lab": "api_attacks",
     "file-upload-lab": "file_upload",
+    "cmdi-lab": "cmdi",
 }
 
 

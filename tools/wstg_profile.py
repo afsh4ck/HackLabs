@@ -89,10 +89,15 @@ def list_profiles_with_info(profile_dir: str | Path | None = None) -> list[dict]
 def discover_profile_for_check(check_name: str, profile_dir: str | Path | None = None) -> str | None:
     """Auto-discover the best profile for a given check module name.
 
-    Maps check module names (e.g., 'sqli') to profile names (e.g., 'sqli-lab').
+    Maps check module names (e.g., 'sqli', 'path_traversal') to profile names
+    (e.g., 'sqli-lab', 'path-traversal-lab').
     Returns profile name or None if not found.
     """
+    # Normalize check_name: underscores to hyphens
+    normalized = check_name.replace("_", "-")
     candidates = [
+        f"{normalized}-lab",
+        normalized,
         f"{check_name}-lab",
         check_name,
     ]

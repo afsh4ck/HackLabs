@@ -1,0 +1,9 @@
+lab_name: "CMD Injection Lab"
+base_url: "http://localhost:5000"
+description: "Command Injection testing for HackLabs cmdi/ping endpoint"
+wstg_categories:
+  - "WSTG-INPV-07"
+endpoints:
+  - path: "/cmdi/ping"
+    params:
+      - "host"
