@@ -5858,7 +5858,8 @@ def api_auth_profile():
 # --- Prototype Pollution (CWE-1321) ---
 @app.route('/lab/prototype_pollution')
 def lab_prototype_pollution():
-    return render_template('labs/prototype_pollution.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'prototype_pollution'), None)
+    return render_template('labs/prototype_pollution.html', lab=lab_info, difficulty='critical')
 
 # In-memory config store (intentionally vulnerable)
 _proto_config = {'theme': 'dark', 'language': 'es', 'notifications': True}
@@ -5887,7 +5888,8 @@ def proto_admin():
 # --- API Data Exposure (API3:2023) ---
 @app.route('/lab/api_data_exposure')
 def lab_api_data_exposure():
-    return render_template('labs/api_data_exposure.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'api_data_exposure'), None)
+    return render_template('labs/api_data_exposure.html', lab=lab_info, difficulty='high')
 
 @app.route('/api/v2/users/<int:user_id>')
 def api_v2_users(user_id):
@@ -5907,7 +5909,8 @@ def api_v2_users(user_id):
 # --- Rate Limiting Bypass (API4:2023) ---
 @app.route('/lab/rate_limit_bypass')
 def lab_rate_limit_bypass():
-    return render_template('labs/rate_limit_bypass.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'rate_limit_bypass'), None)
+    return render_template('labs/rate_limit_bypass.html', lab=lab_info, difficulty='high')
 
 _login_attempts = {}  # IP -> [(timestamp, path)]
 
@@ -5936,7 +5939,8 @@ def api_login_rate_limited():
 # --- Business Flow Abuse (API6:2023) ---
 @app.route('/lab/business_flow_abuse')
 def lab_business_flow_abuse():
-    return render_template('labs/business_flow_abuse.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'business_flow_abuse'), None)
+    return render_template('labs/business_flow_abuse.html', lab=lab_info, difficulty='high')
 
 _coupon_discounts = {'WELCOME10': 10, 'SAVE20': 20, 'VIP30': 30}
 _applied_coupons = []
@@ -5979,7 +5983,8 @@ def api_referral():
 # --- BFLA (API5:2023) ---
 @app.route('/lab/bfla')
 def lab_bfla():
-    return render_template('labs/bfla.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'bfla'), None)
+    return render_template('labs/bfla.html', lab=lab_info, difficulty='critical')
 
 @app.route('/api/user/profile')
 def api_user_profile():
@@ -6017,7 +6022,8 @@ def api_internal_debug():
 # --- Unsafe API Consumption (API10:2023) ---
 @app.route('/lab/unsafe_api_consumption')
 def lab_unsafe_api_consumption():
-    return render_template('labs/unsafe_api_consumption.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'unsafe_api_consumption'), None)
+    return render_template('labs/unsafe_api_consumption.html', lab=lab_info, difficulty='high')
 
 _webhooks_received = []
 
@@ -6042,7 +6048,8 @@ def api_payment_status():
 # --- Cloud Metadata SSRF (A10:2025) ---
 @app.route('/lab/cloud_metadata_ssrf')
 def lab_cloud_metadata_ssrf():
-    return render_template('labs/cloud_metadata_ssrf.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'cloud_metadata_ssrf'), None)
+    return render_template('labs/cloud_metadata_ssrf.html', lab=lab_info, difficulty='critical')
 
 @app.route('/cloud/fetch', methods=['POST'])
 def cloud_fetch():
@@ -6070,7 +6077,8 @@ def cloud_fetch():
 # --- Advanced SSRF with DNS Rebinding ---
 @app.route('/lab/ssrf_advanced')
 def lab_ssrf_advanced():
-    return render_template('labs/ssrf_advanced.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'ssrf_advanced'), None)
+    return render_template('labs/ssrf_advanced.html', lab=lab_info, difficulty='critical')
 
 @app.route('/ssrf/advanced/fetch', methods=['POST'])
 def ssrf_advanced_fetch():
@@ -6100,7 +6108,8 @@ def ssrf_advanced_rebind():
 # --- HTTP Request Smuggling ---
 @app.route('/lab/http_smuggling')
 def lab_http_smuggling():
-    return render_template('labs/http_smuggling.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'http_smuggling'), None)
+    return render_template('labs/http_smuggling.html', lab=lab_info, difficulty='critical')
 
 @app.route('/smuggle/inspect', methods=['POST'])
 def smuggle_inspect():
@@ -6137,7 +6146,8 @@ def smuggle_inspect():
 # --- GraphQL Advanced ---
 @app.route('/lab/graphql_advanced')
 def lab_graphql_advanced():
-    return render_template('labs/graphql_advanced.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'graphql_advanced'), None)
+    return render_template('labs/graphql_advanced.html', lab=lab_info, difficulty='critical')
 
 GRAPHQL_SCHEMA = {
     'types': [
@@ -6183,7 +6193,8 @@ def graphql_advanced_endpoint():
 # --- Supply Chain Advanced (Lockfile Poisoning) ---
 @app.route('/lab/supply_chain_v2')
 def lab_supply_chain_v2():
-    return render_template('labs/supply_chain_v2.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'supply_chain_v2'), None)
+    return render_template('labs/supply_chain_v2.html', lab=lab_info, difficulty='critical')
 
 @app.route('/supply_chain_v2/scan', methods=['POST'])
 def supply_chain_v2_scan():
@@ -6208,7 +6219,8 @@ def supply_chain_v2_scan():
 # --- Advanced Exceptional Conditions ---
 @app.route('/lab/exceptional_v2')
 def lab_exceptional_v2():
-    return render_template('labs/exceptional_v2.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'exceptional_v2'), None)
+    return render_template('labs/exceptional_v2.html', lab=lab_info, difficulty='high')
 
 @app.route('/exceptional_v2/lookup', methods=['POST'])
 def exceptional_v2_lookup():
@@ -6228,7 +6240,8 @@ def exceptional_v2_lookup():
 # --- Advanced DOM XSS ---
 @app.route('/lab/dom_xss_advanced')
 def lab_dom_xss_advanced():
-    return render_template('labs/dom_xss_advanced.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'dom_xss_advanced'), None)
+    return render_template('labs/dom_xss_advanced.html', lab=lab_info, difficulty='high')
 
 @app.route('/dom_xss_advanced/render', methods=['POST'])
 def dom_xss_advanced_render():
@@ -6246,7 +6259,8 @@ def dom_xss_advanced_render():
 # --- Advanced Mass Assignment ---
 @app.route('/lab/mass_assignment_v2')
 def lab_mass_assignment_v2():
-    return render_template('labs/mass_assignment_v2.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'mass_assignment_v2'), None)
+    return render_template('labs/mass_assignment_v2.html', lab=lab_info, difficulty='critical')
 
 @app.route('/mass_assignment_v2/register', methods=['POST'])
 def mass_assignment_v2_register():
@@ -6268,7 +6282,8 @@ def mass_assignment_v2_register():
 # --- UUID-based IDOR ---
 @app.route('/lab/uuid_idor')
 def lab_uuid_idor():
-    return render_template('labs/uuid_idor.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'uuid_idor'), None)
+    return render_template('labs/uuid_idor.html', lab=lab_info, difficulty='high')
 
 _uuid_docs = {
     'doc-00000001': {'title': 'Public API Documentation', 'content': 'Public info', 'owner': 'public'},
@@ -6297,7 +6312,8 @@ def uuid_idor_doc(doc_id):
 # --- MCP Tool Poisoning ---
 @app.route('/lab/ai_tool_poisoning')
 def lab_ai_tool_poisoning():
-    return render_template('labs/ai_tool_poisoning.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'ai_tool_poisoning'), None)
+    return render_template('labs/ai_tool_poisoning.html', lab=lab_info, difficulty='critical')
 
 @app.route('/ai_tool_poisoning/scan', methods=['POST'])
 def ai_tool_poisoning_scan():
@@ -6322,7 +6338,8 @@ _rag_docs = []
 
 @app.route('/lab/rag_injection')
 def lab_rag_injection():
-    return render_template('labs/rag_injection.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'rag_injection'), None)
+    return render_template('labs/rag_injection.html', lab=lab_info, difficulty='critical')
 
 @app.route('/rag_injection/upload', methods=['POST'])
 def rag_upload():
@@ -6350,7 +6367,8 @@ _device_codes = {}
 
 @app.route('/lab/device_code_phishing')
 def lab_device_code_phishing():
-    return render_template('labs/device_code_phishing.html')
+    lab_info = next((l for l in get_lab_list() if l['id'] == 'device_code_phishing'), None)
+    return render_template('labs/device_code_phishing.html', lab=lab_info, difficulty='high')
 
 @app.route('/device_code_phishing/request', methods=['POST'])
 def device_code_request():

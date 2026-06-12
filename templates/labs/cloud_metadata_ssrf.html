@@ -1,52 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Cloud Metadata SSRF — HackLabs{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-red-400 mb-2">A10:2025 – Cloud Metadata SSRF</h1>
-    <p class="text-gray-400">OWASP Top 10 2025 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
-  </div>
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
 
-  <div class="bg-gray-800 rounded-lg p-6 mb-6">
-    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
-    <p class="text-gray-300 mb-4">El endpoint de webhook acepta URLs internas. Explota SSRF para acceder al metadata server del cloud provider (169.254.169.254) y robar credenciales IAM.</p>
-    <ul class="list-disc list-inside text-gray-300 space-y-2">
-      <li>AWS: <code class="bg-gray-700 px-1 rounded">http://169.254.169.254/latest/meta-data/iam/security-credentials/</code></li>
-      <li>GCP: <code class="bg-gray-700 px-1 rounded">http://metadata.google.internal/computeMetadata/v1/</code></li>
-      <li>Azure: <code class="bg-gray-700 px-1 rounded">http://169.254.169.254/metadata/instance?api-version=2021-02-01</code></li>
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="cms_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300 mb-3" data-i18n="cms_desc_text">El endpoint de webhook acepta URLs internas. Explota SSRF para acceder al metadata server del cloud provider (169.254.169.254) y robar credenciales IAM.</p>
+    <ul class="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 text-sm">
+      <li>AWS: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">http://169.254.169.254/latest/meta-data/iam/security-credentials/</code></li>
+      <li>GCP: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">http://metadata.google.internal/computeMetadata/v1/</code></li>
+      <li>Azure: <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">http://169.254.169.254/metadata/instance?api-version=2021-02-01</code></li>
     </ul>
   </div>
 
-  <div class="bg-gray-800 rounded-lg p-6 mb-6">
-    <h2 class="text-xl font-bold text-white mb-4">URL Fetcher</h2>
-    <p class="text-gray-400 mb-4">Ingresa una URL para que el servidor la visite:</p>
-    <form id="fetchForm" class="space-y-4">
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="cms_fetcher">URL Fetcher</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="cms_fetcher_desc">Ingresa una URL para que el servidor la visite:</p>
+    <form id="fetchForm" class="space-y-3">
       <div>
-        <label class="block text-gray-300 mb-2">URL:</label>
-        <input type="text" id="url" value="http://example.com" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono">
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="cms_url">URL</label>
+        <input type="text" id="url" value="http://example.com" class="hl-input font-mono">
       </div>
-      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Fetch URL</button>
+      <button type="submit" class="btn-primary" data-i18n="cms_fetch_btn">Fetch URL</button>
     </form>
-    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
   </div>
 
-  <div class="bg-gray-800 rounded-lg p-6">
-    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
-    <ol class="list-decimal list-inside text-gray-300 space-y-2">
-      <li>Accede al metadata server via SSRF</li>
-      <li>Obtén las credenciales IAM del Rol asignado</li>
-      <li>Usa las credenciales para acceder a S3/dynamodb</li>
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="cms_obj_1">Accede al metadata server via SSRF</li>
+      <li data-i18n="cms_obj_2">Obtén las credenciales IAM del Rol asignado</li>
+      <li data-i18n="cms_obj_3">Usa las credenciales para acceder a S3/dynamodb</li>
     </ol>
-    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{cl0ud_m3t4d4t4_ssrf_1am_r0l3}</p></div>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{cl0ud_m3t4d4t4_ssrf_1am_r0l3}</p></div>
   </div>
 </div>
 <script>
 document.getElementById('fetchForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const res = await fetch('/cloud/fetch', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url: document.getElementById('url').value}) });
-  const data = await res.json();
-  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-  document.getElementById('result').classList.remove('hidden');
+  try {
+    const res = await fetch('/cloud/fetch', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url: document.getElementById('url').value}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
 });
 </script>
 {% endblock %}
