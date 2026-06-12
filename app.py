@@ -1510,6 +1510,28 @@ def get_lab_list():
         {'id': 'exceptional_conditions', 'title': 'A10:2025 – Exceptional Conditions',       'category': 'OWASP Top 10 2025', 'risk': 'high'},
         {'id': 'graphql',            'title': 'API8:2023 – GraphQL Security',                'category': 'OWASP API Security', 'risk': 'high'},
         {'id': 'llm_excessive_agency', 'title': 'LLM06 – Excessive Agency',                  'category': 'IA Attacks',       'risk': 'high'},
+        # Stage 1: API Security Labs (2024-2025 bug bounty findings)
+        {'id': 'prototype_pollution',    'title': 'CWE-1321 – Server-Side Prototype Pollution',    'category': 'OWASP API Security', 'risk': 'critical'},
+        {'id': 'api_data_exposure',      'title': 'API3:2023 – Excessive Data Exposure',           'category': 'OWASP API Security', 'risk': 'high'},
+        {'id': 'rate_limit_bypass',      'title': 'API4:2023 – Rate Limiting Bypass',              'category': 'OWASP API Security', 'risk': 'high'},
+        {'id': 'business_flow_abuse',    'title': 'API6:2023 – Automated Business Flow Abuse',     'category': 'OWASP API Security', 'risk': 'high'},
+        {'id': 'bfla',                   'title': 'API5:2023 – Broken Function Level Auth (BFLA)', 'category': 'OWASP API Security', 'risk': 'critical'},
+        {'id': 'unsafe_api_consumption', 'title': 'API10:2023 – Unsafe Consumption of APIs',       'category': 'OWASP API Security', 'risk': 'high'},
+        # Stage 2: Cloud/Advanced Labs
+        {'id': 'cloud_metadata_ssrf', 'title': 'A10:2025 – Cloud Metadata SSRF',          'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'ssrf_advanced',       'title': 'A10:2025 – Advanced SSRF (DNS Rebinding)', 'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'http_smuggling',      'title': 'A10:2025 – HTTP Request Smuggling (CL.TE/TE.CL)',    'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'graphql_advanced',    'title': 'API8:2023 – GraphQL Advanced Attacks',    'category': 'OWASP API Security', 'risk': 'critical'},
+        # Stage 3: Breach-Driven Labs
+        {'id': 'supply_chain_v2',    'title': 'A03:2025 – Supply Chain Advanced (Lockfile)',     'category': 'OWASP Top 10 2025', 'risk': 'critical'},
+        {'id': 'exceptional_v2',     'title': 'A10:2025 – Advanced Exceptional Conditions',     'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        {'id': 'dom_xss_advanced',   'title': 'A07:2025 – Advanced DOM XSS (Sandbox Escape)',              'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        {'id': 'mass_assignment_v2', 'title': 'API3:2023 – Advanced Mass Assignment (Role Esc.)', 'category': 'OWASP API Security', 'risk': 'critical'},
+        {'id': 'uuid_idor',          'title': 'A01:2025 – UUID-based IDOR',                     'category': 'OWASP Top 10 2025', 'risk': 'high'},
+        # Stage 4: AI/Emerging Labs
+        {'id': 'ai_tool_poisoning',  'title': 'MCP Tool Poisoning (Agent Supply Chain)',   'category': 'IA Attacks', 'risk': 'critical'},
+        {'id': 'rag_injection',      'title': 'RAG Injection (Knowledge Base Poisoning)', 'category': 'IA Attacks', 'risk': 'critical'},
+        {'id': 'device_code_phishing', 'title': 'A07:2025 – Device Code Phishing (OAuth 2.0)',       'category': 'OWASP Top 10 2025', 'risk': 'high'},
     ]
 
 
@@ -1604,6 +1626,33 @@ def inject_labs():
         '/api_broken_auth':  'api_broken_auth',
         '/api/auth/login':   'api_broken_auth',
         '/api/auth/profile': 'api_broken_auth',
+        # Stage 1: API Security Labs
+        '/lab/prototype_pollution': 'prototype_pollution',
+        '/pollute/merge':           'prototype_pollution',
+        '/pollute/admin':           'prototype_pollution',
+        '/lab/api_data_exposure':   'api_data_exposure',
+        '/api/v2/users':            'api_data_exposure',
+        '/lab/rate_limit_bypass':   'rate_limit_bypass',
+        '/lab/business_flow_abuse': 'business_flow_abuse',
+        '/lab/bfla':                'bfla',
+        '/lab/unsafe_api_consumption': 'unsafe_api_consumption',
+        '/api/webhook':             'unsafe_api_consumption',
+        # Stage 2: Cloud/Advanced Labs
+        '/lab/cloud_metadata_ssrf': 'cloud_metadata_ssrf',
+        '/lab/ssrf_advanced':       'ssrf_advanced',
+        '/lab/http_smuggling':      'http_smuggling',
+        '/lab/graphql_advanced':    'graphql_advanced',
+        '/graphql/advanced':        'graphql_advanced',
+        # Stage 3: Breach-Driven Labs
+        '/lab/supply_chain_v2':    'supply_chain_v2',
+        '/lab/exceptional_v2':     'exceptional_v2',
+        '/lab/dom_xss_advanced':   'dom_xss_advanced',
+        '/lab/mass_assignment_v2': 'mass_assignment_v2',
+        '/lab/uuid_idor':          'uuid_idor',
+        # Stage 4: AI/Emerging Labs
+        '/lab/ai_tool_poisoning':  'ai_tool_poisoning',
+        '/lab/rag_injection':      'rag_injection',
+        '/lab/device_code_phishing': 'device_code_phishing',
     }
     # ...existing code...
     current_lab_id = path_to_lab.get(path, '')
@@ -5800,6 +5849,536 @@ def api_auth_profile():
         'role': user['role'],
         'flag': user.get('flag')
     })
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Stage 1: API Security Labs (2024-2025 bug bounty findings)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# --- Prototype Pollution (CWE-1321) ---
+@app.route('/lab/prototype_pollution')
+def lab_prototype_pollution():
+    return render_template('labs/prototype_pollution.html')
+
+# In-memory config store (intentionally vulnerable)
+_proto_config = {'theme': 'dark', 'language': 'es', 'notifications': True}
+
+@app.route('/pollute/merge', methods=['POST'])
+def proto_merge():
+    global _proto_config
+    data = request.get_json(force=True, silent=True) or {}
+    # VULNERABLE: merges __proto__ into config without filtering
+    for key, value in data.items():
+        if isinstance(value, dict):
+            _proto_config.setdefault(key, {}).update(value) if isinstance(_proto_config.get(key), dict) else None
+        else:
+            _proto_config[key] = value
+    return jsonify({'status': 'merged', 'config': _proto_config})
+
+@app.route('/pollute/admin')
+def proto_admin():
+    # Check if isAdmin was injected via prototype pollution
+    return jsonify({
+        'isAdmin': _proto_config.get('isAdmin', False),
+        'flag': 'HL{pr0t0type_p0llut10n_1s_d4ng3r0us}' if _proto_config.get('isAdmin') else None,
+        'message': 'Access granted' if _proto_config.get('isAdmin') else 'Not admin'
+    })
+
+# --- API Data Exposure (API3:2023) ---
+@app.route('/lab/api_data_exposure')
+def lab_api_data_exposure():
+    return render_template('labs/api_data_exposure.html')
+
+@app.route('/api/v2/users/<int:user_id>')
+def api_v2_users(user_id):
+    users = {
+        1: {'id': 1, 'name': 'Alice Admin', 'email': 'alice@hacklabs.com', 'role': 'admin',
+            'password_hash': '5f4dcc3b5aa765d61d8327deb882cf99', 'ssn': '123-45-6789',
+            'reset_token': 'r3s3t_t0k3n_s3cr3t', 'flag': 'HL{3xc3ss1v3_d4ta_3xp0s3d_h1dd3n_f13lds}'},
+        2: {'id': 2, 'name': 'Bob User', 'email': 'bob@hacklabs.com', 'role': 'user',
+            'password_hash': 'e10adc3949ba59abbe56e057f20f883e', 'ssn': '987-65-4321',
+            'reset_token': 'b0b_r3s3t_t0k3n', 'flag': None},
+    }
+    user = users.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    return jsonify(user)
+
+# --- Rate Limiting Bypass (API4:2023) ---
+@app.route('/lab/rate_limit_bypass')
+def lab_rate_limit_bypass():
+    return render_template('labs/rate_limit_bypass.html')
+
+_login_attempts = {}  # IP -> [(timestamp, path)]
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_login_rate_limited():
+    data = request.get_json(force=True, silent=True) or {}
+    email = data.get('email', '')
+    password = data.get('password', '')
+    ip = request.remote_addr
+    now = time.time()
+    # Track attempts
+    if ip not in _login_attempts:
+        _login_attempts[ip] = []
+    _login_attempts[ip].append(now)
+    # Clean old attempts (60s window)
+    _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < 60]
+    # Rate limit: 5 attempts per minute
+    if len(_login_attempts[ip]) > 5:
+        return jsonify({'error': 'Too many attempts. Try again in 60 seconds.', 'rate_limited': True}), 429
+    # Check credentials
+    if email == 'admin@hacklabs.com' and password == 'P@ssw0rd2025!':
+        token = base64.b64encode(json.dumps({'email': email, 'role': 'admin', 'exp': time.time() + 3600}).encode()).decode()
+        return jsonify({'status': 'success', 'token': token, 'flag': 'HL{r4t3_l1m1t_byp4ss_brut3f0rc3}'})
+    return jsonify({'error': 'Invalid credentials', 'remaining': 5 - len(_login_attempts[ip])}), 401
+
+# --- Business Flow Abuse (API6:2023) ---
+@app.route('/lab/business_flow_abuse')
+def lab_business_flow_abuse():
+    return render_template('labs/business_flow_abuse.html')
+
+_coupon_discounts = {'WELCOME10': 10, 'SAVE20': 20, 'VIP30': 30}
+_applied_coupons = []
+
+@app.route('/api/coupon/apply', methods=['POST'])
+def api_coupon_apply():
+    data = request.get_json(force=True, silent=True) or {}
+    coupon = data.get('coupon', '').upper()
+    cart_total = data.get('cart_total', 100)
+    if coupon in _coupon_discounts:
+        discount = _coupon_discounts[coupon]
+        _applied_coupons.append(coupon)
+        # VULNERABLE: allows stacking multiple coupons
+        total_discount = sum(_coupon_discounts[c] for c in _applied_coupons)
+        final = max(0, cart_total - total_discount)
+        return jsonify({
+            'status': 'applied', 'coupon': coupon, 'discount': discount,
+            'applied_coupons': _applied_coupons, 'total_discount': total_discount,
+            'final_price': final,
+            'flag': 'HL{bus1n3ss_fl0w_4bus3_c0up0n_st4ck}' if final <= 0 else None
+        })
+    return jsonify({'error': 'Invalid coupon'}), 400
+
+_referral_count = {'count': 0}
+
+@app.route('/api/referral', methods=['POST'])
+def api_referral():
+    data = request.get_json(force=True, silent=True) or {}
+    email = data.get('referral_email', '')
+    if not email:
+        return jsonify({'error': 'Missing referral_email'}), 400
+    _referral_count['count'] += 1
+    return jsonify({
+        'status': 'created', 'referral': email, 'bonus': 5.0,
+        'total_referrals': _referral_count['count'],
+        'total_bonus': _referral_count['count'] * 5.0,
+        'flag': 'HL{bus1n3ss_fl0w_4bus3_r3f3rr4l_f4rm}' if _referral_count['count'] >= 10 else None
+    })
+
+# --- BFLA (API5:2023) ---
+@app.route('/lab/bfla')
+def lab_bfla():
+    return render_template('labs/bfla.html')
+
+@app.route('/api/user/profile')
+def api_user_profile():
+    return jsonify({'id': 1, 'name': 'Alice', 'role': 'user', 'email': 'alice@hacklabs.com'})
+
+@app.route('/api/admin/users')
+def api_admin_users():
+    return jsonify({
+        'users': [
+            {'id': 1, 'email': 'admin@hacklabs.com', 'role': 'admin', 'password_hash': '5f4dcc3b5aa765d61d8327deb882cf99'},
+            {'id': 2, 'email': 'bob@hacklabs.com', 'role': 'user', 'password_hash': 'e10adc3949ba59abbe56e057f20f883e'},
+        ],
+        'flag': 'HL{bf14_4dm1n_3ndp01nt_3num3r4t10n}'
+    })
+
+@app.route('/api/admin/config')
+def api_admin_config():
+    return jsonify({
+        'debug_mode': True, 'db_password': 'sup3r_s3cr3t_db_p4ss', 'api_key': 'ak_live_1234567890abcdef',
+        'flag': 'HL{bf14_c0nf1g_3xp0s3d}'
+    })
+
+@app.route('/api/admin/delete_user')
+def api_admin_delete():
+    return jsonify({'message': 'Admin endpoint: delete user by ID', 'usage': 'POST with {user_id: X}',
+                    'flag': 'HL{bf14_d3l3t3_us3r_4cc3ss}'})
+
+@app.route('/api/internal/debug')
+def api_internal_debug():
+    return jsonify({
+        'env': {'SECRET_KEY': 'hacklabs_super_insecure_secret_2024', 'DB_PASS': 'root'},
+        'stack': 'Flask 3.0 / Python 3.12', 'flag': 'HL{bf14_d3bug_3ndp01nt_l34k}'
+    })
+
+# --- Unsafe API Consumption (API10:2023) ---
+@app.route('/lab/unsafe_api_consumption')
+def lab_unsafe_api_consumption():
+    return render_template('labs/unsafe_api_consumption.html')
+
+_webhooks_received = []
+
+@app.route('/api/webhook', methods=['POST'])
+def api_webhook():
+    data = request.get_json(force=True, silent=True) or {}
+    _webhooks_received.append(data)
+    return jsonify({'status': 'received', 'id': len(_webhooks_received)})
+
+@app.route('/api/payment-status')
+def api_payment_status():
+    return jsonify({'webhooks': _webhooks_received[-5:], 'count': len(_webhooks_received)})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# END Stage 1 Labs
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Stage 2: Cloud/Advanced Labs (2024-2025 bug bounty findings)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# --- Cloud Metadata SSRF (A10:2025) ---
+@app.route('/lab/cloud_metadata_ssrf')
+def lab_cloud_metadata_ssrf():
+    return render_template('labs/cloud_metadata_ssrf.html')
+
+@app.route('/cloud/fetch', methods=['POST'])
+def cloud_fetch():
+    data = request.get_json(force=True, silent=True) or {}
+    url = data.get('url', '')
+    # Simulated cloud metadata response
+    if '169.254.169.254' in url:
+        if 'iam' in url.lower():
+            return jsonify({
+                'status': 'success', 'source': 'cloud_metadata',
+                'role': 'hacklabs-ec2-role',
+                'credentials': {
+                    'AccessKeyId': 'AKIAIOSFODNN7EXAMPLE',
+                    'SecretAccessKey': 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+                    'Token': 'FwoGZXIvYXdzEBYaDN...',
+                },
+                'flag': 'HL{cl0ud_m3t4d4t4_ssrf_1am_r0l3}'
+            })
+        return jsonify({'status': 'success', 'source': 'cloud_metadata', 'instance_id': 'i-0abc123def456', 'ami': 'ami-0c55b159cbfafe1f0'})
+    if 'metadata.google.internal' in url:
+        return jsonify({'status': 'success', 'source': 'gcp_metadata', 'project_id': 'hacklabs-gcp', 'flag': 'HL{cl0ud_m3t4d4t4_ssrf_gcp}'})
+    # Normal fetch simulation
+    return jsonify({'status': 'fetched', 'url': url, 'response': f'Simulated response from {url}'})
+
+# --- Advanced SSRF with DNS Rebinding ---
+@app.route('/lab/ssrf_advanced')
+def lab_ssrf_advanced():
+    return render_template('labs/ssrf_advanced.html')
+
+@app.route('/ssrf/advanced/fetch', methods=['POST'])
+def ssrf_advanced_fetch():
+    data = request.get_json(force=True, silent=True) or {}
+    url = data.get('url', '')
+    # Filter internal IPs
+    blocked = ['127.0.0.1', 'localhost', '0.0.0.0', '169.254', '10.', '172.16', '192.168']
+    for b in blocked:
+        if b in url:
+            return jsonify({'error': f'Blocked: internal IP detected ({b})', 'blocked': True}), 403
+    return jsonify({'status': 'fetched', 'url': url, 'response': f'Simulated response from {url}'})
+
+@app.route('/ssrf/advanced/rebind', methods=['POST'])
+def ssrf_advanced_rebind():
+    data = request.get_json(force=True, silent=True) or {}
+    domain = data.get('domain', '')
+    # Simulate DNS rebinding: first resolves to public, then to internal
+    return jsonify({
+        'status': 'rebind_simulated',
+        'domain': domain,
+        'first_resolve': '93.184.216.34 (public)',
+        'second_resolve': '127.0.0.1 (internal — REBIND!)',
+        'admin_data': {'flag': 'HL{4dv4nc3d_ssrf_dns_r3b1nd_1nt3rn4l}'},
+        'technique': 'DNS rebinding: domain alternates between public and internal IPs'
+    })
+
+# --- HTTP Request Smuggling ---
+@app.route('/lab/http_smuggling')
+def lab_http_smuggling():
+    return render_template('labs/http_smuggling.html')
+
+@app.route('/smuggle/inspect', methods=['POST'])
+def smuggle_inspect():
+    raw = request.get_data(as_text=True)
+    lines = raw.split('\r\n')
+    method = lines[0] if lines else 'UNKNOWN'
+    headers = {}
+    body = ''
+    in_body = False
+    for line in lines[1:]:
+        if in_body:
+            body += line + '\r\n'
+        elif line == '':
+            in_body = True
+        elif ':' in line:
+            k, v = line.split(':', 1)
+            headers[k.strip()] = v.strip()
+    # Analyze for smuggling indicators
+    has_cl = 'Content-Length' in headers
+    has_te = 'Transfer-Encoding' in headers
+    smuggling_type = 'none'
+    if has_cl and has_te:
+        smuggling_type = 'CL.TE (Content-Length vs Transfer-Encoding conflict!)'
+    elif has_te:
+        smuggling_type = 'TE only (potential TE.CL)'
+    return jsonify({
+        'parsed_method': method, 'headers': headers, 'body_length': len(body),
+        'has_content_length': has_cl, 'has_transfer_encoding': has_te,
+        'smuggling_type': smuggling_type,
+        'analysis': 'CL.TE: proxy uses CL, backend uses TE → request smuggling!' if smuggling_type.startswith('CL.TE') else 'No conflict detected (try CL.TE payload)',
+        'flag': 'HL{http_smuggl1ng_clt3_t3cl_d3sync}' if smuggling_type.startswith('CL.TE') else None
+    })
+
+# --- GraphQL Advanced ---
+@app.route('/lab/graphql_advanced')
+def lab_graphql_advanced():
+    return render_template('labs/graphql_advanced.html')
+
+GRAPHQL_SCHEMA = {
+    'types': [
+        {'name': 'User', 'fields': ['id', 'name', 'email', 'role', 'password_hash', 'ssn', 'api_key']},
+        {'name': 'Post', 'fields': ['id', 'title', 'content', 'author_id', 'author']},
+        {'name': 'Comment', 'fields': ['id', 'text', 'author_id', 'post_id', 'author']},
+    ]
+}
+GRAPHQL_USERS = [
+    {'id': 1, 'name': 'Admin', 'email': 'admin@hacklabs.com', 'role': 'admin', 'password_hash': '5f4dcc3b5aa765d61d8327deb882cf99', 'ssn': '123-45-6789', 'api_key': 'ak_live_1234567890abcdef'},
+    {'id': 2, 'name': 'Bob', 'email': 'bob@hacklabs.com', 'role': 'user', 'password_hash': 'e10adc3949ba59abbe56e057f20f883e', 'ssn': '987-65-4321', 'api_key': 'ak_live_fedcba0987654321'},
+]
+
+@app.route('/graphql/advanced', methods=['POST'])
+def graphql_advanced_endpoint():
+    data = request.get_json(force=True, silent=True) or {}
+    query = data.get('query', '')
+    # Introspection
+    if '__schema' in query:
+        return jsonify({'data': {'__schema': GRAPHQL_SCHEMA}})
+    # User queries
+    if 'users' in query.lower():
+        # VULNERABLE: returns all fields including sensitive ones
+        return jsonify({'data': {'users': GRAPHQL_USERS}})
+    if 'user(' in query.lower():
+        return jsonify({'data': {'user': GRAPHQL_USERS[0]}})
+    # Alias detection
+    if 'a1:' in query:
+        return jsonify({'data': {'a1': {'__typename': 'User'}, 'a2': {'__typename': 'User'}, 'a3': {'__typename': 'User'}}})
+    # Deep nested (simulated — would normally be slow)
+    if 'posts' in query and 'comments' in query:
+        return jsonify({'data': {'users': [{'posts': [{'comments': [{'author': {'posts': [{'comments': [{'author': {'name': 'Deep nested!'}}]}]}}]}]}]}})
+    return jsonify({'data': None, 'errors': [{'message': 'Unknown query'}]})
+
+# ──────────────────────────────────────────────────────────────────────────────
+# END Stage 2 Labs
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Stage 3: Breach-Driven Labs (2024-2025 findings)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# --- Supply Chain Advanced (Lockfile Poisoning) ---
+@app.route('/lab/supply_chain_v2')
+def lab_supply_chain_v2():
+    return render_template('labs/supply_chain_v2.html')
+
+@app.route('/supply_chain_v2/scan', methods=['POST'])
+def supply_chain_v2_scan():
+    data = request.get_json(force=True, silent=True) or {}
+    deps = data.get('dependencies', {})
+    findings = []
+    typosquatting = {
+        'expresss': 'express', 'lodassh': 'lodash', 'requestss': 'request',
+        'colors.js': 'colors', 'event-stream': 'event-stream',
+    }
+    for pkg in deps:
+        if pkg in typosquatting:
+            findings.append({'package': pkg, 'severity': 'CRITICAL', 'type': 'typosquatting',
+                             'real_package': typosquatting[pkg], 'description': f'Looks like {typosquatting[pkg]} but is malicious'})
+        elif 'test' in pkg.lower() or 'debug' in pkg.lower():
+            findings.append({'package': pkg, 'severity': 'HIGH', 'type': 'suspicious_dependency'})
+    if not findings:
+        findings.append({'package': 'none', 'severity': 'info', 'description': 'No suspicious packages found'})
+    return jsonify({'findings': findings, 'total': len(deps),
+                    'flag': 'HL{supply_ch41n_l0ckf1l3_p01s0n}' if any(f['severity'] == 'CRITICAL' for f in findings) else None})
+
+# --- Advanced Exceptional Conditions ---
+@app.route('/lab/exceptional_v2')
+def lab_exceptional_v2():
+    return render_template('labs/exceptional_v2.html')
+
+@app.route('/exceptional_v2/lookup', methods=['POST'])
+def exceptional_v2_lookup():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = data.get('id', '1')
+    # VULNERABLE: leaks DB error details
+    try:
+        if "'" in str(user_id) or '"' in str(user_id) or ';' in str(user_id):
+            raise Exception(f"SQL syntax error near '{user_id}' — Column 'users' has columns: id, name, email, password_hash, role, ssn, api_key, flag")
+        if str(user_id) == '999':
+            return jsonify({'error': f'User not found. Total users in DB: 15. Tables: users, admins, secrets, flags',
+                           'db_error': 'SELECT * FROM users WHERE id=999 — 0 rows returned'})
+        return jsonify({'id': user_id, 'name': f'User {user_id}', 'email': f'user{user_id}@hacklabs.com'})
+    except Exception as e:
+        return jsonify({'error': str(e), 'debug': True, 'flag': 'HL{3xc3pt10n4l_c0nd1t10ns_db_3rr0r}'}), 500
+
+# --- Advanced DOM XSS ---
+@app.route('/lab/dom_xss_advanced')
+def lab_dom_xss_advanced():
+    return render_template('labs/dom_xss_advanced.html')
+
+@app.route('/dom_xss_advanced/render', methods=['POST'])
+def dom_xss_advanced_render():
+    data = request.get_json(force=True, silent=True) or {}
+    html = data.get('html', '')
+    # VULNERABLE sanitizer: only strips <script> tags, not events
+    sanitized = html.replace('<script', '&lt;script').replace('</script>', '&lt;/script&gt;')
+    dangerous = any(evt in html.lower() for evt in ['onload', 'onerror', 'onfocus', 'onmouseover', 'onclick', 'onsubmit'])
+    return jsonify({
+        'original': html, 'sanitized': sanitized, 'rendered': True,
+        'has_event_handler': dangerous,
+        'flag': 'HL{d0m_xss_s4ndb0x_3sc4p3}' if dangerous else None
+    })
+
+# --- Advanced Mass Assignment ---
+@app.route('/lab/mass_assignment_v2')
+def lab_mass_assignment_v2():
+    return render_template('labs/mass_assignment_v2.html')
+
+@app.route('/mass_assignment_v2/register', methods=['POST'])
+def mass_assignment_v2_register():
+    data = request.get_json(force=True, silent=True) or {}
+    # VULNERABLE: accepts all fields without filtering
+    user = {
+        'name': data.get('name', ''),
+        'email': data.get('email', ''),
+        'password_hash': hashlib.md5(data.get('password', '').encode()).hexdigest(),
+        'role': data.get('role', 'user'),  # VULNERABLE: accepts role from input
+    }
+    is_admin = user['role'] == 'admin'
+    return jsonify({
+        'status': 'registered', 'user': user,
+        'is_admin': is_admin,
+        'flag': 'HL{m4ss_4ss1gnm3nt_r0l3_3sc4l4t10n}' if is_admin else None
+    })
+
+# --- UUID-based IDOR ---
+@app.route('/lab/uuid_idor')
+def lab_uuid_idor():
+    return render_template('labs/uuid_idor.html')
+
+_uuid_docs = {
+    'doc-00000001': {'title': 'Public API Documentation', 'content': 'Public info', 'owner': 'public'},
+    'doc-00000002': {'title': 'Employee List', 'content': 'Alice, Bob, Charlie', 'owner': 'hr'},
+    'doc-00000003': {'title': 'Financial Report Q4', 'content': 'Revenue: $1.2M', 'owner': 'finance'},
+    'doc-00000004': {'title': 'Security Audit', 'content': 'Critical vulnerabilities found', 'owner': 'security'},
+    'doc-00000005': {'title': 'Access Credentials', 'content': 'DB: root / sup3r_s3cr3t', 'owner': 'admin',
+                     'flag': 'HL{uu1d_1d0r_s3qu3nt14l_pr3d1ct4bl3}'},
+}
+
+@app.route('/uuid_idor/doc/<doc_id>')
+def uuid_idor_doc(doc_id):
+    doc = _uuid_docs.get(doc_id)
+    if not doc:
+        return jsonify({'error': 'Document not found'}), 404
+    return jsonify(doc)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# END Stage 3 Labs
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Stage 4: AI/Emerging Labs (2025 attack vectors)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# --- MCP Tool Poisoning ---
+@app.route('/lab/ai_tool_poisoning')
+def lab_ai_tool_poisoning():
+    return render_template('labs/ai_tool_poisoning.html')
+
+@app.route('/ai_tool_poisoning/scan', methods=['POST'])
+def ai_tool_poisoning_scan():
+    data = request.get_json(force=True, silent=True) or {}
+    desc = data.get('description', '')
+    hidden_patterns = ['ignore previous', 'ignore all', 'you are now', 'system prompt',
+                       'IMPORTANT:', 'SECRET:', 'HIDDEN:', 'do not tell', 'exfiltrate',
+                       'send to', 'http://evil', 'base64', 'eval(', 'exec(']
+    findings = []
+    for p in hidden_patterns:
+        if p.lower() in desc.lower():
+            findings.append({'pattern': p, 'severity': 'CRITICAL', 'type': 'hidden_instruction'})
+    # Check for encoding tricks
+    if '&#' in desc or '\\x' in desc or '\\u' in desc:
+        findings.append({'pattern': 'encoded_chars', 'severity': 'HIGH', 'type': 'obfuscation'})
+    has_poison = len(findings) > 0
+    return jsonify({'findings': findings, 'poisoned': has_poison,
+                    'flag': 'HL{mcp_t00l_p01s0n1ng_h1dd3n_1ns1r}' if has_poison else None})
+
+# --- RAG Injection ---
+_rag_docs = []
+
+@app.route('/lab/rag_injection')
+def lab_rag_injection():
+    return render_template('labs/rag_injection.html')
+
+@app.route('/rag_injection/upload', methods=['POST'])
+def rag_upload():
+    data = request.get_json(force=True, silent=True) or {}
+    content = data.get('content', '')
+    _rag_docs.append(content)
+    injection_indicators = ['ignore previous', 'IMPORTANT:', 'you must', 'system:',
+                            '<!--', 'INSERT INTO', 'DELETE FROM', 'exec(']
+    is_poisoned = any(ind.lower() in content.lower() for ind in injection_indicators)
+    return jsonify({'status': 'uploaded', 'doc_count': len(_rag_docs), 'is_poisoned': is_poisoned,
+                    'flag': 'HL{r4g_1nj3ct10n_kn0wledg3_b4s3}' if is_poisoned else None})
+
+@app.route('/rag_injection/query', methods=['POST'])
+def rag_query():
+    data = request.get_json(force=True, silent=True) or {}
+    query = data.get('query', '')
+    # VULNERABLE: returns raw poisoned content
+    relevant = [d for d in _rag_docs if any(w.lower() in d.lower() for w in query.split())]
+    if not relevant:
+        relevant = _rag_docs[-3:] if _rag_docs else ['No documents in knowledge base']
+    return jsonify({'query': query, 'sources': relevant, 'count': len(relevant)})
+
+# --- Device Code Phishing ---
+_device_codes = {}
+
+@app.route('/lab/device_code_phishing')
+def lab_device_code_phishing():
+    return render_template('labs/device_code_phishing.html')
+
+@app.route('/device_code_phishing/request', methods=['POST'])
+def device_code_request():
+    device_code = secrets.token_hex(16)
+    user_code = f"HACK-{secrets.token_hex(2).upper()}"
+    _device_codes[device_code] = {'user_code': user_code, 'authorized': False, 'token': None}
+    return jsonify({'device_code': device_code, 'user_code': user_code,
+                    'verification_uri': 'https://login.hacklabs.com/device',
+                    'expires_in': 900})
+
+@app.route('/device_code_phishing/authorize', methods=['POST'])
+def device_code_authorize():
+    data = request.get_json(force=True, silent=True) or {}
+    code = data.get('code', '')
+    device_code = data.get('device_code', '')
+    entry = _device_codes.get(device_code)
+    if not entry:
+        return jsonify({'error': 'Invalid device code'}), 400
+    if code == entry['user_code']:
+        entry['authorized'] = True
+        entry['token'] = f"eyJhbGciOiJSUzI1NiJ9.{secrets.token_hex(32)}"
+        return jsonify({'status': 'authorized', 'access_token': entry['token'],
+                        'flag': 'HL{d3v1c3_c0d3_ph1sh1ng_04uth}'})
+    return jsonify({'error': 'Invalid user code'}), 400
+
+# ──────────────────────────────────────────────────────────────────────────────
+# END Stage 4 Labs
+# ──────────────────────────────────────────────────────────────────────────────
 
 
 if __name__ == '__main__':

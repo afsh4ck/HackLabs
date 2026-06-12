@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Server-Side Prototype Pollution — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">CWE-1321 – Server-Side Prototype Pollution</h1>
+    <p class="text-gray-400">OWASP CWE Registry · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">El servidor fusiona objetos JSON sin filtrar claves peligrosas. Un atacante inyecta <code class="bg-gray-700 px-1 rounded">__proto__</code> para modificar <code class="bg-gray-700 px-1 rounded">Object.prototype</code> y escalar privilegios.</p>
+    <ul class="list-disc list-inside text-gray-300 space-y-2">
+      <li>CVE-2025-13465: Lodash <code>_.unset</code>/<code>_.omit</code> bypass (CVSS 9.8)</li>
+      <li>CVE-2024-6783: Vue.js XSS via prototype pollution</li>
+      <li>Gadget chains → RCE via template rendering</li>
+    </ul>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Merge de Configuración</h2>
+    <p class="text-gray-400 mb-4">El servidor fusiona tu JSON con la configuración del usuario. Intenta inyectar <code>__proto__</code>:</p>
+    <form id="polluteForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">JSON payload:</label>
+        <textarea id="payload" rows="4" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+          placeholder='{"name": "alice", "__proto__": {"isAdmin": true}}'></textarea>
+      </div>
+      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Merge Config</button>
+    </form>
+    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Verificar Admin</h2>
+    <p class="text-gray-400 mb-4">Si lograste inyectar <code>isAdmin: true</code>, este endpoint te dará acceso:</p>
+    <button onclick="checkAdmin()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Check Admin Status</button>
+    <div id="adminResult" class="mt-4 hidden"><pre id="adminOutput" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Inyecta <code>__proto__.isAdmin = true</code> via el merge</li>
+      <li>Accede al panel de admin</li>
+      <li>Encuentra el flag en la respuesta admin</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{pr0t0type_p0llut10n_1s_d4ng3r0us}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('polluteForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const res = await fetch('/pollute/merge', { method: 'POST', headers: {'Content-Type':'application/json'}, body: document.getElementById('payload').value });
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+});
+async function checkAdmin() {
+  const res = await fetch('/pollute/admin');
+  const data = await res.json();
+  document.getElementById('adminOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('adminResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

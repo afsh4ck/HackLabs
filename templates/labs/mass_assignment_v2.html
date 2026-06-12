@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Advanced Mass Assignment — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API3:2023 – Advanced Mass Assignment (Role Escalation)</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">El registro acepta campos no previstos incluyendo <code>role</code>. Un atacante se auto-asigna rol de admin al registrarse.</p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">User Registration</h2>
+    <form id="registerForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-300 mb-2">Name:</label>
+          <input type="text" id="name" value="Attacker" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-2">Email:</label>
+          <input type="email" id="email" value="attacker@evil.com" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2">Password:</label>
+        <input type="text" id="password" value="hacked123" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2">Additional fields (JSON):</label>
+        <textarea id="extraFields" rows="3" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+placeholder='{"role": "admin"}'></textarea>
+      </div>
+      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Register</button>
+    </form>
+    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Registra un usuario con <code>role: "admin"</code></li>
+      <li>Usa las credenciales para acceder al admin panel</li>
+      <li>Obtén el flag</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{m4ss_4ss1gnm3nt_r0l3_3sc4l4t10n}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('registerForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const extra = document.getElementById('extraFields').value;
+  let payload = {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value
+  };
+  try { Object.assign(payload, JSON.parse(extra)); } catch(e) {}
+  const res = await fetch('/mass_assignment_v2/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+});
+</script>
+{% endblock %}

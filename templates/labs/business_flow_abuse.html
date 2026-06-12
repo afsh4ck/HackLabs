@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Business Flow Abuse — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API6:2023 – Automated Business Flow Abuse</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-orange-500 font-bold">HIGH</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">Automatiza flujos de negocio para obtener ventajas no autorizadas: cupones apilables, referral farming, manipulación de precios.</p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Tienda de Cupones</h2>
+    <p class="text-gray-400 mb-4">Tu carrito tiene un item de $100. Aplica cupones:</p>
+    <div class="bg-gray-700 rounded p-4 mb-4">
+      <p class="text-gray-300">Carrito: <span class="text-white font-bold">$100.00</span></p>
+      <p class="text-gray-300">Cupones disponibles: <code class="bg-gray-600 px-1 rounded">WELCOME10</code>, <code class="bg-gray-600 px-1 rounded">SAVE20</code>, <code class="bg-gray-600 px-1 rounded">VIP30</code></p>
+    </div>
+    <form id="couponForm" class="space-y-4">
+      <div class="flex items-center space-x-4">
+        <input type="text" id="coupon" placeholder="Ingresa cupón" class="flex-1 bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Aplicar</button>
+      </div>
+    </form>
+    <div id="couponResult" class="mt-4 hidden"><pre id="couponOutput" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Sistema de Referrals</h2>
+    <p class="text-gray-400 mb-4">Cada referral te da $5. Genera referrals automáticos:</p>
+    <button onclick="farmReferrals()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Farm 10 Referrals</button>
+    <div id="refResult" class="mt-4 hidden"><pre id="refOutput" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Aplica múltiples cupones simultáneamente (race condition)</li>
+      <li>Farma referrals con requests automatizados</li>
+      <li>Manipula el precio final a $0 o negativo</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{bus1n3ss_fl0w_4bus3_c0up0n_st4ck}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('couponForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const res = await fetch('/api/coupon/apply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({coupon: document.getElementById('coupon').value, cart_total: 100}) });
+  const data = await res.json();
+  document.getElementById('couponOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('couponResult').classList.remove('hidden');
+});
+async function farmReferrals() {
+  const results = [];
+  for (let i = 0; i < 10; i++) {
+    const res = await fetch('/api/referral', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({referral_email: `bot${i}@spam.com`}) });
+    const data = await res.json();
+    results.push(data);
+  }
+  document.getElementById('refOutput').textContent = JSON.stringify(results, null, 2);
+  document.getElementById('refResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

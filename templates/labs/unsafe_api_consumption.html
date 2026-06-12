@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Unsafe API Consumption — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API10:2023 – Unsafe Consumption of APIs</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-orange-500 font-bold">HIGH</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">La aplicación confía ciegamente en datos de APIs de terceros (webhooks, respuestas de pago). Si un atacante envenena esos datos, logra inyección en la aplicación que los consume.</p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Simulador de Webhook</h2>
+    <p class="text-gray-400 mb-4">Simula un webhook de pago que la app consume. El payload se "refleja" en el dashboard de admin:</p>
+    <form id="webhookForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">Webhook payload (JSON):</label>
+        <textarea id="payload" rows="4" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+          placeholder='{"status": "completed", "amount": 99.99, "note": "Payment received"}'></textarea>
+      </div>
+      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Send Webhook</button>
+    </form>
+    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Admin Dashboard</h2>
+    <p class="text-gray-400 mb-4">Los webhooks recibidos se muestran aquí (simula XSS almacenado):</p>
+    <button onclick="viewDashboard()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">View Dashboard</button>
+    <div id="dashResult" class="mt-4 hidden"><div id="dashOutput" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></div></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Envía un webhook con payload malicioso en el campo "note"</li>
+      <li>El admin dashboard lo renderiza sin sanitizar</li>
+      <li>Logra XSS almacenado via la API de terceros</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{uns4f3_4p1_c0nsumpt10n_w3bh00k}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('webhookForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const res = await fetch('/api/webhook', { method: 'POST', headers: {'Content-Type':'application/json'}, body: document.getElementById('payload').value });
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+});
+async function viewDashboard() {
+  const res = await fetch('/api/payment-status');
+  const data = await res.json();
+  document.getElementById('dashOutput').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+  document.getElementById('dashResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

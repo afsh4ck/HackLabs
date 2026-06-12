@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Supply Chain Advanced — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">A03:2025 – Supply Chain Advanced (Lockfile Poisoning)</h1>
+    <p class="text-gray-400">OWASP Top 10 2025 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">El <code>package-lock.json</code> no está en el repositorio. Un atacante puede hacer typosquatting y lockfile poisoning para inyectar malware en la cadena de dependencias.</p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Dependency Scanner</h2>
+    <p class="text-gray-400 mb-4">Analiza las dependencias de un proyecto para detectar paquetes sospechosos:</p>
+    <form id="scanForm" class="space-y-4">
+      <div>
+        <label class="block text-gray-300 mb-2">package.json (JSON):</label>
+        <textarea id="packageJson" rows="6" class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+placeholder='{"dependencies": {"express": "^4.18.0", "lodash": "^4.17.21"}}'></textarea>
+      </div>
+      <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">Scan Dependencies</button>
+    </form>
+    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Identifica paquetes con typosquatting</li>
+      <li>Genera un lockfile malicioso</li>
+      <li>Inyecta código malicioso via postinstall script</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{supply_ch41n_l0ckf1l3_p01s0n}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('scanForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const res = await fetch('/supply_chain_v2/scan', { method: 'POST', headers: {'Content-Type':'application/json'}, body: document.getElementById('packageJson').value });
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+});
+</script>
+{% endblock %}

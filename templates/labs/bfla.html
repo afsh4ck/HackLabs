@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Broken Function Level Auth — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API5:2023 – Broken Function Level Authorization</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">Los endpoints admin son accesibles sin verificación de función. Cambia el método HTTP o enumera paths para acceder a funciones de admin.</p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">API Explorer</h2>
+    <p class="text-gray-400 mb-4">Prueba acceder a diferentes endpoints como usuario normal:</p>
+    <div class="space-y-3">
+      <button onclick="hit('/api/user/profile')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">GET /api/user/profile</button>
+      <button onclick="hit('/api/admin/users')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">GET /api/admin/users</button>
+      <button onclick="hit('/api/admin/config')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">GET /api/admin/config</button>
+      <button onclick="hit('/api/admin/delete_user')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">GET /api/admin/delete_user</button>
+      <button onclick="hit('/api/internal/debug')" class="w-full text-left bg-gray-700 hover:bg-gray-600 text-gray-300 rounded px-4 py-2 font-mono text-sm">GET /api/internal/debug</button>
+    </div>
+    <div id="result" class="mt-4 hidden"><pre id="output" class="bg-gray-700 rounded p-4 text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Method Manipulation</h2>
+    <p class="text-gray-400 mb-4">Prueba con diferentes métodos HTTP:</p>
+    <div class="grid grid-cols-3 gap-3">
+      <button onclick="hitMethod('/api/admin/users', 'GET')" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition">GET</button>
+      <button onclick="hitMethod('/api/admin/users', 'POST')" class="bg-green-700 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition">POST</button>
+      <button onclick="hitMethod('/api/admin/users', 'PUT')" class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition">PUT</button>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Enumera los endpoints admin</li>
+      <li>Accede a cada uno sin credenciales de admin</li>
+      <li>Encuentra el flag en algún endpoint admin</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded"><p class="text-yellow-400 font-mono">Flag: HL{bf14_4dm1n_3ndp01nt_3num3r4t10n}</p></div>
+  </div>
+</div>
+<script>
+async function hit(path) {
+  const res = await fetch(path);
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+}
+async function hitMethod(path, method) {
+  const res = await fetch(path, { method });
+  const data = await res.json();
+  document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('result').classList.remove('hidden');
+}
+</script>
+{% endblock %}
