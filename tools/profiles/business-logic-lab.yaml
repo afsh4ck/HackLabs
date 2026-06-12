@@ -1,0 +1,18 @@
+lab_name: "Business Logic Lab"
+description: "Test Business Logic vulnerabilities against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-BUSL-01]
+endpoints:
+  - path: "/shop"
+    params: []
+    method: GET
+  - path: "/shop/buy"
+    params: [item_id, quantity, price]
+    method: POST
+  - path: "/shop/checkout"
+    params: []
+    method: POST
+expected_behaviors:
+  - "Negative quantities accepted in purchase"
+  - "Price parameter modifiable by client"
+  - "Race condition allows double-spend"

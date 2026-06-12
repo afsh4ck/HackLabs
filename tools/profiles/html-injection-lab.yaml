@@ -1,0 +1,15 @@
+lab_name: "HTML Injection Lab"
+description: "Test HTML Injection against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-03]
+endpoints:
+  - path: "/html-injection"
+    params: [name, message]
+    method: POST
+  - path: "/html-injection/preview"
+    params: [content]
+    method: GET
+expected_behaviors:
+  - "HTML tags rendered without sanitization"
+  - "Injected markup visible in page output"
+  - "JavaScript execution possible via HTML injection"

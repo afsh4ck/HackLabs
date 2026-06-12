@@ -1,0 +1,18 @@
+lab_name: "Session Hijacking Lab"
+description: "Test Session Hijacking against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-SESS-06]
+endpoints:
+  - path: "/session-hijacking/login"
+    params: [username, password]
+    method: POST
+  - path: "/session-hijacking/use"
+    params: [session_id]
+    method: GET
+  - path: "/session-hijacking/profile"
+    params: []
+    method: GET
+expected_behaviors:
+  - "Session ID predictable or guessable"
+  - "Session accepted from arbitrary source"
+  - "Session fixation via URL parameter"

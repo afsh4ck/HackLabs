@@ -1,0 +1,18 @@
+lab_name: "JWT Lab"
+description: "Test JSON Web Token vulnerabilities against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-SESS-07]
+endpoints:
+  - path: "/jwt/login"
+    params: [username, password]
+    method: POST
+  - path: "/jwt/protected"
+    params: []
+    method: GET
+  - path: "/jwt/admin"
+    params: []
+    method: GET
+expected_behaviors:
+  - "JWT signed with weak secret (none algorithm accepted)"
+  - "Role claim manipulable via token modification"
+  - "Algorithm confusion (HS256 to RS256) possible"

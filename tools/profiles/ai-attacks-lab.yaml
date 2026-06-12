@@ -1,0 +1,28 @@
+lab_name: "AI Attacks Lab"
+description: "Test AI/LLM-specific attacks against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-AT-01]
+endpoints:
+  - path: "/ai/prompt"
+    params: [prompt]
+    method: POST
+  - path: "/ai/leak"
+    params: [prompt]
+    method: POST
+  - path: "/ai/jailbreak"
+    params: [prompt]
+    method: POST
+  - path: "/ai/exfil"
+    params: [prompt]
+    method: POST
+  - path: "/ai/indirect"
+    params: [document]
+    method: POST
+  - path: "/ai/supply_chain"
+    params: [code]
+    method: POST
+expected_behaviors:
+  - "Prompt injection extracts system instructions"
+  - "Jailbreak bypasses safety guardrails"
+  - "Indirect injection via user-controlled documents"
+  - "Data exfiltration through LLM responses"

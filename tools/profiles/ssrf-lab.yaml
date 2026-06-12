@@ -3,16 +3,14 @@ description: "Test Server-Side Request Forgery against HackLabs vulnerable endpo
 base_url: "http://localhost:5000"
 wstg_categories: [WSTG-INPV-19]
 endpoints:
-  - path: "/fetch"
+  - path: "/ssrf"
     params: [url]
     method: GET
-  - path: "/proxy"
-    params: [target]
+  - path: "/internal/cloud-metadata"
+    params: [url]
     method: GET
-  - path: "/webhook"
-    params: [callback_url]
-    method: POST
 expected_behaviors:
   - "Server fetches attacker-controlled URLs"
   - "Internal IP ranges accessible via parameter"
   - "file:// protocol returns local file contents"
+  - "Cloud metadata endpoint accessible via SSRF"

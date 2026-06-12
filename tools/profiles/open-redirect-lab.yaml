@@ -1,0 +1,12 @@
+lab_name: "Open Redirect Lab"
+description: "Test Open Redirect vulnerabilities against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-UNC-06]
+endpoints:
+  - path: "/open_redirect"
+    params: [url]
+    method: GET
+expected_behaviors:
+  - "User-controlled redirect parameter forwards to external domains"
+  - "No validation of redirect target URL"
+  - "Phishing possible via trusted domain redirect"

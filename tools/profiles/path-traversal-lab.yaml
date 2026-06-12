@@ -1,0 +1,15 @@
+lab_name: "Path Traversal Lab"
+description: "Test Path Traversal / Local File Inclusion against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-11]
+endpoints:
+  - path: "/files"
+    params: [file]
+    method: GET
+  - path: "/download"
+    params: [filename]
+    method: GET
+expected_behaviors:
+  - "Directory traversal sequences (../) resolve to parent directories"
+  - "Etc/passwd readable via path manipulation"
+  - "Secret files accessible via traversal"

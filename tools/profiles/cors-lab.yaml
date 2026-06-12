@@ -1,0 +1,18 @@
+lab_name: "CORS Lab"
+description: "Test Cross-Origin Resource Sharing misconfigurations against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-SESS-05]
+endpoints:
+  - path: "/cors"
+    params: []
+    method: GET
+  - path: "/cors/reflect"
+    params: [origin]
+    method: GET
+  - path: "/cors/credentials"
+    params: []
+    method: GET
+expected_behaviors:
+  - "Origin reflected in Access-Control-Allow-Origin"
+  - "Access-Control-Allow-Credentials: true with reflected origin"
+  - "Wildcard CORS with credentials"

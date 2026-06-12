@@ -1,0 +1,12 @@
+lab_name: "Clickjacking Lab"
+description: "Test Clickjacking (UI Redressing) against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-UNC-11]
+endpoints:
+  - path: "/clickjacking"
+    params: []
+    method: GET
+expected_behaviors:
+  - "Page loadable in iframe without X-Frame-Options"
+  - "No Content-Security-Policy frame-ancestors directive"
+  - "Sensitive actions performable via transparent overlay"

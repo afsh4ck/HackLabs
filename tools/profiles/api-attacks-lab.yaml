@@ -1,0 +1,19 @@
+lab_name: "API Attacks Lab"
+description: "Test API-specific vulnerabilities against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-APIT-01]
+endpoints:
+  - path: "/api/users"
+    params: [id]
+    method: GET
+  - path: "/api/admin/users"
+    params: []
+    method: GET
+  - path: "/api/search"
+    params: [q]
+    method: GET
+expected_behaviors:
+  - "Mass assignment via JSON body manipulation"
+  - "BOLA via sequential ID enumeration"
+  - "Excessive data exposure in API responses"
+  - "Missing rate limiting on sensitive endpoints"

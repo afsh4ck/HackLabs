@@ -2,17 +2,18 @@ lab_name: "SQL Injection Lab"
 description: "Test SQL injection against HackLabs vulnerable endpoints"
 base_url: "http://localhost:5000"
 wstg_categories: [WSTG-SEIN-01]
-paths:
+endpoints:
+  - path: "/sqli/search"
+    params: [q]
+    method: GET
   - path: "/login"
     params: [username, password]
     method: POST
-  - path: "/search"
-    params: [q]
-    method: GET
   - path: "/user"
     params: [id]
     method: GET
 expected_behaviors:
-  - "Login returns SQL error messages on malicious input"
+  - "Search returns SQL error messages on malicious input"
   - "Search reflects injected UNION results"
+  - "Login leaks data via error messages"
   - "User lookup leaks data via error messages"

@@ -1,0 +1,17 @@
+lab_name: "File Upload Lab"
+description: "Test Unrestricted File Upload against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-01]
+endpoints:
+  - path: "/upload"
+    params: [file]
+    method: POST
+    content_type: "multipart/form-data"
+  - path: "/files"
+    params: [file]
+    method: GET
+expected_behaviors:
+  - "Web shell (.php, .jsp, .py) upload accepted"
+  - "Extension filter bypass via double extension"
+  - "Uploaded files directly accessible via URL"
+  - "Content-Type validation only (no magic byte check)"

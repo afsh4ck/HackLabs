@@ -1,18 +1,18 @@
 lab_name: "XSS Lab"
-description: "Test reflected XSS against HackLabs vulnerable endpoints"
+description: "Test reflected, stored, and DOM XSS against HackLabs vulnerable endpoints"
 base_url: "http://localhost:5000"
 wstg_categories: [WSTG-INPV-02]
-paths:
-  - path: "/reflect"
+endpoints:
+  - path: "/xss/reflected"
     params: [name]
     method: GET
-  - path: "/search"
-    params: [q]
-    method: GET
-  - path: "/comment"
+  - path: "/xss/stored"
     params: [author, body]
     method: POST
+  - path: "/xss/dom"
+    params: [input]
+    method: GET
 expected_behaviors:
-  - "Input reflects without HTML encoding"
-  - "Script tags render in browser"
-  - "Event handlers execute JavaScript"
+  - "Reflected input renders without HTML encoding"
+  - "Stored comments render script tags in browser"
+  - "DOM input executes JavaScript via innerHTML"

@@ -1,0 +1,12 @@
+lab_name: "SSTI Lab"
+description: "Test Server-Side Template Injection against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-16]
+endpoints:
+  - path: "/ssti"
+    params: [name]
+    method: GET
+expected_behaviors:
+  - "Template expressions ({{7*7}}) evaluate to 49"
+  - "Jinja2/Twig syntax executes server-side"
+  - "RCE possible via template sandbox escape"

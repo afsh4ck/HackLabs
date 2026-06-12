@@ -1,0 +1,15 @@
+lab_name: "CSRF Lab"
+description: "Test Cross-Site Request Forgery against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-05]
+endpoints:
+  - path: "/csrf/profile"
+    params: [name, email]
+    method: POST
+  - path: "/csrf/change-password"
+    params: [new_password]
+    method: POST
+expected_behaviors:
+  - "State-changing POST requests accept cross-origin submissions"
+  - "No CSRF token validation on profile update"
+  - "Password change vulnerable to forged requests"

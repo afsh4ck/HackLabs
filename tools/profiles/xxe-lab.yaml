@@ -1,0 +1,17 @@
+lab_name: "XXE Lab"
+description: "Test XML External Entity injection against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-07]
+endpoints:
+  - path: "/xxe"
+    params: [xml]
+    method: POST
+    content_type: "application/xml"
+  - path: "/xxe/api"
+    params: [xml]
+    method: POST
+    content_type: "application/xml"
+expected_behaviors:
+  - "External entity references resolve server-side"
+  - "File:// protocol returns local file contents"
+  - "Internal network resources accessible via entity expansion"

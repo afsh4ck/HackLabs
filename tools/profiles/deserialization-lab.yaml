@@ -1,0 +1,13 @@
+lab_name: "Deserialization Lab"
+description: "Test Insecure Deserialization against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-SESS-08]
+endpoints:
+  - path: "/deserialization"
+    params: [data]
+    method: POST
+    content_type: "application/x-www-form-urlencoded"
+expected_behaviors:
+  - "Pickle deserialization executes arbitrary code"
+  - "Crafted serialized objects trigger RCE"
+  - "No integrity validation on serialized data"
