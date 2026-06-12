@@ -59,7 +59,24 @@
 | A07 | Auth Failures | 🟠 High | Sin rate-limiting, credenciales por defecto |
 | A08 | Integrity Failures | 🟠 High | `PUT /api/user` sin validación de propiedad |
 | A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
+| A03 | Supply Chain Security | 🔴 Critical | Typosquatting, dependency confusion, paquetes maliciosos |
 | A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
+| A10 | Exceptional Conditions | 🟡 Medium | Stack traces, debug info, error handling deficiente |
+
+### OWASP API Security Top 10
+
+| # | Lab | Riesgo | Técnica |
+|---|-----|--------|---------|
+| API1 | BOLA – Broken Object Level Authorization | 🔴 Critical | Cambiar IDs para acceder a objetos de otros usuarios |
+| API2 | Broken Authentication | 🔴 Critical | JWT `alg=none`, credenciales por defecto, token no invalidado |
+| API3 | Mass Assignment | 🟠 High | Inyectar `role=admin` en registro/actualización |
+| API8 | GraphQL | 🟡 Medium | Introspection, query batching, campos ocultos |
+
+### OWASP LLM Top 10 2025
+
+| # | Lab | Riesgo | Técnica |
+|---|-----|--------|---------|
+| LLM06 | Excessive Agency | 🟠 High | Agente ejecuta comandos, lee archivos, accede a datos sin restricción |
 
 ### Vulnerabilidades
 
@@ -151,8 +168,9 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | ⚡ Speed Runner | Completar 5 labs |
 | 🏁 Half Way There | Alcanzar el 50% de labs completados |
 | 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 2025 |
+| 🔌 API Hunter | Completar todos los labs de OWASP API Security |
 | 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
-| 🤖 AI Breaker | Completar todos los labs de IA Attacks |
+| 🤖 AI Breaker | Completar todos los labs de IA Attacks + LLM Top 10 |
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |
 | 👑 Completionist | Completar todos los labs |
 
