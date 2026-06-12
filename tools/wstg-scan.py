@@ -13,7 +13,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 from wstg_profile import load_profile, list_profiles
 from wstg_checks import CheckStatus
 
-CHECK_MODULES = {"sqli": "wstg_checks.sqli", "xss": "wstg_checks.xss", "cmdi": "wstg_checks.cmdi"}
+CHECK_MODULES = {
+    "sqli": "wstg_checks.sqli",
+    "xss": "wstg_checks.xss",
+    "cmdi": "wstg_checks.cmdi",
+    "ssrf": "wstg_checks.ssrf",
+    "idor": "wstg_checks.idor",
+}
 
 
 def run_checks(target, profile_name, checks=None, timeout=10, quiet=False):

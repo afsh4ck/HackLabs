@@ -1,0 +1,18 @@
+lab_name: "SSRF Lab"
+description: "Test Server-Side Request Forgery against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-19]
+endpoints:
+  - path: "/fetch"
+    params: [url]
+    method: GET
+  - path: "/proxy"
+    params: [target]
+    method: GET
+  - path: "/webhook"
+    params: [callback_url]
+    method: POST
+expected_behaviors:
+  - "Server fetches attacker-controlled URLs"
+  - "Internal IP ranges accessible via parameter"
+  - "file:// protocol returns local file contents"

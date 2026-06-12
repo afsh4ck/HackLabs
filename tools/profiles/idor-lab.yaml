@@ -1,0 +1,24 @@
+lab_name: "IDOR Lab"
+description: "Test Insecure Direct Object References against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-04]
+endpoints:
+  - path: "/api/users"
+    params: [id]
+    method: GET
+    original_values:
+      id: "1"
+  - path: "/api/documents"
+    params: [doc_id]
+    method: GET
+    original_values:
+      doc_id: "100"
+  - path: "/api/invoices"
+    params: [invoice_id]
+    method: GET
+    original_values:
+      invoice_id: "42"
+expected_behaviors:
+  - "Sequential ID enumeration returns other users' data"
+  - "Changing doc_id leaks unauthorized documents"
+  - "No authorization check on object access"
