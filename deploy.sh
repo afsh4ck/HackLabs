@@ -31,59 +31,58 @@ echo "  ${RED}[!] ADVERTENCIA: Solo usar en entornos aislados y controlados${NC}
 echo ""
 
 # ── Verificar root ──
-[[ $EUID -ne 0 ]] && err "Ejecuta con privilegios root: ${YELLOW}sudo bash deploy.sh${NC}"
+[ "$EUID" -ne 0 ] && err "Ejecuta con privilegios root: ${YELLOW}sudo bash deploy.sh${NC}"
 
 # ── Verificar Docker ──
 if ! command -v docker &>/dev/null; then
     echo "${YELLOW}[!]${NC} Docker no está instalado en el sistema."
     read -rp "    ¿Deseas instalar Docker ahora? (y/n): " INSTALL_DOCKER
-    if [[ "$INSTALL_DOCKER" =~ ^[yYsS]$ ]]; then
-        log "Instalando Docker..."
-        apt-get update -qq
-        apt-get install -y -qq docker.io > /dev/null 2>&1 || err "Error al instalar Docker."
-        systemctl enable --now docker > /dev/null 2>&1
-        log "Docker instalado correctamente."
-    else
-        err "Docker es necesario para desplegar HackLabs."
-    fi
+    case "$INSTALL_DOCKER" in
+        [yYsS]*) log "Instalando Docker..."
+            apt-get update -qq
+            apt-get install -y -qq docker.io > /dev/null 2>&1 || err "Error al instalar Docker."
+            systemctl enable --now docker > /dev/null 2>&1
+            log "Docker instalado correctamente." ;;
+        *) err "Docker es necesario para desplegar HackLabs." ;;
+    esac
 fi
 
-if ! docker info &>/dev/null; then
+# Timeout for docker info check (10s max)
+if ! timeout 10 docker info &>/dev/null; then
     echo "${YELLOW}[!]${NC} El servicio Docker no está activo."
     read -rp "    ¿Deseas iniciar Docker ahora? (y/n): " START_DOCKER
-    if [[ "$START_DOCKER" =~ ^[yYsS]$ ]]; then
-        systemctl start docker
-        sleep 2
-        docker info &>/dev/null || err "No se pudo iniciar Docker."
-        log "Docker iniciado correctamente."
-    else
-        err "Docker debe estar activo para desplegar HackLabs."
-    fi
+    case "$START_DOCKER" in
+        [yYsS]*) systemctl start docker
+            sleep 2
+            timeout 10 docker info &>/dev/null || err "No se pudo iniciar Docker."
+            log "Docker iniciado correctamente." ;;
+        *) err "Docker debe estar activo para desplegar HackLabs." ;;
+    esac
 fi
 
 # ── Detectar interfaz de red ──
 IFACE="eth0"
 if ! ip link show "$IFACE" &>/dev/null; then
     IFACE=$(ip route | awk '/default/{print $5; exit}')
-    [[ -z "$IFACE" ]] && err "No se detectó ninguna interfaz de red activa."
+    [ -z "$IFACE" ] && err "No se detectó ninguna interfaz de red activa."
     warn "eth0 no disponible — usando ${BOLD}$IFACE${NC}"
 fi
 
-HOST_IP_CIDR=$(ip -4 addr show "$IFACE" | grep -oP '(?<=inet\s)\d+\.\d+\.\d+\.\d+/\d+' | head -1)
-[[ -z "$HOST_IP_CIDR" ]] && err "No se pudo detectar la IP de $IFACE."
+HOST_IP_CIDR=$(ip -4 addr show "$IFACE" | grep -oE 'inet [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+' | head -1 | awk '{print $2}')
+[ -z "$HOST_IP_CIDR" ] && err "No se pudo detectar la IP de $IFACE."
 
 # Extraer componentes
 HOST_IP=$(echo "$HOST_IP_CIDR" | cut -d/ -f1)
 CIDR_MASK=$(echo "$HOST_IP_CIDR" | cut -d/ -f2)
-NET_BASE=$(echo "$HOST_IP" | grep -oP '^\d+\.\d+\.\d+')
+NET_BASE=$(echo "$HOST_IP" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\..*/\1/')
 
 # Calcular la dirección de red correcta (para Docker macvlan)
 IFS='.' read -r O1 O2 O3 O4 <<< "$HOST_IP"
-if [[ "$CIDR_MASK" -eq 24 ]]; then
+if [ "$CIDR_MASK" -eq 24 ]; then
     NETWORK_ADDR="${O1}.${O2}.${O3}.0"
-elif [[ "$CIDR_MASK" -eq 16 ]]; then
+elif [ "$CIDR_MASK" -eq 16 ]; then
     NETWORK_ADDR="${O1}.${O2}.0.0"
-elif [[ "$CIDR_MASK" -eq 8 ]]; then
+elif [ "$CIDR_MASK" -eq 8 ]; then
     NETWORK_ADDR="${O1}.0.0.0"
 else
     NETWORK_ADDR="${O1}.${O2}.${O3}.0"
@@ -91,18 +90,19 @@ fi
 SUBNET="${NETWORK_ADDR}/${CIDR_MASK}"
 
 GATEWAY=$(ip route | awk "/default.*$IFACE/{print \$3; exit}")
-[[ -z "$GATEWAY" ]] && GATEWAY=$(ip route | awk '/default/{print $3; exit}')
-[[ -z "$GATEWAY" ]] && err "No se pudo detectar la puerta de enlace."
+[ -z "$GATEWAY" ] && GATEWAY=$(ip route | awk '/default/{print $3; exit}')
+[ -z "$GATEWAY" ] && err "No se pudo detectar la puerta de enlace."
 
 log "Red detectada: ${BOLD}$SUBNET${NC} en ${BOLD}$IFACE${NC} (gateway ${BOLD}$GATEWAY${NC})"
 
 # ── Seleccionar IP libre en rango .100–.199 ──
 CONTAINER_IP=""
+# Use awk to generate shuffled range (POSIX-compatible, no shuf needed)
 while read -r OCTET; do
     CANDIDATE="${NET_BASE}.${OCTET}"
     ping -c1 -W1 "$CANDIDATE" &>/dev/null 2>&1 || { CONTAINER_IP="$CANDIDATE"; break; }
-done < <(shuf -i 100-199)
-[[ -z "$CONTAINER_IP" ]] && err "No se encontró ninguna IP libre en ${NET_BASE}.100-199."
+done < <(awk 'BEGIN { srand(); for (i=100; i<=199; i++) print i }' | sort -R)
+[ -z "$CONTAINER_IP" ] && err "No se encontró ninguna IP libre en ${NET_BASE}.100-199."
 log "IP asignada al laboratorio: ${BOLD}${CONTAINER_IP}${NC}"
 
 # ── Limpiar instancias previas ──
@@ -197,26 +197,26 @@ echo ""
 # Si Firefox ya está abierto en la sesión del usuario, abrir nueva pestaña
 # en ESA sesión (mismo perfil logueado, extensiones, etc.).
 _BROWSER_USER="${SUDO_USER:-}"
-if [[ -n "$_BROWSER_USER" ]]; then
+if [ -n "$_BROWSER_USER" ]; then
     _FF=$(command -v firefox-esr 2>/dev/null || command -v firefox 2>/dev/null)
-    if [[ -n "$_FF" ]]; then
+    if [ -n "$_FF" ]; then
         _URL="http://${CONTAINER_IP}"
         _FF_PID=$(pgrep -u "$_BROWSER_USER" -x firefox | head -1)
-        [[ -z "$_FF_PID" ]] && _FF_PID=$(pgrep -u "$_BROWSER_USER" -x firefox-esr | head -1)
+        [ -z "$_FF_PID" ] && _FF_PID=$(pgrep -u "$_BROWSER_USER" -x firefox-esr | head -1)
 
         # Intenta heredar entorno gráfico de la sesión real del usuario.
         _DISPLAY=":0"
         _DBUS=""
-        if [[ -n "$_FF_PID" ]] && [[ -r "/proc/${_FF_PID}/environ" ]]; then
+        if [ -n "$_FF_PID" ] && [ -r "/proc/${_FF_PID}/environ" ]; then
             _ENV_DUMP=$(tr '\0' '\n' < "/proc/${_FF_PID}/environ" 2>/dev/null || true)
             _DISPLAY=$(printf '%s\n' "$_ENV_DUMP" | awk -F= '/^DISPLAY=/{print $2; exit}')
             _DBUS=$(printf '%s\n' "$_ENV_DUMP" | awk -F= '/^DBUS_SESSION_BUS_ADDRESS=/{print substr($0,index($0,$2)); exit}')
-            [[ -z "$_DISPLAY" ]] && _DISPLAY=":0"
+            [ -z "$_DISPLAY" ] && _DISPLAY=":0"
         fi
 
-        if [[ -n "$_FF_PID" ]]; then
+        if [ -n "$_FF_PID" ]; then
             # Firefox ya abierto: fuerza nueva pestaña en la sesión existente.
-            if [[ -n "$_DBUS" ]]; then
+            if [ -n "$_DBUS" ]; then
                 sudo -u "$_BROWSER_USER" env DISPLAY="$_DISPLAY" \
                     DBUS_SESSION_BUS_ADDRESS="$_DBUS" \
                     HOME="/home/${_BROWSER_USER}" \

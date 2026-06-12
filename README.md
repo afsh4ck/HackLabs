@@ -24,6 +24,7 @@
 - [🔑 Credenciales de prueba](#-credenciales-de-prueba)
 - [🛠️ Herramientas compatibles](#️-herramientas-compatibles)
 - [📁 Estructura del proyecto](#-estructura-del-proyecto)
+- [🔍 WSTG-Scan](#-wstg-scan)
 - [⚙️ Variables de configuración](#️-variables-de-configuración)
 - [🎓 Uso recomendado](#-uso-recomendado)
 - [📄 Licencia](#-licencia)
@@ -977,6 +978,11 @@ HackLabs/
 ├── entrypoint.sh           # Entrypoint: muestra banner + IP al arrancar
 ├── .dockerignore           # Excluye archivos innecesarios del build
 ├── hacklabs.db             # Base de datos SQLite (generada)
+├── tools/                  # WSTG-Scan — escáner de seguridad web
+│   ├── wstg-scan.py        # Entry point CLI
+│   ├── wstg_profile.py     # Gestión de perfiles
+│   ├── profiles/           # Perfiles YAML por lab
+│   └── wstg_checks/        # Módulos de verificación (SQLi, XSS, etc.)
 ├── static/
 │   ├── css/style.css       # Estilos CSS + variables de color
 │   ├── js/main.js          # JS: i18n, sidebar, highlight, modal
@@ -988,6 +994,78 @@ HackLabs/
     ├── _lab_header.html    # Cabecera reutilizable de cada lab
     └── labs/               # 32 templates individuales de labs
 ```
+
+---
+
+## 🔍 WSTG-Scan
+
+WSTG-Scan es un escáner de seguridad web automatizado integrado en HackLabs, diseñado para probar laboratorios individuales siguiendo el methodology del **OWASP Web Security Testing Guide (WSTG)**.
+
+### Características
+
+- **5 módulos de verificación**: SQLi, XSS, Command Injection, SSRF, IDOR
+- **Perfiles predefinidos**: Configuración óptima para cada lab de HackLabs
+- **Salida textual o JSON**: Para consumo humano o automatizado
+- **Modular y extensible**: Añadir nuevos checks es sencillo
+
+### Uso rápido
+
+```bash
+# Listar perfiles disponibles
+python3 tools/wstg-scan.py --list-profiles
+
+# Escanear un lab con un perfil específico
+python3 tools/wstg-scan.py --target http://192.168.1.100 --profile sqli-lab
+
+# Escanear solo checks específicos
+python3 tools/wstg-scan.py --target http://192.168.1.100 --profile xss-lab --checks xss,sqli
+
+# Salida en formato JSON (para integración)
+python3 tools/wstg-scan.py --target http://192.168.1.100 --profile sqli-lab --output json
+```
+
+### Perfiles disponibles
+
+| Perfil | Labs cubiertos | Checks incluidos |
+|--------|----------------|------------------|
+| `sqli-lab` | SQL Injection | sqli, xss, cmdi, ssrf, idor |
+| `xss-lab` | XSS (Reflected/Stored/DOM) | xss, sqli, cmdi |
+| `ssrf-lab` | Server-Side Request Forgery | ssrf, sqli |
+| `idor-lab` | Insecure Direct Object References | idor, sqli |
+
+### Estructura
+
+```
+tools/
+├── wstg-scan.py          # Entry point CLI
+├── wstg_profile.py       # Gestión de perfiles YAML
+├── profiles/             # Perfiles por lab
+│   ├── sqli-lab.yaml
+│   ├── xss-lab.yaml
+│   ├── ssrf-lab.yaml
+│   └── idor-lab.yaml
+└── wstg_checks/          # Módulos de verificación
+    ├── __init__.py       # CheckStatus enum + base
+    ├── sqli.py           # SQL Injection checks
+    ├── xss.py            # XSS checks
+    ├── cmdi.py           # Command Injection checks
+    ├── ssrf.py           # SSRF checks
+    └── idor.py           # IDOR checks
+```
+
+### Integración con HackLabs
+
+WSTG-Scan se ejecuta contra la IP asignada por `deploy.sh`:
+
+```bash
+# 1. Desplegar HackLabs
+sudo bash deploy.sh
+
+# 2. Escanear el lab desplegado (IP del paso anterior)
+python3 tools/wstg-scan.py --target http://192.168.1.147 --profile sqli-lab
+```
+
+> **Nota:** WSTG-Scan es una herramienta educativa. Úsala únicamente en entornos controlados.
 
 ---
 
