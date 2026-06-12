@@ -1,0 +1,18 @@
+lab_name: "XSS Lab"
+description: "Test reflected XSS against HackLabs vulnerable endpoints"
+base_url: "http://localhost:5000"
+wstg_categories: [WSTG-INPV-02]
+paths:
+  - path: "/reflect"
+    params: [name]
+    method: GET
+  - path: "/search"
+    params: [q]
+    method: GET
+  - path: "/comment"
+    params: [author, body]
+    method: POST
+expected_behaviors:
+  - "Input reflects without HTML encoding"
+  - "Script tags render in browser"
+  - "Event handlers execute JavaScript"
