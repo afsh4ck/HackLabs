@@ -1003,54 +1003,61 @@ WSTG-Scan es un escáner de seguridad web automatizado integrado en HackLabs, di
 
 ### Características
 
-- **5 módulos de verificación**: SQLi, XSS, Command Injection, SSRF, IDOR
-- **Perfiles predefinidos**: Configuración óptima para cada lab de HackLabs
-- **Salida textual o JSON**: Para consumo humano o automatizado
+- **20 perfiles predefinidos**: Cobertura completa de 47 endpoints de HackLabs
+- **5 módulos implementados**: SQLi, XSS, Command Injection, SSRF, IDOR
+- **15 módulos registrados**: CSRF, Path Traversal, XXE, SSTI, y más (stubbed)
+- **Auto-descubrimiento**: Detecta automáticamente el check correcto por perfil
+- **Salida textual o JSON**: Para consumo humano o integración CI/CD
 - **Modular y extensible**: Añadir nuevos checks es sencillo
 
 ### Uso rápido
 
 ```bash
-# Listar perfiles disponibles
-python3 tools/wstg-scan.py --list-profiles
+# Listar todos los perfiles con códigos WSTG
+python3 tools/wstg-scan.py --list-profiles --verbose
 
 # Escanear un lab con un perfil específico
 python3 tools/wstg-scan.py --target http://192.168.1.100 --profile sqli-lab
 
-# Escanear solo checks específicos
-python3 tools/wstg-scan.py --target http://192.168.1.100 --profile xss-lab --checks xss,sqli
+# Auto-descubrir checks desde el perfil
+python3 tools/wstg-scan.py --target http://192.168.1.100 --profile xss-lab --auto-scan
 
-# Salida en formato JSON (para integración)
+# Salida en formato JSON (para integración CI/CD)
 python3 tools/wstg-scan.py --target http://192.168.1.100 --profile sqli-lab --output json
 ```
 
-### Perfiles disponibles
+### Perfiles disponibles (20)
 
-| Perfil | Labs cubiertos | Checks incluidos |
-|--------|----------------|------------------|
-| `sqli-lab` | SQL Injection | sqli, xss, cmdi, ssrf, idor |
-| `xss-lab` | XSS (Reflected/Stored/DOM) | xss, sqli, cmdi |
-| `ssrf-lab` | Server-Side Request Forgery | ssrf, sqli |
-| `idor-lab` | Insecure Direct Object References | idor, sqli |
+| Categoría | Perfiles |
+|-----------|----------|
+| **Injection** | sqli, xss, cmdi, ssti, xxe, path-traversal |
+| **Auth/Session** | idor, jwt, session-hijacking, clickjacking |
+| **CSRF** | csrf |
+| **SSRF** | ssrf |
+| **API** | api-attacks |
+| **File** | file-upload |
+| **AI** | ai-attacks (OWASP LLM Top 10) |
+| **Config/Other** | html-injection, cors, business-logic, open-redirect |
 
 ### Estructura
 
 ```
 tools/
 ├── wstg-scan.py          # Entry point CLI
-├── wstg_profile.py       # Gestión de perfiles YAML
-├── profiles/             # Perfiles por lab
+├── wstg_profile.py       # Gestión de perfiles YAML (dual-key, hashing)
+├── profiles/             # 20 perfiles YAML
 │   ├── sqli-lab.yaml
 │   ├── xss-lab.yaml
-│   ├── ssrf-lab.yaml
-│   └── idor-lab.yaml
+│   ├── ... (20 total)
+│   └── ai-attacks-lab.yaml
 └── wstg_checks/          # Módulos de verificación
-    ├── __init__.py       # CheckStatus enum + base
-    ├── sqli.py           # SQL Injection checks
-    ├── xss.py            # XSS checks
-    ├── cmdi.py           # Command Injection checks
-    ├── ssrf.py           # SSRF checks
-    └── idor.py           # IDOR checks
+    ├── __init__.py       # CheckStatus enum + CheckResult
+    ├── base.py           # BaseCheck abstract class
+    ├── sqli.py           # WSTG-SEIN-01
+    ├── xss.py            # WSTG-INPV-02
+    ├── cmdi.py           # WSTG-INPV-07
+    ├── ssrf.py           # WSTG-INPV-19
+    └── idor.py           # WSTG-INPV-04
 ```
 
 ### Integración con HackLabs
