@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Server-Side Prototype Pollution — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="pp_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300 mb-3" data-i18n="pp_desc_text">El servidor fusiona objetos JSON sin filtrar claves peligrosas. Un atacante inyecta <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">__proto__</code> para modificar <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Object.prototype</code> y escalar privilegios.</p>
+    <ul class="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 text-sm">
+      <li>CVE-2025-13465: Lodash <code>_.unset</code>/<code>_.omit</code> bypass (CVSS 9.8)</li>
+      <li>CVE-2024-6783: Vue.js XSS via prototype pollution</li>
+      <li>Gadget chains → RCE via template rendering</li>
+    </ul>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="pp_merge_config">Merge de Configuración</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="pp_merge_desc">El servidor fusiona tu JSON con la configuración del usuario. Intenta inyectar <code>__proto__</code>:</p>
+    <form id="polluteForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="pp_json_payload">JSON payload</label>
+        <textarea id="payload" rows="4" class="hl-input font-mono text-sm" data-i18n-placeholder="pp_json_ph" placeholder='{"name": "alice", "__proto__": {"isAdmin": true}}'></textarea>
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="pp_merge_btn">Merge Config</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="pp_check_admin">Verificar Admin</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="pp_check_admin_desc">Si lograste inyectar <code>isAdmin: true</code>, este endpoint te dará acceso:</p>
+    <button onclick="checkAdmin()" class="btn-primary" data-i18n="pp_check_admin_btn">Check Admin Status</button>
+    <div id="adminResult" class="mt-3 hidden"><pre id="adminOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="pp_obj_1">Inyecta <code>__proto__.isAdmin = true</code> via el merge</li>
+      <li data-i18n="pp_obj_2">Accede al panel de admin</li>
+      <li data-i18n="pp_obj_3">Encuentra el flag en la respuesta admin</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{pr0t0type_p0llut10n_1s_d4ng3r0us}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('polluteForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/pollute/merge', { method: 'POST', headers: {'Content-Type':'application/json'}, body: document.getElementById('payload').value });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+async function checkAdmin() {
+  try {
+    const res = await fetch('/pollute/admin');
+    const data = await res.json();
+    document.getElementById('adminOutput').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('adminResult').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('adminOutput').textContent = 'Error: ' + e.message;
+    document.getElementById('adminResult').classList.remove('hidden');
+  }
+}
+</script>
+{% endblock %}

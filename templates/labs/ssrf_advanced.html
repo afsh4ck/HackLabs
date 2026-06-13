@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Advanced SSRF — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="ssrf_adv_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="ssrf_adv_desc_text">El servidor filtra IPs internas pero no valida DNS rebinding. Un dominio controlado puede resolver a 127.0.0.1 en la segunda consulta, evadiendo el filtro.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="ssrf_adv_webhook">Webhook Tester (con filtro de IPs internas)</h2>
+    <form id="ssrfForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="ssrf_adv_url">URL a probar</label>
+        <input type="text" id="url" value="http://example.com" class="hl-input font-mono">
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="ssrf_adv_test_btn">Test URL</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="ssrf_adv_dns">DNS Rebinding Simulator</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="ssrf_adv_dns_desc">Simula un dominio que cambia de IP entre consultas:</p>
+    <button onclick="dnsRebind()" class="btn-primary" data-i18n="ssrf_adv_dns_btn">Simulate DNS Rebind</button>
+    <div id="rebindResult" class="mt-3 hidden"><pre id="rebindOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="ssrf_adv_obj_1">Evade el filtro de IPs internas via DNS rebinding</li>
+      <li data-i18n="ssrf_adv_obj_2">Accede a endpoints internos (127.0.0.1:5000)</li>
+      <li data-i18n="ssrf_adv_obj_3">Obtén el flag desde el admin interno</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{4dv4nc3d_ssrf_dns_r3b1nd_1nt3rn4l}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('ssrfForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/ssrf/advanced/fetch', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({url: document.getElementById('url').value}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+async function dnsRebind() {
+  try {
+    const res = await fetch('/ssrf/advanced/rebind', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({domain: 'rebind.attacker.com'}) });
+    const data = await res.json();
+    document.getElementById('rebindOutput').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('rebindResult').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('rebindOutput').textContent = 'Error: ' + e.message;
+    document.getElementById('rebindResult').classList.remove('hidden');
+  }
+}
+</script>
+{% endblock %}

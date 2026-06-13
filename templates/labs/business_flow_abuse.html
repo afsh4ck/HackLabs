@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Business Flow Abuse — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="bfa_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="bfa_desc_text">Automatiza flujos de negocio para obtener ventajas no autorizadas: cupones apilables, referral farming, manipulación de precios.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="bfa_store">Tienda de Cupones</h2>
+    <div class="bg-gray-50 dark:bg-gray-800 rounded p-3 mb-3">
+      <p class="text-gray-600 dark:text-gray-300 text-sm"><span data-i18n="bfa_cart">Carrito:</span> <span class="text-gray-900 dark:text-white font-bold">$100.00</span></p>
+      <p class="text-gray-600 dark:text-gray-300 text-sm"><span data-i18n="bfa_coupons">Cupones:</span> <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">WELCOME10</code>, <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">SAVE20</code>, <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">VIP30</code></p>
+    </div>
+    <form id="couponForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="bfa_coupon_label">Ingresa cupón</label>
+        <input type="text" id="coupon" class="hl-input font-mono" data-i18n-placeholder="bfa_coupon_ph" placeholder="WELCOME10">
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="bfa_apply_btn">Aplicar</button>
+    </form>
+    <div id="couponResult" class="mt-3 hidden"><pre id="couponOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="bfa_referrals">Sistema de Referrals</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="bfa_ref_desc">Cada referral te da $5. Genera referrals automáticos:</p>
+    <button onclick="farmReferrals()" class="btn-primary" data-i18n="bfa_ref_btn">Farm 10 Referrals</button>
+    <div id="refResult" class="mt-3 hidden"><pre id="refOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="bfa_obj_1">Aplica múltiples cupones simultáneamente (race condition)</li>
+      <li data-i18n="bfa_obj_2">Farma referrals con requests automatizados</li>
+      <li data-i18n="bfa_obj_3">Manipula el precio final a $0 o negativo</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{bus1n3ss_fl0w_4bus3_c0up0n_st4ck}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('couponForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/api/coupon/apply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({coupon: document.getElementById('coupon').value, cart_total: 100}) });
+    const data = await res.json();
+    document.getElementById('couponOutput').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('couponResult').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('couponOutput').textContent = 'Error: ' + e.message;
+    document.getElementById('couponResult').classList.remove('hidden');
+  }
+});
+async function farmReferrals() {
+  const results = [];
+  for (let i = 0; i < 10; i++) {
+    try {
+      const res = await fetch('/api/referral', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({referral_email: `bot${i}@spam.com`}) });
+      const data = await res.json();
+      results.push(data);
+    } catch (e) {
+      results.push({error: e.message});
+    }
+  }
+  document.getElementById('refOutput').textContent = JSON.stringify(results, null, 2);
+  document.getElementById('refResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

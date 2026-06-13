@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Rate Limiting Bypass — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="rlb_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300 mb-3" data-i18n="rlb_desc_text">El endpoint de login tiene rate limiting, pero puedes evadirlo con técnicas como:</p>
+    <ul class="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 text-sm">
+      <li data-i18n="rlb_technique_1">Cambiar el Content-Type</li>
+      <li data-i18n="rlb_technique_2">Usar diferentes paths al mismo endpoint</li>
+      <li data-i18n="rlb_technique_3">Agregar parámetros de tracking</li>
+      <li data-i18n="rlb_technique_4">HTTP/2 header manipulation</li>
+    </ul>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="rlb_login">Login (Rate Limited: 5 intentos/min)</h2>
+    <form id="loginForm" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="rlb_email">Email</label>
+          <input type="text" id="email" value="admin@hacklabs.com" class="hl-input font-mono">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="rlb_password">Password</label>
+          <input type="text" id="password" class="hl-input font-mono">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="rlb_login_btn">Login</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="rlb_bruteforce">Brute-Force Automatizado</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="rlb_bf_desc">Prueba 20 passwords con diferentes bypasses:</p>
+    <button onclick="bruteForce()" class="btn-primary" data-i18n="rlb_bf_btn">Run Brute-Force</button>
+    <div id="bfResult" class="mt-3 hidden"><pre id="bfOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="rlb_obj_1">Intenta login normal hasta que te bloqueen</li>
+      <li data-i18n="rlb_obj_2">Usa técnicas de bypass para seguir intentando</li>
+      <li data-i18n="rlb_obj_3">Encuentra la password del admin</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{r4t3_l1m1t_byp4ss_brut3f0rc3}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email: document.getElementById('email').value, password: document.getElementById('password').value}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+async function bruteForce() {
+  const passwords = ['admin','password','123456','hacklabs','letmein','welcome','monkey','dragon','master','qwerty','login','abc123','111111','mustang','access','shadow','michael','superman','696969','passw0rd'];
+  const results = [];
+  for (const pw of passwords) {
+    try {
+      const res = await fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email:'admin@hacklabs.com', password: pw}) });
+      const data = await res.json();
+      results.push({password: pw, status: res.status, token: data.token || null, error: data.error || null});
+      if (data.token) break;
+    } catch (e) {
+      results.push({password: pw, error: e.message});
+    }
+  }
+  document.getElementById('bfOutput').textContent = JSON.stringify(results, null, 2);
+  document.getElementById('bfResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

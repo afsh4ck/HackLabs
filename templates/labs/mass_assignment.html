@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Mass Assignment — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API3:2023 – Mass Assignment</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-red-500 font-bold">HIGH</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">El framework vincula automáticamente parámetros del request a propiedades del objeto, permitiendo:</p>
+    <ul class="list-disc list-inside text-gray-300 space-y-2">
+      <li>Privilege escalation (role=admin)</li>
+      <li>Campo no previsto (account_balance, is_verified)</li>
+      <li>Sobreescribir campos protegidos</li>
+    </ul>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Formulario de Registro</h2>
+    <p class="text-gray-400 mb-4">Registra un usuario — intenta inyectar campos extra en el body:</p>
+
+    <form id="registerForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-300 mb-2">Nombre:</label>
+          <input type="text" id="regName" value="testuser"
+                 class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-2">Email:</label>
+          <input type="email" id="regEmail" value="test@test.com"
+                 class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2">Password:</label>
+        <input type="password" id="regPass" value="password123"
+               class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2">Campos extra (JSON):</label>
+        <textarea id="regExtra" rows="4"
+                  class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+                  placeholder='{"role": "admin", "account_balance": 999999, "is_verified": true}'></textarea>
+        <p class="text-gray-500 text-xs mt-1">Intenta inyectar: role, is_admin, account_balance, is_verified</p>
+      </div>
+      <button type="submit"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+        Registrar
+      </button>
+    </form>
+
+    <div id="regResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <h3 class="text-lg font-bold text-white mb-2">Resultado:</h3>
+        <pre id="regOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">API de Actualización de Perfil</h2>
+    <p class="text-gray-400 mb-4">Actualiza tu perfil — prueba a enviar campos adicionales:</p>
+
+    <form id="profileForm" class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-gray-300 mb-2">User ID:</label>
+          <input type="number" id="profId" value="1"
+                 class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-2">Nombre:</label>
+          <input type="text" id="profName" value="updated"
+                 class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-2">Campos extra (JSON):</label>
+        <textarea id="profExtra" rows="3"
+                  class="w-full bg-gray-700 text-white rounded px-4 py-2 border border-gray-600 focus:border-red-500 focus:outline-none font-mono text-sm"
+                  placeholder='{"role": "admin", "is_verified": true}'></textarea>
+      </div>
+      <button type="submit"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+        Actualizar Perfil
+      </button>
+    </form>
+
+    <div id="profResult" class="mt-4 hidden">
+      <div class="bg-gray-700 rounded p-4">
+        <pre id="profOutput" class="text-gray-300 text-sm overflow-x-auto"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <p class="text-gray-300 mb-4">Escalada de privilegios mediante mass assignment:</p>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Registra un usuario inyectando <code class="bg-gray-700 px-1 rounded">role=admin</code></li>
+      <li>Actualiza el perfil para obtener <code class="bg-gray-700 px-1 rounded">is_verified=true</code></li>
+      <li>Accede al panel de admin con el usuario modificado</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded">
+      <p class="text-yellow-400 font-mono">Flag: HL{m4ss_4ss1gnm3nt_pr1v3sc_4dm1n}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    name: document.getElementById('regName').value,
+    email: document.getElementById('regEmail').value,
+    password: document.getElementById('regPass').value,
+  };
+  const extra = document.getElementById('regExtra').value;
+  if (extra.trim()) Object.assign(body, JSON.parse(extra));
+
+  const res = await fetch('/mass_assignment/register', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  document.getElementById('regOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('regResult').classList.remove('hidden');
+});
+
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('profId').value;
+  const body = { name: document.getElementById('profName').value };
+  const extra = document.getElementById('profExtra').value;
+  if (extra.trim()) Object.assign(body, JSON.parse(extra));
+
+  const res = await fetch(`/mass_assignment/profile/${id}`, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  document.getElementById('profOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('profResult').classList.remove('hidden');
+});
+</script>
+{% endblock %}

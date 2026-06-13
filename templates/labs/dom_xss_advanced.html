@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Advanced DOM XSS — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="dom2_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="dom2_desc_text">El sanitizer filtra <code>&lt;script&gt;</code> pero no eventos HTML como <code>onload</code>, <code>onerror</code>, <code>onfocus</code>. Escapa del sandbox via template literal injection.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="dom2_renderer">Safe HTML Renderer</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="dom2_renderer_desc">Tu HTML se renderiza en un sandbox. Intenta escapar:</p>
+    <form id="renderForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="dom2_html">HTML (el sanitizer filtra &lt;script&gt;)</label>
+        <textarea id="htmlInput" rows="4" class="hl-input font-mono text-sm" data-i18n-placeholder="dom2_html_ph" placeholder='<div onmouseover="alert(1)">Hover me</div>'></textarea>
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="dom2_render_btn">Render HTML</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="dom2_obj_1">Bypasea el sanitizer (evita &lt;script&gt;)</li>
+      <li data-i18n="dom2_obj_2">Logra XSS via eventos HTML o SVG</li>
+      <li data-i18n="dom2_obj_3">Ejecuta <code>alert(document.cookie)</code> para obtener el flag</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{d0m_xss_s4ndb0x_3sc4p3}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('renderForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/dom_xss_advanced/render', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({html: document.getElementById('htmlInput').value}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+</script>
+{% endblock %}

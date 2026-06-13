@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Broken Function Level Auth — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="bfla_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="bfla_desc_text">Los endpoints admin son accesibles sin verificación de función. Cambia el método HTTP o enumera paths para acceder a funciones de admin.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="bfla_explorer">API Explorer</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="bfla_explorer_desc">Prueba acceder a diferentes endpoints como usuario normal:</p>
+    <div class="space-y-2">
+      <button onclick="hit('/api/user/profile')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition">GET /api/user/profile</button>
+      <button onclick="hit('/api/admin/users')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition">GET /api/admin/users</button>
+      <button onclick="hit('/api/admin/config')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition">GET /api/admin/config</button>
+      <button onclick="hit('/api/admin/delete_user')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition">GET /api/admin/delete_user</button>
+      <button onclick="hit('/api/internal/debug')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition">GET /api/internal/debug</button>
+    </div>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="bfla_method">Method Manipulation</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="bfla_method_desc">Prueba con diferentes métodos HTTP:</p>
+    <div class="grid grid-cols-3 gap-2">
+      <button onclick="hitMethod('/api/admin/users', 'GET')" class="bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-bold py-2 px-4 rounded transition text-sm">GET</button>
+      <button onclick="hitMethod('/api/admin/users', 'POST')" class="bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 font-bold py-2 px-4 rounded transition text-sm">POST</button>
+      <button onclick="hitMethod('/api/admin/users', 'PUT')" class="bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 font-bold py-2 px-4 rounded transition text-sm">PUT</button>
+    </div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="bfla_obj_1">Enumera los endpoints admin</li>
+      <li data-i18n="bfla_obj_2">Accede a cada uno sin credenciales de admin</li>
+      <li data-i18n="bfla_obj_3">Encuentra el flag en algún endpoint admin</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{bf14_4dm1n_3ndp01nt_3num3r4t10n}</p></div>
+  </div>
+</div>
+<script>
+async function hit(path) {
+  try {
+    const res = await fetch(path);
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+}
+async function hitMethod(path, method) {
+  try {
+    const res = await fetch(path, { method });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+}
+</script>
+{% endblock %}

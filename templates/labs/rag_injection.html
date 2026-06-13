@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}RAG Injection — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300">El sistema RAG (Retrieval-Augmented Generation) ingiere documentos sin sanitizar. Un atacante inyecta contenido malicioso que el LLM luego presenta como información confiable.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Knowledge Base Uploader</h2>
+    <form id="uploadForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Document content</label>
+        <textarea id="content" rows="4" class="hl-input font-mono text-sm" placeholder="Company policy: All employees must change passwords every 90 days."></textarea>
+      </div>
+      <button type="submit" class="btn-primary">Upload to Knowledge Base</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">RAG Query</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm">Consulta la knowledge base:</p>
+    <form id="queryForm" class="space-y-3">
+      <div>
+        <input type="text" id="query" placeholder="What is the password policy?" class="hl-input font-mono">
+      </div>
+      <button type="submit" class="btn-primary">Query Knowledge Base</button>
+    </form>
+    <div id="queryResult" class="mt-3 hidden"><pre id="queryOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li>Inyecta instrucciones maliciosas en un documento</li>
+      <li>El RAG las presenta como información legítima</li>
+      <li>Logra que el LLM ejecute acciones no deseadas</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{r4g_1nj3ct10n_kn0wledg3_b4s3}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/rag_injection/upload', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({content: document.getElementById('content').value}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+document.getElementById('queryForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/rag_injection/query', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({query: document.getElementById('query').value}) });
+    const data = await res.json();
+    document.getElementById('queryOutput').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('queryResult').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('queryOutput').textContent = 'Error: ' + e.message;
+    document.getElementById('queryResult').classList.remove('hidden');
+  }
+});
+</script>
+{% endblock %}

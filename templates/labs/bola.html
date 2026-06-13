@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}BOLA — HackLabs{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-red-400 mb-2">API1:2023 – BOLA (Broken Object Level Authorization)</h1>
+    <p class="text-gray-400">OWASP API Security Top 10 · Riesgo: <span class="text-red-500 font-bold">CRITICAL</span></p>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">Descripción</h2>
+    <p class="text-gray-300 mb-4">BOLA permite acceder a objetos de otros usuarios manipulando IDs en las peticiones API:</p>
+    <ul class="list-disc list-inside text-gray-300 space-y-2">
+      <li>Cambiar IDs numéricos para acceder a datos de otros usuarios</li>
+      <li>Manipular UUIDs para evadir controles de acceso</li>
+      <li>Escalada horizontal de privilegios</li>
+    </ul>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">API de Usuarios</h2>
+    <p class="text-gray-400 mb-4">Endpoint vulnerable — intenta acceder a usuarios diferentes:</p>
+    
+    <div class="space-y-4">
+      <div class="flex items-center space-x-4">
+        <span class="text-gray-300">GET /api/bola/users/</span>
+        <input type="number" id="userId" value="1" min="1" max="100"
+               class="w-24 bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        <button onclick="fetchUser()" 
+                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+          Obtener
+        </button>
+      </div>
+      
+      <div id="userResult" class="hidden bg-gray-700 rounded p-4">
+        <pre id="userOutput" class="text-gray-300 text-sm"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6 mb-6">
+    <h2 class="text-xl font-bold text-white mb-4">API de Documentos</h2>
+    <p class="text-gray-400 mb-4">Accede a documentos de otros usuarios:</p>
+    
+    <div class="space-y-4">
+      <div class="flex items-center space-x-4">
+        <span class="text-gray-300">GET /api/bola/documents/</span>
+        <input type="number" id="docId" value="1" min="1" max="100"
+               class="w-24 bg-gray-700 text-white rounded px-3 py-2 border border-gray-600 focus:border-red-500 focus:outline-none">
+        <button onclick="fetchDocument()" 
+                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition">
+          Obtener
+        </button>
+      </div>
+      
+      <div id="docResult" class="hidden bg-gray-700 rounded p-4">
+        <pre id="docOutput" class="text-gray-300 text-sm"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-lg p-6">
+    <h2 class="text-xl font-bold text-white mb-4">🎯 Objetivo</h2>
+    <p class="text-gray-300 mb-4">Encuentra la bandera accediendo a objetos que no te pertenecen:</p>
+    <ol class="list-decimal list-inside text-gray-300 space-y-2">
+      <li>Accede al usuario con ID que contiene el flag</li>
+      <li>Busca documentos con información sensible</li>
+      <li>Combina ambos para obtener la bandera completa</li>
+    </ol>
+    <div class="mt-4 p-4 bg-gray-700 rounded">
+      <p class="text-yellow-400 font-mono">Flag: HL{b0l4_0bj3ct_l3v3l_4uth_byp4ss}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+async function fetchUser() {
+  const id = document.getElementById('userId').value;
+  const response = await fetch(`/api/bola/users/${id}`);
+  const data = await response.json();
+  document.getElementById('userOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('userResult').classList.remove('hidden');
+}
+
+async function fetchDocument() {
+  const id = document.getElementById('docId').value;
+  const response = await fetch(`/api/bola/documents/${id}`);
+  const data = await response.json();
+  document.getElementById('docOutput').textContent = JSON.stringify(data, null, 2);
+  document.getElementById('docResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

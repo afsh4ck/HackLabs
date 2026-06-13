@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}GraphQL Advanced Attacks — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="gql_adv_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="gql_adv_desc_text">GraphQL introspection habilitada expone todo el esquema. Deep nested queries agotan recursos del servidor (DoS). Alias flooding evita rate limits.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="gql_adv_playground">GraphQL Playground</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="gql_adv_playground_desc">Ejecuta queries contra la API GraphQL:</p>
+    <form id="gqlForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="gql_adv_query">Query</label>
+        <textarea id="query" rows="6" class="hl-input font-mono text-sm" data-i18n-placeholder="gql_adv_query_ph" placeholder='{ __schema { types { name fields { name } } } }'></textarea>
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="gql_adv_exec_btn">Execute Query</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm overflow-x-auto"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="gql_adv_quick">Quick Queries</h2>
+    <div class="space-y-2">
+      <button onclick="runQuery('{ __schema { types { name } } }')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition" data-i18n="gql_adv_q1">Introspection: Full Schema</button>
+      <button onclick="runQuery('{ users { id name email role password_hash } }')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition" data-i18n="gql_adv_q2">Query: All Users (with secrets)</button>
+      <button onclick="runQuery('{ a1: user(id:1) { __typename } a2: user(id:1) { __typename } a3: user(id:1) { __typename } }')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition" data-i18n="gql_adv_q3">Alias Flooding (bypass rate limit)</button>
+      <button onclick="runQuery('{ users { posts { comments { author { posts { comments { author { name } } } } } } } }')" class="w-full text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono text-sm transition" data-i18n="gql_adv_q4">Deep Nested Query (DoS)</button>
+    </div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="gql_adv_obj_1">Usa introspection para descubrir el esquema completo</li>
+      <li data-i18n="gql_adv_obj_2">Exfiltra datos sensibles via queries normales</li>
+      <li data-i18n="gql_adv_obj_3">Alias flooding para evadir rate limiting</li>
+      <li data-i18n="gql_adv_obj_4">Deep nested query para causar DoS</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{gr4phql_1ntr0sp3ct10n_d33p_n3st3d}</p></div>
+  </div>
+</div>
+<script>
+async function runQuery(q) {
+  try {
+    const res = await fetch('/graphql/advanced', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({query: q}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+}
+document.getElementById('gqlForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  runQuery(document.getElementById('query').value);
+});
+</script>
+{% endblock %}

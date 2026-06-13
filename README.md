@@ -3,7 +3,7 @@
 <img width="3456" height="1928" alt="hacklabs-new" src="https://github.com/user-attachments/assets/f9faf6c0-7740-4b3b-b5ff-874d7dac598f" />
 
 <br><br>
-<b>Plataforma de entrenamiento en hacking ético</b> — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el <b>OWASP Top 10</b> completo + vulnerabilidades extra avanzadas.
+<b>Plataforma de entrenamiento en hacking ético</b> — Similar a Mutillidae/DVWA pero con interfaz moderna y guías de explotación. Cubre el <b>OWASP Top 10 2025</b> completo + <b>OWASP API Security Top 10</b> + <b>OWASP LLM Top 10 2025</b> + vulnerabilidades avanzadas.
 <br><br>
 
 > ⚠️ **ADVERTENCIA**: Esta aplicación es intencionalmente insegura. Úsala SOLO en entornos aislados (máquina virtual, red local sin internet). Nunca la expongas públicamente.
@@ -17,6 +17,7 @@
 
 - [🎯 Características](#-características)
 - [🧪 Laboratorios disponibles](#-laboratorios-disponibles)
+- [🆕 Nuevos Labs (2024-2025)](#-nuevos-labs-2024-2025)
 - [🏆 Sistema de Progreso](#-sistema-de-progreso)
 - [🎓 Certificado gratuito](#-certificado-gratuito)
 - [🎚️ Sistema de Dificultad](#️-sistema-de-dificultad)
@@ -32,7 +33,7 @@
 
 ## 🎯 Características
 
-- **43 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **68 laboratorios** cubriendo OWASP Top 10 2025 + OWASP API Security + OWASP LLM Top 10 + vulnerabilidades avanzadas
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -45,48 +46,85 @@
 
 ## 🧪 Laboratorios disponibles
 
-### OWASP Top 10 (2021)
+> **68 labs** organizados por categoría. Los labs marcados con **🆕** son nuevos (2024-2025), basados en hallazgos reales de bug bounties y reportes de seguridad.
+
+### OWASP Top 10 2025
 
 | # | Lab | Riesgo | Técnica |
 |---|-----|--------|---------|
 | A01 | IDOR – Broken Access Control | 🟠 High | `/profile?id=N` sin autenticación |
+| A01 | 🆕 UUID-based IDOR | 🟠 High | UUIDs secuenciales → enumeración de documentos |
 | A02 | Cryptographic Failures | 🟠 High | Contraseñas MD5 en cookie/respuesta |
 | A03 | SQL Injection | 🔴 Critical | UNION-based, error-based, `sqlmap` |
 | A03 | Command Injection | 🔴 Critical | Campo ping → RCE |
+| A03 | Supply Chain Security | 🔴 Critical | Typosquatting, dependency confusion, paquetes maliciosos |
+| A03 | 🆕 Supply Chain Advanced | 🔴 Critical | Lockfile poisoning + typosquatting avanzado |
 | A04 | Insecure Design | 🟡 Medium | Preguntas secretas predecibles |
 | A05 | Security Misconfiguration | 🟡 Medium | `/admin` sin auth, `.git` expuesto |
 | A06 | Outdated Components | 🟡 Medium | jQuery vulnerable con XSS |
 | A07 | Auth Failures | 🟠 High | Sin rate-limiting, credenciales por defecto |
+| A07 | 🆕 Advanced DOM XSS | 🟠 High | Sandbox escape via event handlers |
+| A07 | 🆕 Device Code Phishing | 🟠 High | OAuth 2.0 device code flow abuse |
 | A08 | Integrity Failures | 🟠 High | `PUT /api/user` sin validación de propiedad |
 | A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
 | A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
+| A10 | Exceptional Conditions | 🟡 Medium | Stack traces, debug info, error handling deficiente |
+| A10 | 🆕 Cloud Metadata SSRF | 🔴 Critical | Metadata server (169.254.169.254) → IAM credentials |
+| A10 | 🆕 Advanced SSRF (DNS Rebinding) | 🔴 Critical | DNS rebinding para evadir filtro de IPs internas |
+| A10 | 🆕 HTTP Request Smuggling | 🔴 Critical | CL.TE / TE.CL desync attacks |
+| A10 | 🆕 Advanced Exceptional Conditions | 🟠 High | DB error messages leak schema + sensitive data |
+
+### OWASP API Security Top 10
+
+| # | Lab | Riesgo | Técnica |
+|---|-----|--------|---------|
+| API1 | BOLA – Broken Object Level Authorization | 🔴 Critical | Cambiar IDs para acceder a objetos de otros usuarios |
+| API2 | Broken Authentication | 🔴 Critical | JWT `alg=none`, credenciales por defecto, token no invalidado |
+| API3 | Mass Assignment | 🟠 High | Inyectar `role=admin` en registro/actualización |
+| API3 | 🆕 Excessive Data Exposure | 🟠 High | Hidden fields (password_hash, SSN, reset_token) |
+| API3 | 🆕 Advanced Mass Assignment | 🔴 Critical | Role escalation via hidden fields |
+| API4 | 🆕 Rate Limiting Bypass | 🟠 High | Brute-force con bypass techniques |
+| API5 | 🆕 BFLA – Broken Function Level Auth | 🔴 Critical | Admin endpoints accessible without auth |
+| API6 | 🆕 Business Flow Abuse | 🟠 High | Coupon stacking, referral farming |
+| API8 | GraphQL | 🟡 Medium | Introspection, query batching, campos ocultos |
+| API8 | 🆕 GraphQL Advanced | 🔴 Critical | Introspection + deep nested queries + alias flooding |
+| API10 | 🆕 Unsafe API Consumption | 🟠 High | Webhook poisoning → stored XSS |
+| CWE-1321 | 🆕 Prototype Pollution | 🔴 Critical | `__proto__` injection → Object.prototype modification |
+
+### OWASP LLM Top 10 2025
+
+| # | Lab | Riesgo | Técnica |
+|---|-----|--------|---------|
+| LLM06 | Excessive Agency | 🟠 High | Agente ejecuta comandos, lee archivos, accede a datos sin restricción |
+| MCP | 🆕 Tool Poisoning | 🔴 Critical | Hidden instructions in MCP tool descriptions |
+| RAG | 🆕 RAG Injection | 🔴 Critical | Knowledge base poisoning → LLM manipulation |
 
 ### Vulnerabilidades
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes`: `HL{4p1_n0735_3xf11_0wn3d}` |
+| API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes` |
 | Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
 | C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
 | Container Escape | 🔴 Critical | Docker socket, privileged container, cgroup release_agent |
 | CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
 | CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
 | File Upload sin restricciones | 🔴 Critical | Webshell PHP, bypass doble extensión, reverse shell |
-| Forgot Password Recovery (Authentication Flaws) | 🟠 High | Toma de cuenta por validación insuficiente en 2 fases, enumeración de usuarios |
-| HTML Injection (GET/POST/Stored) | 🟠 High | Inyección HTML reflejada, por POST y almacenada en blog; bypass de filtros por dificultad |
+| Forgot Password Recovery | 🟠 High | Toma de cuenta por validación insuficiente en 2 fases |
+| HTML Injection (GET/POST/Stored) | 🟠 High | Inyección HTML reflejada, por POST y almacenada en blog |
 | Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
 | JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat), algorithm confusion RS256→HS256 |
 | Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
-| CAPTCHA Bypass | 🟡 Medium | Login bancario con CAPTCHA matemático automatizable, oráculo de errores y bruteforce de credenciales |
+| CAPTCHA Bypass | 🟡 Medium | Login bancario con CAPTCHA matemático automatizable |
 | OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar → robo de authorization code |
 | Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
 | Path Traversal / LFI | 🟠 High | `../../etc/passwd`, log poisoning → RCE |
 | Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration, cron |
 | Race Condition / TOCTOU | 🟠 High | Transferencias concurrentes, TOCTOU, requests paralelos |
-| Reverse Shell | 🔴 Critical | URL Health Checker vulnerable, `curl` con `shell=True`, bash/python/perl reverse shells |
-| Clickjacking | 🟠 High | Iframe overlay con slider de opacidad, frame-busting JS bypass via sandbox |
-| 2FA / MFA Bypass | 🔴 Critical | OTP leak en headers, brute force 4 dígitos, TOCTOU race condition |
-| Password Reset Poisoning | 🟠 High | Host header, X-Forwarded-Host, X-Host → token de reset enviado al atacante |
+| Reverse Shell | 🔴 Critical | URL Health Checker vulnerable, `curl` con `shell=True` |
+| Clickjacking | 🟠 High | Iframe overlay con slider de opacidad, frame-busting JS bypass |
+| 2FA / MFA Bypass | 🔴 Critical | OTP leak en headers, brute force 4 dígitos, TOCTOU |
+| Password Reset Poisoning | 🟠 High | Host header, X-Forwarded-Host, X-Host → token al atacante |
 | Session Hijacking | 🟠 High | SID predecible, token base64 sin firma, session fixation |
 | SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
 | XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
@@ -99,9 +137,26 @@
 | AI Jailbreak | 🟡 Medium | DAN, roleplay, instruction override |
 | Indirect Prompt Injection | 🟠 High | Payload oculto en documento analizado |
 | Prompt Injection | 🟠 High | System prompt override, prompt leaking |
-| Prompt Leaking | 🟠 High | Extraer system prompt via traducción, reformulación y codificación base64 |
-| LLM Data Exfiltration | 🟠 High | Tracking pixel, framing indirecto e inyección via documento para exfiltrar datos |
-| AI Supply Chain Poisoning | 🔴 Critical | Modelo envenenado introduce backdoors via print, comparación plaintext y keylogger |
+| Prompt Leaking | 🟠 High | Extraer system prompt via traducción, reformulación y base64 |
+| LLM Data Exfiltration | 🟠 High | Tracking pixel, framing indirecto e inyección via documento |
+| AI Supply Chain Poisoning | 🔴 Critical | Modelo envenenado introduce backdoors |
+
+---
+
+## 🆕 Nuevos Labs (2024-2025)
+
+Los 18 labs nuevos fueron diseñados a partir de investigación real:
+
+| Fuente | Labs derivados |
+|--------|---------------|
+| **HackerOne 2025 Report** | Business Flow Abuse, Rate Limit Bypass, Excessive Data Exposure, BFLA |
+| **OWASP API Security 2023** | GraphQL Advanced, Advanced Mass Assignment, Unsafe API Consumption |
+| **CVE-2024/2025** | Prototype Pollution (CVE-2025-13465), HTTP Smuggling |
+| **Real breaches** | Cloud Metadata SSRF (Capital One), Supply Chain Advanced (XZ Utils) |
+| **Emerging threats** | MCP Tool Poisoning, RAG Injection, Device Code Phishing |
+| **Advanced techniques** | DNS Rebinding SSRF, UUID IDOR, DOM XSS Sandbox Escape |
+
+> Todos los labs incluyen resoluciones paso a paso en español e inglés.
 
 ---
 
@@ -150,9 +205,10 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | 🩸 First Blood | Completar el primer lab |
 | ⚡ Speed Runner | Completar 5 labs |
 | 🏁 Half Way There | Alcanzar el 50% de labs completados |
-| 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 |
+| 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 2025 |
+| 🔌 API Hunter | Completar todos los labs de OWASP API Security |
 | 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
-| 🤖 AI Breaker | Completar todos los labs de IA Attacks |
+| 🤖 AI Breaker | Completar todos los labs de IA Attacks + LLM Top 10 |
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |
 | 👑 Completionist | Completar todos los labs |
 

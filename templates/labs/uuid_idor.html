@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}UUID-based IDOR — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300">El sistema usa UUIDs predecibles (sequential). Un atacante puede iterar UUIDs para acceder a documentos de otros usuarios.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">Document Viewer</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm">Ingresa un UUID para ver el documento:</p>
+    <form id="docForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Document UUID</label>
+        <input type="text" id="uuid" value="doc-00000001" class="hl-input font-mono">
+      </div>
+      <button type="submit" class="btn-primary">Fetch Document</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">UUID Sequence Scanner</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm">Encuentra documentos escaneando UUIDs secuenciales:</p>
+    <button onclick="scanUUIDs()" class="btn-primary">Scan UUIDs doc-00000001 to doc-00000020</button>
+    <div id="scanResult" class="mt-3 hidden"><pre id="scanOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li>Descubre que los UUIDs son secuenciales</li>
+      <li>Escanea para encontrar documentos de otros usuarios</li>
+      <li>Obtén el flag del documento más sensible</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{uu1d_1d0r_s3qu3nt14l_pr3d1ct4bl3}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('docForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch(`/uuid_idor/doc/${document.getElementById('uuid').value}`);
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+async function scanUUIDs() {
+  const results = [];
+  for (let i = 1; i <= 20; i++) {
+    const id = `doc-${String(i).padStart(8, '0')}`;
+    try {
+      const res = await fetch(`/uuid_idor/doc/${id}`);
+      const data = await res.json();
+      results.push({uuid: id, title: data.title || data.error, has_flag: !!(data.flag)});
+    } catch (e) {
+      results.push({uuid: id, error: e.message});
+    }
+  }
+  document.getElementById('scanOutput').textContent = JSON.stringify(results, null, 2);
+  document.getElementById('scanResult').classList.remove('hidden');
+}
+</script>
+{% endblock %}

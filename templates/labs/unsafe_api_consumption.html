@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Unsafe API Consumption — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="uac_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="uac_desc_text">La aplicación confía ciegamente en datos de APIs de terceros (webhooks, respuestas de pago). Si un atacante envenena esos datos, logra inyección en la aplicación que los consume.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="uac_webhook">Simulador de Webhook</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="uac_webhook_desc">Simula un webhook de pago que la app consume:</p>
+    <form id="webhookForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="uac_payload">Webhook payload (JSON)</label>
+        <textarea id="payload" rows="4" class="hl-input font-mono text-sm" data-i18n-placeholder="uac_payload_ph" placeholder='{"status": "completed", "amount": 99.99}'></textarea>
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="uac_send_btn">Send Webhook</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="uac_dashboard">Admin Dashboard</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-3 text-sm" data-i18n="uac_dashboard_desc">Los webhooks recibidos se muestran aquí (simula XSS almacenado):</p>
+    <button onclick="viewDashboard()" class="btn-primary" data-i18n="uac_view_btn">View Dashboard</button>
+    <div id="dashResult" class="mt-3 hidden"><div id="dashOutput" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></div></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="uac_obj_1">Envía un webhook con payload malicioso en el campo "note"</li>
+      <li data-i18n="uac_obj_2">El admin dashboard lo renderiza sin sanitizar</li>
+      <li data-i18n="uac_obj_3">Logra XSS almacenado via la API de terceros</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{uns4f3_4p1_c0nsumpt10n_w3bh00k}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('webhookForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/api/webhook', { method: 'POST', headers: {'Content-Type':'application/json'}, body: document.getElementById('payload').value });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+async function viewDashboard() {
+  try {
+    const res = await fetch('/api/payment-status');
+    const data = await res.json();
+    document.getElementById('dashOutput').innerHTML = '<pre class="text-gray-700 dark:text-gray-300 text-sm">' + JSON.stringify(data, null, 2) + '</pre>';
+    document.getElementById('dashResult').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('dashOutput').textContent = 'Error: ' + e.message;
+    document.getElementById('dashResult').classList.remove('hidden');
+  }
+}
+</script>
+{% endblock %}

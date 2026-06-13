@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Advanced Exceptional Conditions — HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="exc2_description">Descripción</h2>
+    <p class="text-gray-600 dark:text-gray-300" data-i18n="exc2_desc_text">Los errores de base de datos filtran información sensible: nombres de tablas, columnas, estructura del schema, datos de otros usuarios.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="exc2_lookup">User Lookup (SQLi via Error)</h2>
+    <form id="lookupForm" class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium" data-i18n="exc2_user_id">User ID</label>
+        <input type="text" id="userId" value="1" class="hl-input font-mono">
+      </div>
+      <button type="submit" class="btn-primary" data-i18n="exc2_lookup_btn">Lookup User</button>
+    </form>
+    <div id="result" class="mt-3 hidden"><pre id="output" class="bg-gray-50 dark:bg-gray-800 rounded p-3 text-gray-700 dark:text-gray-300 text-sm"></pre></div>
+  </div>
+
+  <div class="hl-card">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-3" data-i18n="objective">🎯 Objetivo</h2>
+    <ol class="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
+      <li data-i18n="exc2_obj_1">Envía un input que cause un error SQL</li>
+      <li data-i18n="exc2_obj_2">Lee el error para obtener la estructura de la DB</li>
+      <li data-i18n="exc2_obj_3">Exfiltra datos sensibles via error messages</li>
+    </ol>
+    <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded"><p class="text-yellow-700 dark:text-yellow-400 font-mono text-sm">Flag: HL{3xc3pt10n4l_c0nd1t10ns_db_3rr0r}</p></div>
+  </div>
+</div>
+<script>
+document.getElementById('lookupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  try {
+    const res = await fetch('/exceptional_v2/lookup', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id: document.getElementById('userId').value}) });
+    const data = await res.json();
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('result').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('output').textContent = 'Error: ' + e.message;
+    document.getElementById('result').classList.remove('hidden');
+  }
+});
+</script>
+{% endblock %}
