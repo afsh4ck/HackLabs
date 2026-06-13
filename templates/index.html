@@ -117,8 +117,8 @@
     'ai_supply_chain':  ('ph-share-network',        'AI Supply Chain Poisoning'),
   } %}
 
-  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'IA Attacks': 'ia-attacks'} %}
-  {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'IA Attacks'] %}
+  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'AI Attacks': 'ai-attacks'} %}
+  {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks'] %}
   {% for cat in desired_order %}
     {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
     {% if labs_in_cat %}

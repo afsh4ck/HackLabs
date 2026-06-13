@@ -671,7 +671,7 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
     owasp_ids = {'idor', 'crypto', 'sqli', 'cmdi', 'insecure_design', 'misconfig',
                  'outdated', 'auth_failures', 'integrity', 'logging', 'ssrf'}
     vuln_ids = {l['id'] for l in labs if l.get('category') == 'Vulnerabilidades'}
-    ia_ids = {l['id'] for l in labs if l.get('category') == 'IA Attacks'}
+    ia_ids = {l['id'] for l in labs if l.get('category') == 'AI Attacks'}
     crit_ids = {l['id'] for l in labs if l.get('risk') == 'critical'}
 
     ach_first = done_count >= 1
@@ -711,7 +711,7 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
         },
         {
             'id': 'ai_breaker', 'icon': '🤖', 'name': 'AI Breaker', 'premium': False,
-            'desc_es': 'Completar todos los IA Attacks', 'desc_en': 'Complete all AI Attacks labs',
+            'desc_es': 'Completar todos los AI Attacks', 'desc_en': 'Complete all AI Attacks labs',
             'unlocked': ach_ia,
         },
         {
@@ -829,7 +829,7 @@ def get_lab_flag_map():
         'xss': ['HL{x55_c00k13_57341_5ucc355}'],
         'xxe': ['HackLabs{XXE_Ext3rn4l_Ent1ty_Expl01t3d}'],
 
-        # IA Attacks
+        # AI Attacks
         'ai_jailbreak': ['HL{j41lbr34k_1ts_w0rk1ng}', 'HL{ai_jailbreak_guardrails_bypassed}'],
         'ai_supply_chain': ['HL{4i_supp1y_ch41n_pwn3d}', 'HL{ai_supply_chain_backdoor_triggered}'],
         'indirect_injection': ['HL{1nd1r3ct_1nj_v14_d0c}', 'HL{indirect_prompt_injection_success}'],
@@ -1382,7 +1382,7 @@ def index():
 CATEGORY_SLUGS = {
     'owasp':            'OWASP Top 10',
     'vulnerabilidades': 'Vulnerabilidades',
-    'ia-attacks':       'IA Attacks',
+    'ai-attacks':       'AI Attacks',
 }
 
 @app.route('/category/<slug>')
@@ -1492,13 +1492,13 @@ def get_lab_list():
         {'id': 'ssti',               'title': 'SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'xss',                'title': 'XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'xxe',                'title': 'XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
-        # IA Attacks
-        {'id': 'ai_jailbreak',       'title': 'AI Jailbreak',                                'category': 'IA Attacks',       'risk': 'medium'},
-        {'id': 'ai_supply_chain',    'title': 'AI Supply Chain Poisoning',                   'category': 'IA Attacks',       'risk': 'critical'},
-        {'id': 'indirect_injection', 'title': 'Indirect Prompt Injection',                   'category': 'IA Attacks',       'risk': 'high'},
-        {'id': 'llm_exfil',          'title': 'LLM Data Exfiltration',                       'category': 'IA Attacks',       'risk': 'high'},
-        {'id': 'prompt_injection',   'title': 'Prompt Injection',                            'category': 'IA Attacks',       'risk': 'high'},
-        {'id': 'prompt_leaking',     'title': 'Prompt Leaking',                              'category': 'IA Attacks',       'risk': 'high'},
+        # AI Attacks
+        {'id': 'ai_jailbreak',       'title': 'AI Jailbreak',                                'category': 'AI Attacks',       'risk': 'medium'},
+        {'id': 'ai_supply_chain',    'title': 'AI Supply Chain Poisoning',                   'category': 'AI Attacks',       'risk': 'critical'},
+        {'id': 'indirect_injection', 'title': 'Indirect Prompt Injection',                   'category': 'AI Attacks',       'risk': 'high'},
+        {'id': 'llm_exfil',          'title': 'LLM Data Exfiltration',                       'category': 'AI Attacks',       'risk': 'high'},
+        {'id': 'prompt_injection',   'title': 'Prompt Injection',                            'category': 'AI Attacks',       'risk': 'high'},
+        {'id': 'prompt_leaking',     'title': 'Prompt Leaking',                              'category': 'AI Attacks',       'risk': 'high'},
     ]
 
 
@@ -4041,7 +4041,7 @@ def privesc():
     return render_template('labs/privesc.html', lab=lab)
 
 
-# ── IA Attacks ────────────────────────────────────────────────────────────────
+# ── AI Attacks ────────────────────────────────────────────────────────────────
 
 import random as _random
 

@@ -325,7 +325,7 @@
           'ai_supply_chain':  'ph-share-network',
         } %}
 
-        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'IA Attacks'] %}
+        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks'] %}
         {% for cat in desired_order %}
           {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
           {% if labs_in_cat %}

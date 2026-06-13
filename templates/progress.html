@@ -125,14 +125,14 @@
     {% if l.id in completed %}
       {% if l.category == 'OWASP Top 10' %}{% set completed_by_cat.owasp = completed_by_cat.owasp + 1 %}{% endif %}
       {% if l.category == 'Vulnerabilidades' %}{% set completed_by_cat.vulns = completed_by_cat.vulns + 1 %}{% endif %}
-      {% if l.category == 'IA Attacks' %}{% set completed_by_cat.ia = completed_by_cat.ia + 1 %}{% endif %}
+      {% if l.category == 'AI Attacks' %}{% set completed_by_cat.ia = completed_by_cat.ia + 1 %}{% endif %}
     {% else %}
       {% if l.risk == 'critical' %}{% set pending_critical.n = pending_critical.n + 1 %}{% endif %}
     {% endif %}
   {% endfor %}
   {% set owasp_total = labs | selectattr('category','equalto','OWASP Top 10')     | list | length %}
   {% set vulns_total = labs | selectattr('category','equalto','Vulnerabilidades')  | list | length %}
-  {% set ia_total    = labs | selectattr('category','equalto','IA Attacks')        | list | length %}
+  {% set ia_total    = labs | selectattr('category','equalto','AI Attacks')        | list | length %}
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
     <div class="progress-stat-card">
@@ -205,7 +205,7 @@
     {% for cat, cat_i18n, done, total, color in [
       ('OWASP Top 10',     'cat_owasp_top_10',      completed_by_cat.owasp, owasp_total, '#ef4444'),
       ('Vulnerabilidades', 'cat_vulnerabilidades',  completed_by_cat.vulns, vulns_total, '#f97316'),
-      ('IA Attacks',       'cat_ia_attacks',        completed_by_cat.ia,    ia_total,    'var(--hl-primary)'),
+      ('AI Attacks',       'cat_ia_attacks',        completed_by_cat.ia,    ia_total,    'var(--hl-primary)'),
     ] %}
     <div class="progress-stat-card" style="text-align:left;padding:.9rem 1rem">
       <div class="flex items-center justify-between mb-2">
@@ -259,7 +259,7 @@
 
   <!-- ── Lab grid ── -->
   {% set risk_color = {'critical': '#ef4444', 'high': '#f97316', 'medium': '#f59e0b'} %}
-  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'IA Attacks': 'var(--hl-primary)'} %}
+  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'AI Attacks': 'var(--hl-primary)'} %}
 
   <div class="space-y-2" id="progress-lab-list">
     {% for l in labs %}
@@ -271,7 +271,7 @@
 
       <!-- Icon -->
       <div class="prog-lab-icon"
-           style="background:rgba({{ '206,255,0' if l.category == 'IA Attacks' else ('239,68,68' if l.category == 'OWASP Top 10' else '249,115,22') }},.1)">
+           style="background:rgba({{ '206,255,0' if l.category == 'AI Attacks' else ('239,68,68' if l.category == 'OWASP Top 10' else '249,115,22') }},.1)">
         <i class="ph {{ lab_icons.get(l.id, 'ph-shield') }} text-sm"
            style="color:{{ cat_color.get(l.category, 'var(--hl-primary)') }}"></i>
       </div>
