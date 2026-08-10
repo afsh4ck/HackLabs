@@ -323,9 +323,24 @@
           'prompt_leaking':   'ph-eye',
           'llm_exfil':        'ph-export',
           'ai_supply_chain':  'ph-share-network',
+          'ad_smb_enum':        'ph-network',
+          'ad_ldap_enum':       'ph-tree-structure',
+          'ad_password_spray':  'ph-spray-bottle',
+          'ad_asrep_roast':     'ph-fire-simple',
+          'ad_kerberoast':      'ph-ticket',
+          'ad_gpp_passwords':   'ph-file-lock',
+          'ad_bloodhound':      'ph-graph',
+          'ad_acl_genericall':  'ph-user-switch',
+          'ad_acl_writemember': 'ph-users-three',
+          'ad_dcsync':          'ph-cloud-arrow-down',
+          'ad_pth':             'ph-hash',
+          'ad_silver_ticket':   'ph-ticket',
+          'ad_golden_ticket':   'ph-crown-simple',
+          'ad_delegation':      'ph-arrows-left-right',
+          'ad_machine_quota':   'ph-desktop-tower',
         } %}
 
-        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks'] %}
+        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks', 'Active Directory'] %}
         {% for cat in desired_order %}
           {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
           {% if labs_in_cat %}

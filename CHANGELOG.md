@@ -2,6 +2,24 @@
 
 All notable changes to this repository are documented in this file.
 
+## 2026-08-10
+
+<details>
+<summary><h4>Nueva categoria: Active Directory (15 labs + Domain Controller vulnerable)</h4></summary>
+
+- feat(ad): Nueva categoria `Active Directory` con 15 laboratorios (AD01-AD15) cubriendo la kill chain completa: enumeracion SMB/LDAP, password spraying, AS-REP Roasting, Kerberoasting, GPP/SYSVOL, BloodHound, abuso de ACLs (GenericAll, AddSelf), DCSync, Pass-the-Hash, Silver/Golden Ticket, delegacion restringida y MachineAccountQuota/RBCD.
+- feat(ad-dc): Nueva imagen Docker `hacklabs-dc` (Samba AD DC real, `ad_hoc/active_directory/`) que provisiona el dominio `HACKLABS.LOCAL` con las 15 debilidades correspondientes: sesion nula, credencial filtrada en LDAP, politica de contraseñas debil, cuenta sin preautenticacion, SPNs kerberoasteables, GPP cpassword en SYSVOL, grupo anidado hasta Domain Admins, ACLs delegadas de forma insegura (GenericAll, WriteProperty, DS-Replication-Get-Changes) y MachineAccountQuota explotable.
+- feat(deploy): `deploy.sh` despliega automaticamente el Domain Controller como segunda maquina con IP propia en la red macvlan, añade la resolucion DNS necesaria a `/etc/hosts` y la limpia al detener el laboratorio. Variable `HL_SKIP_AD=1` para desplegar solo la web.
+- feat(ad): `docker-compose.active-directory.yml` como alternativa manual de despliegue del DC en modo bridge.
+- feat(ad): Flags dedicadas para los 15 labs, aisladas del resto de la app (no aceptan la flag de root generica).
+- feat(ad): Guias de explotacion bilingues ES/EN por lab, con comandos reales de impacket/netexec/bloodyAD/BloodHound y notas honestas donde la implementacion del KDC/DRSUAPI de Samba no reproduce fielmente el comportamiento de un Domain Controller Windows (AS-REP Roasting, Kerberoasting, DCSync, uso en vivo de Silver/Golden Ticket): en esos casos el lab sigue siendo resoluble end-to-end mediante artefactos criptograficos validos generados offline o verificacion local, preservando la tecnica real y el flag.
+- feat(badges): Nuevo logro `Domain Dominator` por completar todos los labs de Active Directory.
+- feat(ad): Ficheros de flag del DC renombrados de `README.txt`/`flag.txt` genericos a `flag-ad-NN.txt` (uno por lab) para no delatar por el nombre donde esta la respuesta.
+- fix(labs): Eliminadas todas las flags en claro de las guias de resolucion y de la caja "Objetivo" en los 58 labs (y del README), sustituidas por un marcador redactado `HL{···}` que preserva el formato sin filtrar la respuesta en el codigo fuente de la pagina.
+- docs(readme): README actualizado con la nueva categoria, tabla de los 15 labs y guia de despliegue del Domain Controller.
+
+</details>
+
 ## 2026-05-15
 
 - fix(captcha): La descripcion del lab se oculta tras el login correcto para priorizar el panel bancario autenticado.

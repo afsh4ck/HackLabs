@@ -1,0 +1,55 @@
+# ──────────────────────────────────────────────────────────────────
+# HackLabs – Domain Controller vulnerable (categoría Active Directory)
+#
+# USO (modo bridge, puertos publicados en el host):
+#   docker compose -f docker-compose.active-directory.yml up -d --build
+#   docker compose -f docker-compose.active-directory.yml logs -f hacklabs-dc
+#
+# Después, en tu Kali:
+#   echo "127.0.0.1 dc01.hacklabs.local hacklabs.local dc01" | sudo tee -a /etc/hosts
+#
+# `sudo bash deploy.sh` despliega este mismo DC automáticamente con su
+# propia IP en la red macvlan; este compose es la alternativa manual.
+#
+# ⚠ En modo bridge el DC publica 139/445 en el host, igual que el
+#   contenedor principal de HackLabs (docker-compose.yml). No levantes
+#   ambos a la vez sin quitar antes el mapeo SMB de uno de los dos, o
+#   usa deploy.sh (cada máquina recibe su propia IP y no hay choque).
+# ──────────────────────────────────────────────────────────────────
+
+services:
+  hacklabs-dc:
+    build:
+      context: ./ad_hoc/active_directory
+    image: hacklabs-dc:latest
+    container_name: hacklabs-dc
+    hostname: dc01
+    restart: unless-stopped
+    environment:
+      AD_REALM: HACKLABS.LOCAL
+      AD_DOMAIN: HACKLABS
+      AD_DC_HOSTNAME: DC01
+      AD_ADMIN_PASSWORD: 'Adm1nP@ss2024!'
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "88:88/tcp"
+      - "88:88/udp"
+      - "135:135/tcp"
+      - "139:139/tcp"
+      - "389:389/tcp"
+      - "389:389/udp"
+      - "445:445/tcp"
+      - "464:464/tcp"
+      - "464:464/udp"
+      - "636:636/tcp"
+      - "3268:3268/tcp"
+      - "3269:3269/tcp"
+      - "49152-49200:49152-49200/tcp"
+    volumes:
+      - hacklabs_dc_state:/var/lib/samba
+      - hacklabs_dc_conf:/etc/samba
+
+volumes:
+  hacklabs_dc_state:
+  hacklabs_dc_conf:

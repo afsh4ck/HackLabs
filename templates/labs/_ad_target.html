@@ -1,0 +1,36 @@
+<!-- Partial: datos de conexión del Domain Controller vulnerable -->
+<div class="hl-card mb-4">
+  <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)" data-i18n="ad_env_title">Máquina objetivo</h3>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-3">
+    <div>
+      <div class="text-xs text-gray-500 mb-0.5" data-i18n="ad_env_realm_lbl">Dominio</div>
+      <code class="text-xs">{{ ad_realm }}</code> <span class="text-gray-500">·</span> <code class="text-xs">{{ ad_domain }}</code>
+    </div>
+    <div>
+      <div class="text-xs text-gray-500 mb-0.5" data-i18n="ad_env_dc_lbl">Domain Controller</div>
+      <code class="text-xs">{{ ad_dc_fqdn }}</code> <span class="text-gray-500">·</span> <code class="text-xs">{{ ad_dc_ip }}</code>
+    </div>
+  </div>
+
+  {% if not ad_dc_deployed %}
+  <div class="alert-warning mb-3 text-xs" data-i18n="ad_env_not_deployed">
+    El Domain Controller no está desplegado en esta instancia. Lánzalo con «sudo bash deploy.sh»
+    (o «docker compose -f docker-compose.active-directory.yml up -d --build») y sustituye &lt;DC_IP&gt;
+    por la IP que se muestra al desplegar.
+  </div>
+  {% endif %}
+
+  <p class="text-xs text-gray-400 mb-2" data-i18n="ad_env_hosts_hint">Kerberos exige resolver el FQDN del DC. Añade la entrada a tu /etc/hosts antes de empezar:</p>
+  <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">echo "{{ ad_dc_ip }} {{ ad_dc_fqdn }} {{ ad_realm_lower }} {{ ad_dc_host | lower }}" | sudo tee -a /etc/hosts</pre>
+
+  {% if ad_show_foothold | default(true) %}
+  <p class="text-xs text-gray-400 mt-3">
+    <i class="ph ph-key" style="color:var(--hl-primary)"></i>
+    <strong data-i18n="ad_env_foothold_lbl">Credencial inicial</strong>:
+    <code>svc.readonly / ReadOnly123!</code>
+    <span class="text-gray-500">·</span>
+    <span data-i18n="ad_env_foothold_hint">se obtiene en el lab AD 01</span>
+  </p>
+  {% endif %}
+</div>

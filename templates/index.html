@@ -115,10 +115,25 @@
     'prompt_leaking':   ('ph-eye',                  'Prompt Leaking'),
     'llm_exfil':        ('ph-export',               'LLM Data Exfiltration'),
     'ai_supply_chain':  ('ph-share-network',        'AI Supply Chain Poisoning'),
+    'ad_smb_enum':        ('ph-network',            'SMB Enumeration & Null Session'),
+    'ad_ldap_enum':       ('ph-tree-structure',     'LDAP Enumeration'),
+    'ad_password_spray':  ('ph-spray-bottle',       'Password Spraying'),
+    'ad_asrep_roast':     ('ph-fire-simple',        'AS-REP Roasting'),
+    'ad_kerberoast':      ('ph-ticket',             'Kerberoasting'),
+    'ad_gpp_passwords':   ('ph-file-lock',          'GPP Passwords en SYSVOL'),
+    'ad_bloodhound':      ('ph-graph',              'BloodHound & Attack Paths'),
+    'ad_acl_genericall':  ('ph-user-switch',        'ACL Abuse: GenericAll'),
+    'ad_acl_writemember': ('ph-users-three',        'ACL Abuse: AddSelf'),
+    'ad_dcsync':          ('ph-cloud-arrow-down',   'DCSync'),
+    'ad_pth':             ('ph-hash',               'Pass-the-Hash'),
+    'ad_silver_ticket':   ('ph-ticket',             'Silver Ticket'),
+    'ad_golden_ticket':   ('ph-crown-simple',       'Golden Ticket'),
+    'ad_delegation':      ('ph-arrows-left-right',  'Constrained Delegation'),
+    'ad_machine_quota':   ('ph-desktop-tower',      'MachineAccountQuota & RBCD'),
   } %}
 
-  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'AI Attacks': 'ai-attacks'} %}
-  {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks'] %}
+  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'AI Attacks': 'ai-attacks', 'Active Directory': 'active-directory'} %}
+  {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks', 'Active Directory'] %}
   {% for cat in desired_order %}
     {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
     {% if labs_in_cat %}

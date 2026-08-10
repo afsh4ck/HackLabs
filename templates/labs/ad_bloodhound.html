@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}AD 07 – BloodHound & Attack Paths – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_bloodhound_obj_desc">Recolecta el dominio con BloodHound y localiza el camino más corto hasta Domain Admins. Un grupo heredado anidado rompe la jerarquía de privilegios: la flag está en su atributo info.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>LDAP · atributo info del grupo anidado</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">Los colectores estándar de BloodHound (bloodhound-python, SharpHound) autentican por LDAP con NTLM o Kerberos, y el Samba de este laboratorio corta esa negociación (limitación conocida de Samba AD DC). La <strong>ruta de ataque es real</strong> y el flag se captura con enumeración LDAP manual (bind simple, que sí funciona) — exactamente lo que BloodHound automatiza por debajo.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Recolectar el dominio (comando real, contra Windows funciona así)
+bloodhound-python -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  -ns {{ ad_dc_ip }} -c All --zip
+
+# En este laboratorio, usa enumeración LDAP manual (ver guía completa)
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b 'DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}' \
+  '(sAMAccountName=TIER0-LEGACY)' info memberOf</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Recolectar el dominio</h3>
+    <p>El colector no necesita privilegios: con cualquier cuenta de dominio lee la información de LDAP y SMB.</p>
+    <pre># Asegúrate de que el DNS del dominio resuelve (o usa -ns)
+bloodhound-python -d {{ ad_realm_lower }} \
+  -u 'svc.readonly' -p 'ReadOnly123!' \
+  -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} \
+  -c All --zip
+
+# Alternativa: recolector integrado en netexec
+nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' \
+  --bloodhound --collection All --dns-server {{ ad_dc_ip }}</pre>
+    <p>Si <code>-c All</code> falla por el módulo de sesiones (necesita SMB en los equipos), usa <code>-c DCOnly</code>: para este dominio es suficiente.</p>
+
+    <h3>2 · Importar y consultar</h3>
+    <pre># BloodHound CE (Docker)
+curl -L https://ghst.ly/getbhce -o docker-compose.yml
+docker compose up -d
+# → http://localhost:8080  (Administration → File Ingest → sube el .zip)
+
+# BloodHound legacy
+sudo neo4j console &
+bloodhound</pre>
+    <p>Marca <code>svc.readonly</code> como <em>Owned</em> y lanza las consultas prefabricadas:</p>
+    <ul>
+      <li><strong>Find Shortest Paths to Domain Admins</strong></li>
+      <li><strong>Shortest Paths from Owned Principals</strong></li>
+      <li><strong>Find Principals with DCSync Rights</strong></li>
+    </ul>
+
+    <h3>3 · Leer el grafo</h3>
+    <p>El camino que aparece es:</p>
+    <pre>h.jones ──MemberOf──► HELPDESK ──MemberOf──► TIER0-LEGACY ──MemberOf──► DOMAIN ADMINS</pre>
+    <p>Un grupo heredado (<code>TIER0-LEGACY</code>) sigue anidado dentro de Domain Admins, así que <em>todos</em> los miembros de Helpdesk son administradores de dominio efectivos sin que nadie lo haya pretendido. Esta anidación transitiva es exactamente lo que BloodHound existe para encontrar y lo que una revisión manual de grupos casi nunca detecta.</p>
+    <p>La misma consulta en Cypher, si prefieres la línea de comandos:</p>
+    <pre>MATCH p=shortestPath(
+  (u:User)-[:MemberOf|AdminTo*1..]->(g:Group {name:'DOMAIN ADMINS@{{ ad_realm }}'})
+) RETURN p</pre>
+
+    <h3>4 · Capturar la flag</h3>
+    <p>La flag está en el atributo <code>info</code> (Notas) del grupo que rompe la jerarquía:</p>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(sAMAccountName=TIER0-LEGACY)' info
+
+# También la ve bloodyAD
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  get object 'TIER0-LEGACY' --attr info</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Revisar la pertenencia <em>transitiva</em> a grupos privilegiados, no solo la directa.</li>
+      <li>Modelo de niveles (tiering) y grupos administrativos vacíos salvo cuando se necesiten (JIT).</li>
+      <li>Auditar los cambios de pertenencia a Domain Admins (eventos <code>4728</code> / <code>4756</code>).</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">bloodhound-python</span> <span class="tools-badge">BloodHound CE</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">SharpHound</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Collect the domain</h3>
+    <p>The collector needs no privileges: any domain account can read the LDAP and SMB information it wants.</p>
+    <pre># Make sure domain DNS resolves (or use -ns)
+bloodhound-python -d {{ ad_realm_lower }} \
+  -u 'svc.readonly' -p 'ReadOnly123!' \
+  -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} \
+  -c All --zip
+
+# Alternative: netexec's built-in collector
+nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' \
+  --bloodhound --collection All --dns-server {{ ad_dc_ip }}</pre>
+    <p>If <code>-c All</code> fails on the session module (it needs SMB on member hosts), use <code>-c DCOnly</code>: it is enough for this domain.</p>
+
+    <h3>2 · Import and query</h3>
+    <pre># BloodHound CE (Docker)
+curl -L https://ghst.ly/getbhce -o docker-compose.yml
+docker compose up -d
+# → http://localhost:8080  (Administration → File Ingest → upload the .zip)
+
+# Legacy BloodHound
+sudo neo4j console &
+bloodhound</pre>
+    <p>Mark <code>svc.readonly</code> as <em>Owned</em> and run the prebuilt queries:</p>
+    <ul>
+      <li><strong>Find Shortest Paths to Domain Admins</strong></li>
+      <li><strong>Shortest Paths from Owned Principals</strong></li>
+      <li><strong>Find Principals with DCSync Rights</strong></li>
+    </ul>
+
+    <h3>3 · Read the graph</h3>
+    <p>The path that shows up is:</p>
+    <pre>h.jones ──MemberOf──► HELPDESK ──MemberOf──► TIER0-LEGACY ──MemberOf──► DOMAIN ADMINS</pre>
+    <p>A legacy group (<code>TIER0-LEGACY</code>) is still nested inside Domain Admins, so <em>every</em> Helpdesk member is an effective domain admin without anyone intending it. This transitive nesting is exactly what BloodHound exists to surface and what a manual group review almost never catches.</p>
+    <p>The same query in Cypher, if you prefer the command line:</p>
+    <pre>MATCH p=shortestPath(
+  (u:User)-[:MemberOf|AdminTo*1..]->(g:Group {name:'DOMAIN ADMINS@{{ ad_realm }}'})
+) RETURN p</pre>
+
+    <h3>4 · Capture the flag</h3>
+    <p>The flag sits in the <code>info</code> (Notes) attribute of the group that breaks the hierarchy:</p>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" '(sAMAccountName=TIER0-LEGACY)' info
+
+# bloodyAD sees it too
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  get object 'TIER0-LEGACY' --attr info</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Review <em>transitive</em> membership of privileged groups, not just direct membership.</li>
+      <li>Apply a tiering model and keep admin groups empty until needed (JIT).</li>
+      <li>Audit Domain Admins membership changes (events <code>4728</code> / <code>4756</code>).</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">bloodhound-python</span> <span class="tools-badge">BloodHound CE</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">SharpHound</span></div>
+  </div>
+</div>
+{% endblock %}

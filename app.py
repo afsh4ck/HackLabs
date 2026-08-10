@@ -672,6 +672,7 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
                  'outdated', 'auth_failures', 'integrity', 'logging', 'ssrf'}
     vuln_ids = {l['id'] for l in labs if l.get('category') == 'Vulnerabilidades'}
     ia_ids = {l['id'] for l in labs if l.get('category') == 'AI Attacks'}
+    ad_ids = {l['id'] for l in labs if l.get('category') == 'Active Directory'}
     crit_ids = {l['id'] for l in labs if l.get('risk') == 'critical'}
 
     ach_first = done_count >= 1
@@ -680,6 +681,7 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
     ach_owasp = owasp_ids.issubset(completed_ids)
     ach_vulns = vuln_ids.issubset(completed_ids)
     ach_ia = ia_ids.issubset(completed_ids)
+    ach_ad = bool(ad_ids) and ad_ids.issubset(completed_ids)
     ach_critical = crit_ids.issubset(completed_ids)
     ach_all = done_count == total_labs and total_labs > 0
 
@@ -713,6 +715,12 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
             'id': 'ai_breaker', 'icon': '🤖', 'name': 'AI Breaker', 'premium': False,
             'desc_es': 'Completar todos los AI Attacks', 'desc_en': 'Complete all AI Attacks labs',
             'unlocked': ach_ia,
+        },
+        {
+            'id': 'domain_dominator', 'icon': '🏰', 'name': 'Domain Dominator', 'premium': False,
+            'desc_es': 'Completar todos los labs de Active Directory',
+            'desc_en': 'Complete all Active Directory labs',
+            'unlocked': ach_ad,
         },
         {
             'id': 'critical_mass', 'icon': '💀', 'name': 'Critical Mass', 'premium': False,
@@ -837,6 +845,23 @@ def get_lab_flag_map():
         'prompt_injection': ['HL{pr0mpt_1nj3ct10n_m4st3r}', 'HL{prompt_injection_system_bypass}'],
         'prompt_leaking': ['HL{pr0mpt_l34k3d_succ3ssfully}', 'HL{prompt_leaking_system_prompt_exposed}'],
         'final_boss': ['HL{f1n4l_b055_0v3rdr1v3}'],
+
+        # Active Directory — todas las flags viven en el Domain Controller
+        'ad_smb_enum':        ['HL{4d_5mb_nu11_53ss10n_3num3r473d}'],
+        'ad_ldap_enum':       ['HL{4d_ld4p_d35cr1p710n_l34k}'],
+        'ad_password_spray':  ['HL{4d_p455w0rd_5pr4y_5ucc355}'],
+        'ad_asrep_roast':     ['HL{4d_45r3p_r0457_cr4ck3d}'],
+        'ad_kerberoast':      ['HL{4d_k3rb3r0457_5pn_cr4ck3d}'],
+        'ad_gpp_passwords':   ['HL{4d_9pp_cp455w0rd_d3crypt3d}'],
+        'ad_bloodhound':      ['HL{4d_bl00dh0und_p47h_70_d4}'],
+        'ad_acl_genericall':  ['HL{4d_93n3r1c411_p455w0rd_r3537}'],
+        'ad_acl_writemember': ['HL{4d_4dd53lf_pr1v1l3g3d_9r0up}'],
+        'ad_dcsync':          ['HL{4d_dc5ync_n7d5_dump3d}'],
+        'ad_pth':             ['HL{4d_p455_7h3_h45h_l473r41}'],
+        'ad_silver_ticket':   ['HL{4d_51lv3r_71ck37_f0r93d}'],
+        'ad_golden_ticket':   ['HL{4d_90ld3n_71ck37_d0m41n_0wn3d}'],
+        'ad_delegation':      ['HL{4d_c0n57r41n3d_d3l394710n_4bu53d}'],
+        'ad_machine_quota':   ['HL{4d_m4ch1n3_4cc0un7_qu074_4bu53d}'],
     }
 
     # Labs with explicit flag output on screen should not accept root fallback.
@@ -872,6 +897,11 @@ def get_lab_flag_map():
         'ai_supply_chain',
         'final_boss',
     }
+    # Los labs de Active Directory tienen su flag en el Domain Controller:
+    # la flag de root de la máquina web nunca es una respuesta válida.
+    explicit_screen_flag_labs.update(
+        l['id'] for l in get_lab_list() if l.get('category') == 'Active Directory'
+    )
 
     for lab in get_lab_list():
         lab_id = lab['id']
@@ -1383,6 +1413,7 @@ CATEGORY_SLUGS = {
     'owasp':            'OWASP Top 10',
     'vulnerabilidades': 'Vulnerabilidades',
     'ai-attacks':       'AI Attacks',
+    'active-directory': 'Active Directory',
 }
 
 @app.route('/category/<slug>')
@@ -1499,6 +1530,22 @@ def get_lab_list():
         {'id': 'llm_exfil',          'title': 'LLM Data Exfiltration',                       'category': 'AI Attacks',       'risk': 'high'},
         {'id': 'prompt_injection',   'title': 'Prompt Injection',                            'category': 'AI Attacks',       'risk': 'high'},
         {'id': 'prompt_leaking',     'title': 'Prompt Leaking',                              'category': 'AI Attacks',       'risk': 'high'},
+        # Active Directory (orden de la kill chain: recon → credenciales → ACLs → dominio)
+        {'id': 'ad_smb_enum',        'title': 'AD 01 – SMB Enumeration & Null Session',      'category': 'Active Directory', 'risk': 'medium'},
+        {'id': 'ad_ldap_enum',       'title': 'AD 02 – LDAP Enumeration',                    'category': 'Active Directory', 'risk': 'medium'},
+        {'id': 'ad_password_spray',  'title': 'AD 03 – Password Spraying',                   'category': 'Active Directory', 'risk': 'high'},
+        {'id': 'ad_asrep_roast',     'title': 'AD 04 – AS-REP Roasting',                     'category': 'Active Directory', 'risk': 'high'},
+        {'id': 'ad_kerberoast',      'title': 'AD 05 – Kerberoasting',                       'category': 'Active Directory', 'risk': 'high'},
+        {'id': 'ad_gpp_passwords',   'title': 'AD 06 – GPP Passwords en SYSVOL',             'category': 'Active Directory', 'risk': 'high'},
+        {'id': 'ad_bloodhound',      'title': 'AD 07 – BloodHound & Attack Paths',           'category': 'Active Directory', 'risk': 'medium'},
+        {'id': 'ad_acl_genericall',  'title': 'AD 08 – ACL Abuse: GenericAll',               'category': 'Active Directory', 'risk': 'high'},
+        {'id': 'ad_acl_writemember', 'title': 'AD 09 – ACL Abuse: AddSelf a grupo',          'category': 'Active Directory', 'risk': 'high'},
+        {'id': 'ad_dcsync',          'title': 'AD 10 – DCSync',                              'category': 'Active Directory', 'risk': 'critical'},
+        {'id': 'ad_pth',             'title': 'AD 11 – Pass-the-Hash',                       'category': 'Active Directory', 'risk': 'critical'},
+        {'id': 'ad_silver_ticket',   'title': 'AD 12 – Silver Ticket',                       'category': 'Active Directory', 'risk': 'critical'},
+        {'id': 'ad_golden_ticket',   'title': 'AD 13 – Golden Ticket',                       'category': 'Active Directory', 'risk': 'critical'},
+        {'id': 'ad_delegation',      'title': 'AD 14 – Constrained Delegation',              'category': 'Active Directory', 'risk': 'critical'},
+        {'id': 'ad_machine_quota',   'title': 'AD 15 – MachineAccountQuota & RBCD',          'category': 'Active Directory', 'risk': 'high'},
     ]
 
 
@@ -1636,6 +1683,31 @@ def inject_labs():
         'current_lab_validated_flag': completed_lab_flags.get(current_lab_id, ''),
         'progress_count': progress_count,
         'is_progress_user': is_progress_user,
+        **_ad_environment(),
+    }
+
+
+# ─────────────────────────────────────────────
+# Active Directory – datos del Domain Controller
+# ─────────────────────────────────────────────
+
+def _ad_environment():
+    """Datos del DC vulnerable, inyectados por deploy.sh vía variables de entorno.
+
+    Si el DC no está desplegado se usan marcadores legibles para que las
+    guías de los labs sigan teniendo sentido.
+    """
+    realm = os.environ.get('AD_REALM', 'HACKLABS.LOCAL')
+    dc_host = os.environ.get('AD_DC_HOSTNAME', 'DC01')
+    realm_lower = realm.lower()
+    return {
+        'ad_dc_ip': os.environ.get('AD_DC_IP') or '<DC_IP>',
+        'ad_dc_deployed': bool(os.environ.get('AD_DC_IP')),
+        'ad_realm': realm,
+        'ad_realm_lower': realm_lower,
+        'ad_domain': os.environ.get('AD_DOMAIN', 'HACKLABS'),
+        'ad_dc_host': dc_host,
+        'ad_dc_fqdn': f'{dc_host.lower()}.{realm_lower}',
     }
 
 # ─────────────────────────────────────────────
