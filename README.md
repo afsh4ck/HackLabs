@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **43 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + IA Attacks
+- **58 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + AI Attacks + Active Directory
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -92,7 +92,7 @@
 | XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
 | XXE – XML External Entity | 🟠 High | XML External Entity |
 
-### IA Attacks
+### AI Attacks
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
@@ -174,7 +174,7 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | 🏁 Half Way There | Alcanzar el 50% de labs completados |
 | 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 |
 | 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
-| 🤖 AI Breaker | Completar todos los labs de IA Attacks |
+| 🤖 AI Breaker | Completar todos los labs de AI Attacks |
 | 🏰 Domain Dominator | Completar todos los labs de Active Directory |
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |
 | 👑 Completionist | Completar todos los labs |
