@@ -57,17 +57,21 @@ klist    # deberías ver un krbtgt/{{ ad_realm }} válido ~10 años</pre>
     <p>El TGT forjado es válido — el problema es la fase <em>siguiente</em>: para acceder a un recurso SMB, el cliente debe pedirle al KDC un ticket de servicio (TGS-REQ) usando ese TGT. El KDC embebido de Samba tiene incompatibilidades conocidas con esa fase del protocolo en las herramientas actuales (la misma limitación que impide completar Kerberoasting en vivo). En un Domain Controller Windows real, este mismo Golden Ticket te daría acceso total al dominio.</p>
 
     <h3>5 · Verificar el forjado localmente</h3>
-    <p>Descarga el script de verificación (descifra el TGT con la misma clave que usaste para forjarlo y confirma la identidad reclamada):</p>
+    <p>Descarga el script de verificación (descifra el TGT con la misma clave que usaste para forjarlo, confirma la identidad reclamada y, si todo cuadra, imprime la flag):</p>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
 python3 verify_ticket.py Administrator.ccache "$KRBTGT_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
 Identidad reclamada (cname): Administrator
+Servicio (sname): krbtgt/HACKLABS.LOCAL
 Realm: HACKLABS.LOCAL
-OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
+OK: la clave descifra el ticket y confirma la identidad forjada.
+Tipo de ticket detectado (por el SPN): Golden Ticket
+Flag: HL{···}</pre>
+    <p>El script distingue Golden Ticket de Silver Ticket mirando el <code>sname</code> del propio ticket (<code>krbtgt/...</code> aquí, o un servicio concreto como <code>cifs/...</code> en un Silver Ticket) — no hace falta pasarle ningún parámetro extra. Solo llega a imprimir la flag si el descifrado tiene éxito, así que leer el script no sirve de nada sin el hash NT real de <code>krbtgt</code>.</p>
 
     <h3>6 · Capturar la flag</h3>
-    <p>La verificación exitosa demuestra que el TGT forjado es criptográficamente válido, está firmado por krbtgt y reclama la identidad de Administrator — exactamente lo que un DC real validaría para conceder control total del dominio:</p>
+    <p>La verificación exitosa demuestra que el TGT forjado es criptográficamente válido, está firmado por krbtgt y reclama la identidad de Administrator — exactamente lo que un DC real validaría para conceder control total del dominio. La flag es la que acaba de imprimir <code>verify_ticket.py</code>:</p>
     <pre>HL{···}</pre>
 
     <h3>Bonus · Variante mimikatz (desde Windows)</h3>
@@ -113,17 +117,21 @@ klist    # you should see a valid krbtgt/{{ ad_realm }} for ~10 years</pre>
     <p>The forged TGT is valid — the problem is the <em>next</em> phase: to reach an SMB share, the client must request a service ticket (TGS-REQ) from the KDC using that TGT. Samba's embedded KDC has known incompatibilities with that protocol phase in current tooling (the same limitation that blocks live Kerberoasting). Against a real Windows Domain Controller, this exact Golden Ticket would grant you full domain control.</p>
 
     <h3>5 · Verify the forge locally</h3>
-    <p>Download the verification script (decrypts the TGT with the same key you used to forge it and confirms the claimed identity):</p>
+    <p>Download the verification script (decrypts the TGT with the same key you used to forge it, confirms the claimed identity and, if it all checks out, prints the flag):</p>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
 python3 verify_ticket.py Administrator.ccache "$KRBTGT_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
 Identidad reclamada (cname): Administrator
+Servicio (sname): krbtgt/HACKLABS.LOCAL
 Realm: HACKLABS.LOCAL
-OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
+OK: la clave descifra el ticket y confirma la identidad forjada.
+Tipo de ticket detectado (por el SPN): Golden Ticket
+Flag: HL{···}</pre>
+    <p>The script tells Golden Ticket and Silver Ticket apart by looking at the ticket's own <code>sname</code> (<code>krbtgt/...</code> here, or a specific service like <code>cifs/...</code> for a Silver Ticket) — no extra parameter needed. It only reaches the point of printing the flag if the decryption succeeds, so reading the script's source is useless without the real <code>krbtgt</code> NT hash.</p>
 
     <h3>6 · Capture the flag</h3>
-    <p>The successful verification proves the forged TGT is cryptographically valid, signed by krbtgt, and claims Administrator's identity — exactly what a real DC would validate to grant full domain control:</p>
+    <p>The successful verification proves the forged TGT is cryptographically valid, signed by krbtgt, and claims Administrator's identity — exactly what a real DC would validate to grant full domain control. The flag is the one <code>verify_ticket.py</code> just printed:</p>
     <pre>HL{···}</pre>
 
     <h3>Bonus · mimikatz variant (from Windows)</h3>
