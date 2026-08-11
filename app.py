@@ -302,6 +302,25 @@ def _migrate_progress_table():
     db.close()
 
 
+def _migrate_forensic_answers_table():
+    """Create forensic_answers table (persiste las respuestas de las preguntas guiadas de Forense Digital)."""
+    db = sqlite3.connect(DATABASE)
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS forensic_answers (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_username TEXT NOT NULL,
+            lab_id           TEXT NOT NULL,
+            question_id      TEXT NOT NULL,
+            answer_text      TEXT NOT NULL,
+            is_correct       INTEGER NOT NULL DEFAULT 0,
+            updated_at       TEXT DEFAULT (datetime('now')),
+            UNIQUE(account_username, lab_id, question_id)
+        )
+    ''')
+    db.commit()
+    db.close()
+
+
 def _migrate_sqli_flag_seed():
     """Ensure SQLi lab has at least one real HL flag row in products for existing DBs."""
     db = sqlite3.connect(DATABASE)
@@ -637,6 +656,7 @@ def _get_special_rank(account_username):
 
 if os.path.exists(DATABASE):
     _migrate_progress_table()
+    _migrate_forensic_answers_table()
     _migrate_sqli_flag_seed()
     _migrate_reward_tables()
     _migrate_certificate_codes_to_signed()
@@ -1695,7 +1715,9 @@ def forensics_download(lab_id):
 
 @app.route('/forensics/check-answer', methods=['POST'])
 def forensics_check_answer():
-    """Valida una respuesta guiada (no la flag) sin persistir estado alguno."""
+    """Valida una respuesta guiada (no la flag). Si el usuario tiene cuenta propia,
+    persiste el texto introducido (y si acertó) para restaurarlo en visitas futuras
+    -- ver forensic_answers / _migrate_forensic_answers_table()."""
     data = request.get_json(silent=True) or {}
     lab_id = (data.get('lab_id') or '').strip()
     question_id = (data.get('question_id') or '').strip()
@@ -1710,7 +1732,22 @@ def forensics_check_answer():
 
     normalized = submitted.strip().lower()
     accepted = [a.strip().lower() for a in question['answers']]
-    return jsonify({'correct': normalized in accepted})
+    correct = normalized in accepted
+
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if app_user and app_type == 'account':
+        db = get_db()
+        db.execute(
+            '''INSERT INTO forensic_answers (account_username, lab_id, question_id, answer_text, is_correct, updated_at)
+               VALUES (?,?,?,?,?,datetime('now'))
+               ON CONFLICT(account_username, lab_id, question_id)
+               DO UPDATE SET answer_text=excluded.answer_text, is_correct=excluded.is_correct, updated_at=excluded.updated_at''',
+            (app_user, lab_id, question_id, submitted, int(correct))
+        )
+        db.commit()
+
+    return jsonify({'correct': correct})
 
 @app.route('/lab/<lab_id>')
 def lab(lab_id):
@@ -1972,6 +2009,21 @@ def inject_labs():
     nightmare_mode = bool(session.get('nightmare_mode')) and nightmare_unlocked
     difficulty = 'nightmare' if nightmare_mode else base_difficulty
 
+    # Respuestas guardadas de las preguntas guiadas de Forense Digital (lab actual, cuenta propia)
+    saved_forensic_answers = {}
+    if is_progress_user and current_lab_id:
+        try:
+            _fa_rows = get_db().execute(
+                'SELECT question_id, answer_text, is_correct FROM forensic_answers WHERE account_username=? AND lab_id=?',
+                (_app_user, current_lab_id)
+            ).fetchall()
+            saved_forensic_answers = {
+                r['question_id']: {'answer': r['answer_text'], 'correct': bool(r['is_correct'])}
+                for r in _fa_rows
+            }
+        except Exception:
+            pass
+
     return {
         'all_labs': all_labs_sorted,
         'current_lab_id': current_lab_id,
@@ -1989,6 +2041,7 @@ def inject_labs():
         'is_progress_user': is_progress_user,
         'forensic_evidence': _forensic_evidence_meta(),
         'forensic_questions': get_lab_questions_map(),
+        'saved_forensic_answers': saved_forensic_answers,
         'level_icons': _LEVEL_ICONS,
         'level_colors': _LEVEL_COLORS,
         **_ad_environment(),

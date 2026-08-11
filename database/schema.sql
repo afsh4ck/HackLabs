@@ -10,6 +10,17 @@ CREATE TABLE IF NOT EXISTS user_progress (
     UNIQUE(account_username, lab_id)
 );
 
+CREATE TABLE IF NOT EXISTS forensic_answers (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_username TEXT NOT NULL,
+    lab_id           TEXT NOT NULL,
+    question_id      TEXT NOT NULL,
+    answer_text      TEXT NOT NULL,
+    is_correct       INTEGER NOT NULL DEFAULT 0,
+    updated_at       TEXT DEFAULT (datetime('now')),
+    UNIQUE(account_username, lab_id, question_id)
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     username        TEXT NOT NULL UNIQUE,
