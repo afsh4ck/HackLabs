@@ -59,6 +59,34 @@ EOF</pre>
     <h3>4 · Capturar la flag</h3>
     <pre>HL{···}</pre>
 
+    <h3>Bonus · Ocultar tu propio mensaje con LSB</h3>
+    <p>La operación inversa: en vez de leer el bit menos significativo de cada canal, lo <em>sobrescribes</em> con los bits de tu mensaje. Mismo esquema que en el reto — prefijo de 32 bits con la longitud, luego el mensaje byte a byte, LSB del canal R, G y B en orden:</p>
+    <pre>python3 - &lt;&lt;'EOF'
+from PIL import Image
+
+message = b"HL{tu_mensaje_secreto}"
+img = Image.open('portada.png').convert('RGB')
+pixels = list(img.getdata())
+
+length_bits = format(len(message), '032b')
+msg_bits = ''.join(format(b, '08b') for b in message)
+bits = length_bits + msg_bits
+
+new_pixels = []
+bit_idx = 0
+for px in pixels:
+    px = list(px)
+    for c in range(3):
+        if bit_idx < len(bits):
+            px[c] = (px[c] & ~1) | int(bits[bit_idx])
+            bit_idx += 1
+    new_pixels.append(tuple(px))
+
+img.putdata(new_pixels)
+img.save('oculto.png')
+EOF</pre>
+    <p>Dos detalles que importan: la imagen de portada necesita al menos <code>(32 + len(mensaje)*8) / 3</code> píxeles (un bit por canal, tres canales por píxel) para poder alojar el mensaje completo, y el fichero de salida <strong>tiene que guardarse como PNG</strong> (u otro formato sin pérdida) — cualquier compresión con pérdida como JPEG recalcula los valores de los píxeles y destruye el LSB. Puedes comprobar que funciona pasando <code>oculto.png</code> por el script de extracción del paso 3, o por <code>zsteg</code> (detecta la misma combinación <code>b1,rgb,lsb,xy</code> que usó este reto).</p>
+
     <h3>Mitigación</h3>
     <ul>
       <li>No es un control técnico habitual — la esteganografía es difícil de detectar de forma genérica.</li>
@@ -105,6 +133,34 @@ EOF</pre>
 
     <h3>4 · Capture the flag</h3>
     <pre>HL{···}</pre>
+
+    <h3>Bonus · Hiding your own message with LSB</h3>
+    <p>The reverse operation: instead of reading the least significant bit of each channel, you <em>overwrite</em> it with your message's bits. Same scheme as the challenge — a 32-bit length prefix, then the message byte by byte, LSB of the R, G and B channels in order:</p>
+    <pre>python3 - &lt;&lt;'EOF'
+from PIL import Image
+
+message = b"HL{your_secret_message}"
+img = Image.open('cover.png').convert('RGB')
+pixels = list(img.getdata())
+
+length_bits = format(len(message), '032b')
+msg_bits = ''.join(format(b, '08b') for b in message)
+bits = length_bits + msg_bits
+
+new_pixels = []
+bit_idx = 0
+for px in pixels:
+    px = list(px)
+    for c in range(3):
+        if bit_idx < len(bits):
+            px[c] = (px[c] & ~1) | int(bits[bit_idx])
+            bit_idx += 1
+    new_pixels.append(tuple(px))
+
+img.putdata(new_pixels)
+img.save('hidden.png')
+EOF</pre>
+    <p>Two details that matter: the cover image needs at least <code>(32 + len(message)*8) / 3</code> pixels (one bit per channel, three channels per pixel) to fit the whole message, and the output file <strong>must be saved as PNG</strong> (or another lossless format) — any lossy compression like JPEG recomputes pixel values and destroys the LSB. You can confirm it works by running <code>hidden.png</code> through the extraction script from step 3, or through <code>zsteg</code> (it detects the same <code>b1,rgb,lsb,xy</code> combination this challenge used).</p>
 
     <h3>Mitigation</h3>
     <ul>
