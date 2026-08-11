@@ -7,7 +7,7 @@
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
     <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_delegation_obj_desc">La cuenta svc.delegate tiene delegación restringida con transición de protocolo hacia cifs/dc01. Consigue su contraseña (Kerberoasting, lab AD 05) y demuestra el control total que le otorgaría: acceso directo a //DC01/deleg y, en un dominio real, impersonación de Administrator vía S4U2Self + S4U2Proxy.</p>
-    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/deleg/flag-ad-14.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/deleg/flag-ad-14.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la caja «Validar Flag» al final de esta página.</span></p>
   </div>
 
   {% include 'labs/_ad_target.html' %}
