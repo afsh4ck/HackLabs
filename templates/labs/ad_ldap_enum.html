@@ -17,8 +17,8 @@
     <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Enumerar usuarios del dominio con la credencial de AD 01
 nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --users
 
-# Volcar descripciones de todos los usuarios por LDAP
-nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc</pre>
+# Volcar descripciones de todos los usuarios por LDAP (bloodyAD, no nxc ldap)
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description</pre>
   </div>
 </div>
 
@@ -44,6 +44,8 @@ export DC={{ ad_dc_ip }}
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
 
+    <p><strong>Nota sobre este Domain Controller:</strong> <code>nxc ldap</code>, <code>ldapdomaindump</code> y <code>windapsearch</code> usan un bind NTLM (<code>ldap3</code>/impacket Sicily) que el servidor Samba corta a media negociación (<code>LDAPSessionTerminatedByServerError</code> / <code>IndexError: list index out of range</code>) — <strong>fallan incluso solo para autenticar</strong>, no es un problema de un módulo concreto. El bind LDAP <strong>simple</strong> (<code>ldapsearch -x -D ...</code>, usuario+contraseña en claro) sí funciona siempre; <code>bloodyAD</code> también funciona porque usa su propia librería (<code>badldap</code>), no <code>ldap3</code>.</p>
+
     <h3>4 · Volcar usuarios, grupos y equipos</h3>
     <pre># Usuarios (sin cuentas de máquina)
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
@@ -54,17 +56,13 @@ ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly1
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(objectClass=group)' sAMAccountName member
 
-# Lo mismo con netexec
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --users
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --groups
-
-# Y con windapsearch / ldapdomaindump
-ldapdomaindump -u '{{ ad_realm_lower }}\svc.readonly' -p 'ReadOnly123!' ldap://$DC -o loot/</pre>
+# Lo mismo con bloodyAD (alternativa que sí funciona contra este DC)
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(objectClass=group)' --attr sAMAccountName</pre>
 
     <h3>5 · Buscar credenciales en los atributos</h3>
     <p>El atributo <code>description</code> es legible por cualquier usuario autenticado y es donde más credenciales se filtran en dominios reales.</p>
-    <pre># Módulo dedicado de netexec
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc
+    <pre># Con bloodyAD
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description
 
 # A mano, filtrando por palabras clave
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
@@ -87,7 +85,7 @@ description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024!
     </ul>
 
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">ldapsearch</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">ldapdomaindump</span> <span class="tools-badge">windapsearch</span> <span class="tools-badge">bloodyAD</span></div>
+    <div><span class="tools-badge">ldapsearch</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">netexec (nxc) — solo SMB</span></div>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
@@ -111,6 +109,8 @@ export DC={{ ad_dc_ip }}
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
 
+    <p><strong>Note about this Domain Controller:</strong> <code>nxc ldap</code>, <code>ldapdomaindump</code> and <code>windapsearch</code> use an NTLM bind (<code>ldap3</code>/impacket Sicily) that the Samba server cuts off mid-negotiation (<code>LDAPSessionTerminatedByServerError</code> / <code>IndexError: list index out of range</code>) — they fail just to authenticate, it's not a single-module problem. A <strong>simple</strong> LDAP bind (<code>ldapsearch -x -D ...</code>, plaintext user+password) always works; <code>bloodyAD</code> also works because it uses its own library (<code>badldap</code>), not <code>ldap3</code>.</p>
+
     <h3>4 · Dump users, groups and computers</h3>
     <pre># Users (machine accounts excluded)
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
@@ -121,17 +121,13 @@ ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly1
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(objectClass=group)' sAMAccountName member
 
-# Same thing with netexec
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --users
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --groups
-
-# And with ldapdomaindump
-ldapdomaindump -u '{{ ad_realm_lower }}\svc.readonly' -p 'ReadOnly123!' ldap://$DC -o loot/</pre>
+# Same thing with bloodyAD (alternative that does work against this DC)
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(objectClass=group)' --attr sAMAccountName</pre>
 
     <h3>5 · Hunt for credentials in the attributes</h3>
     <p>The <code>description</code> attribute is readable by any authenticated user and is where most credentials leak in real domains.</p>
-    <pre># Dedicated netexec module
-nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc
+    <pre># With bloodyAD
+bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description
 
 # By hand, filtering on keywords
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
@@ -154,7 +150,7 @@ description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024!
     </ul>
 
     <h3>Tools</h3>
-    <div><span class="tools-badge">ldapsearch</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">ldapdomaindump</span> <span class="tools-badge">windapsearch</span> <span class="tools-badge">bloodyAD</span></div>
+    <div><span class="tools-badge">ldapsearch</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">netexec (nxc) — SMB only</span></div>
   </div>
 </div>
 {% endblock %}

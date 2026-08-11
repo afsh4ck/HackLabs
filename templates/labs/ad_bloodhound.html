@@ -38,12 +38,8 @@ ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w
 bloodhound-python -d {{ ad_realm_lower }} \
   -u 'svc.readonly' -p 'ReadOnly123!' \
   -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} \
-  -c All --zip
-
-# Alternativa: recolector integrado en netexec
-nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' \
-  --bloodhound --collection All --dns-server {{ ad_dc_ip }}</pre>
-    <p>Si <code>-c All</code> falla por el módulo de sesiones (necesita SMB en los equipos), usa <code>-c DCOnly</code>: para este dominio es suficiente.</p>
+  -c All --zip</pre>
+    <p>Si <code>-c All</code> falla por el módulo de sesiones (necesita SMB en los equipos), usa <code>-c DCOnly</code>: para este dominio es suficiente. El recolector integrado de netexec (<code>nxc ldap --bloodhound</code>) <strong>no funciona</strong> contra este DC — falla el mismo bind NTLM que el resto de módulos <code>nxc ldap</code> (ver AD 02).</p>
 
     <h3>2 · Importar y consultar</h3>
     <pre># BloodHound CE (Docker)
@@ -101,12 +97,8 @@ bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
 bloodhound-python -d {{ ad_realm_lower }} \
   -u 'svc.readonly' -p 'ReadOnly123!' \
   -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} \
-  -c All --zip
-
-# Alternative: netexec's built-in collector
-nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' \
-  --bloodhound --collection All --dns-server {{ ad_dc_ip }}</pre>
-    <p>If <code>-c All</code> fails on the session module (it needs SMB on member hosts), use <code>-c DCOnly</code>: it is enough for this domain.</p>
+  -c All --zip</pre>
+    <p>If <code>-c All</code> fails on the session module (it needs SMB on member hosts), use <code>-c DCOnly</code>: it is enough for this domain. netexec's built-in collector (<code>nxc ldap --bloodhound</code>) <strong>does not work</strong> against this DC — it hits the same NTLM bind failure as every other <code>nxc ldap</code> module (see AD 02).</p>
 
     <h3>2 · Import and query</h3>
     <pre># BloodHound CE (Docker)
