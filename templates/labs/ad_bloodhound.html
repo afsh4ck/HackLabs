@@ -68,14 +68,11 @@ bloodhound</pre>
 
     <h3>4 · Capturar la flag</h3>
     <p>La flag está en el atributo <code>info</code> (Notas) del grupo que rompe la jerarquía:</p>
-    <pre>export DC={{ ad_dc_ip }}
-export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(sAMAccountName=TIER0-LEGACY)' info
+    <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(sAMAccountName=TIER0-LEGACY)' info
 
 # También la ve bloodyAD
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object 'TIER0-LEGACY' --attr info</pre>
     <pre>HL{···}</pre>
 
@@ -127,14 +124,11 @@ bloodhound</pre>
 
     <h3>4 · Capture the flag</h3>
     <p>The flag sits in the <code>info</code> (Notes) attribute of the group that breaks the hierarchy:</p>
-    <pre>export DC={{ ad_dc_ip }}
-export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(sAMAccountName=TIER0-LEGACY)' info
+    <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(sAMAccountName=TIER0-LEGACY)' info
 
 # bloodyAD sees it too
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object 'TIER0-LEGACY' --attr info</pre>
     <pre>HL{···}</pre>
 

