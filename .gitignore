@@ -9,6 +9,8 @@ __pycache__/
 *.db
 *.sqlite
 *.sqlite3
+# Excepción: evidencia forense estática (no es una BD en runtime, ver CLAUDE.md S7.1)
+!evidence/forensic/*.sqlite
 
 # Python env
 .env
