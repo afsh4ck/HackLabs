@@ -1097,9 +1097,9 @@ def get_lab_questions_map():
             {'id': 'q1',
              'prompt_es': '¿Desde qué ruta se ejecuta el proceso malicioso?',
              'prompt_en': 'From which path does the malicious process run?',
-             'hint_es': 'Busca procesos ejecutados desde rutas de usuario poco habituales, como <code>C:\\Users\\Public\\</code>.',
-             'hint_en': 'Look for processes running from unusual user paths, like <code>C:\\Users\\Public\\</code>.',
-             'answers': ['c:\\users\\public\\svchost32.exe', 'c:\\users\\public']},
+             'hint_es': 'Con <code>linux.psaux</code>, busca el proceso que se hace pasar por un hilo de kernel (<code>kworker/...</code>) pero que sí tiene un <em>exe</em>/cmdline real — algo que un hilo de kernel genuino nunca tiene.',
+             'hint_en': 'With <code>linux.psaux</code>, look for the process pretending to be a kernel worker thread (<code>kworker/...</code>) that actually has a real exe/cmdline — something a genuine kernel thread never has.',
+             'answers': ['/dev/shm/.systemd/kworker', '/dev/shm/.systemd']},
         ],
         'df_memory_credentials': [
             {'id': 'q1',
@@ -1678,7 +1678,7 @@ FORENSIC_EVIDENCE_FILES = {
     'df_disk_timeline':      'workstation_image.dd',
     'df_malware_strings':    'svc_update_x64',
     'df_pe_analysis':        'Factura_Pendiente.exe',
-    'df_memory_process':     'memdump_workstation01.raw',
+    'df_memory_process':     'memdump_server01_hacklabs.zip',
     'df_memory_credentials': 'memdump_workstation01_lsass.raw',
 }
 
