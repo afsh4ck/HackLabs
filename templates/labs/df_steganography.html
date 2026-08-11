@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}DF 03 – Esteganografía en Imagen – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_steganography_obj_desc">Esta imagen de una puesta de sol esconde algo más que píxeles. Analiza sus bits menos significativos para recuperar el mensaje oculto.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">zsteg sunset.png
+# o con Python + Pillow (ver guía completa)</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>La esteganografía LSB (Least Significant Bit) oculta datos modificando el bit menos significativo de cada byte de color de una imagen. El cambio es tan pequeño (como máximo ±1 en un canal de 0-255) que resulta invisible al ojo humano, pero perfectamente recuperable si sabes dónde mirar.</p>
+
+    <h3>2 · Intentar con herramientas estándar</h3>
+    <pre>zsteg sunset.png
+binwalk sunset.png
+steghide extract -sf sunset.png</pre>
+    <p>Si no tienes <code>zsteg</code>/<code>steghide</code> instalados, o la imagen no usa su formato concreto, puedes extraer el mensaje manualmente: este reto usa un LSB casero (bit menos significativo del canal R, G y B en orden, con un prefijo de 32 bits indicando la longitud del mensaje en bytes).</p>
+
+    <h3>3 · Extracción manual con Python</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+import struct
+from PIL import Image
+img = Image.open('sunset.png')
+pixels = list(img.getdata())
+
+bits = ''
+for px in pixels:
+    for c in px[:3]:
+        bits += str(c & 1)
+
+length = int(bits[:32], 2)
+msg_bits = bits[32:32 + length*8]
+msg = bytes(int(msg_bits[i:i+8], 2) for i in range(0, len(msg_bits), 8))
+print(msg.decode())
+EOF</pre>
+    <p>El script lee el bit menos significativo de cada canal de color, reconstruye primero la longitud del mensaje (32 bits) y después el mensaje en sí.</p>
+
+    <h3>4 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>No es un control técnico habitual — la esteganografía es difícil de detectar de forma genérica.</li>
+      <li>En entornos sensibles, aplicar recompresión/resize de imágenes subidas por usuarios (destruye el LSB) antes de servirlas.</li>
+      <li>Usar DLP (Data Loss Prevention) con análisis estadístico de LSB en flujos de salida críticos.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">zsteg</span> <span class="tools-badge">steghide</span> <span class="tools-badge">stegsolve</span> <span class="tools-badge">Python + Pillow</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>LSB (Least Significant Bit) steganography hides data by altering the least significant bit of each color byte in an image. The change is so small (at most ±1 on a 0-255 channel) that it's invisible to the human eye, yet perfectly recoverable if you know where to look.</p>
+
+    <h3>2 · Try standard tools first</h3>
+    <pre>zsteg sunset.png
+binwalk sunset.png
+steghide extract -sf sunset.png</pre>
+    <p>If you don't have <code>zsteg</code>/<code>steghide</code> installed, or the image doesn't use their specific format, you can extract the message manually: this challenge uses a home-made LSB scheme (least significant bit of the R, G, B channels in order, with a 32-bit prefix indicating the message length in bytes).</p>
+
+    <h3>3 · Manual extraction with Python</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+import struct
+from PIL import Image
+img = Image.open('sunset.png')
+pixels = list(img.getdata())
+
+bits = ''
+for px in pixels:
+    for c in px[:3]:
+        bits += str(c & 1)
+
+length = int(bits[:32], 2)
+msg_bits = bits[32:32 + length*8]
+msg = bytes(int(msg_bits[i:i+8], 2) for i in range(0, len(msg_bits), 8))
+print(msg.decode())
+EOF</pre>
+    <p>The script reads the least significant bit of each color channel, first reconstructing the message length (32 bits) and then the message itself.</p>
+
+    <h3>4 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Not a common technical control — steganography is generically hard to detect.</li>
+      <li>In sensitive environments, recompress/resize user-uploaded images (destroys the LSB) before serving them.</li>
+      <li>Use DLP (Data Loss Prevention) with statistical LSB analysis on critical outbound flows.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">zsteg</span> <span class="tools-badge">steghide</span> <span class="tools-badge">stegsolve</span> <span class="tools-badge">Python + Pillow</span></div>
+  </div>
+</div>
+{% endblock %}

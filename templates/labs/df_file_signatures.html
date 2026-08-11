@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}DF 01 – File Signature Analysis – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_file_signatures_obj_desc">Un empleado te ha pasado un documento con extensión .docx que "no se abre bien" en Word. Antes de intentar repararlo, comprueba qué tipo de fichero es en realidad — la extensión no siempre dice la verdad.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">file Informe_Confidencial.docx
+xxd Informe_Confidencial.docx | head -5</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Los ficheros no se identifican por su extensión, sino por sus primeros bytes (los <em>magic bytes</em> o firma de fichero). Un atacante — o en este caso, un empleado despistado — puede renombrar cualquier fichero con cualquier extensión sin que su contenido cambie. Un analista forense nunca confía en la extensión: siempre verifica la firma real.</p>
+
+    <h3>2 · Comprobar la firma real</h3>
+    <pre>file Informe_Confidencial.docx
+# Informe_Confidencial.docx: PNG image data, 300 x 150, 8-bit/color RGB, non-interlaced</pre>
+    <p>El comando <code>file</code> reconoce cientos de firmas de fichero. Aquí queda claro que, a pesar del nombre, se trata de una imagen PNG.</p>
+
+    <h3>3 · Confirmar con los bytes en crudo</h3>
+    <pre>xxd Informe_Confidencial.docx | head -3
+# 00000000: 8950 4e47 0d0a 1a0a 0000 000d 4948 4452  .PNG........IHDR</pre>
+    <p>La firma <code>89 50 4E 47 0D 0A 1A 0A</code> es la cabecera estándar de todo fichero PNG — inconfundible.</p>
+
+    <h3>4 · Renombrar y extraer los metadatos</h3>
+    <pre>cp Informe_Confidencial.docx informe.png
+exiftool informe.png | grep -i comment</pre>
+    <p>El fichero incluye un chunk de texto <code>tEXt</code> con un comentario — ahí está la flag.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Nunca confiar en la extensión declarada por el cliente al validar subidas de fichero (ver también el lab <em>File Upload</em>).</li>
+      <li>Validar el tipo MIME real (magic bytes) en el servidor antes de procesar cualquier fichero.</li>
+      <li>Escanear adjuntos con herramientas de detección de tipo (<code>libmagic</code>) en los flujos de correo/subida.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">file</span> <span class="tools-badge">xxd</span> <span class="tools-badge">exiftool</span> <span class="tools-badge">binwalk</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Files aren't identified by their extension but by their first bytes (the <em>magic bytes</em>, or file signature). An attacker — or in this case, a careless employee — can rename any file with any extension without its content changing. A forensic analyst never trusts the extension: they always verify the real signature.</p>
+
+    <h3>2 · Check the real signature</h3>
+    <pre>file Informe_Confidencial.docx
+# Informe_Confidencial.docx: PNG image data, 300 x 150, 8-bit/color RGB, non-interlaced</pre>
+    <p>The <code>file</code> command recognizes hundreds of file signatures. Here it's clear that, despite the name, this is a PNG image.</p>
+
+    <h3>3 · Confirm with the raw bytes</h3>
+    <pre>xxd Informe_Confidencial.docx | head -3
+# 00000000: 8950 4e47 0d0a 1a0a 0000 000d 4948 4452  .PNG........IHDR</pre>
+    <p>The signature <code>89 50 4E 47 0D 0A 1A 0A</code> is the standard header of every PNG file — unmistakable.</p>
+
+    <h3>4 · Rename and extract the metadata</h3>
+    <pre>cp Informe_Confidencial.docx informe.png
+exiftool informe.png | grep -i comment</pre>
+    <p>The file includes a <code>tEXt</code> chunk with a comment — that's where the flag is.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Never trust the client-declared extension when validating file uploads (see also the <em>File Upload</em> lab).</li>
+      <li>Validate the real MIME type (magic bytes) server-side before processing any file.</li>
+      <li>Scan attachments with type-detection tooling (<code>libmagic</code>) in mail/upload pipelines.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">file</span> <span class="tools-badge">xxd</span> <span class="tools-badge">exiftool</span> <span class="tools-badge">binwalk</span></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}DF 10 – File Carving en Imagen de Disco – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_file_carving_obj_desc">Un volcado de sectores sin asignar contiene un fichero que fue borrado pero nunca sobrescrito. Localiza su firma y recupéralo por carving.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">binwalk unallocated_cluster_dump.dd</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Cuando un sistema de ficheros "borra" un fichero, normalmente solo elimina su entrada del índice/tabla de directorio — el contenido sigue físicamente en el disco hasta que un nuevo fichero lo sobrescribe. El <em>file carving</em> ignora el sistema de ficheros por completo y busca directamente las firmas binarias (magic bytes) de formatos conocidos dentro de un volcado en crudo, recuperando así datos que ya no están "indexados" en ningún sitio.</p>
+
+    <h3>2 · Localizar firmas conocidas</h3>
+    <pre>binwalk unallocated_cluster_dump.dd
+# DECIMAL   HEXADECIMAL   DESCRIPTION
+# 65536     0x10000       PNG image, 180 x 90, 8-bit/color RGB, non-interlaced
+# 65622     0x10056       Zlib compressed data, default compression</pre>
+    <p>binwalk identifica una imagen PNG completa empezando en el offset decimal <code>65536</code> — el resto del fichero es ruido aleatorio que simula sectores sin asignar.</p>
+
+    <h3>3 · Extraer el fichero embebido</h3>
+    <pre># Opción rápida: extracción automática
+binwalk -e unallocated_cluster_dump.dd
+
+# Opción manual con dd (funciona siempre, incluso sin soporte de extracción)
+dd if=unallocated_cluster_dump.dd of=recovered.png bs=1 skip=65536 count=4096</pre>
+    <p>No hace falta ser exacto con el tamaño: un PNG válido termina en su propio chunk <code>IEND</code>, así que la mayoría de visores/herramientas ignoran los bytes sobrantes después de esa marca.</p>
+
+    <h3>4 · Verificar y leer el fichero recuperado</h3>
+    <pre>file recovered.png
+exiftool recovered.png | grep -i comment</pre>
+    <p>La imagen recuperada contiene un comentario PNG con la flag.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Borrado seguro (<em>wiping</em>, sobrescritura multipasada o <code>shred</code>/cifrado de disco completo) para datos sensibles que deban desaparecer de verdad.</li>
+      <li>Cifrado de disco completo (FDE): si el volcado en crudo está cifrado, el carving por firma no encuentra nada legible.</li>
+      <li>Política de retención y destrucción certificada de medios de almacenamiento dados de baja.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">binwalk</span> <span class="tools-badge">foremost</span> <span class="tools-badge">photorec</span> <span class="tools-badge">scalpel</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>When a filesystem "deletes" a file, it usually only removes its entry from the index/directory table — the content physically stays on disk until a new file overwrites it. <em>File carving</em> ignores the filesystem entirely and searches directly for known binary signatures (magic bytes) inside a raw dump, recovering data that is no longer "indexed" anywhere.</p>
+
+    <h3>2 · Locate known signatures</h3>
+    <pre>binwalk unallocated_cluster_dump.dd
+# DECIMAL   HEXADECIMAL   DESCRIPTION
+# 65536     0x10000       PNG image, 180 x 90, 8-bit/color RGB, non-interlaced
+# 65622     0x10056       Zlib compressed data, default compression</pre>
+    <p>binwalk identifies a full PNG image starting at decimal offset <code>65536</code> — the rest of the file is random noise simulating unallocated sectors.</p>
+
+    <h3>3 · Extract the embedded file</h3>
+    <pre># Quick option: automatic extraction
+binwalk -e unallocated_cluster_dump.dd
+
+# Manual option with dd (always works, even without extraction support)
+dd if=unallocated_cluster_dump.dd of=recovered.png bs=1 skip=65536 count=4096</pre>
+    <p>You don't need to be exact about the size: a valid PNG ends at its own <code>IEND</code> chunk, so most viewers/tools ignore trailing bytes after that marker.</p>
+
+    <h3>4 · Verify and read the recovered file</h3>
+    <pre>file recovered.png
+exiftool recovered.png | grep -i comment</pre>
+    <p>The recovered image contains a PNG comment with the flag.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Secure deletion (<em>wiping</em>, multi-pass overwrite or <code>shred</code>/full-disk encryption) for sensitive data that must truly disappear.</li>
+      <li>Full-disk encryption (FDE): if the raw dump is encrypted, signature-based carving finds nothing readable.</li>
+      <li>Retention and certified destruction policy for decommissioned storage media.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">binwalk</span> <span class="tools-badge">foremost</span> <span class="tools-badge">photorec</span> <span class="tools-badge">scalpel</span></div>
+  </div>
+</div>
+{% endblock %}

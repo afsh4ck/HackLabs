@@ -9,7 +9,8 @@ def cleanup_uploads():
                 pass
 atexit.register(cleanup_uploads)
 from flask import (Flask, request, render_template, redirect, url_for,
-                   session, jsonify, make_response, g, send_file, render_template_string, flash, abort)
+                   session, jsonify, make_response, g, send_file, send_from_directory,
+                   render_template_string, flash, abort)
 import sys
 import sqlite3
 import os
@@ -673,6 +674,7 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
     vuln_ids = {l['id'] for l in labs if l.get('category') == 'Vulnerabilidades'}
     ia_ids = {l['id'] for l in labs if l.get('category') == 'AI Attacks'}
     ad_ids = {l['id'] for l in labs if l.get('category') == 'Active Directory'}
+    forensics_ids = {l['id'] for l in labs if l.get('category') == 'Forense Digital'}
     crit_ids = {l['id'] for l in labs if l.get('risk') == 'critical'}
 
     ach_first = done_count >= 1
@@ -682,6 +684,7 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
     ach_vulns = vuln_ids.issubset(completed_ids)
     ach_ia = ia_ids.issubset(completed_ids)
     ach_ad = bool(ad_ids) and ad_ids.issubset(completed_ids)
+    ach_forensics = bool(forensics_ids) and forensics_ids.issubset(completed_ids)
     ach_critical = crit_ids.issubset(completed_ids)
     ach_all = done_count == total_labs and total_labs > 0
 
@@ -721,6 +724,12 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
             'desc_es': 'Completar todos los labs de Active Directory',
             'desc_en': 'Complete all Active Directory labs',
             'unlocked': ach_ad,
+        },
+        {
+            'id': 'digital_detective', 'icon': '🔍', 'name': 'Digital Detective', 'premium': False,
+            'desc_es': 'Completar todos los labs de Forense Digital',
+            'desc_en': 'Complete all Digital Forensics labs',
+            'unlocked': ach_forensics,
         },
         {
             'id': 'critical_mass', 'icon': '💀', 'name': 'Critical Mass', 'premium': False,
@@ -862,6 +871,23 @@ def get_lab_flag_map():
         'ad_golden_ticket':   ['HL{4d_90ld3n_71ck37_d0m41n_0wn3d}'],
         'ad_delegation':      ['HL{4d_c0n57r41n3d_d3l394710n_4bu53d}'],
         'ad_machine_quota':   ['HL{4d_m4ch1n3_4cc0un7_qu074_4bu53d}'],
+
+        # Forense Digital — la flag vive dentro de cada fichero de evidencia
+        'df_file_signatures':    ['HL{m4g1c_by73s_r3v34l_7h3_7ru7h}'],
+        'df_metadata_exif':      ['HL{3x1f_g30l0c4710n_l34k4g3}'],
+        'df_steganography':      ['HL{l5b_5t3g0_h1dd3n_1n_p1x3l5}'],
+        'df_archive_cracking':   ['HL{z1p_p455w0rd_cr4ck3d_w17h_j0hn}'],
+        'df_email_analysis':     ['HL{ph1sh1ng_h34d3r5_d0n7_l13}'],
+        'df_browser_artifacts':  ['HL{br0ws3r_h1570ry_n3v3r_l135}'],
+        'df_log_analysis':       ['HL{55h_bru73f0rc3_r3c0n57ruc73d}'],
+        'df_pcap_credentials':   ['HL{pl41n73x7_f7p_cr3d5_5n1ff3d}'],
+        'df_pcap_exfiltration':  ['HL{dn5_7unn3l_3xf1l7r4710n_c4u9h7}'],
+        'df_file_carving':       ['HL{c4rv3d_fr0m_r4w_by73s}'],
+        'df_disk_timeline':      ['HL{d3l3730_1n0d3_r3c0v3r3d}'],
+        'df_malware_strings':    ['HL{57r1ng5_n3v3r_l13_4b0u7_m4lw4r3}'],
+        'df_pe_analysis':        ['HL{p3_h34d3r5_3xp053_7h3_p4yl04d}'],
+        'df_memory_process':     ['HL{m4l1c10u5_pr0c355_1n_r4m}'],
+        'df_memory_credentials': ['HL{cr3d5_l1ng3r_1n_m3m0ry}'],
     }
 
     # Labs with explicit flag output on screen should not accept root fallback.
@@ -902,6 +928,11 @@ def get_lab_flag_map():
     explicit_screen_flag_labs.update(
         l['id'] for l in get_lab_list() if l.get('category') == 'Active Directory'
     )
+    # Los labs de Forense Digital tienen su flag dentro del propio fichero de
+    # evidencia: la flag de root de la máquina web nunca es una respuesta válida.
+    explicit_screen_flag_labs.update(
+        l['id'] for l in get_lab_list() if l.get('category') == 'Forense Digital'
+    )
 
     for lab in get_lab_list():
         lab_id = lab['id']
@@ -912,6 +943,151 @@ def get_lab_flag_map():
             flags.append(root_flag)
 
     return flag_map
+
+
+def get_lab_questions_map():
+    """Preguntas guiadas estilo CyberDefenders para los labs de Forense Digital.
+
+    Cada lab tiene 1-2 preguntas cortas (con pista) que guían el análisis del
+    fichero de evidencia, más la flag final. Se validan sin estado server-side
+    vía /forensics/check-answer — la flag sigue siendo la vía oficial de
+    completar el lab a través de /progress/submit-flag, igual que en el resto
+    de la app (comparación case-insensitive salvo la propia flag).
+    """
+    return {
+        'df_file_signatures': [
+            {'id': 'q1',
+             'prompt_es': '¿Qué tipo de fichero es realmente (según sus magic bytes), a pesar de la extensión .docx?',
+             'prompt_en': 'What file type is this really (per its magic bytes), despite the .docx extension?',
+             'hint_es': 'Usa el comando <code>file</code> sobre el fichero descargado; ignora la extensión.',
+             'hint_en': 'Run the <code>file</code> command on the downloaded file; ignore the extension.',
+             'answers': ['png', 'imagen png', 'image/png', '.png']},
+        ],
+        'df_metadata_exif': [
+            {'id': 'q1',
+             'prompt_es': '¿En qué ciudad se tomó la fotografía según sus coordenadas GPS EXIF?',
+             'prompt_en': 'Which city was the photo taken in, according to its EXIF GPS coordinates?',
+             'hint_es': 'Extrae GPSLatitude/GPSLongitude con <code>exiftool</code> y búscalas en un mapa.',
+             'hint_en': 'Extract GPSLatitude/GPSLongitude with <code>exiftool</code> and look them up on a map.',
+             'answers': ['madrid']},
+        ],
+        'df_steganography': [
+            {'id': 'q1',
+             'prompt_es': '¿Qué técnica de esteganografía se ha usado para ocultar el mensaje en la imagen?',
+             'prompt_en': 'Which steganography technique was used to hide the message in the image?',
+             'hint_es': 'Piensa en qué bit de cada canal de color se puede alterar sin que se note visualmente.',
+             'hint_en': 'Think about which bit of each color channel can be altered without a visible change.',
+             'answers': ['lsb', 'least significant bit', 'bit menos significativo']},
+        ],
+        'df_archive_cracking': [
+            {'id': 'q1',
+             'prompt_es': '¿Cuál es la contraseña del archivo ZIP?',
+             'prompt_en': 'What is the password of the ZIP archive?',
+             'hint_es': 'Extrae el hash con <code>zip2john</code> y crackéalo con <code>john</code> + rockyou.txt.',
+             'hint_en': 'Extract the hash with <code>zip2john</code> and crack it with <code>john</code> + rockyou.txt.',
+             'answers': ['trustno1']},
+        ],
+        'df_email_analysis': [
+            {'id': 'q1',
+             'prompt_es': '¿Cuál es la IP real que envió el email según la cabecera Received?',
+             'prompt_en': 'What is the real sending IP according to the Received header?',
+             'hint_es': 'Mira la cabecera <code>Received</code>, no el campo <code>From</code> (que puede falsificarse).',
+             'hint_en': 'Check the <code>Received</code> header, not the <code>From</code> field (which can be spoofed).',
+             'answers': ['185.220.101.42']},
+            {'id': 'q2',
+             'prompt_es': '¿Qué resultado dan las comprobaciones SPF/DKIM/DMARC de este correo?',
+             'prompt_en': 'What do the SPF/DKIM/DMARC checks report for this email?',
+             'hint_es': 'Revisa la cabecera <code>Authentication-Results</code>.',
+             'hint_en': 'Check the <code>Authentication-Results</code> header.',
+             'answers': ['fail', 'fallan', 'fallo', 'failed', 'ko']},
+        ],
+        'df_browser_artifacts': [
+            {'id': 'q1',
+             'prompt_es': '¿Qué parámetro de la URL filtrada contiene el token robado?',
+             'prompt_en': 'Which URL parameter in the leaked entry holds the stolen token?',
+             'hint_es': 'Consulta la tabla <code>urls</code> con <code>sqlite3</code> y busca la fila con más parámetros.',
+             'hint_en': 'Query the <code>urls</code> table with <code>sqlite3</code> and look for the row with the most query params.',
+             'answers': ['token']},
+        ],
+        'df_log_analysis': [
+            {'id': 'q1',
+             'prompt_es': '¿Cuál es la IP de origen del ataque de fuerza bruta?',
+             'prompt_en': 'What is the source IP of the brute-force attack?',
+             'hint_es': "Cuenta cuántas líneas 'Failed password' comparten la misma IP.",
+             'hint_en': "Count how many 'Failed password' lines share the same IP.",
+             'answers': ['198.51.100.77']},
+            {'id': 'q2',
+             'prompt_es': '¿Qué usuario consiguió autenticarse correctamente?',
+             'prompt_en': 'Which user successfully authenticated?',
+             'hint_es': "Busca la única línea 'Accepted password' del fichero.",
+             'hint_en': "Look for the single 'Accepted password' line in the file.",
+             'answers': ['backup-svc']},
+        ],
+        'df_pcap_credentials': [
+            {'id': 'q1',
+             'prompt_es': '¿Cuál es la contraseña usada en el login FTP?',
+             'prompt_en': 'What is the password used in the FTP login?',
+             'hint_es': 'Filtra por <code>ftp.request.command == "PASS"</code> en Wireshark/tshark.',
+             'hint_en': 'Filter by <code>ftp.request.command == "PASS"</code> in Wireshark/tshark.',
+             'answers': ['bu1ld3r2024']},
+        ],
+        'df_pcap_exfiltration': [
+            {'id': 'q1',
+             'prompt_es': '¿A qué dominio se envían las consultas DNS de exfiltración?',
+             'prompt_en': 'Which domain are the DNS exfiltration queries sent to?',
+             'hint_es': 'Mira el sufijo común de todos los <code>qname</code> en las consultas DNS TXT.',
+             'hint_en': 'Look at the common suffix shared by every <code>qname</code> in the DNS TXT queries.',
+             'answers': ['exfil.attacker-c2.net', 'attacker-c2.net']},
+        ],
+        'df_file_carving': [
+            {'id': 'q1',
+             'prompt_es': '¿En qué offset decimal del fichero empieza la imagen PNG embebida?',
+             'prompt_en': 'At which decimal offset does the embedded PNG image start?',
+             'hint_es': 'Ejecuta <code>binwalk</code> sobre el volcado y mira la columna DECIMAL.',
+             'hint_en': 'Run <code>binwalk</code> on the dump and check the DECIMAL column.',
+             'answers': ['65536']},
+        ],
+        'df_disk_timeline': [
+            {'id': 'q1',
+             'prompt_es': '¿Cuál es el número de inodo del fichero borrado?',
+             'prompt_en': "What is the inode number of the deleted file?",
+             'hint_es': 'Ejecuta <code>fls -rd imagen.dd</code> para listar entradas borradas.',
+             'hint_en': 'Run <code>fls -rd image.dd</code> to list deleted entries.',
+             'answers': ['14']},
+        ],
+        'df_malware_strings': [
+            {'id': 'q1',
+             'prompt_es': '¿Cuál es la IP del servidor C2 al que se conecta el binario?',
+             'prompt_en': 'What is the C2 server IP the binary connects to?',
+             'hint_es': 'Ejecuta <code>strings</code> sobre el binario y busca patrones de URL/IP.',
+             'hint_en': 'Run <code>strings</code> on the binary and look for URL/IP patterns.',
+             'answers': ['45.33.12.87']},
+        ],
+        'df_pe_analysis': [
+            {'id': 'q1',
+             'prompt_es': '¿Qué arquitectura de CPU tiene el ejecutable según su cabecera PE (Machine)?',
+             'prompt_en': "What CPU architecture does the executable target, per its PE Machine field?",
+             'hint_es': 'Usa <code>file</code> o revisa el campo Machine (0x8664) con <code>objdump -f</code>/<code>pefile</code>.',
+             'hint_en': 'Use <code>file</code> or check the Machine field (0x8664) with <code>objdump -f</code>/<code>pefile</code>.',
+             'answers': ['x86-64', 'x64', 'amd64', 'x86_64']},
+        ],
+        'df_memory_process': [
+            {'id': 'q1',
+             'prompt_es': '¿Desde qué ruta se ejecuta el proceso malicioso?',
+             'prompt_en': 'From which path does the malicious process run?',
+             'hint_es': 'Busca procesos ejecutados desde rutas de usuario poco habituales, como <code>C:\\Users\\Public\\</code>.',
+             'hint_en': 'Look for processes running from unusual user paths, like <code>C:\\Users\\Public\\</code>.',
+             'answers': ['c:\\users\\public\\svchost32.exe', 'c:\\users\\public']},
+        ],
+        'df_memory_credentials': [
+            {'id': 'q1',
+             'prompt_es': '¿Qué usuario tiene sus credenciales en texto claro en memoria?',
+             'prompt_en': 'Which user has plaintext credentials sitting in memory?',
+             'hint_es': 'Busca la cadena <code>PASS:</code> en el volcado con <code>strings</code>/<code>grep</code>.',
+             'hint_en': 'Search for the <code>PASS:</code> string in the dump with <code>strings</code>/<code>grep</code>.',
+             'answers': ['m.director']},
+        ],
+    }
 
 
 def _to_leet_flag(flag):
@@ -1414,6 +1590,7 @@ CATEGORY_SLUGS = {
     'vulnerabilidades': 'Vulnerabilidades',
     'ai-attacks':       'AI Attacks',
     'active-directory': 'Active Directory',
+    'forense-digital':  'Forense Digital',
 }
 
 @app.route('/category/<slug>')
@@ -1423,6 +1600,79 @@ def category_page(slug):
         abort(404)
     labs = [l for l in get_lab_list() if l['category'] == cat_name]
     return render_template('category.html', category=cat_name, slug=slug, labs=labs)
+
+# ─────────────────────────────────────────────
+# Forense Digital – ficheros de evidencia estáticos
+# ─────────────────────────────────────────────
+
+FORENSIC_EVIDENCE_DIR = os.path.join(app.root_path, 'evidence', 'forensic')
+FORENSIC_EVIDENCE_FILES = {
+    'df_file_signatures':    'Informe_Confidencial.docx',
+    'df_metadata_exif':      'team_offsite.jpg',
+    'df_steganography':      'sunset.png',
+    'df_archive_cracking':   'Informe_Financiero_Q3.zip',
+    'df_email_analysis':     'nomina_urgente.eml',
+    'df_browser_artifacts':  'history.sqlite',
+    'df_log_analysis':       'auth.log',
+    'df_pcap_credentials':   'captura_trafico.pcap',
+    'df_pcap_exfiltration':  'dns_traffic.pcap',
+    'df_file_carving':       'unallocated_cluster_dump.dd',
+    'df_disk_timeline':      'workstation_image.dd',
+    'df_malware_strings':    'svc_update_x64',
+    'df_pe_analysis':        'Factura_Pendiente.exe',
+    'df_memory_process':     'memdump_workstation01.raw',
+    'df_memory_credentials': 'memdump_workstation01_lsass.raw',
+}
+
+_forensic_hash_cache = {}
+
+def _forensic_evidence_meta():
+    """Metadatos (nombre, tamaño, SHA-256) de cada fichero de evidencia forense.
+
+    El hash se calcula una vez y se cachea en memoria — los ficheros son
+    estáticos y no cambian en runtime.
+    """
+    meta = {}
+    for lab_id, filename in FORENSIC_EVIDENCE_FILES.items():
+        path = os.path.join(FORENSIC_EVIDENCE_DIR, filename)
+        if lab_id not in _forensic_hash_cache:
+            try:
+                with open(path, 'rb') as f:
+                    _forensic_hash_cache[lab_id] = hashlib.sha256(f.read()).hexdigest()
+            except OSError:
+                _forensic_hash_cache[lab_id] = None
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            size = 0
+        meta[lab_id] = {'filename': filename, 'sha256': _forensic_hash_cache[lab_id], 'size': size}
+    return meta
+
+@app.route('/forensics/download/<lab_id>')
+def forensics_download(lab_id):
+    filename = FORENSIC_EVIDENCE_FILES.get(lab_id)
+    if not filename:
+        abort(404)
+    return send_from_directory(FORENSIC_EVIDENCE_DIR, filename, as_attachment=True)
+
+@app.route('/forensics/check-answer', methods=['POST'])
+def forensics_check_answer():
+    """Valida una respuesta guiada (no la flag) sin persistir estado alguno."""
+    data = request.get_json(silent=True) or {}
+    lab_id = (data.get('lab_id') or '').strip()
+    question_id = (data.get('question_id') or '').strip()
+    submitted = (data.get('answer') or '').strip()
+
+    questions = get_lab_questions_map().get(lab_id, [])
+    question = next((q for q in questions if q['id'] == question_id), None)
+    if not question:
+        return jsonify({'error': 'invalid_question'}), 400
+    if not submitted:
+        return jsonify({'error': 'empty_answer'}), 400
+
+    normalized = submitted.strip().lower()
+    accepted = [a.strip().lower() for a in question['answers']]
+    return jsonify({'correct': normalized in accepted})
 
 @app.route('/lab/<lab_id>')
 def lab(lab_id):
@@ -1546,6 +1796,22 @@ def get_lab_list():
         {'id': 'ad_golden_ticket',   'title': 'AD 13 – Golden Ticket',                       'category': 'Active Directory', 'risk': 'critical'},
         {'id': 'ad_delegation',      'title': 'AD 14 – Constrained Delegation',              'category': 'Active Directory', 'risk': 'critical'},
         {'id': 'ad_machine_quota',   'title': 'AD 15 – MachineAccountQuota & RBCD',          'category': 'Active Directory', 'risk': 'high'},
+        # Forense Digital (orden: fundamentos → red → disco → malware → memoria)
+        {'id': 'df_file_signatures',    'title': 'DF 01 – File Signature Analysis',             'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_metadata_exif',      'title': 'DF 02 – EXIF Metadata Analysis',              'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_steganography',      'title': 'DF 03 – Esteganografía en Imagen',            'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_archive_cracking',   'title': 'DF 04 – Cracking de Archivo Protegido',       'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_email_analysis',     'title': 'DF 05 – Análisis Forense de Email',           'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_browser_artifacts',  'title': 'DF 06 – Artefactos de Navegador',             'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_log_analysis',       'title': 'DF 07 – Reconstrucción de Ataque por Logs',   'category': 'Forense Digital', 'risk': 'medium'},
+        {'id': 'df_pcap_credentials',   'title': 'DF 08 – Credenciales en Claro (PCAP)',        'category': 'Forense Digital', 'risk': 'high'},
+        {'id': 'df_pcap_exfiltration',  'title': 'DF 09 – Exfiltración de Datos vía DNS',       'category': 'Forense Digital', 'risk': 'critical'},
+        {'id': 'df_file_carving',       'title': 'DF 10 – File Carving en Imagen de Disco',     'category': 'Forense Digital', 'risk': 'high'},
+        {'id': 'df_disk_timeline',      'title': 'DF 11 – Timeline y Recuperación de Borrados', 'category': 'Forense Digital', 'risk': 'high'},
+        {'id': 'df_malware_strings',    'title': 'DF 12 – Triage de Malware: Strings & YARA',   'category': 'Forense Digital', 'risk': 'high'},
+        {'id': 'df_pe_analysis',        'title': 'DF 13 – Análisis de Cabeceras PE',            'category': 'Forense Digital', 'risk': 'high'},
+        {'id': 'df_memory_process',     'title': 'DF 14 – Memoria: Proceso Malicioso',          'category': 'Forense Digital', 'risk': 'high'},
+        {'id': 'df_memory_credentials', 'title': 'DF 15 – Memoria: Credenciales en RAM',        'category': 'Forense Digital', 'risk': 'critical'},
     ]
 
 
@@ -1683,6 +1949,8 @@ def inject_labs():
         'current_lab_validated_flag': completed_lab_flags.get(current_lab_id, ''),
         'progress_count': progress_count,
         'is_progress_user': is_progress_user,
+        'forensic_evidence': _forensic_evidence_meta(),
+        'forensic_questions': get_lab_questions_map(),
         **_ad_environment(),
     }
 
@@ -3739,6 +4007,10 @@ def ensure_account_table():
     columns = {row['name'] for row in db.execute('PRAGMA table_info(account_users)').fetchall()}
     if 'certificate_name' not in columns:
         db.execute('ALTER TABLE account_users ADD COLUMN certificate_name TEXT')
+    if 'reset_token' not in columns:
+        db.execute('ALTER TABLE account_users ADD COLUMN reset_token TEXT')
+    if 'reset_token_expires' not in columns:
+        db.execute('ALTER TABLE account_users ADD COLUMN reset_token_expires TEXT')
     db.commit()
 
 @app.route('/account/register', methods=['GET', 'POST'])
@@ -3777,6 +4049,7 @@ def account_register():
 @app.route('/account/login', methods=['GET', 'POST'])
 def account_login():
     error = None
+    reset_ok = request.args.get('reset') == 'ok'
     next_url = request.args.get('next', url_for('index'))
 
     if request.method == 'POST':
@@ -3815,7 +4088,66 @@ def account_login():
 
         error = 'Usuario o contraseña incorrectos.'
 
-    return render_template('account/login.html', error=error, next=next_url)
+    return render_template('account/login.html', error=error, next=next_url, reset_ok=reset_ok)
+
+
+@app.route('/account/forgot-password', methods=['GET', 'POST'])
+def account_forgot_password():
+    sent = False
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        ensure_account_table()
+        db = get_db()
+        user = db.execute('SELECT * FROM account_users WHERE email=?', (email,)).fetchone()
+        if user:
+            token = secrets.token_urlsafe(32)
+            expires = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)).isoformat()
+            db.execute('UPDATE account_users SET reset_token=?, reset_token_expires=? WHERE id=?',
+                       (token, expires, user['id']))
+            db.commit()
+            reset_url = url_for('account_reset_password', token=token, _external=True)
+            print(f'[+] Password reset solicitado para "{user["username"]}" — enlace válido 30 min: {reset_url}')
+        # Respuesta genérica exista o no la cuenta, para no filtrar qué emails están registrados.
+        sent = True
+    return render_template('account/forgot_password.html', sent=sent)
+
+
+@app.route('/account/reset-password/<token>', methods=['GET', 'POST'])
+def account_reset_password(token):
+    ensure_account_table()
+    db = get_db()
+    user = db.execute('SELECT * FROM account_users WHERE reset_token=?', (token,)).fetchone()
+
+    invalid = True
+    if user and user['reset_token_expires']:
+        try:
+            expires_dt = datetime.datetime.fromisoformat(user['reset_token_expires'])
+            invalid = datetime.datetime.now(datetime.timezone.utc) > expires_dt
+        except ValueError:
+            invalid = True
+
+    if invalid:
+        return render_template('account/reset_password.html', invalid=True, token=token)
+
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm  = request.form.get('confirm', '')
+        if not password or len(password) < 6:
+            error = 'La contraseña debe tener al menos 6 caracteres.'
+        elif password != confirm:
+            error = 'Las contraseñas no coinciden.'
+        else:
+            pw_hash = hashlib.sha256(password.encode()).hexdigest()
+            db.execute(
+                'UPDATE account_users SET password_hash=?, reset_token=NULL, reset_token_expires=NULL WHERE id=?',
+                (pw_hash, user['id'])
+            )
+            db.commit()
+            return redirect(url_for('account_login', reset='ok'))
+
+    return render_template('account/reset_password.html', invalid=False, token=token,
+                            error=error, username=user['username'])
 
 
 @app.route('/account/logout')

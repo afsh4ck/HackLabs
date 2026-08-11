@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **58 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + AI Attacks + Active Directory
+- **73 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + AI Attacks + Active Directory + Forense Digital
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -125,6 +125,28 @@
 | AD 14 – Constrained Delegation | 🔴 Critical | S4U2Self + S4U2Proxy con transición de protocolo |
 | AD 15 – MachineAccountQuota & RBCD | 🟠 High | Alta de cuenta de máquina, base para RBCD |
 
+### Forense Digital
+
+15 laboratorios de análisis forense contra ficheros de evidencia reales (PCAP, volcados de memoria, imágenes de disco, metadatos, esteganografía, malware). Cada lab se resuelve descargando la evidencia desde la propia app y analizándola con herramientas forenses estándar — no requiere infraestructura adicional. Además de la flag final, cada lab incluye **preguntas guiadas** (estilo CyberDefenders) con pista opcional, validadas sin recargar la página.
+
+| Lab | Riesgo | Técnica |
+|-----|--------|---------|
+| DF 01 – File Signature Analysis | 🟡 Medium | Magic bytes vs. extensión falsa |
+| DF 02 – EXIF Metadata Analysis | 🟡 Medium | GPS y comentarios ocultos en JPEG |
+| DF 03 – Esteganografía en Imagen | 🟡 Medium | LSB en PNG |
+| DF 04 – Cracking de Archivo Protegido | 🟡 Medium | `zip2john` + `john` + rockyou |
+| DF 05 – Análisis Forense de Email | 🟡 Medium | Cabeceras spoofeadas, SPF/DKIM/DMARC, adjunto base64 |
+| DF 06 – Artefactos de Navegador | 🟡 Medium | Historial SQLite, token filtrado en URL |
+| DF 07 – Reconstrucción de Ataque por Logs | 🟡 Medium | Fuerza bruta SSH + comando post-explotación |
+| DF 08 – Credenciales en Claro (PCAP) | 🟠 High | FTP/HTTP sin cifrar, Follow TCP Stream |
+| DF 09 – Exfiltración de Datos vía DNS | 🔴 Critical | DNS tunneling, reconstrucción de subdominios |
+| DF 10 – File Carving en Imagen de Disco | 🟠 High | `binwalk` + carving manual |
+| DF 11 – Timeline y Recuperación de Borrados | 🟠 High | The Sleuth Kit (`fls`/`istat`/`icat`) |
+| DF 12 – Triage de Malware: Strings & YARA | 🟠 High | IOCs estáticos, persistencia vía crontab |
+| DF 13 – Análisis de Cabeceras PE | 🟠 High | `pefile`/`objdump`, persistencia en registro |
+| DF 14 – Memoria: Proceso Malicioso | 🟠 High | `strings`/`grep`, referencia a Volatility |
+| DF 15 – Memoria: Credenciales en RAM | 🔴 Critical | Credenciales en claro en memoria de proceso |
+
 ---
 
 ## 🏆 Sistema de Progreso
@@ -176,6 +198,7 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
 | 🤖 AI Breaker | Completar todos los labs de AI Attacks |
 | 🏰 Domain Dominator | Completar todos los labs de Active Directory |
+| 🔍 Digital Detective | Completar todos los labs de Forense Digital |
 | 💀 Critical Mass | Completar todos los labs de riesgo Critical |
 | 👑 Completionist | Completar todos los labs |
 

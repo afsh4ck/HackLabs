@@ -1,0 +1,18 @@
+<!-- Partial: caja de descarga del fichero de evidencia forense -->
+{% set _ev = forensic_evidence.get(lab.id) %}
+<div class="hl-card mb-4">
+  <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:var(--hl-primary)" data-i18n="df_evidence_title">Evidencia a analizar</h3>
+
+  {% if _ev %}
+  <div class="flex flex-wrap items-center gap-3 mb-2">
+    <a href="/forensics/download/{{ lab.id }}" class="text-xs px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5" style="background:var(--hl-primary);color:#07101e">
+      <i class="ph ph-download-simple"></i> <span data-i18n="df_evidence_download_btn">Descargar evidencia</span>
+    </a>
+    <span class="text-xs text-gray-500"><span data-i18n="df_evidence_filename_lbl">Fichero</span>: <code class="text-xs">{{ _ev.filename }}</code></span>
+  </div>
+  <p class="text-xs text-gray-400 break-all">
+    <span data-i18n="df_evidence_hash_lbl">SHA-256</span>: <code class="text-xs">{{ _ev.sha256 }}</code>
+  </p>
+  <p class="text-xs text-gray-500 mt-2" data-i18n="df_evidence_hash_hint">Verifica la integridad del fichero antes de analizarlo.</p>
+  {% endif %}
+</div>

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}DF 06 – Artefactos de Navegador – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_browser_artifacts_obj_desc">El historial de navegación de un equipo comprometido puede revelar credenciales filtradas. Examina el fichero SQLite del navegador en busca de URLs sospechosas.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">sqlite3 history.sqlite ".tables"
+sqlite3 history.sqlite "select url from urls;"</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Chrome, Firefox y Edge guardan el historial de navegación en bases de datos SQLite locales. Cualquier dato sensible que aparezca en una URL visitada (tokens de sesión, parámetros de autenticación, IDs internos) queda persistido en texto claro en ese fichero, accesible a cualquiera que tenga el fichero — incluido un analista forense o un atacante con acceso al disco.</p>
+
+    <h3>2 · Explorar el esquema</h3>
+    <pre>sqlite3 history.sqlite ".tables"
+# downloads  urls
+sqlite3 history.sqlite ".schema urls"</pre>
+
+    <h3>3 · Volcar las URLs visitadas</h3>
+    <pre>sqlite3 history.sqlite "SELECT url, title, visit_count FROM urls;"</pre>
+    <p>Entre resultados normales (correo, wiki interna, GitHub…) hay una URL con muchos más parámetros que el resto — casi siempre la señal de que algo interesante viaja en la query string.</p>
+
+    <h3>4 · Aislar la URL sospechosa</h3>
+    <pre>sqlite3 history.sqlite "SELECT url FROM urls WHERE url LIKE '%token=%';"</pre>
+    <p>El parámetro <code>token</code> de esa URL contiene la flag directamente.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Nunca pasar tokens de sesión ni credenciales como parámetros de URL — usar cabeceras (<code>Authorization</code>) o cookies con flags <code>HttpOnly</code>/<code>Secure</code>.</li>
+      <li>Rotar y expirar inmediatamente cualquier token que se detecte filtrado en logs, historial o cachés de proxy.</li>
+      <li>Aplicar políticas de borrado de historial/DLP en equipos que manejan datos sensibles.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">sqlite3</span> <span class="tools-badge">DB Browser for SQLite</span> <span class="tools-badge">Autopsy</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Chrome, Firefox and Edge store browsing history in local SQLite databases. Any sensitive data appearing in a visited URL (session tokens, auth parameters, internal IDs) is persisted in plaintext in that file, accessible to anyone holding the file — including a forensic analyst or an attacker with disk access.</p>
+
+    <h3>2 · Explore the schema</h3>
+    <pre>sqlite3 history.sqlite ".tables"
+# downloads  urls
+sqlite3 history.sqlite ".schema urls"</pre>
+
+    <h3>3 · Dump the visited URLs</h3>
+    <pre>sqlite3 history.sqlite "SELECT url, title, visit_count FROM urls;"</pre>
+    <p>Among normal results (mail, internal wiki, GitHub…) there's one URL with far more parameters than the rest — usually a sign that something interesting is riding in the query string.</p>
+
+    <h3>4 · Isolate the suspicious URL</h3>
+    <pre>sqlite3 history.sqlite "SELECT url FROM urls WHERE url LIKE '%token=%';"</pre>
+    <p>The <code>token</code> parameter of that URL directly contains the flag.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Never pass session tokens or credentials as URL parameters — use headers (<code>Authorization</code>) or cookies with <code>HttpOnly</code>/<code>Secure</code> flags.</li>
+      <li>Immediately rotate and expire any token found leaked in logs, history, or proxy caches.</li>
+      <li>Apply history-wiping/DLP policies on workstations that handle sensitive data.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">sqlite3</span> <span class="tools-badge">DB Browser for SQLite</span> <span class="tools-badge">Autopsy</span></div>
+  </div>
+</div>
+{% endblock %}

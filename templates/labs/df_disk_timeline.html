@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}DF 11 – Timeline y Recuperación de Borrados – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_disk_timeline_obj_desc">Un equipo de trabajo tiene un fichero borrado intencionadamente. Usa herramientas forenses de disco para listar las entradas borradas y recuperar su contenido.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">fls -rd workstation_image.dd
+icat workstation_image.dd &lt;inodo&gt;</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>En un sistema de ficheros ext4, borrar un fichero marca su inodo como no asignado (<em>not allocated</em>) pero no borra sus bloques de datos ni sus metadatos de inmediato. The Sleuth Kit puede leer la estructura del filesystem directamente sobre la imagen en crudo y listar también las entradas marcadas como borradas, siempre que no hayan sido sobrescritas.</p>
+
+    <h3>2 · Listar el contenido del filesystem, incluidos los borrados</h3>
+    <pre>fls -rd workstation_image.dd
+# r/r * 14: informe_RRHH.txt</pre>
+    <p>El flag <code>-d</code> filtra solo las entradas borradas; el asterisco <code>*</code> confirma que está marcada como no asignada. El número tras los dos puntos (<code>14</code>) es el <strong>inodo</strong>.</p>
+
+    <h3>3 · Inspeccionar los metadatos del inodo</h3>
+    <pre>istat workstation_image.dd 14
+# inode: 14
+# Not Allocated
+# size: 96
+# ...</pre>
+    <p><code>istat</code> muestra tamaño, permisos y timestamps (MAC times) del fichero borrado — útil para reconstruir una línea temporal del incidente.</p>
+
+    <h3>4 · Recuperar el contenido por inodo</h3>
+    <pre>icat workstation_image.dd 14</pre>
+    <p><code>icat</code> vuelca el contenido asociado al inodo directamente, sin pasar por el índice de directorio (que ya no lo referencia). Si los bloques de datos no han sido reutilizados, el contenido se recupera íntegro.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Usar borrado seguro (<code>shred</code>, <code>srm</code>) quando el objetivo sea eliminar datos de forma irrecuperable, no un simple <code>rm</code>.</li>
+      <li>Cifrado de disco completo: sin la clave, ni el filesystem ni sus inodos borrados son legibles.</li>
+      <li>Política de retención: destruir certificadamente equipos/discos dados de baja en vez de solo formatearlos.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">The Sleuth Kit (fls/istat/icat)</span> <span class="tools-badge">Autopsy</span> <span class="tools-badge">debugfs</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>On an ext4 filesystem, deleting a file marks its inode as not allocated but doesn't immediately erase its data blocks or metadata. The Sleuth Kit can read the filesystem structure directly on the raw image and also list entries flagged as deleted, as long as they haven't been overwritten.</p>
+
+    <h3>2 · List the filesystem contents, including deleted ones</h3>
+    <pre>fls -rd workstation_image.dd
+# r/r * 14: informe_RRHH.txt</pre>
+    <p>The <code>-d</code> flag filters only deleted entries; the asterisk <code>*</code> confirms it's marked as not allocated. The number after the colon (<code>14</code>) is the <strong>inode</strong>.</p>
+
+    <h3>3 · Inspect the inode metadata</h3>
+    <pre>istat workstation_image.dd 14
+# inode: 14
+# Not Allocated
+# size: 96
+# ...</pre>
+    <p><code>istat</code> shows size, permissions and timestamps (MAC times) of the deleted file — useful for reconstructing an incident timeline.</p>
+
+    <h3>4 · Recover the content by inode</h3>
+    <pre>icat workstation_image.dd 14</pre>
+    <p><code>icat</code> dumps the content associated with the inode directly, bypassing the directory index (which no longer references it). If the data blocks haven't been reused, the content is recovered intact.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Use secure deletion (<code>shred</code>, <code>srm</code>) when the goal is to make data truly unrecoverable, not a plain <code>rm</code>.</li>
+      <li>Full-disk encryption: without the key, neither the filesystem nor its deleted inodes are readable.</li>
+      <li>Retention policy: certifiably destroy decommissioned equipment/disks instead of just formatting them.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">The Sleuth Kit (fls/istat/icat)</span> <span class="tools-badge">Autopsy</span> <span class="tools-badge">debugfs</span></div>
+  </div>
+</div>
+{% endblock %}

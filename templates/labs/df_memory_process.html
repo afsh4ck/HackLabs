@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}DF 14 – Memoria: Proceso Malicioso – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_memory_process_obj_desc">Se ha extraído una muestra de memoria de una estación de trabajo. Localiza el proceso que no debería estar ahí.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre esta muestra de memoria</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">Un volcado de memoria real (compatible con los perfiles de sistema operativo que usa Volatility para reconstruir <code>pslist</code>/<code>pstree</code> con toda su estructura de kernel) pesa varios GB y no es viable de distribuir en este laboratorio. Esta muestra es un extracto reducido, pensado para practicar la técnica que de verdad importa en un triage rápido: <strong>localizar cadenas de texto reveladoras con <code>strings</code>/<code>grep</code></strong> — el primer paso que cualquier analista da incluso antes de cargar Volatility. Los comandos de Volatility se documentan abajo como referencia de cómo abordarías un volcado real.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">strings memdump_workstation01.raw | grep "PROC_ENTRY"</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>La memoria RAM de un proceso en ejecución contiene, en texto plano, buena parte de la información que ese proceso maneja: rutas de ficheros, argumentos de línea de comandos, cadenas de configuración… Un volcado de memoria congela ese estado, y aunque no tengas un framework completo de análisis, <code>strings</code> por sí solo ya revela muchísimo.</p>
+
+    <h3>2 · Triage rápido con strings</h3>
+    <pre>strings memdump_workstation01.raw | grep "PROC_ENTRY"</pre>
+    <p>Verás una lista de procesos "en memoria": <code>csrss.exe</code>, <code>explorer.exe</code>, <code>chrome.exe</code>, <code>OUTLOOK.EXE</code>, <code>Teams.exe</code>, <code>OneDrive.exe</code>… y uno que no encaja.</p>
+
+    <h3>3 · Identificar el proceso anómalo</h3>
+    <pre>strings memdump_workstation01.raw | grep -A1 "svchost32"
+# PROC_ENTRY|PID:4821|PPID:668|IMAGE:svchost32.exe|PATH:C:\Users\Public\svchost32.exe|CMD:svchost32.exe -connect 45.33.12.87:4444 -k</pre>
+    <p>Dos señales inequívocas de proceso malicioso:</p>
+    <ul>
+      <li><strong>Ruta anómala</strong>: se ejecuta desde <code>C:\Users\Public\</code>, no desde <code>System32</code> como el <code>svchost.exe</code> legítimo.</li>
+      <li><strong>Línea de comandos sospechosa</strong>: conecta a una IP externa por un puerto no estándar (<code>-connect 45.33.12.87:4444</code>) — patrón típico de una conexión C2.</li>
+    </ul>
+
+    <h3>4 · (Referencia) Cómo lo harías con un volcado real</h3>
+    <pre># Identificar el perfil de SO
+volatility3 -f memdump.raw windows.info
+
+# Listar procesos (detecta también procesos ocultos/desenlazados)
+volatility3 -f memdump.raw windows.pslist
+volatility3 -f memdump.raw windows.pstree
+
+# Ver la línea de comandos de un PID sospechoso
+volatility3 -f memdump.raw windows.cmdline --pid 4821</pre>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>strings memdump_workstation01.raw | grep -A1 "svchost32"</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>EDR con detección de procesos ejecutándose desde rutas de usuario no habituales (<code>%PUBLIC%</code>, <code>%TEMP%</code>, <code>%APPDATA%</code>).</li>
+      <li>Bloquear conexiones salientes a puertos no estándar desde procesos que normalmente no las hacen (Sysmon Event ID 3 + reglas de red).</li>
+      <li>Allowlisting de aplicaciones (AppLocker/WDAC) para impedir la ejecución de binarios no autorizados, con independencia del nombre que usen.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">strings</span> <span class="tools-badge">grep</span> <span class="tools-badge">Volatility 3</span> <span class="tools-badge">Rekall</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>A running process's RAM holds, in plain text, much of the information it handles: file paths, command-line arguments, configuration strings… A memory dump freezes that state, and even without a full analysis framework, <code>strings</code> alone already reveals a lot.</p>
+
+    <h3>2 · Quick triage with strings</h3>
+    <pre>strings memdump_workstation01.raw | grep "PROC_ENTRY"</pre>
+    <p>You'll see a list of processes "in memory": <code>csrss.exe</code>, <code>explorer.exe</code>, <code>chrome.exe</code>, <code>OUTLOOK.EXE</code>, <code>Teams.exe</code>, <code>OneDrive.exe</code>… and one that doesn't fit.</p>
+
+    <h3>3 · Identify the anomalous process</h3>
+    <pre>strings memdump_workstation01.raw | grep -A1 "svchost32"
+# PROC_ENTRY|PID:4821|PPID:668|IMAGE:svchost32.exe|PATH:C:\Users\Public\svchost32.exe|CMD:svchost32.exe -connect 45.33.12.87:4444 -k</pre>
+    <p>Two unmistakable signs of a malicious process:</p>
+    <ul>
+      <li><strong>Anomalous path</strong>: it runs from <code>C:\Users\Public\</code>, not from <code>System32</code> like the legitimate <code>svchost.exe</code>.</li>
+      <li><strong>Suspicious command line</strong>: it connects to an external IP on a non-standard port (<code>-connect 45.33.12.87:4444</code>) — a typical C2 connection pattern.</li>
+    </ul>
+
+    <h3>4 · (Reference) How you'd approach a real dump</h3>
+    <pre># Identify the OS profile
+volatility3 -f memdump.raw windows.info
+
+# List processes (also detects hidden/unlinked processes)
+volatility3 -f memdump.raw windows.pslist
+volatility3 -f memdump.raw windows.pstree
+
+# View the command line of a suspicious PID
+volatility3 -f memdump.raw windows.cmdline --pid 4821</pre>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>strings memdump_workstation01.raw | grep -A1 "svchost32"</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>EDR detecting processes running from unusual user paths (<code>%PUBLIC%</code>, <code>%TEMP%</code>, <code>%APPDATA%</code>).</li>
+      <li>Block outbound connections to non-standard ports from processes that normally don't make them (Sysmon Event ID 3 + network rules).</li>
+      <li>Application allowlisting (AppLocker/WDAC) to prevent unauthorized binaries from running, regardless of the name they use.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">strings</span> <span class="tools-badge">grep</span> <span class="tools-badge">Volatility 3</span> <span class="tools-badge">Rekall</span></div>
+  </div>
+</div>
+{% endblock %}

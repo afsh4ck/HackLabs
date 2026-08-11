@@ -338,9 +338,24 @@
           'ad_golden_ticket':   'ph-crown-simple',
           'ad_delegation':      'ph-arrows-left-right',
           'ad_machine_quota':   'ph-desktop-tower',
+          'df_file_signatures':    'ph-fingerprint',
+          'df_metadata_exif':      'ph-map-pin',
+          'df_steganography':      'ph-image',
+          'df_archive_cracking':   'ph-lock-key',
+          'df_email_analysis':     'ph-envelope-simple-open',
+          'df_browser_artifacts':  'ph-globe',
+          'df_log_analysis':       'ph-file-text',
+          'df_pcap_credentials':   'ph-wifi-high',
+          'df_pcap_exfiltration':  'ph-cloud-arrow-up',
+          'df_file_carving':       'ph-scissors',
+          'df_disk_timeline':      'ph-clock-counter-clockwise',
+          'df_malware_strings':    'ph-bug',
+          'df_pe_analysis':        'ph-warning-octagon',
+          'df_memory_process':     'ph-cpu',
+          'df_memory_credentials': 'ph-key',
         } %}
 
-        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks', 'Active Directory'] %}
+        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks', 'Active Directory', 'Forense Digital'] %}
         {% for cat in desired_order %}
           {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
           {% if labs_in_cat %}

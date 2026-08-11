@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}DF 05 – Análisis Forense de Email – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_email_analysis_obj_desc">Un compañero recibió un correo sospechoso de "RRHH" pidiendo verificar sus datos de nómina. Analiza las cabeceras del email para detectar los indicios de phishing y recupera el adjunto.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">cat nomina_urgente.eml | less
+# o abrirlo con un cliente de correo / visor .eml</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>El protocolo SMTP no verifica por defecto quién dice ser el remitente: el campo <code>From</code> es simple texto que cualquiera puede falsificar. Las cabeceras <code>Received</code> (que cada servidor de correo añade al reenviar el mensaje) y los resultados de <code>SPF</code>/<code>DKIM</code>/<code>DMARC</code> son las señales fiables para reconstruir el origen real.</p>
+
+    <h3>2 · Inspeccionar las cabeceras</h3>
+    <pre>cat nomina_urgente.eml | head -20</pre>
+    <p>Fíjate en tres cosas:</p>
+    <ul>
+      <li><code>From</code>: dice ser <code>rrhh@hacklabs-corp.com</code> — parece legítimo.</li>
+      <li><code>Reply-To</code>: apunta a <code>soporte-nomina@hack1abs-corp.com</code> — un dominio <em>typosquatting</em> (con el número «1» en vez de la «l»).</li>
+      <li><code>Received</code>: el primer salto viene de <code>mail-relay-77.attacker-infra.ru</code> (IP <code>185.220.101.42</code>) — no de infraestructura de HackLabs Corp.</li>
+    </ul>
+
+    <h3>3 · Comprobar la autenticación del correo</h3>
+    <pre>grep "Authentication-Results" nomina_urgente.eml
+# spf=fail dkim=none dmarc=fail action=quarantine</pre>
+    <p>Las tres comprobaciones fallan: el servidor emisor no está autorizado a enviar en nombre de <code>hacklabs-corp.com</code>, y el correo no está firmado. Es phishing.</p>
+
+    <h3>4 · Extraer el adjunto en base64</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+import email
+with open('nomina_urgente.eml','rb') as f:
+    msg = email.message_from_bytes(f.read())
+for part in msg.walk():
+    if part.get_content_disposition() == 'attachment':
+        print(part.get_payload(decode=True).decode())
+EOF</pre>
+    <p>El adjunto MIME está codificado en base64 (habitual en correo); al decodificarlo aparece el "documento de verificación" con la flag.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Desplegar y hacer cumplir SPF, DKIM y DMARC (política <code>reject</code>, no solo <code>quarantine</code>) en el dominio corporativo.</li>
+      <li>Formar a los empleados en detectar dominios typosquatted y verificar el <code>Reply-To</code> antes de responder a solicitudes urgentes.</li>
+      <li>Filtrar/poner en cuarentena automáticamente correos que fallen DMARC en el gateway de correo.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Python email module</span> <span class="tools-badge">MXToolbox</span> <span class="tools-badge">Thunderbird (ver código fuente)</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>SMTP does not verify by default who the sender claims to be: the <code>From</code> field is plain text anyone can forge. The <code>Received</code> headers (added by every mail server that relays the message) and the <code>SPF</code>/<code>DKIM</code>/<code>DMARC</code> results are the reliable signals for reconstructing the real origin.</p>
+
+    <h3>2 · Inspect the headers</h3>
+    <pre>cat nomina_urgente.eml | head -20</pre>
+    <p>Notice three things:</p>
+    <ul>
+      <li><code>From</code>: claims to be <code>rrhh@hacklabs-corp.com</code> — looks legitimate.</li>
+      <li><code>Reply-To</code>: points to <code>soporte-nomina@hack1abs-corp.com</code> — a typosquatted domain (digit "1" instead of "l").</li>
+      <li><code>Received</code>: the first hop comes from <code>mail-relay-77.attacker-infra.ru</code> (IP <code>185.220.101.42</code>) — not HackLabs Corp infrastructure.</li>
+    </ul>
+
+    <h3>3 · Check the email authentication results</h3>
+    <pre>grep "Authentication-Results" nomina_urgente.eml
+# spf=fail dkim=none dmarc=fail action=quarantine</pre>
+    <p>All three checks fail: the sending server is not authorized to send on behalf of <code>hacklabs-corp.com</code>, and the email isn't signed. This is phishing.</p>
+
+    <h3>4 · Extract the base64 attachment</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+import email
+with open('nomina_urgente.eml','rb') as f:
+    msg = email.message_from_bytes(f.read())
+for part in msg.walk():
+    if part.get_content_disposition() == 'attachment':
+        print(part.get_payload(decode=True).decode())
+EOF</pre>
+    <p>The MIME attachment is base64-encoded (common in email); decoding it reveals the "verification document" containing the flag.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Deploy and enforce SPF, DKIM and DMARC (a <code>reject</code> policy, not just <code>quarantine</code>) on the corporate domain.</li>
+      <li>Train employees to spot typosquatted domains and verify the <code>Reply-To</code> before responding to urgent requests.</li>
+      <li>Automatically filter/quarantine emails that fail DMARC at the mail gateway.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Python email module</span> <span class="tools-badge">MXToolbox</span> <span class="tools-badge">Thunderbird (view source)</span></div>
+  </div>
+</div>
+{% endblock %}

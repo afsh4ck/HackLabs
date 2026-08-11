@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}DF 04 – Cracking de Archivo Protegido – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_archive_cracking_obj_desc">RRHH protegió un informe financiero con una contraseña débil antes de subirlo por error a una carpeta pública. Craquéala offline para acceder al contenido.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">zip2john Informe_Financiero_Q3.zip > hash.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>El cifrado tradicional de ZIP (ZipCrypto) es criptográficamente débil y, además, la contraseña elegida es una palabra común de diccionario. Un atacante no necesita romper el cifrado: le basta con probar millones de contraseñas candidatas offline hasta encontrar la correcta.</p>
+
+    <h3>2 · Extraer el hash crackeable</h3>
+    <pre>zip2john Informe_Financiero_Q3.zip > hash.txt
+cat hash.txt
+# Informe_Financiero_Q3.zip/Informe_Financiero_Q3.txt:$pkzip$1*1*2*0*...</pre>
+
+    <h3>3 · Crackear con john + rockyou</h3>
+    <pre>john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
+john --show hash.txt</pre>
+    <p>En segundos, <code>john</code> encuentra la contraseña dentro del diccionario rockyou.txt.</p>
+
+    <h3>4 · Abrir el archivo</h3>
+    <pre>unzip -P '&lt;contraseña_encontrada&gt;' Informe_Financiero_Q3.zip -d extraido/
+cat extraido/Informe_Financiero_Q3.txt</pre>
+    <p>El informe descomprimido contiene la flag.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Nunca proteger datos sensibles solo con la contraseña de un ZIP — usar cifrado fuerte real (GPG, AES-256 con contraseña robusta) o, mejor, control de acceso a nivel de almacenamiento.</li>
+      <li>Forzar políticas de contraseñas robustas y comprobarlas contra diccionarios conocidos (rockyou, HaveIBeenPwned) antes de aceptarlas.</li>
+      <li>Auditar y eliminar ficheros con datos sensibles en ubicaciones de acceso público.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">zip2john</span> <span class="tools-badge">john the ripper</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">rockyou.txt</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Traditional ZIP encryption (ZipCrypto) is cryptographically weak, and on top of that the chosen password is a common dictionary word. An attacker doesn't need to break the encryption — they just need to try millions of candidate passwords offline until they find the right one.</p>
+
+    <h3>2 · Extract the crackable hash</h3>
+    <pre>zip2john Informe_Financiero_Q3.zip > hash.txt
+cat hash.txt
+# Informe_Financiero_Q3.zip/Informe_Financiero_Q3.txt:$pkzip$1*1*2*0*...</pre>
+
+    <h3>3 · Crack with john + rockyou</h3>
+    <pre>john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
+john --show hash.txt</pre>
+    <p>Within seconds, <code>john</code> finds the password inside the rockyou.txt dictionary.</p>
+
+    <h3>4 · Open the archive</h3>
+    <pre>unzip -P '&lt;found_password&gt;' Informe_Financiero_Q3.zip -d extracted/
+cat extracted/Informe_Financiero_Q3.txt</pre>
+    <p>The decompressed report contains the flag.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Never protect sensitive data with just a ZIP password — use real strong encryption (GPG, AES-256 with a strong passphrase) or, better yet, storage-level access control.</li>
+      <li>Enforce strong password policies and check them against known dictionaries (rockyou, HaveIBeenPwned) before accepting them.</li>
+      <li>Audit and remove files containing sensitive data from publicly accessible locations.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">zip2john</span> <span class="tools-badge">john the ripper</span> <span class="tools-badge">hashcat</span> <span class="tools-badge">rockyou.txt</span></div>
+  </div>
+</div>
+{% endblock %}

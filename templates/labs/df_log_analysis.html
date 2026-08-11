@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}DF 07 – Reconstrucción de Ataque por Logs – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_log_analysis_obj_desc">Un servidor bastión sufrió un intento de acceso sospechoso. Analiza su log de autenticación para identificar el ataque, el usuario comprometido y lo que hizo el atacante tras entrar.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">grep "Failed password" auth.log | awk '{print $(NF-3)}' | sort | uniq -c
+grep "Accepted password" auth.log</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Cada intento de autenticación SSH queda registrado en <code>auth.log</code>: intentos fallidos, aceptados, y apertura/cierre de sesión. Una política sin bloqueo de cuentas ni rate-limiting permite a un atacante probar cientos de combinaciones en minutos — y el propio log deja un rastro perfecto para reconstruir el ataque a posteriori.</p>
+
+    <h3>2 · Contar los intentos fallidos por IP</h3>
+    <pre>grep "Failed password" auth.log | grep -oE '[0-9]{1,3}(\.[0-9]{1,3}){3}' | sort | uniq -c | sort -rn</pre>
+    <p>Una única IP concentra decenas de intentos contra usuarios distintos (root, admin, oracle, jenkins…) — patrón clásico de fuerza bruta / diccionario de usuarios.</p>
+
+    <h3>3 · Localizar el login exitoso</h3>
+    <pre>grep "Accepted password" auth.log</pre>
+    <p>Tras la ráfaga de fallos, una única línea <code>Accepted password</code> muestra qué usuario (y desde qué IP) consiguió entrar finalmente.</p>
+
+    <h3>4 · Ver qué hizo el atacante tras entrar</h3>
+    <pre>grep -A2 "session opened" auth.log</pre>
+    <p>El log de auditoría del bastión registra el comando ejecutado por esa sesión y su salida — incluida la lectura de un fichero con la flag.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Bloqueo de cuenta / rate-limiting tras N intentos fallidos (<code>fail2ban</code>, <code>pam_tally2</code>).</li>
+      <li>Deshabilitar autenticación por contraseña en SSH; exigir solo claves públicas + MFA.</li>
+      <li>Alertar automáticamente ante patrones de fuerza bruta en el SIEM (correlación de <code>Failed password</code> por IP/tiempo).</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">grep</span> <span class="tools-badge">awk</span> <span class="tools-badge">Logwatch</span> <span class="tools-badge">Splunk / ELK</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Every SSH authentication attempt is logged to <code>auth.log</code>: failed attempts, accepted ones, and session open/close events. A policy with no account lockout or rate-limiting lets an attacker try hundreds of combinations in minutes — and the log itself leaves a perfect trail to reconstruct the attack afterwards.</p>
+
+    <h3>2 · Count failed attempts per IP</h3>
+    <pre>grep "Failed password" auth.log | grep -oE '[0-9]{1,3}(\.[0-9]{1,3}){3}' | sort | uniq -c | sort -rn</pre>
+    <p>A single IP concentrates dozens of attempts against different usernames (root, admin, oracle, jenkins…) — a classic brute-force / username-dictionary pattern.</p>
+
+    <h3>3 · Locate the successful login</h3>
+    <pre>grep "Accepted password" auth.log</pre>
+    <p>After the burst of failures, a single <code>Accepted password</code> line shows which user (and from which IP) finally got in.</p>
+
+    <h3>4 · See what the attacker did after logging in</h3>
+    <pre>grep -A2 "session opened" auth.log</pre>
+    <p>The bastion's audit log records the command executed in that session and its output — including reading a file that holds the flag.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Account lockout / rate-limiting after N failed attempts (<code>fail2ban</code>, <code>pam_tally2</code>).</li>
+      <li>Disable password authentication on SSH; require public keys + MFA only.</li>
+      <li>Automatically alert on brute-force patterns in the SIEM (correlating <code>Failed password</code> by IP/time).</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">grep</span> <span class="tools-badge">awk</span> <span class="tools-badge">Logwatch</span> <span class="tools-badge">Splunk / ELK</span></div>
+  </div>
+</div>
+{% endblock %}

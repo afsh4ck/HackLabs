@@ -1,0 +1,37 @@
+Content-Type: multipart/mixed; boundary="===============8536557415408405763=="
+MIME-Version: 1.0
+From: Recursos Humanos <rrhh@hacklabs-corp.com>
+To: empleado@hacklabs-corp.com
+Subject: Actualizacion urgente de nomina - Accion requerida
+Date: Mon, 10 Aug 2026 09:14:02 +0200
+Message-ID: <20260810091402.A1B2C3@mail-relay-77.attacker-infra.ru>
+Received: from mail-relay-77.attacker-infra.ru (unverified [185.220.101.42])
+  by mx1.hacklabs-corp.com with SMTP id 4Xy1Z; Mon, 10 Aug 2026 09:14:01 +0200
+Authentication-Results: mx1.hacklabs-corp.com;
+ spf=fail smtp.mailfrom=hacklabs-corp.com; dkim=none;
+ dmarc=fail action=quarantine
+Reply-To: soporte-nomina@hack1abs-corp.com
+
+--===============8536557415408405763==
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+
+RXN0aW1hZG8gZW1wbGVhZG8sCgpOdWVzdHJvIGRlcGFydGFtZW50byBoYSBkZXRlY3RhZG8gdW5h
+IGluY2lkZW5jaWEgZW4gZWwgY2FsY3VsbyBkZSBzdSBub21pbmEgZGUgZXN0ZSBtZXMuIEFkanVu
+dGFtb3MgZWwgZG9jdW1lbnRvIGRlIHZlcmlmaWNhY2lvbiBjb24gZWwgY29kaWdvIGRlIHJlZmVy
+ZW5jaWEgbmVjZXNhcmlvIHBhcmEgcmVndWxhcml6YXIgbGEgc2l0dWFjaW9uLgoKQXRlbnRhbWVu
+dGUsClJlY3Vyc29zIEh1bWFub3M=
+
+--===============8536557415408405763==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="verificacion_nomina.txt"
+
+RE9DVU1FTlRPIERFIFZFUklGSUNBQ0lPTiBJTlRFUk5BCgpDb2RpZ28gZGUgcmVmZXJlbmNpYTog
+SEx7cGgxc2gxbmdfaDM0ZDNyNV9kMG43X2wxM30KCkVzdGUgZG9jdW1lbnRvIGNvbmZpcm1hIGxh
+IGlkZW50aWRhZCBkZWwgc29saWNpdGFudGUgYW50ZSBlbCBkZXBhcnRhbWVudG8gZGUgbm9taW5h
+cy4K
+
+--===============8536557415408405763==--

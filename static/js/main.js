@@ -15,6 +15,7 @@ const T = {
     cat_ia_attacks:        'AI Attacks',
     cat_ai_attacks:        'AI Attacks',
     cat_active_directory:  'Active Directory',
+    cat_forense_digital:   'Forense Digital',
     labs:            'Labs',
     resolution_steps:'Pasos de explotación',
     tools_label:     'Herramientas',
@@ -154,6 +155,50 @@ const T = {
     lab_title_ad_golden_ticket:   'AD 13 – Golden Ticket',
     lab_title_ad_delegation:      'AD 14 – Delegación restringida',
     lab_title_ad_machine_quota:   'AD 15 – MachineAccountQuota y RBCD',
+    // ── Forense Digital ──
+    lab_title_df_file_signatures:    'DF 01 – Análisis de Firmas de Fichero',
+    lab_title_df_metadata_exif:      'DF 02 – Análisis de Metadatos EXIF',
+    lab_title_df_steganography:      'DF 03 – Esteganografía en Imagen',
+    lab_title_df_archive_cracking:   'DF 04 – Cracking de Archivo Protegido',
+    lab_title_df_email_analysis:     'DF 05 – Análisis Forense de Email',
+    lab_title_df_browser_artifacts:  'DF 06 – Artefactos de Navegador',
+    lab_title_df_log_analysis:       'DF 07 – Reconstrucción de Ataque por Logs',
+    lab_title_df_pcap_credentials:   'DF 08 – Credenciales en Claro (PCAP)',
+    lab_title_df_pcap_exfiltration:  'DF 09 – Exfiltración de Datos vía DNS',
+    lab_title_df_file_carving:       'DF 10 – File Carving en Imagen de Disco',
+    lab_title_df_disk_timeline:      'DF 11 – Timeline y Recuperación de Borrados',
+    lab_title_df_malware_strings:    'DF 12 – Triage de Malware: Strings y YARA',
+    lab_title_df_pe_analysis:        'DF 13 – Análisis de Cabeceras PE',
+    lab_title_df_memory_process:     'DF 14 – Memoria: Proceso Malicioso',
+    lab_title_df_memory_credentials: 'DF 15 – Memoria: Credenciales en RAM',
+    df_evidence_title:        'Evidencia a analizar',
+    df_evidence_download_btn: 'Descargar evidencia',
+    df_evidence_filename_lbl: 'Fichero',
+    df_evidence_hash_lbl:     'SHA-256',
+    df_evidence_hash_hint:    'Verifica la integridad del fichero antes de analizarlo.',
+    df_quickstart:            'Inicio rápido',
+    df_obj_flag_where:        '— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.',
+    df_quiz_title:            'Preguntas guiadas',
+    df_quiz_check:            'Comprobar',
+    df_quiz_hint_btn:         '💡 Pista',
+    df_quiz_footer:           'Responde todas las preguntas para completar el análisis; la flag final se valida en la barra lateral.',
+    df_quiz_correct:          '✓ Correcto',
+    df_quiz_incorrect:        '✗ Incorrecto, inténtalo de nuevo',
+    df_file_signatures_obj_desc: 'Un empleado te ha pasado un documento con extensión .docx que "no se abre bien" en Word. Antes de intentar repararlo, comprueba qué tipo de fichero es en realidad — la extensión no siempre dice la verdad.',
+    df_metadata_exif_obj_desc: 'Una foto subida a la intranet corporativa revela más de lo que parece. Extrae sus metadatos EXIF para descubrir dónde y con qué dispositivo se tomó.',
+    df_steganography_obj_desc: 'Esta imagen de una puesta de sol esconde algo más que píxeles. Analiza sus bits menos significativos para recuperar el mensaje oculto.',
+    df_archive_cracking_obj_desc: 'RRHH protegió un informe financiero con una contraseña débil antes de subirlo por error a una carpeta pública. Craquéala offline para acceder al contenido.',
+    df_email_analysis_obj_desc: 'Un compañero recibió un correo sospechoso de "RRHH" pidiendo verificar sus datos de nómina. Analiza las cabeceras del email para detectar los indicios de phishing y recupera el adjunto.',
+    df_browser_artifacts_obj_desc: 'El historial de navegación de un equipo comprometido puede revelar credenciales filtradas. Examina el fichero SQLite del navegador en busca de URLs sospechosas.',
+    df_log_analysis_obj_desc: 'Un servidor bastión sufrió un intento de acceso sospechoso. Analiza su log de autenticación para identificar el ataque, el usuario comprometido y lo que hizo el atacante tras entrar.',
+    df_pcap_credentials_obj_desc: 'Se capturó tráfico de red de un segmento sin cifrar. Analiza la captura para extraer credenciales y datos transmitidos en texto claro.',
+    df_pcap_exfiltration_obj_desc: 'Un endpoint muestra un volumen inusual de consultas DNS hacia un dominio externo. Reconstruye los datos exfiltrados a partir de las peticiones DNS capturadas.',
+    df_file_carving_obj_desc: 'Un volcado de sectores sin asignar contiene un fichero que fue borrado pero nunca sobrescrito. Localiza su firma y recupéralo por carving.',
+    df_disk_timeline_obj_desc: 'Un equipo de trabajo tiene un fichero borrado intencionadamente. Usa herramientas forenses de disco para listar las entradas borradas y recuperar su contenido.',
+    df_malware_strings_obj_desc: 'Un binario sospechoso apareció en un servidor. Analízalo estáticamente con strings/YARA para identificar indicadores de compromiso sin llegar a ejecutarlo.',
+    df_pe_analysis_obj_desc: 'Un ejecutable disfrazado de factura llegó por correo. Analiza sus cabeceras PE de forma estática para identificar indicios de comportamiento malicioso.',
+    df_memory_process_obj_desc: 'Se ha extraído una muestra de memoria de una estación de trabajo. Localiza el proceso que no debería estar ahí.',
+    df_memory_credentials_obj_desc: 'La misma muestra de memoria contiene credenciales que nunca deberían quedar en texto claro. Encuéntralas antes de que lo haga otro.',
     ad_env_title:        'Máquina objetivo',
     ad_env_realm_lbl:    'Dominio',
     ad_env_dc_lbl:       'Domain Controller',
@@ -401,6 +446,7 @@ const T = {
     cat_ia_attacks:        'AI Attacks',
     cat_ai_attacks:        'AI Attacks',
     cat_active_directory:  'Active Directory',
+    cat_forense_digital:   'Digital Forensics',
     labs:            'Labs',
     resolution_steps:'Exploitation Steps',
     tools_label:     'Tools',
@@ -540,6 +586,50 @@ const T = {
     lab_title_ad_golden_ticket:   'AD 13 – Golden Ticket',
     lab_title_ad_delegation:      'AD 14 – Constrained Delegation',
     lab_title_ad_machine_quota:   'AD 15 – MachineAccountQuota & RBCD',
+    // ── Digital Forensics ──
+    lab_title_df_file_signatures:    'DF 01 – File Signature Analysis',
+    lab_title_df_metadata_exif:      'DF 02 – EXIF Metadata Analysis',
+    lab_title_df_steganography:      'DF 03 – Image Steganography',
+    lab_title_df_archive_cracking:   'DF 04 – Protected Archive Cracking',
+    lab_title_df_email_analysis:     'DF 05 – Email Forensics',
+    lab_title_df_browser_artifacts:  'DF 06 – Browser Artifacts',
+    lab_title_df_log_analysis:       'DF 07 – Log-based Attack Reconstruction',
+    lab_title_df_pcap_credentials:   'DF 08 – Plaintext Credentials (PCAP)',
+    lab_title_df_pcap_exfiltration:  'DF 09 – DNS Data Exfiltration',
+    lab_title_df_file_carving:       'DF 10 – File Carving from a Disk Image',
+    lab_title_df_disk_timeline:      'DF 11 – Timeline & Deleted File Recovery',
+    lab_title_df_malware_strings:    'DF 12 – Malware Triage: Strings & YARA',
+    lab_title_df_pe_analysis:        'DF 13 – PE Header Analysis',
+    lab_title_df_memory_process:     'DF 14 – Memory: Malicious Process',
+    lab_title_df_memory_credentials: 'DF 15 – Memory: Credentials in RAM',
+    df_evidence_title:        'Evidence to analyze',
+    df_evidence_download_btn: 'Download evidence',
+    df_evidence_filename_lbl: 'File',
+    df_evidence_hash_lbl:     'SHA-256',
+    df_evidence_hash_hint:    'Verify the file’s integrity before analyzing it.',
+    df_quickstart:            'Quick start',
+    df_obj_flag_where:        '— the flag is hidden inside the evidence file itself; analyze it and validate it in the sidebar.',
+    df_quiz_title:            'Guided questions',
+    df_quiz_check:            'Check',
+    df_quiz_hint_btn:         '💡 Hint',
+    df_quiz_footer:           'Answer every question to complete the analysis; validate the final flag in the sidebar.',
+    df_quiz_correct:          '✓ Correct',
+    df_quiz_incorrect:        '✗ Incorrect, try again',
+    df_file_signatures_obj_desc: 'An employee handed you a .docx file that "won’t open properly" in Word. Before trying to repair it, check what the file actually is — the extension doesn’t always tell the truth.',
+    df_metadata_exif_obj_desc: 'A photo uploaded to the corporate intranet reveals more than it seems. Extract its EXIF metadata to find out where and with what device it was taken.',
+    df_steganography_obj_desc: 'This sunset image hides more than just pixels. Analyze its least significant bits to recover the hidden message.',
+    df_archive_cracking_obj_desc: 'HR protected a financial report with a weak password before accidentally uploading it to a public folder. Crack it offline to access the content.',
+    df_email_analysis_obj_desc: 'A colleague received a suspicious email from "HR" asking to verify their payroll details. Analyze the email headers to spot the phishing indicators and recover the attachment.',
+    df_browser_artifacts_obj_desc: 'A compromised workstation’s browsing history can reveal leaked credentials. Examine the browser’s SQLite file for suspicious URLs.',
+    df_log_analysis_obj_desc: 'A bastion host suffered a suspicious access attempt. Analyze its authentication log to identify the attack, the compromised user, and what the attacker did after logging in.',
+    df_pcap_credentials_obj_desc: 'Network traffic was captured from an unencrypted segment. Analyze the capture to extract credentials and data transmitted in plaintext.',
+    df_pcap_exfiltration_obj_desc: 'An endpoint shows an unusual volume of DNS queries toward an external domain. Reconstruct the exfiltrated data from the captured DNS requests.',
+    df_file_carving_obj_desc: 'A dump of unallocated sectors contains a file that was deleted but never overwritten. Locate its signature and recover it via carving.',
+    df_disk_timeline_obj_desc: 'A workstation has a file that was intentionally deleted. Use disk forensics tools to list deleted entries and recover their content.',
+    df_malware_strings_obj_desc: 'A suspicious binary appeared on a server. Statically analyze it with strings/YARA to identify indicators of compromise without ever running it.',
+    df_pe_analysis_obj_desc: 'An executable disguised as an invoice arrived by email. Statically analyze its PE headers to identify signs of malicious behavior.',
+    df_memory_process_obj_desc: 'A memory sample was extracted from a workstation. Locate the process that shouldn’t be there.',
+    df_memory_credentials_obj_desc: 'The same memory sample contains credentials that should never sit in plaintext. Find them before someone else does.',
     ad_env_title:        'Target machine',
     ad_env_realm_lbl:    'Domain',
     ad_env_dc_lbl:       'Domain Controller',
@@ -1703,3 +1793,52 @@ function submitLabFlag(labId) {
   })
   .catch(() => {});
 }
+
+// ── Forense Digital: preguntas guiadas ───────────────────────────
+function initForensicQuiz() {
+  document.addEventListener('click', (e) => {
+    const hintBtn = e.target.closest('.forensic-hint-btn');
+    if (hintBtn) {
+      const box = hintBtn.closest('.forensic-question').querySelector('.forensic-hint-box');
+      if (box) box.classList.toggle('hidden');
+      return;
+    }
+
+    const checkBtn = e.target.closest('.forensic-check-btn');
+    if (checkBtn) {
+      const wrap = checkBtn.closest('[data-forensic-quiz]');
+      const qBlock = checkBtn.closest('.forensic-question');
+      const input = qBlock.querySelector('.forensic-answer-input');
+      const result = qBlock.querySelector('.forensic-answer-result');
+      const answer = (input.value || '').trim();
+      if (!answer) return;
+
+      checkBtn.disabled = true;
+      fetch('/forensics/check-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lab_id: wrap.dataset.labId,
+          question_id: qBlock.dataset.questionId,
+          answer: answer
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        checkBtn.disabled = false;
+        if (data.error) { result.textContent = ''; return; }
+        if (data.correct) {
+          result.textContent = t('df_quiz_correct');
+          result.style.color = '#22c55e';
+          input.disabled = true;
+          qBlock.classList.add('forensic-question--solved');
+        } else {
+          result.textContent = t('df_quiz_incorrect');
+          result.style.color = '#ef4444';
+        }
+      })
+      .catch(() => { checkBtn.disabled = false; });
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', initForensicQuiz);

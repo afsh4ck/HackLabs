@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}DF 13 – Análisis de Cabeceras PE – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_pe_analysis_obj_desc">Un ejecutable disfrazado de factura llegó por correo. Analiza sus cabeceras PE de forma estática para identificar indicios de comportamiento malicioso.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Aviso</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400">Este ejecutable Windows es inofensivo — se generó específicamente para este laboratorio y solo imprime un mensaje de prueba. No lo ejecutes fuera de una VM aislada; el objetivo del lab es el análisis estático, no la ejecución.</p>
+  </div>
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">file Factura_Pendiente.exe
+strings Factura_Pendiente.exe | grep -iE "http|CurrentVersion"</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>El formato PE (Portable Executable) de Windows tiene una estructura de cabeceras bien documentada (DOS header, PE header, tabla de secciones, tabla de imports) que se puede parsear sin ejecutar el binario. Analizar esas cabeceras revela la arquitectura objetivo, las librerías/API que importa (comportamiento potencial) y cualquier cadena de texto embebida — todo ello sin correr ningún riesgo.</p>
+
+    <h3>2 · Confirmar que es un PE y su arquitectura</h3>
+    <pre>file Factura_Pendiente.exe
+# Factura_Pendiente.exe: PE32+ executable for MS Windows, x86-64, 18 sections</pre>
+    <p>Un supuesto visor de facturas no debería ser un ejecutable nativo de Windows de 64 bits.</p>
+
+    <h3>3 · Inspeccionar la cabecera PE con pefile</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+import pefile
+pe = pefile.PE('Factura_Pendiente.exe')
+print('Machine:', hex(pe.FILE_HEADER.Machine))   # 0x8664 = x86-64
+print('Sections:', [s.Name.decode().strip('\x00') for s in pe.sections])
+EOF</pre>
+    <p>También puedes usar <code>objdump -f Factura_Pendiente.exe</code> para ver el mismo campo <code>Machine</code> sin depender de Python.</p>
+
+    <h3>4 · Extraer cadenas sospechosas</h3>
+    <pre>strings Factura_Pendiente.exe | grep -iE "http|CurrentVersion\\\\Run"
+# SOFTWARE\Microsoft\Windows\CurrentVersion\Run\InvoiceHelper
+# https://update-cdn.attacker-infra.ru/beacon.php</pre>
+    <p>La clave de registro <code>...CurrentVersion\Run\...</code> es la ruta clásica de persistencia de Windows (ejecución automática al iniciar sesión), y la URL apunta a infraestructura externa de C2 — ninguna de las dos tiene sentido en un "visor de facturas".</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>strings Factura_Pendiente.exe | grep "HL{"</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Bloquear la ejecución de adjuntos <code>.exe</code> recibidos por correo a nivel de gateway.</li>
+      <li>AppLocker / Windows Defender Application Control para permitir solo binarios firmados y en rutas conocidas.</li>
+      <li>Monitorizar escrituras en claves <code>Run</code>/<code>RunOnce</code> del registro como señal de persistencia (Sysmon Event ID 13).</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">pefile</span> <span class="tools-badge">objdump</span> <span class="tools-badge">strings</span> <span class="tools-badge">CFF Explorer / PE-bear</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Windows' PE (Portable Executable) format has a well-documented header structure (DOS header, PE header, section table, import table) that can be parsed without running the binary. Analyzing those headers reveals the target architecture, the libraries/APIs it imports (potential behavior), and any embedded text strings — all without any execution risk.</p>
+
+    <h3>2 · Confirm it's a PE and its architecture</h3>
+    <pre>file Factura_Pendiente.exe
+# Factura_Pendiente.exe: PE32+ executable for MS Windows, x86-64, 18 sections</pre>
+    <p>A supposed invoice viewer shouldn't be a native 64-bit Windows executable.</p>
+
+    <h3>3 · Inspect the PE header with pefile</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+import pefile
+pe = pefile.PE('Factura_Pendiente.exe')
+print('Machine:', hex(pe.FILE_HEADER.Machine))   # 0x8664 = x86-64
+print('Sections:', [s.Name.decode().strip('\x00') for s in pe.sections])
+EOF</pre>
+    <p>You can also use <code>objdump -f Factura_Pendiente.exe</code> to see the same <code>Machine</code> field without relying on Python.</p>
+
+    <h3>4 · Extract suspicious strings</h3>
+    <pre>strings Factura_Pendiente.exe | grep -iE "http|CurrentVersion\\\\Run"
+# SOFTWARE\Microsoft\Windows\CurrentVersion\Run\InvoiceHelper
+# https://update-cdn.attacker-infra.ru/beacon.php</pre>
+    <p>The registry key <code>...CurrentVersion\Run\...</code> is Windows' classic persistence path (auto-run at logon), and the URL points to external C2 infrastructure — neither makes sense in an "invoice viewer".</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>strings Factura_Pendiente.exe | grep "HL{"</pre>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Block execution of <code>.exe</code> email attachments at the gateway level.</li>
+      <li>AppLocker / Windows Defender Application Control to allow only signed binaries in known paths.</li>
+      <li>Monitor writes to registry <code>Run</code>/<code>RunOnce</code> keys as a persistence signal (Sysmon Event ID 13).</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">pefile</span> <span class="tools-badge">objdump</span> <span class="tools-badge">strings</span> <span class="tools-badge">CFF Explorer / PE-bear</span></div>
+  </div>
+</div>
+{% endblock %}

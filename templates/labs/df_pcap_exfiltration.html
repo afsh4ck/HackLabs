@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}DF 09 – Exfiltración de Datos vía DNS – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_pcap_exfiltration_obj_desc">Un endpoint muestra un volumen inusual de consultas DNS hacia un dominio externo. Reconstruye los datos exfiltrados a partir de las peticiones DNS capturadas.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">tshark -r dns_traffic.pcap -Y "dns.flags.response==0" -T fields -e dns.qry.name</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>El tráfico DNS casi nunca se inspecciona ni se bloquea, porque es imprescindible para el funcionamiento normal de la red. Un atacante puede abusar de esto: codifica los datos que quiere robar como subdominios de consultas DNS (<em>DNS tunneling / exfiltration</em>) y las envía una a una a un dominio bajo su control — cada consulta parece tráfico DNS legítimo.</p>
+
+    <h3>2 · Listar las consultas DNS salientes</h3>
+    <pre>tshark -r dns_traffic.pcap -Y "dns.flags.response==0" -T fields -e frame.number -e dns.qry.name</pre>
+    <p>Todas comparten el mismo sufijo: <code>exfil.attacker-c2.net</code> — un dominio externo no relacionado con la infraestructura interna.</p>
+
+    <h3>3 · Extraer los fragmentos codificados</h3>
+    <pre>tshark -r dns_traffic.pcap -Y "dns.flags.response==0" -T fields -e dns.qry.name
+# 00-484c7b706c34...exfil.attacker-c2.net
+# 01-315f7433376337...exfil.attacker-c2.net
+# ...</pre>
+    <p>El primer campo de cada subdominio (<code>00-</code>, <code>01-</code>…) indica el orden del fragmento; el resto, antes del sufijo, es el dato exfiltrado codificado en hexadecimal.</p>
+
+    <h3>4 · Reconstruir el mensaje</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+from scapy.all import rdpcap, DNS, DNSQR
+pkts = rdpcap('dns_traffic.pcap')
+chunks = {}
+for p in pkts:
+    if p.haslayer(DNS) and p[DNS].qr == 0 and p.haslayer(DNSQR):
+        qname = p[DNSQR].qname.decode().rstrip('.')
+        idx, chunk = qname.split('.')[0].split('-')
+        chunks[int(idx)] = chunk
+hexstr = ''.join(chunks[i] for i in sorted(chunks))
+print(bytes.fromhex(hexstr).decode())
+EOF</pre>
+    <p>Concatenando los fragmentos en orden y decodificando de hexadecimal a texto se reconstruye el dato exfiltrado completo.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Monitorizar el tráfico DNS en busca de volumen anómalo de consultas, subdominios largos/aleatorios y dominios de baja reputación (DNS analytics / RPZ).</li>
+      <li>Restringir la resolución DNS a resolvers corporativos autorizados; bloquear DNS-over-HTTPS no gestionado que evite esa inspección.</li>
+      <li>Implementar egress filtering y alertar sobre patrones de tunneling conocidos (herramientas como <code>dnstop</code>, Zeek).</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">Wireshark</span> <span class="tools-badge">tshark</span> <span class="tools-badge">Scapy</span> <span class="tools-badge">Zeek</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>DNS traffic is almost never inspected or blocked, because it's essential for normal network operation. An attacker can abuse this: encode the data they want to steal as subdomains of DNS queries (<em>DNS tunneling / exfiltration</em>) and send them one by one to a domain they control — each query looks like legitimate DNS traffic.</p>
+
+    <h3>2 · List the outbound DNS queries</h3>
+    <pre>tshark -r dns_traffic.pcap -Y "dns.flags.response==0" -T fields -e frame.number -e dns.qry.name</pre>
+    <p>They all share the same suffix: <code>exfil.attacker-c2.net</code> — an external domain unrelated to the internal infrastructure.</p>
+
+    <h3>3 · Extract the encoded fragments</h3>
+    <pre>tshark -r dns_traffic.pcap -Y "dns.flags.response==0" -T fields -e dns.qry.name
+# 00-484c7b706c34...exfil.attacker-c2.net
+# 01-315f7433376337...exfil.attacker-c2.net
+# ...</pre>
+    <p>The first field of each subdomain (<code>00-</code>, <code>01-</code>…) indicates the fragment order; the rest, before the suffix, is the exfiltrated data hex-encoded.</p>
+
+    <h3>4 · Reconstruct the message</h3>
+    <pre>python3 - &lt;&lt;'EOF'
+from scapy.all import rdpcap, DNS, DNSQR
+pkts = rdpcap('dns_traffic.pcap')
+chunks = {}
+for p in pkts:
+    if p.haslayer(DNS) and p[DNS].qr == 0 and p.haslayer(DNSQR):
+        qname = p[DNSQR].qname.decode().rstrip('.')
+        idx, chunk = qname.split('.')[0].split('-')
+        chunks[int(idx)] = chunk
+hexstr = ''.join(chunks[i] for i in sorted(chunks))
+print(bytes.fromhex(hexstr).decode())
+EOF</pre>
+    <p>Concatenating the fragments in order and decoding from hex to text reconstructs the full exfiltrated data.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Monitor DNS traffic for anomalous query volume, long/random subdomains and low-reputation domains (DNS analytics / RPZ).</li>
+      <li>Restrict DNS resolution to authorized corporate resolvers; block unmanaged DNS-over-HTTPS that bypasses that inspection.</li>
+      <li>Implement egress filtering and alert on known tunneling patterns (tools like <code>dnstop</code>, Zeek).</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">Wireshark</span> <span class="tools-badge">tshark</span> <span class="tools-badge">Scapy</span> <span class="tools-badge">Zeek</span></div>
+  </div>
+</div>
+{% endblock %}

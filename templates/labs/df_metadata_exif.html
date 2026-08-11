@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}DF 02 – EXIF Metadata Analysis – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_metadata_exif_obj_desc">Una foto subida a la intranet corporativa revela más de lo que parece. Extrae sus metadatos EXIF para descubrir dónde y con qué dispositivo se tomó.</p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+  </div>
+
+  {% include 'labs/_forensic_evidence.html' %}
+  {% include 'labs/_forensic_questions.html' %}
+
+  <div class="hl-card mb-4">
+    <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">exiftool team_offsite.jpg</pre>
+  </div>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>1 · Por qué funciona</h3>
+    <p>Las cámaras y smartphones incrustan metadatos EXIF en cada JPEG: modelo de dispositivo, fecha, coordenadas GPS y, a veces, campos de comentario libre que alguien rellenó sin pensar en quién los vería después. Compartir una foto sin limpiar sus metadatos es una fuga de información habitual (geolocalización de instalaciones, identificación de dispositivos internos, etc.).</p>
+
+    <h3>2 · Volcar todos los metadatos</h3>
+    <pre>exiftool team_offsite.jpg</pre>
+    <p>Presta atención a los campos <code>GPS Latitude</code>, <code>GPS Longitude</code>, <code>Software</code>, <code>Artist</code> y <code>User Comment</code>.</p>
+
+    <h3>3 · Geolocalizar la foto</h3>
+    <pre>exiftool -GPSLatitude -GPSLongitude team_offsite.jpg
+# GPS Latitude  : 40 deg 25' 0.48" N
+# GPS Longitude : 3 deg 42' 13.68" W</pre>
+    <p>Esas coordenadas corresponden al centro de Madrid — información que probablemente no debería estar asociada a una foto pública del equipo.</p>
+
+    <h3>4 · Leer el comentario embebido</h3>
+    <pre>exiftool -UserComment team_offsite.jpg</pre>
+    <p>El campo <code>User Comment</code> contiene la flag.</p>
+
+    <h3>5 · Capturar la flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigación</h3>
+    <ul>
+      <li>Limpiar metadatos EXIF (<code>exiftool -all=</code>) antes de publicar cualquier imagen fuera de la organización.</li>
+      <li>Deshabilitar el guardado de GPS en cámaras/móviles corporativos, o hacerlo automáticamente en el pipeline de subida.</li>
+      <li>Auditar periódicamente las imágenes ya publicadas en busca de fugas de metadatos.</li>
+    </ul>
+
+    <h3>Herramientas</h3>
+    <div><span class="tools-badge">exiftool</span> <span class="tools-badge">ImageMagick identify</span></div>
+  </div>
+
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>1 · Why it works</h3>
+    <p>Cameras and smartphones embed EXIF metadata in every JPEG: device model, date, GPS coordinates and, sometimes, free-text comment fields someone filled in without thinking about who would see them later. Sharing a photo without stripping its metadata is a common information leak (facility geolocation, internal device fingerprinting, etc.).</p>
+
+    <h3>2 · Dump all metadata</h3>
+    <pre>exiftool team_offsite.jpg</pre>
+    <p>Pay attention to the <code>GPS Latitude</code>, <code>GPS Longitude</code>, <code>Software</code>, <code>Artist</code> and <code>User Comment</code> fields.</p>
+
+    <h3>3 · Geolocate the photo</h3>
+    <pre>exiftool -GPSLatitude -GPSLongitude team_offsite.jpg
+# GPS Latitude  : 40 deg 25' 0.48" N
+# GPS Longitude : 3 deg 42' 13.68" W</pre>
+    <p>Those coordinates point to central Madrid — information that probably shouldn't be attached to a public team photo.</p>
+
+    <h3>4 · Read the embedded comment</h3>
+    <pre>exiftool -UserComment team_offsite.jpg</pre>
+    <p>The <code>User Comment</code> field holds the flag.</p>
+
+    <h3>5 · Capture the flag</h3>
+    <pre>HL{···}</pre>
+
+    <h3>Mitigation</h3>
+    <ul>
+      <li>Strip EXIF metadata (<code>exiftool -all=</code>) before publishing any image outside the organization.</li>
+      <li>Disable GPS tagging on corporate cameras/phones, or strip it automatically in the upload pipeline.</li>
+      <li>Periodically audit already-published images for metadata leaks.</li>
+    </ul>
+
+    <h3>Tools</h3>
+    <div><span class="tools-badge">exiftool</span> <span class="tools-badge">ImageMagick identify</span></div>
+  </div>
+</div>
+{% endblock %}

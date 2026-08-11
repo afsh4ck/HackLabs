@@ -1,0 +1,53 @@
+Aug 10 03:03:00 bastion sshd[2211]: Failed password for invalid user git from 198.51.100.77 port 40000 ssh2
+Aug 10 03:03:02 bastion sshd[2211]: Failed password for invalid user ftpuser from 198.51.100.77 port 40001 ssh2
+Aug 10 03:03:04 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40002 ssh2
+Aug 10 03:03:06 bastion sshd[2211]: Failed password for invalid user backup-svc from 198.51.100.77 port 40003 ssh2
+Aug 10 03:03:08 bastion sshd[2211]: Failed password for invalid user backup-svc from 198.51.100.77 port 40004 ssh2
+Aug 10 03:03:10 bastion sshd[2211]: Failed password for invalid user ftpuser from 198.51.100.77 port 40005 ssh2
+Aug 10 03:03:12 bastion sshd[2211]: Failed password for invalid user ubuntu from 198.51.100.77 port 40006 ssh2
+Aug 10 03:03:14 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40007 ssh2
+Aug 10 03:03:16 bastion sshd[2211]: Failed password for invalid user deploy from 198.51.100.77 port 40008 ssh2
+Aug 10 03:03:18 bastion sshd[2211]: Failed password for invalid user www-data from 198.51.100.77 port 40009 ssh2
+Aug 10 03:03:20 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40010 ssh2
+Aug 10 03:03:22 bastion sshd[2211]: Failed password for invalid user oracle from 198.51.100.77 port 40011 ssh2
+Aug 10 03:03:24 bastion sshd[2211]: Failed password for invalid user deploy from 198.51.100.77 port 40012 ssh2
+Aug 10 03:03:26 bastion sshd[2211]: Failed password for invalid user ftpuser from 198.51.100.77 port 40013 ssh2
+Aug 10 03:03:28 bastion sshd[2211]: Failed password for invalid user test from 198.51.100.77 port 40014 ssh2
+Aug 10 03:03:30 bastion sshd[2211]: Failed password for invalid user www-data from 198.51.100.77 port 40015 ssh2
+Aug 10 03:03:32 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40016 ssh2
+Aug 10 03:03:34 bastion sshd[2211]: Failed password for invalid user admin from 198.51.100.77 port 40017 ssh2
+Aug 10 03:03:36 bastion sshd[2211]: Failed password for invalid user deploy from 198.51.100.77 port 40018 ssh2
+Aug 10 03:03:38 bastion sshd[2211]: Failed password for invalid user www-data from 198.51.100.77 port 40019 ssh2
+Aug 10 03:03:40 bastion sshd[2211]: Failed password for invalid user deploy from 198.51.100.77 port 40020 ssh2
+Aug 10 03:03:42 bastion sshd[2211]: Failed password for invalid user admin from 198.51.100.77 port 40021 ssh2
+Aug 10 03:03:44 bastion sshd[2211]: Failed password for invalid user git from 198.51.100.77 port 40022 ssh2
+Aug 10 03:03:46 bastion sshd[2211]: Failed password for invalid user ftpuser from 198.51.100.77 port 40023 ssh2
+Aug 10 03:03:48 bastion sshd[2211]: Failed password for invalid user www-data from 198.51.100.77 port 40024 ssh2
+Aug 10 03:03:50 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40025 ssh2
+Aug 10 03:03:52 bastion sshd[2211]: Failed password for invalid user deploy from 198.51.100.77 port 40026 ssh2
+Aug 10 03:03:54 bastion sshd[2211]: Failed password for invalid user deploy from 198.51.100.77 port 40027 ssh2
+Aug 10 03:03:56 bastion sshd[2211]: Failed password for invalid user ftpuser from 198.51.100.77 port 40028 ssh2
+Aug 10 03:03:58 bastion sshd[2211]: Failed password for invalid user oracle from 198.51.100.77 port 40029 ssh2
+Aug 10 03:04:00 bastion sshd[2211]: Failed password for invalid user www-data from 198.51.100.77 port 40030 ssh2
+Aug 10 03:04:02 bastion sshd[2211]: Failed password for invalid user root from 198.51.100.77 port 40031 ssh2
+Aug 10 03:04:04 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40032 ssh2
+Aug 10 03:04:06 bastion sshd[2211]: Failed password for invalid user backup-svc from 198.51.100.77 port 40033 ssh2
+Aug 10 03:04:08 bastion sshd[2211]: Failed password for invalid user admin from 198.51.100.77 port 40034 ssh2
+Aug 10 03:04:10 bastion sshd[2211]: Failed password for invalid user jenkins from 198.51.100.77 port 40035 ssh2
+Aug 10 03:04:12 bastion sshd[2211]: Failed password for invalid user test from 198.51.100.77 port 40036 ssh2
+Aug 10 03:04:14 bastion sshd[2211]: Failed password for invalid user ubuntu from 198.51.100.77 port 40037 ssh2
+Aug 10 03:04:16 bastion sshd[2211]: Failed password for invalid user postgres from 198.51.100.77 port 40038 ssh2
+Aug 10 03:04:18 bastion sshd[2211]: Failed password for invalid user www-data from 198.51.100.77 port 40039 ssh2
+Aug 10 03:04:20 bastion sshd[2211]: Failed password for invalid user ftpuser from 198.51.100.77 port 40040 ssh2
+Aug 10 03:04:22 bastion sshd[2211]: Failed password for invalid user backup-svc from 198.51.100.77 port 40041 ssh2
+Aug 10 03:04:24 bastion sshd[2211]: Failed password for invalid user jenkins from 198.51.100.77 port 40042 ssh2
+Aug 10 03:04:26 bastion sshd[2211]: Failed password for invalid user backup-svc from 198.51.100.77 port 40043 ssh2
+Aug 10 03:04:28 bastion sshd[2211]: Failed password for invalid user oracle from 198.51.100.77 port 40044 ssh2
+Aug 10 03:04:30 bastion sshd[2211]: Failed password for invalid user test from 198.51.100.77 port 40045 ssh2
+Aug 10 03:04:32 bastion sshd[2211]: Failed password for invalid user git from 198.51.100.77 port 40046 ssh2
+Aug 10 03:04:34 bastion sshd[2211]: Failed password for invalid user admin from 198.51.100.77 port 40047 ssh2
+Aug 10 03:04:40 bastion sshd[2211]: Accepted password for backup-svc from 198.51.100.77 port 51322 ssh2
+Aug 10 03:04:41 bastion sshd[2211]: pam_unix(sshd:session): session opened for user backup-svc by (uid=0)
+Aug 10 03:04:59 bastion audit[2211]: CMD="cat /srv/secrets/flag_df07.txt" cwd=/home/backup-svc uid=backup-svc
+Aug 10 03:04:59 bastion audit[2211]: OUTPUT="HL{55h_bru73f0rc3_r3c0n57ruc73d}"
+Aug 10 03:05:01 bastion sshd[2211]: pam_unix(sshd:session): session closed for user backup-svc

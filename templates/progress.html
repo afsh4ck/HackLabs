@@ -42,6 +42,36 @@
   'prompt_leaking':    'ph-eye',
   'llm_exfil':         'ph-export',
   'ai_supply_chain':   'ph-share-network',
+  'ad_smb_enum':        'ph-network',
+  'ad_ldap_enum':       'ph-tree-structure',
+  'ad_password_spray':  'ph-spray-bottle',
+  'ad_asrep_roast':     'ph-fire-simple',
+  'ad_kerberoast':      'ph-ticket',
+  'ad_gpp_passwords':   'ph-file-lock',
+  'ad_bloodhound':      'ph-graph',
+  'ad_acl_genericall':  'ph-user-switch',
+  'ad_acl_writemember': 'ph-users-three',
+  'ad_dcsync':          'ph-cloud-arrow-down',
+  'ad_pth':             'ph-hash',
+  'ad_silver_ticket':   'ph-ticket',
+  'ad_golden_ticket':   'ph-crown-simple',
+  'ad_delegation':      'ph-arrows-left-right',
+  'ad_machine_quota':   'ph-desktop-tower',
+  'df_file_signatures':    'ph-fingerprint',
+  'df_metadata_exif':      'ph-map-pin',
+  'df_steganography':      'ph-image',
+  'df_archive_cracking':   'ph-lock-key',
+  'df_email_analysis':     'ph-envelope-simple-open',
+  'df_browser_artifacts':  'ph-globe',
+  'df_log_analysis':       'ph-file-text',
+  'df_pcap_credentials':   'ph-wifi-high',
+  'df_pcap_exfiltration':  'ph-cloud-arrow-up',
+  'df_file_carving':       'ph-scissors',
+  'df_disk_timeline':      'ph-clock-counter-clockwise',
+  'df_malware_strings':    'ph-bug',
+  'df_pe_analysis':        'ph-warning-octagon',
+  'df_memory_process':     'ph-cpu',
+  'df_memory_credentials': 'ph-key',
 } %}
 {% set xp_map = {'critical': 300, 'high': 200, 'medium': 100} %}
 {% set total_labs = labs|length %}
@@ -119,20 +149,24 @@
   </div>
 
   <!-- ── Stats ── -->
-  {% set completed_by_cat = namespace(owasp=0, vulns=0, ia=0) %}
+  {% set completed_by_cat = namespace(owasp=0, vulns=0, ia=0, ad=0, forensics=0) %}
   {% set pending_critical = namespace(n=0) %}
   {% for l in labs %}
     {% if l.id in completed %}
       {% if l.category == 'OWASP Top 10' %}{% set completed_by_cat.owasp = completed_by_cat.owasp + 1 %}{% endif %}
       {% if l.category == 'Vulnerabilidades' %}{% set completed_by_cat.vulns = completed_by_cat.vulns + 1 %}{% endif %}
       {% if l.category == 'AI Attacks' %}{% set completed_by_cat.ia = completed_by_cat.ia + 1 %}{% endif %}
+      {% if l.category == 'Active Directory' %}{% set completed_by_cat.ad = completed_by_cat.ad + 1 %}{% endif %}
+      {% if l.category == 'Forense Digital' %}{% set completed_by_cat.forensics = completed_by_cat.forensics + 1 %}{% endif %}
     {% else %}
       {% if l.risk == 'critical' %}{% set pending_critical.n = pending_critical.n + 1 %}{% endif %}
     {% endif %}
   {% endfor %}
-  {% set owasp_total = labs | selectattr('category','equalto','OWASP Top 10')     | list | length %}
-  {% set vulns_total = labs | selectattr('category','equalto','Vulnerabilidades')  | list | length %}
-  {% set ia_total    = labs | selectattr('category','equalto','AI Attacks')        | list | length %}
+  {% set owasp_total      = labs | selectattr('category','equalto','OWASP Top 10')     | list | length %}
+  {% set vulns_total      = labs | selectattr('category','equalto','Vulnerabilidades')  | list | length %}
+  {% set ia_total         = labs | selectattr('category','equalto','AI Attacks')        | list | length %}
+  {% set ad_total         = labs | selectattr('category','equalto','Active Directory')  | list | length %}
+  {% set forensics_total  = labs | selectattr('category','equalto','Forense Digital')   | list | length %}
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
     <div class="progress-stat-card">
@@ -201,11 +235,13 @@
   {% endif %}
 
   <!-- Category mini bars -->
-  <div class="grid grid-cols-3 gap-3 mb-6">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
     {% for cat, cat_i18n, done, total, color in [
-      ('OWASP Top 10',     'cat_owasp_top_10',      completed_by_cat.owasp, owasp_total, '#ef4444'),
-      ('Vulnerabilidades', 'cat_vulnerabilidades',  completed_by_cat.vulns, vulns_total, '#f97316'),
-      ('AI Attacks',       'cat_ia_attacks',        completed_by_cat.ia,    ia_total,    'var(--hl-primary)'),
+      ('OWASP Top 10',     'cat_owasp_top_10',      completed_by_cat.owasp,     owasp_total,     '#ef4444'),
+      ('Vulnerabilidades', 'cat_vulnerabilidades',  completed_by_cat.vulns,     vulns_total,     '#f97316'),
+      ('AI Attacks',       'cat_ia_attacks',        completed_by_cat.ia,        ia_total,        'var(--hl-primary)'),
+      ('Active Directory', 'cat_active_directory',  completed_by_cat.ad,        ad_total,        '#38bdf8'),
+      ('Forense Digital',  'cat_forense_digital',   completed_by_cat.forensics, forensics_total, '#a78bfa'),
     ] %}
     <div class="progress-stat-card" style="text-align:left;padding:.9rem 1rem">
       <div class="flex items-center justify-between mb-2">
@@ -259,7 +295,13 @@
 
   <!-- ── Lab grid ── -->
   {% set risk_color = {'critical': '#ef4444', 'high': '#f97316', 'medium': '#f59e0b'} %}
-  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'AI Attacks': 'var(--hl-primary)'} %}
+  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'AI Attacks': 'var(--hl-primary)',
+                        'Active Directory': '#38bdf8', 'Forense Digital': '#a78bfa'} %}
+  {% set cat_bg     = {'OWASP Top 10': '239,68,68', 'Vulnerabilidades': '249,115,22', 'AI Attacks': '206,255,0',
+                        'Active Directory': '56,189,248', 'Forense Digital': '167,139,250'} %}
+  {% set cat_i18n_map = {'OWASP Top 10': 'cat_owasp_top_10', 'Vulnerabilidades': 'cat_vulnerabilidades',
+                          'AI Attacks': 'cat_ia_attacks', 'Active Directory': 'cat_active_directory',
+                          'Forense Digital': 'cat_forense_digital'} %}
 
   <div class="space-y-2" id="progress-lab-list">
     {% for l in labs %}
@@ -271,7 +313,7 @@
 
       <!-- Icon -->
       <div class="prog-lab-icon"
-           style="background:rgba({{ '206,255,0' if l.category == 'AI Attacks' else ('239,68,68' if l.category == 'OWASP Top 10' else '249,115,22') }},.1)">
+           style="background:rgba({{ cat_bg.get(l.category, '249,115,22') }},.1)">
         <i class="ph {{ lab_icons.get(l.id, 'ph-shield') }} text-sm"
            style="color:{{ cat_color.get(l.category, 'var(--hl-primary)') }}"></i>
       </div>
@@ -282,7 +324,7 @@
           <span class="text-xs font-semibold text-gray-200 truncate">{{ l.title }}</span>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          {% set cat_i18n = 'cat_owasp_top_10' if l.category == 'OWASP Top 10' else ('cat_vulnerabilidades' if l.category == 'Vulnerabilidades' else 'cat_ia_attacks') %}
+          {% set cat_i18n = cat_i18n_map.get(l.category, 'cat_vulnerabilidades') %}
           <span class="text-xs text-gray-600" data-i18n="{{ cat_i18n }}">{{ l.category }}</span>
           <span class="text-xs px-1.5 py-0 rounded font-mono risk-badge-{{ l.risk }}" style="font-size:10px">{{ l.risk }}</span>
           <span class="text-xs font-semibold" style="color:{{ risk_color.get(l.risk,'#fff') }}">+{{ xp_map.get(l.risk, 100) }} XP</span>
