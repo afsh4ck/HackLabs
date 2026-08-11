@@ -223,6 +223,7 @@ if [[ $DEPLOY_AD -eq 1 ]]; then
         -e AD_ADMIN_PASSWORD="$AD_ADMIN_PASSWORD" \
         -v hacklabs_dc_state:/var/lib/samba \
         -v hacklabs_dc_conf:/etc/samba \
+        -v hacklabs_dc_shares:/srv/shares \
         "$DC_IMAGE_NAME" > /dev/null; then
 
         echo -n "${GREEN}[+]${NC} Provisionando el dominio ${AD_REALM}"

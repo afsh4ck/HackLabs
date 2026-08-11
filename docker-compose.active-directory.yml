@@ -49,7 +49,9 @@ services:
     volumes:
       - hacklabs_dc_state:/var/lib/samba
       - hacklabs_dc_conf:/etc/samba
+      - hacklabs_dc_shares:/srv/shares
 
 volumes:
   hacklabs_dc_state:
   hacklabs_dc_conf:
+  hacklabs_dc_shares:
