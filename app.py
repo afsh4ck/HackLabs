@@ -650,6 +650,8 @@ _LEVEL_NAMES = ['Script Kiddie', 'Apprentice', 'Hacker', 'Pentester',
                 'Red Teamer', 'Elite Hacker', 'Expert', 'Master']
 _LEVEL_ICONS = ['ph-graduation-cap', 'ph-sword', 'ph-bug', 'ph-crosshair',
                 'ph-target', 'ph-skull', 'ph-flame', 'ph-crown']
+_LEVEL_COLORS = ['#6b7280', '#3b82f6', '#CEFF00', '#f97316',
+                 '#ef4444', '#a855f7', '#f59e0b', '#f59e0b']
 _XP_MAP      = {'critical': 300, 'high': 200, 'medium': 100}
 
 
@@ -1316,6 +1318,42 @@ def progress_page():
     )
 
 
+@app.route('/progress/levels')
+def progress_levels():
+    app_user = session.get('app_user')
+    app_type = session.get('app_user_type')
+    if not app_user or app_type != 'account':
+        return redirect('/account/login?next=/progress/levels')
+
+    db = get_db()
+    labs = get_lab_list()
+    rows = db.execute('SELECT lab_id FROM user_progress WHERE account_username=?', (app_user,)).fetchall()
+    completed_ids = {r['lab_id'] for r in rows}
+
+    max_xp = sum(_XP_MAP.get(l['risk'], 100) for l in labs)
+    total_xp = sum(_XP_MAP.get(l['risk'], 100) for l in labs if l['id'] in completed_ids)
+    thresholds = [round(max_xp * p) for p in _LEVEL_PCTS]
+    current_level, _ = _compute_level(completed_ids, labs)
+
+    levels = []
+    for i, name in enumerate(_LEVEL_NAMES):
+        levels.append({
+            'index': i,
+            'name': name,
+            'xp_required': thresholds[i],
+            'pct_required': round(_LEVEL_PCTS[i] * 100),
+            'reached': total_xp >= thresholds[i],
+            'current': i == current_level,
+        })
+
+    return render_template('progress_levels.html',
+        levels=levels,
+        total_xp=total_xp,
+        max_xp=max_xp,
+        current_level=current_level,
+    )
+
+
 @app.route('/certificate/view')
 def download_completion_certificate():
     app_user = session.get('app_user')
@@ -1951,6 +1989,8 @@ def inject_labs():
         'is_progress_user': is_progress_user,
         'forensic_evidence': _forensic_evidence_meta(),
         'forensic_questions': get_lab_questions_map(),
+        'level_icons': _LEVEL_ICONS,
+        'level_colors': _LEVEL_COLORS,
         **_ad_environment(),
     }
 
@@ -4007,10 +4047,6 @@ def ensure_account_table():
     columns = {row['name'] for row in db.execute('PRAGMA table_info(account_users)').fetchall()}
     if 'certificate_name' not in columns:
         db.execute('ALTER TABLE account_users ADD COLUMN certificate_name TEXT')
-    if 'reset_token' not in columns:
-        db.execute('ALTER TABLE account_users ADD COLUMN reset_token TEXT')
-    if 'reset_token_expires' not in columns:
-        db.execute('ALTER TABLE account_users ADD COLUMN reset_token_expires TEXT')
     db.commit()
 
 @app.route('/account/register', methods=['GET', 'POST'])
@@ -4091,63 +4127,34 @@ def account_login():
     return render_template('account/login.html', error=error, next=next_url, reset_ok=reset_ok)
 
 
-@app.route('/account/forgot-password', methods=['GET', 'POST'])
-def account_forgot_password():
-    sent = False
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        ensure_account_table()
-        db = get_db()
-        user = db.execute('SELECT * FROM account_users WHERE email=?', (email,)).fetchone()
-        if user:
-            token = secrets.token_urlsafe(32)
-            expires = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)).isoformat()
-            db.execute('UPDATE account_users SET reset_token=?, reset_token_expires=? WHERE id=?',
-                       (token, expires, user['id']))
-            db.commit()
-            reset_url = url_for('account_reset_password', token=token, _external=True)
-            print(f'[+] Password reset solicitado para "{user["username"]}" — enlace válido 30 min: {reset_url}')
-        # Respuesta genérica exista o no la cuenta, para no filtrar qué emails están registrados.
-        sent = True
-    return render_template('account/forgot_password.html', sent=sent)
-
-
-@app.route('/account/reset-password/<token>', methods=['GET', 'POST'])
-def account_reset_password(token):
-    ensure_account_table()
-    db = get_db()
-    user = db.execute('SELECT * FROM account_users WHERE reset_token=?', (token,)).fetchone()
-
-    invalid = True
-    if user and user['reset_token_expires']:
-        try:
-            expires_dt = datetime.datetime.fromisoformat(user['reset_token_expires'])
-            invalid = datetime.datetime.now(datetime.timezone.utc) > expires_dt
-        except ValueError:
-            invalid = True
-
-    if invalid:
-        return render_template('account/reset_password.html', invalid=True, token=token)
-
+@app.route('/account/reset-password', methods=['GET', 'POST'])
+def account_reset_password():
+    # HackLabs se ejecuta en local para un único usuario por máquina: no hay
+    # verificación por email ni token, el reseteo es directo por nombre de
+    # usuario (no se envía ningún email, la app no tiene servidor de correo).
     error = None
     if request.method == 'POST':
+        username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
         confirm  = request.form.get('confirm', '')
-        if not password or len(password) < 6:
+
+        ensure_account_table()
+        db = get_db()
+        user = db.execute('SELECT * FROM account_users WHERE username=?', (username,)).fetchone()
+
+        if not user:
+            error = 'No existe ninguna cuenta con ese usuario.'
+        elif not password or len(password) < 6:
             error = 'La contraseña debe tener al menos 6 caracteres.'
         elif password != confirm:
             error = 'Las contraseñas no coinciden.'
         else:
             pw_hash = hashlib.sha256(password.encode()).hexdigest()
-            db.execute(
-                'UPDATE account_users SET password_hash=?, reset_token=NULL, reset_token_expires=NULL WHERE id=?',
-                (pw_hash, user['id'])
-            )
+            db.execute('UPDATE account_users SET password_hash=? WHERE id=?', (pw_hash, user['id']))
             db.commit()
             return redirect(url_for('account_login', reset='ok'))
 
-    return render_template('account/reset_password.html', invalid=False, token=token,
-                            error=error, username=user['username'])
+    return render_template('account/reset_password.html', error=error)
 
 
 @app.route('/account/logout')

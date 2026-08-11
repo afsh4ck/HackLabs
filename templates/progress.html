@@ -81,9 +81,6 @@
 {% set level_xp_done  = total_xp - current_threshold %}
 {% set level_pct = ((level_xp_done / level_xp_range * 100) | round(1)) if level_xp_range > 0 else 100 %}
 
-{% set level_icons = ['ph-graduation-cap','ph-sword','ph-bug','ph-crosshair','ph-target','ph-skull','ph-flame','ph-crown'] %}
-{% set level_colors = ['#6b7280','#3b82f6','#CEFF00','#f97316','#ef4444','#a855f7','#f59e0b','#f59e0b'] %}
-
 <div class="p-6 lg:p-8 max-w-5xl mx-auto">
 
   <!-- Breadcrumb -->
@@ -145,6 +142,13 @@
           </span>
         </div>
       </div>
+    </div>
+    <div class="flex justify-end mt-4">
+      <a href="/progress/levels" class="text-xs font-semibold inline-flex items-center gap-1 transition hover:opacity-80" style="color:var(--hl-primary)">
+        <span class="lang-content" data-lang="es">Ver todos los niveles</span>
+        <span class="lang-content" data-lang="en" style="display:none">View all levels</span>
+        <i class="ph ph-arrow-right text-xs"></i>
+      </a>
     </div>
   </div>
 

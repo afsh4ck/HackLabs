@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Niveles – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 lg:p-8 max-w-3xl mx-auto">
+
+  <!-- Breadcrumb -->
+  <nav class="text-xs text-gray-400 mb-6 flex items-center gap-2">
+    <a href="/" class="hover:opacity-70 transition" style="color:var(--hl-primary)" data-i18n="home">Inicio</a>
+    <i class="ph ph-caret-right text-gray-600" style="font-size:10px"></i>
+    <a href="/progress" class="hover:opacity-70 transition" data-i18n="nav_progress">Mi progreso</a>
+    <i class="ph ph-caret-right text-gray-600" style="font-size:10px"></i>
+    <span class="text-gray-300 font-semibold">
+      <span class="lang-content" data-lang="es">Niveles</span>
+      <span class="lang-content" data-lang="en" style="display:none">Levels</span>
+    </span>
+  </nav>
+
+  <div class="mb-8">
+    <h1 class="font-bold text-2xl text-gray-900 dark:text-white mb-2 logo-text">
+      <span class="lang-content" data-lang="es">Roadmap de niveles</span>
+      <span class="lang-content" data-lang="en" style="display:none">Level roadmap</span>
+    </h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      <span class="lang-content" data-lang="es">Tu progreso actual: <strong style="color:var(--hl-primary)">{{ total_xp }} XP</strong> de {{ max_xp }} XP totales.</span>
+      <span class="lang-content" data-lang="en" style="display:none">Your current progress: <strong style="color:var(--hl-primary)">{{ total_xp }} XP</strong> out of {{ max_xp }} total XP.</span>
+    </p>
+  </div>
+
+  <div class="flex flex-col">
+    {% for lvl in levels %}
+    <div class="flex gap-4">
+      <!-- Nodo + línea conectora -->
+      <div class="flex flex-col items-center flex-shrink-0" style="width:56px">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center border-2 flex-shrink-0"
+             style="border-color:{{ level_colors[lvl.index] }};
+                    background:{{ 'rgba(0,0,0,.4)' if lvl.reached else 'rgba(255,255,255,.03)' }};
+                    {% if lvl.current %}box-shadow:0 0 20px {{ level_colors[lvl.index] }}66;{% endif %}
+                    opacity:{{ '1' if lvl.reached else '0.4' }}">
+          <i class="ph {{ level_icons[lvl.index] }} text-2xl" style="color:{{ level_colors[lvl.index] }}"></i>
+        </div>
+        {% if not loop.last %}
+        <div style="width:2px;flex:1;min-height:2.5rem;margin:4px 0;
+                    background:{{ level_colors[lvl.index] if levels[loop.index0 + 1].reached else 'rgba(255,255,255,.08)' }}"></div>
+        {% endif %}
+      </div>
+
+      <!-- Info del nivel -->
+      <div class="flex-1 pb-8 pt-2 {% if loop.last %}pb-0{% endif %}">
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <span class="font-bold text-sm" style="color:{{ level_colors[lvl.index] if lvl.reached else '#6b7280' }}">
+            Lv.{{ lvl.index + 1 }} — {{ lvl.name }}
+          </span>
+          {% if lvl.current %}
+          <span class="text-xs px-2 py-0.5 rounded-full font-bold" style="background:{{ level_colors[lvl.index] }};color:#000">
+            <span class="lang-content" data-lang="es">Nivel actual</span>
+            <span class="lang-content" data-lang="en" style="display:none">Current level</span>
+          </span>
+          {% elif lvl.reached %}
+          <i class="ph ph-check-circle" style="color:#4ade80;font-size:14px"></i>
+          {% else %}
+          <i class="ph ph-lock-simple text-gray-600" style="font-size:14px"></i>
+          {% endif %}
+        </div>
+        <p class="text-xs text-gray-500">
+          <span class="lang-content" data-lang="es">{{ lvl.xp_required }} XP requeridos <span class="text-gray-600">({{ lvl.pct_required }}% del total)</span></span>
+          <span class="lang-content" data-lang="en" style="display:none">{{ lvl.xp_required }} XP required <span class="text-gray-600">({{ lvl.pct_required }}% of total)</span></span>
+        </p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-2">
+    <a href="/progress" class="text-xs font-medium transition hover:opacity-80 inline-flex items-center gap-1" style="color:var(--hl-primary)">
+      <i class="ph ph-arrow-left text-xs"></i>
+      <span class="lang-content" data-lang="es">Volver a mi progreso</span>
+      <span class="lang-content" data-lang="en" style="display:none">Back to my progress</span>
+    </a>
+  </div>
+
+</div>
+{% endblock %}
