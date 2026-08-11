@@ -62,11 +62,28 @@ INFO: Found 2 gpos
 INFO: Compressing output into &lt;timestamp&gt;_bloodhound.zip</pre>
     <p><code>-c DCOnly</code> solo consulta LDAP (no abre sesiones SMB contra equipos), así que es lo único que necesita el wrapper. El recolector integrado de netexec (<code>nxc ldap --bloodhound</code>) sigue sin funcionar contra este DC — falla el mismo bind NTLM que el resto de módulos <code>nxc ldap</code> (ver AD 02); usa siempre el wrapper de arriba.</p>
 
-    <h3>3 · Importar y consultar en BloodHound CE</h3>
-    <pre># BloodHound CE (Docker) — https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound
-curl -L https://ghst.ly/getbhce -o docker-compose.yml
-docker compose up -d
-# → http://localhost:8080  (Administration → File Ingest → sube el .zip)</pre>
+    <h3>3 · Instalar y levantar BloodHound CE</h3>
+    <p>Guía completa: <a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound" target="_blank" rel="noopener">afsh4ck.gitbook.io — BloodHound</a>. Instala Docker si no lo tienes:</p>
+    <pre>sudo apt install docker.io docker-compose -y
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Añadir tu usuario al grupo docker (evita tener que usar sudo con cada comando)
+sudo usermod -aG docker $USER
+sudo reboot</pre>
+    <p><strong>Este paso es necesario</strong>: hay que reiniciar el equipo para que el usuario quede aplicado al grupo <code>docker</code>, o los pasos siguientes fallarán con errores de permisos.</p>
+    <p>Descarga e instala BloodHound CE con <code>bloodhound-cli</code> (el instalador oficial de SpecterOps, sustituye al antiguo método de <code>docker-compose.yml</code> suelto):</p>
+    <pre>mkdir Bloodhound && cd Bloodhound
+wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz
+tar -xvzf bloodhound-cli-linux-amd64.tar.gz
+
+./bloodhound-cli -h          # menú de ayuda
+./bloodhound-cli install     # levanta los contenedores y crea el usuario admin
+docker ps                    # confirmar que los contenedores están arriba</pre>
+    <p><code>bloodhound-cli install</code> imprime en la terminal la contraseña generada para el usuario <code>admin</code> — apúntala, solo se muestra una vez. Para parar/levantar los contenedores más adelante:</p>
+    <pre>./bloodhound-cli containers down
+./bloodhound-cli containers up</pre>
+    <p>Accede a la interfaz en <a href="http://127.0.0.1:8080/ui/login" target="_blank" rel="noopener">http://127.0.0.1:8080/ui/login</a> con <code>admin</code> y la contraseña que te dio la terminal, y sube el <code>.zip</code> en <em>Administration → File Ingest</em>.</p>
     <p>Marca <code>svc.readonly</code> como <em>Owned</em> y lanza las consultas prefabricadas:</p>
     <ul>
       <li><strong>Find Shortest Paths to Domain Admins</strong></li>
@@ -134,11 +151,28 @@ INFO: Found 2 gpos
 INFO: Compressing output into &lt;timestamp&gt;_bloodhound.zip</pre>
     <p><code>-c DCOnly</code> only queries LDAP (no SMB sessions against member hosts), which is exactly what the wrapper needs. netexec's built-in collector (<code>nxc ldap --bloodhound</code>) still doesn't work against this DC — it hits the same NTLM bind failure as every other <code>nxc ldap</code> module (see AD 02); always use the wrapper above.</p>
 
-    <h3>3 · Import and query in BloodHound CE</h3>
-    <pre># BloodHound CE (Docker) — https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound
-curl -L https://ghst.ly/getbhce -o docker-compose.yml
-docker compose up -d
-# → http://localhost:8080  (Administration → File Ingest → upload the .zip)</pre>
+    <h3>3 · Install and start BloodHound CE</h3>
+    <p>Full guide: <a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound" target="_blank" rel="noopener">afsh4ck.gitbook.io — BloodHound</a>. Install Docker if you don't have it:</p>
+    <pre>sudo apt install docker.io docker-compose -y
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add your user to the docker group (avoids needing sudo for every command)
+sudo usermod -aG docker $USER
+sudo reboot</pre>
+    <p><strong>This step is required</strong>: you need to reboot for your user's docker group membership to take effect, or the next steps will fail with permission errors.</p>
+    <p>Download and install BloodHound CE with <code>bloodhound-cli</code> (SpecterOps' official installer, replaces the older standalone <code>docker-compose.yml</code> method):</p>
+    <pre>mkdir Bloodhound && cd Bloodhound
+wget https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz
+tar -xvzf bloodhound-cli-linux-amd64.tar.gz
+
+./bloodhound-cli -h          # help menu
+./bloodhound-cli install     # brings up the containers and creates the admin user
+docker ps                    # confirm the containers are up</pre>
+    <p><code>bloodhound-cli install</code> prints the generated password for the <code>admin</code> user to the terminal — save it, it's only shown once. To stop/start the containers later:</p>
+    <pre>./bloodhound-cli containers down
+./bloodhound-cli containers up</pre>
+    <p>Log into the UI at <a href="http://127.0.0.1:8080/ui/login" target="_blank" rel="noopener">http://127.0.0.1:8080/ui/login</a> with <code>admin</code> and the password the terminal gave you, and upload the <code>.zip</code> under <em>Administration → File Ingest</em>.</p>
     <p>Mark <code>svc.readonly</code> as <em>Owned</em> and run the prebuilt queries:</p>
     <ul>
       <li><strong>Find Shortest Paths to Domain Admins</strong></li>
