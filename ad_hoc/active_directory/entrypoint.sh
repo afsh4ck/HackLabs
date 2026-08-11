@@ -27,11 +27,21 @@ echo ''
 echo '   [!] Máquina INTENCIONADAMENTE vulnerable. Solo en redes aisladas.'
 echo ''
 
+SHARES_MARKER=/srv/shares/public/flag-ad-01.txt
+
 if [ ! -f "$MARKER" ]; then
     echo '  [*] Primer arranque: provisionando el dominio (puede tardar ~1 min)...'
     /provision.sh
     touch "$MARKER"
     echo '  [+] Dominio provisionado.'
+elif [ ! -f "$SHARES_MARKER" ]; then
+    # El dominio ya está provisionado (/var/lib/samba y /etc/samba
+    # persistidos), pero /srv/shares vive en un volumen Docker aparte y
+    # está vacío/incompleto — p.ej. porque se recreó el contenedor sin
+    # recrear ese volumen a la vez que los otros dos. Autorreparar sin
+    # tocar el dominio AD ya existente.
+    echo '  [*] Dominio provisionado pero recursos compartidos ausentes: regenerando /srv/shares...'
+    /provision.sh --shares-only
 else
     echo '  [*] Dominio ya provisionado, reutilizando la base de datos existente.'
 fi

@@ -5,6 +5,16 @@
 # Crea el dominio HACKLABS.LOCAL con 15 debilidades, una por cada
 # laboratorio de la categoría "Active Directory".
 # Se ejecuta UNA sola vez, en el primer arranque del contenedor.
+#
+# Uso:
+#   provision.sh               → provisión completa (dominio + shares)
+#   provision.sh --shares-only → solo repuebla /srv/shares y su sección
+#                                 de smb.conf, sin tocar samba-tool ni el
+#                                 AD. Pensado para que entrypoint.sh pueda
+#                                 autorreparar /srv/shares si algún día ese
+#                                 volumen se recrea vacío mientras
+#                                 /var/lib/samba y /etc/samba persisten
+#                                 (volúmenes Docker independientes).
 # ──────────────────────────────────────────────────────────────────
 set -e
 
@@ -20,124 +30,12 @@ HOST_LOWER=$(echo "$DCHOST" | tr '[:upper:]' '[:lower:]')
 FQDN="${HOST_LOWER}.${REALM_LOWER}"
 SHARES=/srv/shares
 
-# ── 1. Provisión del dominio ──────────────────────────────────────
-echo '  [*] samba-tool domain provision...'
-rm -f /etc/samba/smb.conf
-samba-tool domain provision \
-    --use-rfc2307 \
-    --realm="$REALM" \
-    --domain="$DOMAIN" \
-    --server-role=dc \
-    --dns-backend=SAMBA_INTERNAL \
-    --host-name="$DCHOST" \
-    --host-ip="$IP" \
-    --adminpass="$ADMINPW" \
-    --option="dns forwarder=$FORWARDER" \
-    >/dev/null
-
-ln -sf /var/lib/samba/private/krb5.conf /etc/krb5.conf
-
-# ── 2. Endurecimiento… al revés (configuración insegura a propósito) ──
-echo '  [*] Aplicando configuración insegura del servidor...'
-python3 - <<'PYEOF'
-import re
-path = '/etc/samba/smb.conf'
-extra = """
-	# ── HackLabs: opciones deliberadamente inseguras ──
-	ntlm auth = yes
-	ldap server require strong auth = no
-	map to guest = Bad User
-	guest account = nobody
-	restrict anonymous = 0
-	log level = 0
-"""
-with open(path) as fh:
-    conf = fh.read()
-conf = re.sub(r'(?m)^\[global\]\s*$', '[global]\n' + extra.rstrip(), conf, count=1)
-with open(path, 'w') as fh:
-    fh.write(conf)
-PYEOF
-
-# ── 3. Política de contraseñas débil (sin complejidad, sin bloqueo) ──
-echo '  [*] Debilitando la política de contraseñas...'
-samba-tool domain passwordsettings set \
-    --complexity=off --history-length=0 \
-    --min-pwd-age=0 --max-pwd-age=0 --min-pwd-length=1 >/dev/null
-samba-tool domain passwordsettings set --account-lockout-threshold=0 >/dev/null
-
-# ── 4. Usuarios del dominio ───────────────────────────────────────
-echo '  [*] Creando usuarios del dominio...'
-mkuser() {  # mkuser <sam> <password> <given> <surname> [description]
-    samba-tool user create "$1" "$2" \
-        --given-name="$3" --surname="$4" \
-        --description="${5:-}" >/dev/null
-}
-
-mkuser 'svc.readonly'  'ReadOnly123!'      'Service' 'ReadOnly'   'Cuenta de servicio de solo lectura para inventario'
-mkuser 'j.smith'       'Password123'       'John'    'Smith'      'Sales department'
-mkuser 'm.wilson'      'Autumn2023!'       'Mary'    'Wilson'     'Marketing department'
-mkuser 'p.taylor'      'Chang3M3!'         'Peter'   'Taylor'     'Logistics department'
-mkuser 't.rodriguez'   'Welcome2024!'      'Tomas'   'Rodriguez'  'Cuenta temporal'
-mkuser 'svc.backup'    'Welcome1'          'Service' 'Backup'     'Backup service account (legacy Kerberos)'
-mkuser 'svc.mssql'     'ranger'            'Service' 'MSSQL'      'SQL Server service account'
-mkuser 'svc.delegate'  'iloveyou1'         'Service' 'Delegate'   'Front-end web service account'
-mkuser 'gpp.deploy'    'GPPstillStandingStrong2k18'   'GPP'     'Deploy'     'Cuenta de despliegue usada por GPO'
-mkuser 'h.jones'       'Sup3rS3cur3!2024'  'Helen'   'Jones'      'Helpdesk supervisor'
-mkuser 'm.davis'       'Xk9#mQ2$vL8wR3zP'  'Michael' 'Davis'      'Human Resources'
-mkuser 'a.miller'      'Rr7$kW1pZ4tB9nGh'  'Anna'    'Miller'     'Finance department'
-
-# La cuenta Guest habilitada permite sesiones nulas / anónimas
-samba-tool user enable Guest >/dev/null 2>&1 || true
-
-# ── 5. Grupos y anidamiento (camino de ataque para BloodHound) ────
-echo '  [*] Creando grupos y anidamientos...'
-for g in 'IT Support' 'Helpdesk' 'TIER0-LEGACY' 'Finance'; do
-    samba-tool group add "$g" >/dev/null
-done
-
-samba-tool group addmembers 'Helpdesk'      'h.jones'      >/dev/null
-samba-tool group addmembers 'TIER0-LEGACY'  'Helpdesk'     >/dev/null
-samba-tool group addmembers 'Domain Admins' 'TIER0-LEGACY' >/dev/null
-samba-tool group addmembers 'Finance'       'a.miller'     >/dev/null
-
-# ── 6. SPNs (cuentas kerberoasteables) ────────────────────────────
-echo '  [*] Registrando SPNs...'
-samba-tool spn add "MSSQLSvc/${FQDN}:1433" 'svc.mssql'   >/dev/null
-samba-tool spn add "HTTP/web.${REALM_LOWER}" 'svc.delegate' >/dev/null
-
-# ── 7. Ajustes de bajo nivel: UAC, delegación, atributos con flags ──
-echo '  [*] Aplicando atributos vulnerables (UAC, delegación, descripciones)...'
-eval "$(python3 /seed_domain.py)"
-
-# ── 7b. MachineAccountQuota utilizable: delega creación de equipos ────
-# Por defecto ms-DS-MachineAccountQuota=10, pero el ACL por defecto de
-# Samba en CN=Computers es más estricto que el de un AD real de Windows.
-# Se concede CreateChild(computer) a "Authenticated Users" para que la
-# cuota tenga efecto real (delegación habitual en dominios de producción).
-samba-tool dsacl set \
-    --objectdn="CN=Computers,${DN_BASE}" \
-    --sddl="(OA;;CC;bf967a86-0de6-11d0-a285-00aa003049e2;;AU)" >/dev/null
-
-# ── 8. ACLs abusables sobre objetos del directorio ────────────────
-echo '  [*] Delegando ACLs inseguras...'
-
-# svc.readonly → GenericAll sobre m.davis (permite resetear su contraseña)
-samba-tool dsacl set \
-    --objectdn="${DN_M_DAVIS}" \
-    --sddl="(A;;GA;;;${SID_SVC_READONLY})" >/dev/null
-
-# svc.readonly → WriteProperty sobre el atributo 'member' de "IT Support"
-samba-tool dsacl set \
-    --objectdn="${DN_IT_SUPPORT}" \
-    --sddl="(OA;;WP;bf9679c0-0de6-11d0-a285-00aa003049e2;;${SID_SVC_READONLY})" >/dev/null
-
-# "IT Support" → derechos de replicación (DCSync) sobre el dominio
-samba-tool dsacl set \
-    --objectdn="${DN_BASE}" \
-    --sddl="(OA;;CR;1131f6aa-9c07-11d1-f79f-00c04fc2dcd2;;${SID_IT_SUPPORT})(OA;;CR;1131f6ad-9c07-11d1-f79f-00c04fc2dcd2;;${SID_IT_SUPPORT})(OA;;CR;89e95b76-444d-4c62-991a-0facbeda640c;;${SID_IT_SUPPORT})" \
-    >/dev/null
-
-# ── 9. Recursos compartidos con las flags ─────────────────────────
+# ── populate_shares: puebla /srv/shares y su sección de smb.conf ──
+# Solo depende de que el dominio YA esté provisionado (usa samba-tool
+# sobre la base de datos existente para leer hashes reales) — no crea
+# usuarios/grupos/ACLs ni toca seed_domain.py, así que es seguro
+# reejecutarla contra un dominio ya vivo.
+populate_shares() {
 echo '  [*] Publicando recursos compartidos y flags...'
 mkdir -p "$SHARES"/{public,jsmith,backup,sqldata,deploy,hr_private,it_share,secrets,finance,silver,vault,deleg,computers}
 
@@ -269,6 +167,10 @@ chown -R root:root "$SHARES"
 find "$SHARES" -type d -exec chmod 0755 {} +
 find "$SHARES" -type f -exec chmod 0644 {} +
 
+# Idempotente: si smb.conf ya tiene la sección [public] (p.ej. porque
+# /etc/samba persistió en su propio volumen mientras /srv/shares no),
+# no la duplicamos.
+if ! grep -q '^\[public\]' /etc/samba/smb.conf 2>/dev/null; then
 cat >> /etc/samba/smb.conf <<EOF
 
 # ──────────────────────────────────────────────────────────────
@@ -365,8 +267,9 @@ cat >> /etc/samba/smb.conf <<EOF
 	browseable = yes
 	valid users = @"$DOMAIN\\Domain Computers"
 EOF
+fi
 
-# ── 10. GPO con cpassword en SYSVOL (MS14-025) ────────────────────
+# ── GPO con cpassword en SYSVOL (MS14-025) ────────────────────────
 echo '  [*] Plantando GPP cpassword en SYSVOL...'
 GPO_GUID='{A2B3C4D5-1E6F-4A7B-8C9D-0E1F2A3B4C5D}'
 GPO_DIR="/var/lib/samba/sysvol/${REALM_LOWER}/Policies/${GPO_GUID}"
@@ -401,5 +304,133 @@ cat > "${GPO_DIR}/Machine/Preferences/Groups/Groups.xml" <<'EOF'
 EOF
 
 chmod -R 0755 "$GPO_DIR"
+}
+
+# ── Modo --shares-only: autorreparación, no toca el dominio AD ────
+if [ "$1" = "--shares-only" ]; then
+    populate_shares
+    echo '  [+] Recursos compartidos regenerados.'
+    exit 0
+fi
+
+# ── 1. Provisión del dominio ──────────────────────────────────────
+echo '  [*] samba-tool domain provision...'
+rm -f /etc/samba/smb.conf
+samba-tool domain provision \
+    --use-rfc2307 \
+    --realm="$REALM" \
+    --domain="$DOMAIN" \
+    --server-role=dc \
+    --dns-backend=SAMBA_INTERNAL \
+    --host-name="$DCHOST" \
+    --host-ip="$IP" \
+    --adminpass="$ADMINPW" \
+    --option="dns forwarder=$FORWARDER" \
+    >/dev/null
+
+ln -sf /var/lib/samba/private/krb5.conf /etc/krb5.conf
+
+# ── 2. Endurecimiento… al revés (configuración insegura a propósito) ──
+echo '  [*] Aplicando configuración insegura del servidor...'
+python3 - <<'PYEOF'
+import re
+path = '/etc/samba/smb.conf'
+extra = """
+	# ── HackLabs: opciones deliberadamente inseguras ──
+	ntlm auth = yes
+	ldap server require strong auth = no
+	map to guest = Bad User
+	guest account = nobody
+	restrict anonymous = 0
+	log level = 0
+"""
+with open(path) as fh:
+    conf = fh.read()
+conf = re.sub(r'(?m)^\[global\]\s*$', '[global]\n' + extra.rstrip(), conf, count=1)
+with open(path, 'w') as fh:
+    fh.write(conf)
+PYEOF
+
+# ── 3. Política de contraseñas débil (sin complejidad, sin bloqueo) ──
+echo '  [*] Debilitando la política de contraseñas...'
+samba-tool domain passwordsettings set \
+    --complexity=off --history-length=0 \
+    --min-pwd-age=0 --max-pwd-age=0 --min-pwd-length=1 >/dev/null
+samba-tool domain passwordsettings set --account-lockout-threshold=0 >/dev/null
+
+# ── 4. Usuarios del dominio ───────────────────────────────────────
+echo '  [*] Creando usuarios del dominio...'
+mkuser() {  # mkuser <sam> <password> <given> <surname> [description]
+    samba-tool user create "$1" "$2" \
+        --given-name="$3" --surname="$4" \
+        --description="${5:-}" >/dev/null
+}
+
+mkuser 'svc.readonly'  'ReadOnly123!'      'Service' 'ReadOnly'   'Cuenta de servicio de solo lectura para inventario'
+mkuser 'j.smith'       'Password123'       'John'    'Smith'      'Sales department'
+mkuser 'm.wilson'      'Autumn2023!'       'Mary'    'Wilson'     'Marketing department'
+mkuser 'p.taylor'      'Chang3M3!'         'Peter'   'Taylor'     'Logistics department'
+mkuser 't.rodriguez'   'Welcome2024!'      'Tomas'   'Rodriguez'  'Cuenta temporal'
+mkuser 'svc.backup'    'Welcome1'          'Service' 'Backup'     'Backup service account (legacy Kerberos)'
+mkuser 'svc.mssql'     'ranger'            'Service' 'MSSQL'      'SQL Server service account'
+mkuser 'svc.delegate'  'iloveyou1'         'Service' 'Delegate'   'Front-end web service account'
+mkuser 'gpp.deploy'    'GPPstillStandingStrong2k18'   'GPP'     'Deploy'     'Cuenta de despliegue usada por GPO'
+mkuser 'h.jones'       'Sup3rS3cur3!2024'  'Helen'   'Jones'      'Helpdesk supervisor'
+mkuser 'm.davis'       'Xk9#mQ2$vL8wR3zP'  'Michael' 'Davis'      'Human Resources'
+mkuser 'a.miller'      'Rr7$kW1pZ4tB9nGh'  'Anna'    'Miller'     'Finance department'
+
+# La cuenta Guest habilitada permite sesiones nulas / anónimas
+samba-tool user enable Guest >/dev/null 2>&1 || true
+
+# ── 5. Grupos y anidamiento (camino de ataque para BloodHound) ────
+echo '  [*] Creando grupos y anidamientos...'
+for g in 'IT Support' 'Helpdesk' 'TIER0-LEGACY' 'Finance'; do
+    samba-tool group add "$g" >/dev/null
+done
+
+samba-tool group addmembers 'Helpdesk'      'h.jones'      >/dev/null
+samba-tool group addmembers 'TIER0-LEGACY'  'Helpdesk'     >/dev/null
+samba-tool group addmembers 'Domain Admins' 'TIER0-LEGACY' >/dev/null
+samba-tool group addmembers 'Finance'       'a.miller'     >/dev/null
+
+# ── 6. SPNs (cuentas kerberoasteables) ────────────────────────────
+echo '  [*] Registrando SPNs...'
+samba-tool spn add "MSSQLSvc/${FQDN}:1433" 'svc.mssql'   >/dev/null
+samba-tool spn add "HTTP/web.${REALM_LOWER}" 'svc.delegate' >/dev/null
+
+# ── 7. Ajustes de bajo nivel: UAC, delegación, atributos con flags ──
+echo '  [*] Aplicando atributos vulnerables (UAC, delegación, descripciones)...'
+eval "$(python3 /seed_domain.py)"
+
+# ── 7b. MachineAccountQuota utilizable: delega creación de equipos ────
+# Por defecto ms-DS-MachineAccountQuota=10, pero el ACL por defecto de
+# Samba en CN=Computers es más estricto que el de un AD real de Windows.
+# Se concede CreateChild(computer) a "Authenticated Users" para que la
+# cuota tenga efecto real (delegación habitual en dominios de producción).
+samba-tool dsacl set \
+    --objectdn="CN=Computers,${DN_BASE}" \
+    --sddl="(OA;;CC;bf967a86-0de6-11d0-a285-00aa003049e2;;AU)" >/dev/null
+
+# ── 8. ACLs abusables sobre objetos del directorio ────────────────
+echo '  [*] Delegando ACLs inseguras...'
+
+# svc.readonly → GenericAll sobre m.davis (permite resetear su contraseña)
+samba-tool dsacl set \
+    --objectdn="${DN_M_DAVIS}" \
+    --sddl="(A;;GA;;;${SID_SVC_READONLY})" >/dev/null
+
+# svc.readonly → WriteProperty sobre el atributo 'member' de "IT Support"
+samba-tool dsacl set \
+    --objectdn="${DN_IT_SUPPORT}" \
+    --sddl="(OA;;WP;bf9679c0-0de6-11d0-a285-00aa003049e2;;${SID_SVC_READONLY})" >/dev/null
+
+# "IT Support" → derechos de replicación (DCSync) sobre el dominio
+samba-tool dsacl set \
+    --objectdn="${DN_BASE}" \
+    --sddl="(OA;;CR;1131f6aa-9c07-11d1-f79f-00c04fc2dcd2;;${SID_IT_SUPPORT})(OA;;CR;1131f6ad-9c07-11d1-f79f-00c04fc2dcd2;;${SID_IT_SUPPORT})(OA;;CR;89e95b76-444d-4c62-991a-0facbeda640c;;${SID_IT_SUPPORT})" \
+    >/dev/null
+
+# ── 9-10. Recursos compartidos, flags y GPO con cpassword ─────────
+populate_shares
 
 echo '  [+] Provisión completada.'

