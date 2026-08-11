@@ -8,11 +8,11 @@
   <div class="forensic-question mb-4 pb-4" style="border-bottom:1px solid rgba(255,255,255,.06)" data-question-id="{{ q.id }}">
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 lang-content" data-lang="es">{{ loop.index }}. {{ q.prompt_es }}</p>
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 lang-content" data-lang="en" style="display:none">{{ loop.index }}. {{ q.prompt_en }}</p>
-    <div class="flex flex-wrap items-center gap-2">
-      <input type="text" class="forensic-answer-input text-xs px-2.5 py-1.5 rounded-lg" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)">
-      <button type="button" class="forensic-check-btn text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--hl-primary);color:#07101e" data-i18n="df_quiz_check">Comprobar</button>
-      <button type="button" class="forensic-hint-btn text-xs px-2.5 py-1.5 rounded-lg" style="background:rgba(255,255,255,.06)" data-i18n="df_quiz_hint_btn">💡 Pista</button>
-      <span class="forensic-answer-result text-xs font-semibold"></span>
+    <div class="flex items-center gap-2">
+      <input type="text" class="forensic-answer-input flex-1 min-w-0 text-xs px-2.5 py-1.5 rounded-lg" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)">
+      <button type="button" class="forensic-check-btn shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold" style="background:var(--hl-primary);color:#07101e" data-i18n="df_quiz_check">Comprobar</button>
+      <button type="button" class="forensic-hint-btn shrink-0 text-xs px-2.5 py-1.5 rounded-lg" style="background:rgba(255,255,255,.06)" data-i18n="df_quiz_hint_btn">💡 Pista</button>
+      <span class="forensic-answer-result shrink-0 text-xs font-semibold"></span>
     </div>
     <div class="forensic-hint-box hidden mt-2">
       <p class="text-xs text-gray-400 lang-content" data-lang="es">💡 {{ q.hint_es | safe }}</p>
