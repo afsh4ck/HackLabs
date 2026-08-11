@@ -987,6 +987,23 @@ pre.hljs-block .hljs {
   transition: background 0.12s, color 0.12s;
 }
 
+/* Botón "Descargar evidencia" (labs Forense Digital): línea amarilla por
+   defecto, relleno amarillo sólido en hover. Selector más específico que
+   ".hl-card a:hover" de arriba para que no le pise el padding/radius y
+   "encoja" el botón al pasar el ratón (bug real, ya corregido). */
+.df-evidence-download-btn {
+  color: var(--hl-primary);
+  background: transparent;
+  border: 1px solid var(--hl-primary);
+}
+.hl-card a.df-evidence-download-btn:hover {
+  color: #07101e;
+  background: var(--hl-primary);
+  border-color: var(--hl-primary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
 /* ── Progress ring (navbar) ─────────────────────────────────── */
 .progress-ring-wrap {
   position: relative;

@@ -5,7 +5,7 @@
 
   {% if _ev %}
   <div class="flex flex-wrap items-center gap-3 mb-2">
-    <a href="/forensics/download/{{ lab.id }}" class="text-xs px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5" style="background:var(--hl-primary);color:#07101e">
+    <a href="/forensics/download/{{ lab.id }}" class="df-evidence-download-btn text-xs px-3 py-1.5 rounded-lg font-semibold inline-flex items-center gap-1.5">
       <i class="ph ph-download-simple"></i> <span data-i18n="df_evidence_download_btn">Descargar evidencia</span>
     </a>
     <span class="text-xs text-gray-500"><span data-i18n="df_evidence_filename_lbl">Fichero</span>: <code class="text-xs">{{ _ev.filename }}</code></span>
