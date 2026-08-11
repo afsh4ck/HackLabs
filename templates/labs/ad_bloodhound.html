@@ -14,42 +14,59 @@
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400">Los colectores estándar de BloodHound (bloodhound-python, SharpHound) autentican por LDAP con NTLM o Kerberos, y el Samba de este laboratorio corta esa negociación (limitación conocida de Samba AD DC). La <strong>ruta de ataque es real</strong> y el flag se captura con enumeración LDAP manual (bind simple, que sí funciona) — exactamente lo que BloodHound automatiza por debajo.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400">Los colectores de BloodHound autentican por LDAP con NTLM (<code>ldap3</code>/Sicily bind, que Samba no implementa) o Kerberos (que aquí falla por un bug real de Samba al firmar el PAC del ticket <code>ldap/{{ ad_dc_host|lower }}</code>). <strong>Ninguno de los dos es un límite insalvable</strong>: el bind LDAP <em>simple</em> (usuario+contraseña en claro) sí funciona de forma fiable contra este DC — el mismo mecanismo que ya usan <code>ldapsearch</code>/<code>bloodyAD</code> en el resto de labs. Descarga <code>bloodhound_simple_bind.py</code> del share <code>public</code>: es un wrapper de <code>bloodhound-ce-python</code> que fuerza ese bind, y con <code>-c DCOnly</code> (solo LDAP, sin tocar SMB en equipos) hace una recolección <strong>completa y real</strong> contra este dominio.</p>
   </div>
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Recolectar el dominio (comando real, contra Windows funciona así)
-bloodhound-python -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
-  -ns {{ ad_dc_ip }} -c All --zip
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Entorno aislado + BloodHound CE (evita romper el bloodhound.py legacy de apt)
+python3 -m venv ~/bhce-venv && ~/bhce-venv/bin/pip install bloodhound-ce
 
-# En este laboratorio, usa enumeración LDAP manual (ver guía completa)
-ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
-  -b 'DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}' \
-  '(sAMAccountName=TIER0-LEGACY)' info memberOf</pre>
+# Descargar el wrapper que arregla el bind LDAP contra este DC
+smbclient -N //{{ ad_dc_ip }}/public -c 'get bloodhound_simple_bind.py'
+
+# Recolectar de verdad (funciona en vivo)
+~/bhce-venv/bin/python bloodhound_simple_bind.py -d {{ ad_realm_lower }} \
+  -u svc.readonly -p 'ReadOnly123!' -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} -c DCOnly --zip</pre>
   </div>
 </div>
 
 <div id="resolution-data" class="hidden">
   <div class="lang-content" data-lang="es">
-    <h3>1 · Recolectar el dominio</h3>
-    <p>El colector no necesita privilegios: con cualquier cuenta de dominio lee la información de LDAP y SMB.</p>
-    <pre># Asegúrate de que el DNS del dominio resuelve (o usa -ns)
-bloodhound-python -d {{ ad_realm_lower }} \
+    <h3>1 · Por qué el colector estándar falla aquí (y cómo se arregla)</h3>
+    <p><code>bloodhound-python</code>/<code>bloodhound-ce-python</code> solo saben autenticar en LDAP con NTLM o Kerberos (código fuente: <code>bloodhound/ad/authentication.py</code>, método <code>getLDAPConnection</code>). Contra este DC:</p>
+    <ul>
+      <li><strong>NTLM</strong> — <code>ldap3</code> usa un bind Sicily que Samba no implementa: <code>LDAPSessionTerminatedByServerError</code> (mismo fallo que <code>nxc ldap</code>, ver AD 02).</li>
+      <li><strong>Kerberos</strong> — el bind SASL/GSSAPI necesita un TGS-REQ para <code>ldap/{{ ad_dc_host|lower }}</code>; el KDC de Samba falla al firmar el PAC de ese ticket con <code>KRB_AP_ERR_INAPP_CKSUM</code> — un bug real de Samba, verificado en vivo, no de las herramientas cliente.</li>
+    </ul>
+    <p>El <strong>bind LDAP simple</strong> (DN/UPN + contraseña en claro, sin NTLM ni Kerberos) sí funciona siempre contra este DC. <code>bloodhound_simple_bind.py</code> es un monkeypatch de <code>getLDAPConnection</code> que fuerza ese bind — no toca nada del resto del colector, así que la recolección de usuarios, grupos, ACLs, GPOs y containers es 100% real.</p>
+
+    <h3>2 · Recolectar el dominio</h3>
+    <pre># Entorno aislado para no chocar con el paquete bloodhound.py (legacy) de apt
+python3 -m venv ~/bhce-venv
+~/bhce-venv/bin/pip install bloodhound-ce
+
+# El wrapper vive en el share público del DC
+smbclient -N //{{ ad_dc_ip }}/public -c 'get bloodhound_simple_bind.py'
+
+~/bhce-venv/bin/python bloodhound_simple_bind.py -d {{ ad_realm_lower }} \
   -u 'svc.readonly' -p 'ReadOnly123!' \
   -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} \
-  -c All --zip</pre>
-    <p>Si <code>-c All</code> falla por el módulo de sesiones (necesita SMB en los equipos), usa <code>-c DCOnly</code>: para este dominio es suficiente. El recolector integrado de netexec (<code>nxc ldap --bloodhound</code>) <strong>no funciona</strong> contra este DC — falla el mismo bind NTLM que el resto de módulos <code>nxc ldap</code> (ver AD 02).</p>
+  -c DCOnly --zip</pre>
+    <pre>INFO: BloodHound.py for BloodHound Community Edition
+INFO: Found AD domain: {{ ad_realm_lower }}
+INFO: Found 16 users
+INFO: Found 46 groups
+INFO: Found 2 gpos
+...
+INFO: Compressing output into &lt;timestamp&gt;_bloodhound.zip</pre>
+    <p><code>-c DCOnly</code> solo consulta LDAP (no abre sesiones SMB contra equipos), así que es lo único que necesita el wrapper. El recolector integrado de netexec (<code>nxc ldap --bloodhound</code>) sigue sin funcionar contra este DC — falla el mismo bind NTLM que el resto de módulos <code>nxc ldap</code> (ver AD 02); usa siempre el wrapper de arriba.</p>
 
-    <h3>2 · Importar y consultar</h3>
-    <pre># BloodHound CE (Docker)
+    <h3>3 · Importar y consultar en BloodHound CE</h3>
+    <pre># BloodHound CE (Docker) — https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound
 curl -L https://ghst.ly/getbhce -o docker-compose.yml
 docker compose up -d
-# → http://localhost:8080  (Administration → File Ingest → sube el .zip)
-
-# BloodHound legacy
-sudo neo4j console &
-bloodhound</pre>
+# → http://localhost:8080  (Administration → File Ingest → sube el .zip)</pre>
     <p>Marca <code>svc.readonly</code> como <em>Owned</em> y lanza las consultas prefabricadas:</p>
     <ul>
       <li><strong>Find Shortest Paths to Domain Admins</strong></li>
@@ -57,7 +74,7 @@ bloodhound</pre>
       <li><strong>Find Principals with DCSync Rights</strong></li>
     </ul>
 
-    <h3>3 · Leer el grafo</h3>
+    <h3>4 · Leer el grafo</h3>
     <p>El camino que aparece es:</p>
     <pre>h.jones ──MemberOf──► HELPDESK ──MemberOf──► TIER0-LEGACY ──MemberOf──► DOMAIN ADMINS</pre>
     <p>Un grupo heredado (<code>TIER0-LEGACY</code>) sigue anidado dentro de Domain Admins, así que <em>todos</em> los miembros de Helpdesk son administradores de dominio efectivos sin que nadie lo haya pretendido. Esta anidación transitiva es exactamente lo que BloodHound existe para encontrar y lo que una revisión manual de grupos casi nunca detecta.</p>
@@ -66,7 +83,7 @@ bloodhound</pre>
   (u:User)-[:MemberOf|AdminTo*1..]->(g:Group {name:'DOMAIN ADMINS@{{ ad_realm }}'})
 ) RETURN p</pre>
 
-    <h3>4 · Capturar la flag</h3>
+    <h3>5 · Capturar la flag</h3>
     <p>La flag está en el atributo <code>info</code> (Notas) del grupo que rompe la jerarquía:</p>
     <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(sAMAccountName=TIER0-LEGACY)' info
@@ -84,28 +101,44 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     </ul>
 
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">bloodhound-python</span> <span class="tools-badge">BloodHound CE</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">SharpHound</span></div>
+    <div><span class="tools-badge">bloodhound-ce-python</span> <span class="tools-badge">BloodHound CE</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">SharpHound</span></div>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
-    <h3>1 · Collect the domain</h3>
-    <p>The collector needs no privileges: any domain account can read the LDAP and SMB information it wants.</p>
-    <pre># Make sure domain DNS resolves (or use -ns)
-bloodhound-python -d {{ ad_realm_lower }} \
+    <h3>1 · Why the standard collector fails here (and how it's fixed)</h3>
+    <p><code>bloodhound-python</code>/<code>bloodhound-ce-python</code> only know how to authenticate to LDAP with NTLM or Kerberos (source: <code>bloodhound/ad/authentication.py</code>, method <code>getLDAPConnection</code>). Against this DC:</p>
+    <ul>
+      <li><strong>NTLM</strong> — <code>ldap3</code> uses a Sicily bind Samba doesn't implement: <code>LDAPSessionTerminatedByServerError</code> (same failure as <code>nxc ldap</code>, see AD 02).</li>
+      <li><strong>Kerberos</strong> — the SASL/GSSAPI bind needs a TGS-REQ for <code>ldap/{{ ad_dc_host|lower }}</code>; Samba's KDC fails to sign that ticket's PAC with <code>KRB_AP_ERR_INAPP_CKSUM</code> — a real, live-verified Samba bug, not a client-tooling issue.</li>
+    </ul>
+    <p><strong>Simple LDAP bind</strong> (DN/UPN + cleartext password, no NTLM or Kerberos) always works against this DC. <code>bloodhound_simple_bind.py</code> is a monkeypatch of <code>getLDAPConnection</code> that forces that bind — it doesn't touch anything else in the collector, so the resulting users/groups/ACLs/GPOs/containers are 100% real.</p>
+
+    <h3>2 · Collect the domain</h3>
+    <pre># Isolated environment so we don't clash with apt's legacy bloodhound.py package
+python3 -m venv ~/bhce-venv
+~/bhce-venv/bin/pip install bloodhound-ce
+
+# The wrapper lives on the DC's public share
+smbclient -N //{{ ad_dc_ip }}/public -c 'get bloodhound_simple_bind.py'
+
+~/bhce-venv/bin/python bloodhound_simple_bind.py -d {{ ad_realm_lower }} \
   -u 'svc.readonly' -p 'ReadOnly123!' \
   -ns {{ ad_dc_ip }} -dc {{ ad_dc_fqdn }} \
-  -c All --zip</pre>
-    <p>If <code>-c All</code> fails on the session module (it needs SMB on member hosts), use <code>-c DCOnly</code>: it is enough for this domain. netexec's built-in collector (<code>nxc ldap --bloodhound</code>) <strong>does not work</strong> against this DC — it hits the same NTLM bind failure as every other <code>nxc ldap</code> module (see AD 02).</p>
+  -c DCOnly --zip</pre>
+    <pre>INFO: BloodHound.py for BloodHound Community Edition
+INFO: Found AD domain: {{ ad_realm_lower }}
+INFO: Found 16 users
+INFO: Found 46 groups
+INFO: Found 2 gpos
+...
+INFO: Compressing output into &lt;timestamp&gt;_bloodhound.zip</pre>
+    <p><code>-c DCOnly</code> only queries LDAP (no SMB sessions against member hosts), which is exactly what the wrapper needs. netexec's built-in collector (<code>nxc ldap --bloodhound</code>) still doesn't work against this DC — it hits the same NTLM bind failure as every other <code>nxc ldap</code> module (see AD 02); always use the wrapper above.</p>
 
-    <h3>2 · Import and query</h3>
-    <pre># BloodHound CE (Docker)
+    <h3>3 · Import and query in BloodHound CE</h3>
+    <pre># BloodHound CE (Docker) — https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound
 curl -L https://ghst.ly/getbhce -o docker-compose.yml
 docker compose up -d
-# → http://localhost:8080  (Administration → File Ingest → upload the .zip)
-
-# Legacy BloodHound
-sudo neo4j console &
-bloodhound</pre>
+# → http://localhost:8080  (Administration → File Ingest → upload the .zip)</pre>
     <p>Mark <code>svc.readonly</code> as <em>Owned</em> and run the prebuilt queries:</p>
     <ul>
       <li><strong>Find Shortest Paths to Domain Admins</strong></li>
@@ -113,7 +146,7 @@ bloodhound</pre>
       <li><strong>Find Principals with DCSync Rights</strong></li>
     </ul>
 
-    <h3>3 · Read the graph</h3>
+    <h3>4 · Read the graph</h3>
     <p>The path that shows up is:</p>
     <pre>h.jones ──MemberOf──► HELPDESK ──MemberOf──► TIER0-LEGACY ──MemberOf──► DOMAIN ADMINS</pre>
     <p>A legacy group (<code>TIER0-LEGACY</code>) is still nested inside Domain Admins, so <em>every</em> Helpdesk member is an effective domain admin without anyone intending it. This transitive nesting is exactly what BloodHound exists to surface and what a manual group review almost never catches.</p>
@@ -122,7 +155,7 @@ bloodhound</pre>
   (u:User)-[:MemberOf|AdminTo*1..]->(g:Group {name:'DOMAIN ADMINS@{{ ad_realm }}'})
 ) RETURN p</pre>
 
-    <h3>4 · Capture the flag</h3>
+    <h3>5 · Capture the flag</h3>
     <p>The flag sits in the <code>info</code> (Notes) attribute of the group that breaks the hierarchy:</p>
     <pre>ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" '(sAMAccountName=TIER0-LEGACY)' info
@@ -140,7 +173,7 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     </ul>
 
     <h3>Tools</h3>
-    <div><span class="tools-badge">bloodhound-python</span> <span class="tools-badge">BloodHound CE</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">SharpHound</span></div>
+    <div><span class="tools-badge">bloodhound-ce-python</span> <span class="tools-badge">BloodHound CE</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">bloodyAD</span> <span class="tools-badge">SharpHound</span></div>
   </div>
 </div>
 {% endblock %}

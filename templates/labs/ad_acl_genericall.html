@@ -52,8 +52,9 @@ cat flag-ad-08.txt</pre>
     <h3>4 · Alternativa sigilosa: Shadow Credentials</h3>
     <p>Resetear una contraseña es ruidoso (rompe el login del usuario legítimo). Con <code>GenericAll</code> también puedes escribir <code>msDS-KeyCredentialLink</code> y autenticarte por PKINIT sin tocar la contraseña:</p>
     <pre>certipy-ad shadow auto -u svc.readonly@{{ ad_realm_lower }} -p 'ReadOnly123!' \
-  -account m.davis -dc-ip {{ ad_dc_ip }}
+  -account m.davis -dc-ip {{ ad_dc_ip }} -ldap-simple-auth
 # Devuelve el hash NT de m.davis → úsalo con pass-the-hash</pre>
+    <p><strong>Nota sobre este Domain Controller:</strong> certipy también usa bind NTLM en LDAP por defecto — falla igual que <code>nxc ldap</code> (ver AD 02), de ahí el flag <code>-ldap-simple-auth</code>. Con él la conexión y la escritura del ataque avanzan, pero el paso final revienta con <code>invalid attribute type msDS-KeyCredentialLink</code>: este dominio está provisionado a nivel funcional <em>2008 R2</em> y el esquema de Samba (adprep hasta Sch59) no incluye el atributo de Key Trust introducido en Windows Server 2016 — una limitación real del propio Samba, no de certipy ni de tu ataque. El reset de contraseña del paso 2 es, por tanto, el camino soportado para completar este laboratorio; Shadow Credentials queda documentado como referencia de un ataque real que sí funciona contra un DC Windows 2016+ con este mismo GenericAll.</p>
 
     <h3>Mitigación</h3>
     <ul>
@@ -96,8 +97,9 @@ cat flag-ad-08.txt</pre>
     <h3>4 · Stealthier alternative: Shadow Credentials</h3>
     <p>Resetting a password is noisy (it breaks the legitimate user's logon). With <code>GenericAll</code> you can instead write <code>msDS-KeyCredentialLink</code> and authenticate via PKINIT without touching the password:</p>
     <pre>certipy-ad shadow auto -u svc.readonly@{{ ad_realm_lower }} -p 'ReadOnly123!' \
-  -account m.davis -dc-ip {{ ad_dc_ip }}
+  -account m.davis -dc-ip {{ ad_dc_ip }} -ldap-simple-auth
 # Returns m.davis's NT hash → use it with pass-the-hash</pre>
+    <p><strong>Note about this Domain Controller:</strong> certipy also defaults to NTLM LDAP bind — it fails the same way <code>nxc ldap</code> does (see AD 02), hence <code>-ldap-simple-auth</code>. With it the connection and the attack's write step go through, but the final step blows up with <code>invalid attribute type msDS-KeyCredentialLink</code>: this domain is provisioned at <em>2008 R2</em> functional level and Samba's schema (adprep up to Sch59) doesn't include the Key Trust attribute introduced in Windows Server 2016 — a genuine Samba limitation, not a certipy or attack-technique failure. Resetting the password in step 2 is therefore the supported path to finish this lab; Shadow Credentials is documented here as a real technique that does work against a Windows Server 2016+ DC with this same GenericAll.</p>
 
     <h3>Mitigation</h3>
     <ul>

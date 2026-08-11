@@ -150,7 +150,7 @@ cleanup() {
     docker rm    "$CONTAINER_NAME" &>/dev/null || true
     docker network rm "$NET_NAME"  &>/dev/null || true
     ip link del  "$SHIM"           &>/dev/null || true
-    sed -i "/[[:space:]]${AD_FQDN}\([[:space:]]\|$\)/d" /etc/hosts &>/dev/null || true
+    sed -i -E "/[[:space:]](${AD_FQDN}|hacklabs\.local|dc01)([[:space:]]|\$)/Id" /etc/hosts &>/dev/null || true
     echo "${GREEN}[+] Laboratorio eliminado correctamente. ¡Hasta pronto!${NC}"
     echo ""
     exit 0
@@ -237,10 +237,14 @@ if [[ $DEPLOY_AD -eq 1 ]]; then
         done
         echo ""
 
-        # Resolución de nombres en el host (Kerberos necesita el FQDN)
-        sed -i "/[[:space:]]${AD_FQDN}\([[:space:]]\|$\)/d" /etc/hosts 2>/dev/null || true
+        # Resolución de nombres en el host (Kerberos necesita el FQDN).
+        # Se elimina primero CUALQUIER entrada previa que mencione el DC
+        # (por FQDN, "hacklabs.local" o "dc01" sueltos, sin distinguir
+        # mayúsculas/minúsculas) para sobreescribirla con la IP actual en
+        # vez de acumular entradas obsoletas en cada redespliegue.
+        sed -i -E "/[[:space:]](${AD_FQDN}|hacklabs\.local|dc01)([[:space:]]|\$)/Id" /etc/hosts 2>/dev/null || true
         printf '%s\t%s hacklabs.local dc01\n' "$DC_IP" "$AD_FQDN" >> /etc/hosts
-        log "Añadida la entrada ${BOLD}${DC_IP} ${AD_FQDN}${NC} a /etc/hosts."
+        log "Añadida la entrada ${BOLD}${DC_IP} ${AD_FQDN}${NC} a /etc/hosts (sobrescribiendo cualquier entrada previa)."
     else
         warn "No se pudo iniciar el Domain Controller — se continúa sin él."
         DEPLOY_AD=0

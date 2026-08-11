@@ -87,6 +87,10 @@ EOF
 # (Silver Ticket / Golden Ticket). Se publica junto al resto de artefactos
 # para que sea descargable desde el mismo recurso anónimo.
 cp /verify_ticket.py "$SHARES/public/verify_ticket.py"
+cp /bloodhound_simple_bind.py "$SHARES/public/bloodhound_simple_bind.py"
+cp /getTGT_fixed.py "$SHARES/public/getTGT_fixed.py"
+cp /GetUserSPNs_fixed.py "$SHARES/public/GetUserSPNs_fixed.py"
+cp /smbclient_fixed.py "$SHARES/public/smbclient_fixed.py"
 
 printf 'HL{4d_p455w0rd_5pr4y_5ucc355}\n'          > "$SHARES/jsmith/flag-ad-03.txt"
 printf 'HL{4d_45r3p_r0457_cr4ck3d}\n'             > "$SHARES/backup/flag-ad-04.txt"
@@ -115,10 +119,6 @@ get_nt_hash() {  # get_nt_hash <sAMAccountName>
         | python3 -c 'import sys,base64; print(base64.b64decode(sys.stdin.read().strip()).hex())'
 }
 
-ADMIN_NT=$(get_nt_hash Administrator)
-KRBTGT_NT=$(get_nt_hash krbtgt)
-DC_NT=$(get_nt_hash "${DCHOST}\$")
-AMILLER_NT=$(get_nt_hash a.miller)
 # El SID del dominio es el SID de Administrator sin su RID final (-500)
 ADMIN_SID=$(samba-tool user show Administrator --attributes=objectSid 2>/dev/null \
     | awk -F': ' '/^objectSid/{print $2}')
@@ -135,16 +135,37 @@ Formato: dominio\\usuario:rid:LM:NT:::
   conocidas con la implementación DRSUAPI de Samba y no completan
   la replicación en vivo contra este laboratorio. Este fichero
   representa el resultado que obtendrías con una replicación
-  DCSync exitosa (los mismos comandos SÍ funcionan contra un
-  Domain Controller Windows real).
+  DCSync exitosa — el volcado COMPLETO de todas las cuentas del
+  dominio, generado leyendo los hashes reales de cada objeto
+  (samba-tool, acceso local del propio DC), tal y como devolvería
+  -just-dc contra un Domain Controller Windows real.
 
   Comando real que ejecutarías:
     impacket-secretsdump '${REALM_LOWER}/svc.readonly:ReadOnly123!'@${FQDN} -just-dc
 
-HACKLABS\\Administrator:500:aad3b435b51404eeaad3b435b51404ee:${ADMIN_NT}:::
-HACKLABS\\krbtgt:502:aad3b435b51404eeaad3b435b51404ee:${KRBTGT_NT}:::
-HACKLABS\\a.miller:1108:aad3b435b51404eeaad3b435b51404ee:${AMILLER_NT}:::
-HACKLABS\\${DCHOST}\$:1000:aad3b435b51404eeaad3b435b51404ee:${DC_NT}:::
+EOF2
+
+# Volcado dinámico de TODAS las cuentas del dominio (usuarios + equipos),
+# no solo un puñado fijo — así el lab se comporta como un NTDS real.
+{
+    for u in $(samba-tool user list 2>/dev/null | sort); do
+        nt=$(get_nt_hash "$u")
+        [ -z "$nt" ] && continue
+        sid=$(samba-tool user show "$u" --attributes=objectSid 2>/dev/null | awk -F': ' '/^objectSid/{print $2}')
+        rid=${sid##*-}
+        printf 'HACKLABS\\%s:%s:aad3b435b51404eeaad3b435b51404ee:%s:::\n' "$u" "$rid" "$nt"
+    done
+    for c in $(samba-tool computer list 2>/dev/null | sort); do
+        nt=$(get_nt_hash "$c")
+        [ -z "$nt" ] && continue
+        sid=$(samba-tool computer show "$c" --attributes=objectSid 2>/dev/null | awk -F': ' '/^objectSid/{print $2}')
+        rid=${sid##*-}
+        cname=${c%\$}
+        printf 'HACKLABS\\%s$:%s:aad3b435b51404eeaad3b435b51404ee:%s:::\n' "$cname" "$rid" "$nt"
+    done
+} >> "$SHARES/secrets/ntds_dump.txt"
+
+cat >> "$SHARES/secrets/ntds_dump.txt" <<EOF2
 
   SID del dominio: ${DOMAIN_SID}
 

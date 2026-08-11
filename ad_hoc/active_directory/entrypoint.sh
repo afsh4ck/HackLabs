@@ -46,9 +46,13 @@ else
     echo '  [*] Dominio ya provisionado, reutilizando la base de datos existente.'
 fi
 
-# /etc/hosts y resolv.conf apuntando al propio DC (necesario para Kerberos)
-grep -q "${HOST_LOWER}.${REALM_LOWER}" /etc/hosts 2>/dev/null || \
-    printf '%s\t%s.%s %s\n' "$IP" "$HOST_LOWER" "$REALM_LOWER" "$HOST_LOWER" >> /etc/hosts
+# /etc/hosts y resolv.conf apuntando al propio DC (necesario para Kerberos).
+# Si la línea ya existe pero con una IP obsoleta (recreación del contenedor
+# con nueva IP macvlan), hay que REEMPLAZARLA, no solo comprobar que existe.
+if grep -q "${HOST_LOWER}\.${REALM_LOWER}" /etc/hosts 2>/dev/null; then
+    sed -i "/${HOST_LOWER}\.${REALM_LOWER}/d" /etc/hosts
+fi
+printf '%s\t%s.%s %s\n' "$IP" "$HOST_LOWER" "$REALM_LOWER" "$HOST_LOWER" >> /etc/hosts
 printf 'search %s\nnameserver 127.0.0.1\n' "$REALM_LOWER" > /etc/resolv.conf 2>/dev/null || true
 
 echo ''
@@ -56,4 +60,33 @@ echo '  [+] Servicios expuestos: DNS/53 · Kerberos/88 · LDAP/389 · SMB/445 ·
 echo "  [+] Añade en tu Kali:  echo '${IP} ${HOST_LOWER}.${REALM_LOWER} ${REALM_LOWER} ${HOST_LOWER}' | sudo tee -a /etc/hosts"
 echo ''
 
-exec samba --foreground --no-process-group --debuglevel=1
+# ── Auto-reparación de los registros DNS propios del DC ─────────────
+# La IP del contenedor puede cambiar en cada recreación (macvlan) aunque
+# el dominio persista en los volúmenes montados. Samba no se re-registra
+# solo, así que el apex del dominio (@) y/o el registro de DC01 pueden
+# quedar apuntando a una IP muerta — rompiendo bloodhound-python, certipy
+# y cualquier herramienta que resuelva el dominio por su propio DNS en
+# vez de usar /etc/hosts. Arrancamos Samba en segundo plano, esperamos a
+# que su DNS responda, comparamos y corregimos, y luego lo traemos a
+# primer plano como PID 1 real (igual que exec, pero después de reparar).
+samba --foreground --no-process-group --debuglevel=1 &
+SAMBA_PID=$!
+trap 'kill -TERM "$SAMBA_PID" 2>/dev/null' TERM INT
+
+for i in $(seq 1 30); do
+    samba-tool dns query 127.0.0.1 "$REALM_LOWER" "$HOST_LOWER" A -U "administrator%${AD_ADMIN_PASSWORD}" >/dev/null 2>&1 && break
+    sleep 1
+done
+
+for name in "$REALM_LOWER" "$HOST_LOWER"; do
+    old_ip=$(samba-tool dns query 127.0.0.1 "$REALM_LOWER" "$name" A -U "administrator%${AD_ADMIN_PASSWORD}" 2>/dev/null \
+        | awk '/^ *A: /{print $2; exit}')
+    if [ -n "$old_ip" ] && [ "$old_ip" != "$IP" ]; then
+        echo "  [*] Registro DNS de '$name' obsoleto ($old_ip -> $IP): reparando..."
+        samba-tool dns update 127.0.0.1 "$REALM_LOWER" "$name" A "$old_ip" "$IP" -U "administrator%${AD_ADMIN_PASSWORD}" >/dev/null 2>&1 \
+            && echo "  [+] Registro DNS de '$name' actualizado." \
+            || echo "  [!] No se pudo actualizar el registro DNS de '$name'."
+    fi
+done
+
+wait "$SAMBA_PID"

