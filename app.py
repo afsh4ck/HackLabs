@@ -1103,11 +1103,11 @@ def get_lab_questions_map():
         ],
         'df_memory_credentials': [
             {'id': 'q1',
-             'prompt_es': '¿Qué usuario tiene sus credenciales en texto claro en memoria?',
-             'prompt_en': 'Which user has plaintext credentials sitting in memory?',
-             'hint_es': 'Busca la cadena <code>PASS:</code> en el volcado con <code>strings</code>/<code>grep</code>.',
-             'hint_en': 'Search for the <code>PASS:</code> string in the dump with <code>strings</code>/<code>grep</code>.',
-             'answers': ['m.director']},
+             'prompt_es': '¿Qué usuario de base de datos aparece con su contraseña en texto claro en el historial de bash?',
+             'prompt_en': 'Which database user shows up with a plaintext password in the recovered bash history?',
+             'hint_es': 'Usa <code>linux.bash</code> para recuperar el historial de comandos desde memoria — busca el comando <code>mysqldump</code>.',
+             'hint_en': 'Use <code>linux.bash</code> to recover the command history from memory — look for the <code>mysqldump</code> command.',
+             'answers': ['root']},
         ],
     }
 
@@ -1679,7 +1679,7 @@ FORENSIC_EVIDENCE_FILES = {
     'df_malware_strings':    'svc_update_x64',
     'df_pe_analysis':        'Factura_Pendiente.exe',
     'df_memory_process':     'memdump_server01_hacklabs.zip',
-    'df_memory_credentials': 'memdump_workstation01_lsass.raw',
+    'df_memory_credentials': 'memdump_dbserver01_hacklabs.zip',
 }
 
 _forensic_hash_cache = {}
