@@ -65,43 +65,43 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes`: `HL{···}` |
-| Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
-| C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
-| Container Escape | 🔴 Critical | Docker socket, privileged container, cgroup release_agent |
-| CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
-| CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
-| File Upload sin restricciones | 🔴 Critical | Webshell PHP, bypass doble extensión, reverse shell |
-| Forgot Password Recovery (Authentication Flaws) | 🟠 High | Toma de cuenta por validación insuficiente en 2 fases, enumeración de usuarios |
-| HTML Injection (GET/POST/Stored) | 🟠 High | Inyección HTML reflejada, por POST y almacenada en blog; bypass de filtros por dificultad |
-| Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
-| JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat), algorithm confusion RS256→HS256 |
-| Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
-| CAPTCHA Bypass | 🟡 Medium | Login bancario con CAPTCHA matemático automatizable, oráculo de errores y bruteforce de credenciales |
-| OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar → robo de authorization code |
-| Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
-| Path Traversal / LFI | 🟠 High | `../../etc/passwd`, log poisoning → RCE |
-| Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration, cron |
-| Race Condition / TOCTOU | 🟠 High | Transferencias concurrentes, TOCTOU, requests paralelos |
-| Reverse Shell | 🔴 Critical | URL Health Checker vulnerable, `curl` con `shell=True`, bash/python/perl reverse shells |
-| Clickjacking | 🟠 High | Iframe overlay con slider de opacidad, frame-busting JS bypass via sandbox |
-| 2FA / MFA Bypass | 🔴 Critical | OTP leak en headers, brute force 4 dígitos, TOCTOU race condition |
-| Password Reset Poisoning | 🟠 High | Host header, X-Forwarded-Host, X-Host → token de reset enviado al atacante |
-| Session Hijacking | 🟠 High | SID predecible, token base64 sin firma, session fixation |
-| SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
-| XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
-| XXE – XML External Entity | 🟠 High | XML External Entity |
+| V01 – API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes`: `HL{···}` |
+| V02 – Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
+| V03 – C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
+| V04 – Container Escape | 🔴 Critical | Docker socket, privileged container, cgroup release_agent |
+| V05 – CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
+| V06 – CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
+| V07 – File Upload sin restricciones | 🔴 Critical | Webshell PHP, bypass doble extensión, reverse shell |
+| V08 – Forgot Password Recovery (Authentication Flaws) | 🟠 High | Toma de cuenta por validación insuficiente en 2 fases, enumeración de usuarios |
+| V09 – HTML Injection (GET/POST/Stored) | 🟠 High | Inyección HTML reflejada, por POST y almacenada en blog; bypass de filtros por dificultad |
+| V10 – Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
+| V11 – JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat), algorithm confusion RS256→HS256 |
+| V12 – Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
+| V13 – CAPTCHA Bypass | 🟡 Medium | Login bancario con CAPTCHA matemático automatizable, oráculo de errores y bruteforce de credenciales |
+| V14 – OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar → robo de authorization code |
+| V15 – Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
+| V16 – Path Traversal / LFI | 🟠 High | `../../etc/passwd`, log poisoning → RCE |
+| V17 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration, cron |
+| V18 – 2FA / MFA Bypass | 🔴 Critical | OTP leak en headers, brute force 4 dígitos, TOCTOU race condition |
+| V19 – Clickjacking | 🟠 High | Iframe overlay con slider de opacidad, frame-busting JS bypass via sandbox |
+| V20 – Password Reset Poisoning | 🟠 High | Host header, X-Forwarded-Host, X-Host → token de reset enviado al atacante |
+| V21 – Race Condition / TOCTOU | 🟠 High | Transferencias concurrentes, TOCTOU, requests paralelos |
+| V22 – Reverse Shell | 🔴 Critical | URL Health Checker vulnerable, `curl` con `shell=True`, bash/python/perl reverse shells |
+| V23 – Session Hijacking | 🟠 High | SID predecible, token base64 sin firma, session fixation |
+| V24 – SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
+| V25 – XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
+| V26 – XXE – XML External Entity | 🟠 High | XML External Entity |
 
 ### AI Attacks
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| AI Jailbreak | 🟡 Medium | DAN, roleplay, instruction override |
-| Indirect Prompt Injection | 🟠 High | Payload oculto en documento analizado |
-| Prompt Injection | 🟠 High | System prompt override, prompt leaking |
-| Prompt Leaking | 🟠 High | Extraer system prompt via traducción, reformulación y codificación base64 |
-| LLM Data Exfiltration | 🟠 High | Tracking pixel, framing indirecto e inyección via documento para exfiltrar datos |
-| AI Supply Chain Poisoning | 🔴 Critical | Modelo envenenado introduce backdoors via print, comparación plaintext y keylogger |
+| AI01 – AI Jailbreak | 🟡 Medium | DAN, roleplay, instruction override |
+| AI02 – AI Supply Chain Poisoning | 🔴 Critical | Modelo envenenado introduce backdoors via print, comparación plaintext y keylogger |
+| AI03 – Indirect Prompt Injection | 🟠 High | Payload oculto en documento analizado |
+| AI04 – LLM Data Exfiltration | 🟠 High | Tracking pixel, framing indirecto e inyección via documento para exfiltrar datos |
+| AI05 – Prompt Injection | 🟠 High | System prompt override, prompt leaking |
+| AI06 – Prompt Leaking | 🟠 High | Extraer system prompt via traducción, reformulación y codificación base64 |
 
 ### Active Directory
 
@@ -378,7 +378,7 @@ Flag: `HL{···}` (dentro de las credenciales IAM del endpoint de metadatos)
 </details>
 
 <details>
-<summary><strong>C2 — Sliver (Command & Control)</strong></summary>
+<summary><strong>V03 – C2 — Sliver (Command & Control)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -409,7 +409,7 @@ sliver (ID) > ps
 </details>
 
 <details>
-<summary><strong>CORS Misconfiguration</strong></summary>
+<summary><strong>V05 – CORS Misconfiguration</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -422,7 +422,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>CSRF</strong></summary>
+<summary><strong>V06 – CSRF</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -435,7 +435,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>File Upload</strong></summary>
+<summary><strong>V07 – File Upload</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -446,7 +446,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>Forgot Password Recovery (Authentication Flaws)</strong></summary>
+<summary><strong>V08 – Forgot Password Recovery (Authentication Flaws)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -459,7 +459,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>HTML Injection (GET/POST/Stored)</strong></summary>
+<summary><strong>V09 – HTML Injection (GET/POST/Stored)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -474,7 +474,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>Insecure Deserialization</strong></summary>
+<summary><strong>V10 – Insecure Deserialization</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -487,7 +487,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>JWT Manipulation</strong></summary>
+<summary><strong>V11 – JWT Manipulation</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -500,7 +500,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>Login Bruteforce (HTTP + FTP)</strong></summary>
+<summary><strong>V12 – Login Bruteforce (HTTP + FTP)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -511,7 +511,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>CAPTCHA Bypass</strong></summary>
+<summary><strong>V13 – CAPTCHA Bypass</strong></summary>
 
 Login bancario protegido por CAPTCHA matematico. Al recuperar acceso como `admin`, el panel muestra datos financieros simulados y la flag aparece solo despues del login correcto.
 
@@ -528,7 +528,7 @@ Errores clave del lab:
 </details>
 
 <details>
-<summary><strong>Open Redirect</strong></summary>
+<summary><strong>V15 – Open Redirect</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -541,7 +541,7 @@ Flag dedicada: `HL{···}` (se expone en la cabecera `X-HackLabs-Flag` al forza
 </details>
 
 <details>
-<summary><strong>Path Traversal / LFI</strong></summary>
+<summary><strong>V16 – Path Traversal / LFI</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -555,7 +555,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>Privilege Escalation (SSH)</strong></summary>
+<summary><strong>V17 – Privilege Escalation (SSH)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -566,7 +566,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>SSTI — Server-Side Template Injection</strong></summary>
+<summary><strong>V24 – SSTI — Server-Side Template Injection</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -577,7 +577,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>XSS — Reflected / Stored / DOM</strong></summary>
+<summary><strong>V25 – XSS — Reflected / Stored / DOM</strong></summary>
 
 **Reflected & Stored:**
 
@@ -600,7 +600,7 @@ En Reflected/Stored, al ejecutar `alert(document.cookie)` se observa cookie de l
 </details>
 
 <details>
-<summary><strong>XXE — XML External Entity</strong></summary>
+<summary><strong>V26 – XXE — XML External Entity</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -613,7 +613,7 @@ Flag dedicada XXE: `HackLabs{···}` (lectura recomendada: `file:///app/secret/
 </details>
 
 <details>
-<summary><strong>Business Logic Flaws</strong></summary>
+<summary><strong>V02 – Business Logic Flaws</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -638,7 +638,7 @@ Flag: `HL{···}`
 </details>
 
 <details>
-<summary><strong>Container Escape</strong></summary>
+<summary><strong>V04 – Container Escape</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -673,7 +673,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>OAuth 2.0 Attacks</strong></summary>
+<summary><strong>V14 – OAuth 2.0 Attacks</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -695,7 +695,7 @@ Flag: `HL{···}`
 </details>
 
 <details>
-<summary><strong>Race Condition / TOCTOU</strong></summary>
+<summary><strong>V21 – Race Condition / TOCTOU</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -725,7 +725,7 @@ Flags: `HL{···}` / `HL{···}` / `HL{···}`
 </details>
 
 <details>
-<summary><strong>AI Jailbreak</strong></summary>
+<summary><strong>AI01 – AI Jailbreak</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -738,7 +738,7 @@ Flags: `HL{···}` / `HL{···}` / `HL{···}`
 </details>
 
 <details>
-<summary><strong>Indirect Prompt Injection</strong></summary>
+<summary><strong>AI03 – Indirect Prompt Injection</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -749,7 +749,7 @@ Flags: `HL{···}` / `HL{···}` / `HL{···}`
 </details>
 
 <details>
-<summary><strong>Prompt Injection</strong></summary>
+<summary><strong>AI05 – Prompt Injection</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -762,7 +762,7 @@ Flags: `HL{···}` / `HL{···}` / `HL{···}`
 </details>
 
 <details>
-<summary><strong>Reverse Shell</strong></summary>
+<summary><strong>V22 – Reverse Shell</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -788,7 +788,7 @@ Flag valida del lab: solo `HL{···}` (`/root/root.txt`).
 </details>
 
 <details>
-<summary><strong>Clickjacking</strong></summary>
+<summary><strong>V19 – Clickjacking</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -801,7 +801,7 @@ El slider de opacidad en el lab muestra visualmente el overlay del iframe sobre 
 </details>
 
 <details>
-<summary><strong>2FA / MFA Bypass</strong></summary>
+<summary><strong>V18 – 2FA / MFA Bypass</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -820,7 +820,7 @@ curl -i http://TARGET_IP/2fa/login -d "username=admin&password=password1" | grep
 </details>
 
 <details>
-<summary><strong>Password Reset Poisoning</strong></summary>
+<summary><strong>V20 – Password Reset Poisoning</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -846,7 +846,7 @@ curl -X POST http://TARGET_IP/reset/request \
 </details>
 
 <details>
-<summary><strong>Session Hijacking</strong></summary>
+<summary><strong>V23 – Session Hijacking</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -861,7 +861,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>Prompt Leaking</strong></summary>
+<summary><strong>AI06 – Prompt Leaking</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -874,7 +874,7 @@ Flag: `HL{···}`
 </details>
 
 <details>
-<summary><strong>LLM Data Exfiltration</strong></summary>
+<summary><strong>AI04 – LLM Data Exfiltration</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -887,7 +887,7 @@ El panel derecho (Attacker Server Log) muestra en tiempo real las peticiones cap
 </details>
 
 <details>
-<summary><strong>AI Supply Chain Poisoning</strong></summary>
+<summary><strong>AI02 – AI Supply Chain Poisoning</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
