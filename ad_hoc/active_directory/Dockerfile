@@ -58,8 +58,9 @@ COPY bloodhound_simple_bind.py /bloodhound_simple_bind.py
 COPY getTGT_fixed.py /getTGT_fixed.py
 COPY GetUserSPNs_fixed.py /GetUserSPNs_fixed.py
 COPY smbclient_fixed.py /smbclient_fixed.py
+COPY secretsdump_fixed.py /secretsdump_fixed.py
 COPY entrypoint.sh /entrypoint.sh
-RUN sed -i 's/\r$//' /provision.sh /entrypoint.sh /seed_domain.py /verify_ticket.py /bloodhound_simple_bind.py /getTGT_fixed.py /GetUserSPNs_fixed.py /smbclient_fixed.py \
+RUN sed -i 's/\r$//' /provision.sh /entrypoint.sh /seed_domain.py /verify_ticket.py /bloodhound_simple_bind.py /getTGT_fixed.py /GetUserSPNs_fixed.py /smbclient_fixed.py /secretsdump_fixed.py \
     && chmod +x /provision.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

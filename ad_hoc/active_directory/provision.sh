@@ -91,6 +91,7 @@ cp /bloodhound_simple_bind.py "$SHARES/public/bloodhound_simple_bind.py"
 cp /getTGT_fixed.py "$SHARES/public/getTGT_fixed.py"
 cp /GetUserSPNs_fixed.py "$SHARES/public/GetUserSPNs_fixed.py"
 cp /smbclient_fixed.py "$SHARES/public/smbclient_fixed.py"
+cp /secretsdump_fixed.py "$SHARES/public/secretsdump_fixed.py"
 
 printf 'HL{4d_p455w0rd_5pr4y_5ucc355}\n'          > "$SHARES/jsmith/flag-ad-03.txt"
 printf 'HL{4d_45r3p_r0457_cr4ck3d}\n'             > "$SHARES/backup/flag-ad-04.txt"
