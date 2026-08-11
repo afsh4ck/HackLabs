@@ -7,7 +7,7 @@
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
     <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="df_steganography_obj_desc">Esta imagen de una puesta de sol esconde algo más que píxeles. Analiza sus bits menos significativos para recuperar el mensaje oculto.</p>
-    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la barra lateral.</span></p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <span data-i18n="df_obj_flag_where">— la flag está oculta en el propio fichero de evidencia; analízalo y valídala en la caja «Validar Flag» al final de esta página.</span></p>
   </div>
 
   {% include 'labs/_forensic_evidence.html' %}
@@ -15,7 +15,9 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">zsteg sunset.png
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># zsteg no está en los repos de apt de Kali -- es una gema Ruby
+sudo gem install zsteg
+zsteg sunset.png
 # o con Python + Pillow (ver guía completa)</pre>
   </div>
 </div>
@@ -26,10 +28,14 @@
     <p>La esteganografía LSB (Least Significant Bit) oculta datos modificando el bit menos significativo de cada byte de color de una imagen. El cambio es tan pequeño (como máximo ±1 en un canal de 0-255) que resulta invisible al ojo humano, pero perfectamente recuperable si sabes dónde mirar.</p>
 
     <h3>2 · Intentar con herramientas estándar</h3>
-    <pre>zsteg sunset.png
-binwalk sunset.png
-steghide extract -sf sunset.png</pre>
-    <p>Si no tienes <code>zsteg</code>/<code>steghide</code> instalados, o la imagen no usa su formato concreto, puedes extraer el mensaje manualmente: este reto usa un LSB casero (bit menos significativo del canal R, G y B en orden, con un prefijo de 32 bits indicando la longitud del mensaje en bytes).</p>
+    <p><code>zsteg</code> <strong>no está empaquetado para apt en Kali</strong> — es una gema Ruby, se instala con <code>gem</code>:</p>
+    <pre>sudo gem install zsteg
+zsteg sunset.png</pre>
+    <p>Entre la enorme lista de combinaciones que prueba (bit-plane × canal × orden), una acierta directamente:</p>
+    <pre>b1,rgb,lsb,xy       .. text: "HL{···}"</pre>
+    <p><code>binwalk sunset.png</code> no sirve aquí: busca ficheros incrustados o datos anexados al final del fichero, no datos ocultos en el bit menos significativo de cada píxel — con esta técnica solo confirmará que el PNG es válido y no encontrará nada más, lo cual es normal y no significa que el reto esté roto.</p>
+    <p><code>steghide extract -sf sunset.png</code> <strong>nunca</strong> funcionará aquí: steghide solo soporta JPEG, BMP, WAV y AU — ni siquiera reconoce PNG como formato de entrada (falla con <code>el formato del archivo no es reconocido</code> sea cual sea el contenido del PNG). No es un problema de instalación ni de esta imagen en concreto.</p>
+    <p>Si prefieres no depender de <code>zsteg</code>, puedes extraer el mensaje manualmente: este reto usa un LSB casero (bit menos significativo del canal R, G y B en orden, con un prefijo de 32 bits indicando la longitud del mensaje en bytes) — exactamente la combinación <code>b1,rgb,lsb,xy</code> que <code>zsteg</code> también prueba por defecto.</p>
 
     <h3>3 · Extracción manual con Python</h3>
     <pre>python3 - &lt;&lt;'EOF'
@@ -61,7 +67,7 @@ EOF</pre>
     </ul>
 
     <h3>Herramientas</h3>
-    <div><span class="tools-badge">zsteg</span> <span class="tools-badge">steghide</span> <span class="tools-badge">stegsolve</span> <span class="tools-badge">Python + Pillow</span></div>
+    <div><span class="tools-badge">zsteg</span> <span class="tools-badge">stegsolve</span> <span class="tools-badge">Python + Pillow</span></div>
   </div>
 
   <div class="lang-content" data-lang="en" style="display:none">
@@ -69,10 +75,14 @@ EOF</pre>
     <p>LSB (Least Significant Bit) steganography hides data by altering the least significant bit of each color byte in an image. The change is so small (at most ±1 on a 0-255 channel) that it's invisible to the human eye, yet perfectly recoverable if you know where to look.</p>
 
     <h3>2 · Try standard tools first</h3>
-    <pre>zsteg sunset.png
-binwalk sunset.png
-steghide extract -sf sunset.png</pre>
-    <p>If you don't have <code>zsteg</code>/<code>steghide</code> installed, or the image doesn't use their specific format, you can extract the message manually: this challenge uses a home-made LSB scheme (least significant bit of the R, G, B channels in order, with a 32-bit prefix indicating the message length in bytes).</p>
+    <p><code>zsteg</code> is <strong>not packaged for apt on Kali</strong> — it's a Ruby gem, install it with <code>gem</code>:</p>
+    <pre>sudo gem install zsteg
+zsteg sunset.png</pre>
+    <p>Among the huge list of combinations it tries (bit-plane × channel × order), one hits directly:</p>
+    <pre>b1,rgb,lsb,xy       .. text: "HL{···}"</pre>
+    <p><code>binwalk sunset.png</code> won't help here: it looks for embedded files or data appended to the end of the file, not data hidden in the least significant bit of each pixel — with this technique it will only confirm the PNG is valid and find nothing else, which is expected and doesn't mean the challenge is broken.</p>
+    <p><code>steghide extract -sf sunset.png</code> will <strong>never</strong> work here: steghide only supports JPEG, BMP, WAV and AU — it doesn't even recognize PNG as an input format (fails with <code>the file format ... is not supported</code> no matter what the PNG contains). It's not an installation issue or specific to this image.</p>
+    <p>If you'd rather not depend on <code>zsteg</code>, you can extract the message manually: this challenge uses a home-made LSB scheme (least significant bit of the R, G, B channels in order, with a 32-bit prefix indicating the message length in bytes) — exactly the <code>b1,rgb,lsb,xy</code> combination <code>zsteg</code> also tries by default.</p>
 
     <h3>3 · Manual extraction with Python</h3>
     <pre>python3 - &lt;&lt;'EOF'
@@ -104,7 +114,7 @@ EOF</pre>
     </ul>
 
     <h3>Tools</h3>
-    <div><span class="tools-badge">zsteg</span> <span class="tools-badge">steghide</span> <span class="tools-badge">stegsolve</span> <span class="tools-badge">Python + Pillow</span></div>
+    <div><span class="tools-badge">zsteg</span> <span class="tools-badge">stegsolve</span> <span class="tools-badge">Python + Pillow</span></div>
   </div>
 </div>
 {% endblock %}
