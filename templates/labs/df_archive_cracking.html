@@ -34,6 +34,12 @@ cat hash.txt
     <pre>john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
 john --show hash.txt</pre>
     <p>En segundos, <code>john</code> encuentra la contraseña dentro del diccionario rockyou.txt.</p>
+    <p><strong>¿Te sale <code>No password hashes left to crack (see FAQ)</code>?</strong> No es un fallo — significa que ese hash <em>ya está</em> crackeado en tu potfile local (<code>~/.john/john.pot</code>), de una ejecución anterior tuya. <code>john</code> nunca vuelve a intentar un hash que ya tiene resuelto. La contraseña sigue ahí, solo hay que pedírsela con <code>--show</code>:</p>
+    <pre>john --show hash.txt
+# Informe_Financiero_Q3.zip/Informe_Financiero_Q3.txt:trustno1:Informe_Financiero_Q3.txt:Informe_Financiero_Q3.zip::
+
+1 password hash cracked, 0 left</pre>
+    <p>Si de verdad quieres forzar un re-crackeo desde cero (por ejemplo, para comprobar el tiempo que tarda), borra la entrada de ese hash del potfile o usa <code>john --pot=otro_fichero.pot ...</code> con un potfile nuevo.</p>
 
     <h3>4 · Abrir el archivo</h3>
     <pre>unzip -P '&lt;contraseña_encontrada&gt;' Informe_Financiero_Q3.zip -d extraido/
@@ -67,6 +73,12 @@ cat hash.txt
     <pre>john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
 john --show hash.txt</pre>
     <p>Within seconds, <code>john</code> finds the password inside the rockyou.txt dictionary.</p>
+    <p><strong>Getting <code>No password hashes left to crack (see FAQ)</code>?</strong> That's not a failure — it means this hash is <em>already</em> cracked in your local potfile (<code>~/.john/john.pot</code>) from a previous run of yours. <code>john</code> never retries a hash it already has an answer for. The password is still there, just ask for it with <code>--show</code>:</p>
+    <pre>john --show hash.txt
+# Informe_Financiero_Q3.zip/Informe_Financiero_Q3.txt:trustno1:Informe_Financiero_Q3.txt:Informe_Financiero_Q3.zip::
+
+1 password hash cracked, 0 left</pre>
+    <p>If you genuinely want to force a fresh crack from scratch (say, to time it), remove that hash's entry from the potfile, or use <code>john --pot=another_file.pot ...</code> with a brand new potfile.</p>
 
     <h3>4 · Open the archive</h3>
     <pre>unzip -P '&lt;found_password&gt;' Informe_Financiero_Q3.zip -d extracted/
