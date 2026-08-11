@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}AD 14 – Constrained Delegation – HackLabs{% endblock %}
+{% block title %}AD14 – Constrained Delegation – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_delegation_obj_desc">La cuenta svc.delegate tiene delegación restringida con transición de protocolo hacia cifs/dc01. Consigue su contraseña (Kerberoasting, lab AD 05) y demuestra el control total que le otorgaría: acceso directo a //DC01/deleg y, en un dominio real, impersonación de Administrator vía S4U2Self + S4U2Proxy.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_delegation_obj_desc">La cuenta svc.delegate tiene delegación restringida con transición de protocolo hacia cifs/dc01. Consigue su contraseña (Kerberoasting, lab AD05) y demuestra el control total que le otorgaría: acceso directo a //DC01/deleg y, en un dominio real, impersonación de Administrator vía S4U2Self + S4U2Proxy.</p>
     <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>//{{ ad_dc_host }}/deleg/flag-ad-14.txt</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la caja «Validar Flag» al final de esta página.</span></p>
   </div>
 
@@ -19,7 +19,7 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Contraseña de svc.delegate obtenida en el lab AD 05 (Kerberoasting)
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Contraseña de svc.delegate obtenida en el lab AD05 (Kerberoasting)
 smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt'
 cat flag-ad-14.txt</pre>
   </div>
@@ -40,7 +40,7 @@ userAccountControl: ... (TRUSTED_TO_AUTH_FOR_DELEGATION)</pre>
     <p>Esta consulta es real: la configuración de delegación existe genuinamente en el directorio y es auditable con cualquier herramienta LDAP.</p>
 
     <h3>3 · Conseguir la credencial de svc.delegate</h3>
-    <p><code>svc.delegate</code> tiene un SPN, así que es kerberoasteable (lab AD 05). Su contraseña es <code>iloveyou1</code>. Si vienes de aquel lab ya la tienes.</p>
+    <p><code>svc.delegate</code> tiene un SPN, así que es kerberoasteable (lab AD05). Su contraseña es <code>iloveyou1</code>. Si vienes de aquel lab ya la tienes.</p>
 
     <h3>4 · El impacto real: S4U2Self + S4U2Proxy (comando real, contra Windows funciona así)</h3>
     <pre>impacket-getST \
@@ -83,7 +83,7 @@ userAccountControl: ... (TRUSTED_TO_AUTH_FOR_DELEGATION)</pre>
     <p>This query is real: the delegation configuration genuinely exists in the directory and is auditable with any LDAP tool.</p>
 
     <h3>3 · Get svc.delegate's credential</h3>
-    <p><code>svc.delegate</code> has an SPN, so it is kerberoastable (lab AD 05). Its password is <code>iloveyou1</code>. If you came from that lab you already have it.</p>
+    <p><code>svc.delegate</code> has an SPN, so it is kerberoastable (lab AD05). Its password is <code>iloveyou1</code>. If you came from that lab you already have it.</p>
 
     <h3>4 · The real impact: S4U2Self + S4U2Proxy (real command, works exactly like this against Windows)</h3>
     <pre>impacket-getST \

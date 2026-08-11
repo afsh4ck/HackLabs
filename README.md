@@ -109,21 +109,21 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| AD 01 – SMB Enumeration & Null Session | 🟡 Medium | Sesión nula, RID cycling, saqueo de share anónimo |
-| AD 02 – LDAP Enumeration | 🟡 Medium | Bind simple, credencial filtrada en `description` |
-| AD 03 – Password Spraying | 🟠 High | Sin bloqueo de cuentas, spray con kerbrute/netexec |
-| AD 04 – AS-REP Roasting | 🟠 High | `DONT_REQ_PREAUTH`, crackeo del hash krb5asrep |
-| AD 05 – Kerberoasting | 🟠 High | Cuentas con SPN, crackeo del hash krb5tgs |
-| AD 06 – GPP Passwords en SYSVOL | 🟠 High | `cpassword` en Groups.xml (MS14-025) |
-| AD 07 – BloodHound & Attack Paths | 🟡 Medium | Grupo anidado heredado hacia Domain Admins |
-| AD 08 – ACL Abuse: GenericAll | 🟠 High | Reset de contraseña / Shadow Credentials |
-| AD 09 – ACL Abuse: AddSelf a grupo | 🟠 High | WriteProperty sobre `member`, autoañadirse |
-| AD 10 – DCSync | 🔴 Critical | Derechos de replicación delegados, volcado NTDS |
-| AD 11 – Pass-the-Hash | 🔴 Critical | Autenticación NTLM con hash NT, over-PtH |
-| AD 12 – Silver Ticket | 🔴 Critical | TGS CIFS forjado con el hash de DC01$ |
-| AD 13 – Golden Ticket | 🔴 Critical | TGT arbitrario firmado con el hash de krbtgt |
-| AD 14 – Constrained Delegation | 🔴 Critical | S4U2Self + S4U2Proxy con transición de protocolo |
-| AD 15 – MachineAccountQuota & RBCD | 🟠 High | Alta de cuenta de máquina, base para RBCD |
+| AD01 – SMB Enumeration & Null Session | 🟡 Medium | Sesión nula, RID cycling, saqueo de share anónimo |
+| AD02 – LDAP Enumeration | 🟡 Medium | Bind simple, credencial filtrada en `description` |
+| AD03 – Password Spraying | 🟠 High | Sin bloqueo de cuentas, spray con kerbrute/netexec |
+| AD04 – AS-REP Roasting | 🟠 High | `DONT_REQ_PREAUTH`, crackeo del hash krb5asrep |
+| AD05 – Kerberoasting | 🟠 High | Cuentas con SPN, crackeo del hash krb5tgs |
+| AD06 – GPP Passwords en SYSVOL | 🟠 High | `cpassword` en Groups.xml (MS14-025) |
+| AD07 – BloodHound & Attack Paths | 🟡 Medium | Grupo anidado heredado hacia Domain Admins |
+| AD08 – ACL Abuse: GenericAll | 🟠 High | Reset de contraseña / Shadow Credentials |
+| AD09 – ACL Abuse: AddSelf a grupo | 🟠 High | WriteProperty sobre `member`, autoañadirse |
+| AD10 – DCSync | 🔴 Critical | Derechos de replicación delegados, volcado NTDS |
+| AD11 – Pass-the-Hash | 🔴 Critical | Autenticación NTLM con hash NT, over-PtH |
+| AD12 – Silver Ticket | 🔴 Critical | TGS CIFS forjado con el hash de DC01$ |
+| AD13 – Golden Ticket | 🔴 Critical | TGT arbitrario firmado con el hash de krbtgt |
+| AD14 – Constrained Delegation | 🔴 Critical | S4U2Self + S4U2Proxy con transición de protocolo |
+| AD15 – MachineAccountQuota & RBCD | 🟠 High | Alta de cuenta de máquina, base para RBCD |
 
 ### Forense Digital
 
@@ -131,21 +131,21 @@
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| DF 01 – File Signature Analysis | 🟡 Medium | Magic bytes vs. extensión falsa |
-| DF 02 – EXIF Metadata Analysis | 🟡 Medium | GPS y comentarios ocultos en JPEG |
-| DF 03 – Esteganografía en Imagen | 🟡 Medium | LSB en PNG |
-| DF 04 – Cracking de Archivo Protegido | 🟡 Medium | `zip2john` + `john` + rockyou |
-| DF 05 – Análisis Forense de Email | 🟡 Medium | Cabeceras spoofeadas, SPF/DKIM/DMARC, adjunto base64 |
-| DF 06 – Artefactos de Navegador | 🟡 Medium | Historial SQLite, token filtrado en URL |
-| DF 07 – Reconstrucción de Ataque por Logs | 🟡 Medium | Fuerza bruta SSH + comando post-explotación |
-| DF 08 – Credenciales en Claro (PCAP) | 🟠 High | FTP/HTTP sin cifrar, Follow TCP Stream |
-| DF 09 – Exfiltración de Datos vía DNS | 🔴 Critical | DNS tunneling, reconstrucción de subdominios |
-| DF 10 – File Carving en Imagen de Disco | 🟠 High | `binwalk` + carving manual |
-| DF 11 – Timeline y Recuperación de Borrados | 🟠 High | The Sleuth Kit (`fls`/`istat`/`icat`) |
-| DF 12 – Triage de Malware: Strings & YARA | 🟠 High | IOCs estáticos, persistencia vía crontab |
-| DF 13 – Análisis de Cabeceras PE | 🟠 High | `pefile`/`objdump`, persistencia en registro |
-| DF 14 – Memoria: Proceso Malicioso | 🟠 High | `strings`/`grep`, referencia a Volatility |
-| DF 15 – Memoria: Credenciales en RAM | 🔴 Critical | Credenciales en claro en memoria de proceso |
+| DF01 – File Signature Analysis | 🟡 Medium | Magic bytes vs. extensión falsa |
+| DF02 – EXIF Metadata Analysis | 🟡 Medium | GPS y comentarios ocultos en JPEG |
+| DF03 – Esteganografía en Imagen | 🟡 Medium | LSB en PNG |
+| DF04 – Cracking de Archivo Protegido | 🟡 Medium | `zip2john` + `john` + rockyou |
+| DF05 – Análisis Forense de Email | 🟡 Medium | Cabeceras spoofeadas, SPF/DKIM/DMARC, adjunto base64 |
+| DF06 – Artefactos de Navegador | 🟡 Medium | Historial SQLite, token filtrado en URL |
+| DF07 – Reconstrucción de Ataque por Logs | 🟡 Medium | Fuerza bruta SSH + comando post-explotación |
+| DF08 – Credenciales en Claro (PCAP) | 🟠 High | FTP/HTTP sin cifrar, Follow TCP Stream |
+| DF09 – Exfiltración de Datos vía DNS | 🔴 Critical | DNS tunneling, reconstrucción de subdominios |
+| DF10 – File Carving en Imagen de Disco | 🟠 High | `binwalk` + carving manual |
+| DF11 – Timeline y Recuperación de Borrados | 🟠 High | The Sleuth Kit (`fls`/`istat`/`icat`) |
+| DF12 – Triage de Malware: Strings & YARA | 🟠 High | IOCs estáticos, persistencia vía crontab |
+| DF13 – Análisis de Cabeceras PE | 🟠 High | `pefile`/`objdump`, persistencia en registro |
+| DF14 – Memoria: Proceso Malicioso | 🟠 High | `strings`/`grep`, referencia a Volatility |
+| DF15 – Memoria: Credenciales en RAM | 🔴 Critical | Credenciales en claro en memoria de proceso |
 
 ---
 

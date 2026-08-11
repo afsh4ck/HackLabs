@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 08 – ACL Abuse: GenericAll – HackLabs{% endblock %}
+{% block title %}AD08 – ACL Abuse: GenericAll – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -28,7 +28,7 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} \
     <pre># Con bloodyAD: ver quién tiene qué sobre m.davis (usa el sAMAccountName, no el nombre completo)
 bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object m.davis --attr nTSecurityDescriptor</pre>
-    <p><strong>Nota sobre este Domain Controller:</strong> <code>nxc ldap -M daclread</code> no funciona contra este DC (falla el bind NTLM, ver AD 02) — usa <code>bloodyAD</code> como en el comando de arriba.</p>
+    <p><strong>Nota sobre este Domain Controller:</strong> <code>nxc ldap -M daclread</code> no funciona contra este DC (falla el bind NTLM, ver AD02) — usa <code>bloodyAD</code> como en el comando de arriba.</p>
 
     <h3>2 · Resetear la contraseña de la víctima</h3>
     <pre># bloodyAD (fija una contraseña conocida)
@@ -54,7 +54,7 @@ cat flag-ad-08.txt</pre>
     <pre>certipy-ad shadow auto -u svc.readonly@{{ ad_realm_lower }} -p 'ReadOnly123!' \
   -account m.davis -dc-ip {{ ad_dc_ip }} -ldap-simple-auth
 # Devuelve el hash NT de m.davis → úsalo con pass-the-hash</pre>
-    <p><strong>Nota sobre este Domain Controller:</strong> certipy también usa bind NTLM en LDAP por defecto — falla igual que <code>nxc ldap</code> (ver AD 02), de ahí el flag <code>-ldap-simple-auth</code>. Con él la conexión y la escritura del ataque avanzan, pero el paso final revienta con <code>invalid attribute type msDS-KeyCredentialLink</code>: este dominio está provisionado a nivel funcional <em>2008 R2</em> y el esquema de Samba (adprep hasta Sch59) no incluye el atributo de Key Trust introducido en Windows Server 2016 — una limitación real del propio Samba, no de certipy ni de tu ataque. El reset de contraseña del paso 2 es, por tanto, el camino soportado para completar este laboratorio; Shadow Credentials queda documentado como referencia de un ataque real que sí funciona contra un DC Windows 2016+ con este mismo GenericAll.</p>
+    <p><strong>Nota sobre este Domain Controller:</strong> certipy también usa bind NTLM en LDAP por defecto — falla igual que <code>nxc ldap</code> (ver AD02), de ahí el flag <code>-ldap-simple-auth</code>. Con él la conexión y la escritura del ataque avanzan, pero el paso final revienta con <code>invalid attribute type msDS-KeyCredentialLink</code>: este dominio está provisionado a nivel funcional <em>2008 R2</em> y el esquema de Samba (adprep hasta Sch59) no incluye el atributo de Key Trust introducido en Windows Server 2016 — una limitación real del propio Samba, no de certipy ni de tu ataque. El reset de contraseña del paso 2 es, por tanto, el camino soportado para completar este laboratorio; Shadow Credentials queda documentado como referencia de un ataque real que sí funciona contra un DC Windows 2016+ con este mismo GenericAll.</p>
 
     <h3>Mitigación</h3>
     <ul>
@@ -73,7 +73,7 @@ cat flag-ad-08.txt</pre>
     <pre># With bloodyAD: see who has what over m.davis (use the sAMAccountName, not the full name)
 bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object m.davis --attr nTSecurityDescriptor</pre>
-    <p><strong>Note about this Domain Controller:</strong> <code>nxc ldap -M daclread</code> does not work against this DC (the NTLM bind fails, see AD 02) — use <code>bloodyAD</code> as shown above.</p>
+    <p><strong>Note about this Domain Controller:</strong> <code>nxc ldap -M daclread</code> does not work against this DC (the NTLM bind fails, see AD02) — use <code>bloodyAD</code> as shown above.</p>
 
     <h3>2 · Reset the victim's password</h3>
     <pre># bloodyAD (set a known password)
@@ -99,7 +99,7 @@ cat flag-ad-08.txt</pre>
     <pre>certipy-ad shadow auto -u svc.readonly@{{ ad_realm_lower }} -p 'ReadOnly123!' \
   -account m.davis -dc-ip {{ ad_dc_ip }} -ldap-simple-auth
 # Returns m.davis's NT hash → use it with pass-the-hash</pre>
-    <p><strong>Note about this Domain Controller:</strong> certipy also defaults to NTLM LDAP bind — it fails the same way <code>nxc ldap</code> does (see AD 02), hence <code>-ldap-simple-auth</code>. With it the connection and the attack's write step go through, but the final step blows up with <code>invalid attribute type msDS-KeyCredentialLink</code>: this domain is provisioned at <em>2008 R2</em> functional level and Samba's schema (adprep up to Sch59) doesn't include the Key Trust attribute introduced in Windows Server 2016 — a genuine Samba limitation, not a certipy or attack-technique failure. Resetting the password in step 2 is therefore the supported path to finish this lab; Shadow Credentials is documented here as a real technique that does work against a Windows Server 2016+ DC with this same GenericAll.</p>
+    <p><strong>Note about this Domain Controller:</strong> certipy also defaults to NTLM LDAP bind — it fails the same way <code>nxc ldap</code> does (see AD02), hence <code>-ldap-simple-auth</code>. With it the connection and the attack's write step go through, but the final step blows up with <code>invalid attribute type msDS-KeyCredentialLink</code>: this domain is provisioned at <em>2008 R2</em> functional level and Samba's schema (adprep up to Sch59) doesn't include the Key Trust attribute introduced in Windows Server 2016 — a genuine Samba limitation, not a certipy or attack-technique failure. Resetting the password in step 2 is therefore the supported path to finish this lab; Shadow Credentials is documented here as a real technique that does work against a Windows Server 2016+ DC with this same GenericAll.</p>
 
     <h3>Mitigation</h3>
     <ul>

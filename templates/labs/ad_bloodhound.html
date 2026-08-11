@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 07 – BloodHound & Attack Paths – HackLabs{% endblock %}
+{% block title %}AD07 – BloodHound & Attack Paths – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -36,7 +36,7 @@ smbclient -N //{{ ad_dc_ip }}/public -c 'get bloodhound_simple_bind.py'
     <h3>1 · Por qué el colector estándar falla aquí (y cómo se arregla)</h3>
     <p><code>bloodhound-python</code>/<code>bloodhound-ce-python</code> solo saben autenticar en LDAP con NTLM o Kerberos (código fuente: <code>bloodhound/ad/authentication.py</code>, método <code>getLDAPConnection</code>). Contra este DC:</p>
     <ul>
-      <li><strong>NTLM</strong> — <code>ldap3</code> usa un bind Sicily que Samba no implementa: <code>LDAPSessionTerminatedByServerError</code> (mismo fallo que <code>nxc ldap</code>, ver AD 02).</li>
+      <li><strong>NTLM</strong> — <code>ldap3</code> usa un bind Sicily que Samba no implementa: <code>LDAPSessionTerminatedByServerError</code> (mismo fallo que <code>nxc ldap</code>, ver AD02).</li>
       <li><strong>Kerberos</strong> — el bind SASL/GSSAPI necesita un TGS-REQ para <code>ldap/{{ ad_dc_host|lower }}</code>; el KDC de Samba falla al firmar el PAC de ese ticket con <code>KRB_AP_ERR_INAPP_CKSUM</code> — un bug real de Samba, verificado en vivo, no de las herramientas cliente.</li>
     </ul>
     <p>El <strong>bind LDAP simple</strong> (DN/UPN + contraseña en claro, sin NTLM ni Kerberos) sí funciona siempre contra este DC. <code>bloodhound_simple_bind.py</code> es un monkeypatch de <code>getLDAPConnection</code> que fuerza ese bind — no toca nada del resto del colector, así que la recolección de usuarios, grupos, ACLs, GPOs y containers es 100% real.</p>
@@ -60,7 +60,7 @@ INFO: Found 46 groups
 INFO: Found 2 gpos
 ...
 INFO: Compressing output into &lt;timestamp&gt;_bloodhound.zip</pre>
-    <p><code>-c DCOnly</code> solo consulta LDAP (no abre sesiones SMB contra equipos), así que es lo único que necesita el wrapper. El recolector integrado de netexec (<code>nxc ldap --bloodhound</code>) sigue sin funcionar contra este DC — falla el mismo bind NTLM que el resto de módulos <code>nxc ldap</code> (ver AD 02); usa siempre el wrapper de arriba.</p>
+    <p><code>-c DCOnly</code> solo consulta LDAP (no abre sesiones SMB contra equipos), así que es lo único que necesita el wrapper. El recolector integrado de netexec (<code>nxc ldap --bloodhound</code>) sigue sin funcionar contra este DC — falla el mismo bind NTLM que el resto de módulos <code>nxc ldap</code> (ver AD02); usa siempre el wrapper de arriba.</p>
 
     <h3>3 · Instalar y levantar BloodHound CE</h3>
     <p>Guía completa: <a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound" target="_blank" rel="noopener">afsh4ck.gitbook.io — BloodHound</a>. Instala Docker si no lo tienes:</p>
@@ -130,7 +130,7 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     <h3>1 · Why the standard collector fails here (and how it's fixed)</h3>
     <p><code>bloodhound-python</code>/<code>bloodhound-ce-python</code> only know how to authenticate to LDAP with NTLM or Kerberos (source: <code>bloodhound/ad/authentication.py</code>, method <code>getLDAPConnection</code>). Against this DC:</p>
     <ul>
-      <li><strong>NTLM</strong> — <code>ldap3</code> uses a Sicily bind Samba doesn't implement: <code>LDAPSessionTerminatedByServerError</code> (same failure as <code>nxc ldap</code>, see AD 02).</li>
+      <li><strong>NTLM</strong> — <code>ldap3</code> uses a Sicily bind Samba doesn't implement: <code>LDAPSessionTerminatedByServerError</code> (same failure as <code>nxc ldap</code>, see AD02).</li>
       <li><strong>Kerberos</strong> — the SASL/GSSAPI bind needs a TGS-REQ for <code>ldap/{{ ad_dc_host|lower }}</code>; Samba's KDC fails to sign that ticket's PAC with <code>KRB_AP_ERR_INAPP_CKSUM</code> — a real, live-verified Samba bug, not a client-tooling issue.</li>
     </ul>
     <p><strong>Simple LDAP bind</strong> (DN/UPN + cleartext password, no NTLM or Kerberos) always works against this DC. <code>bloodhound_simple_bind.py</code> is a monkeypatch of <code>getLDAPConnection</code> that forces that bind — it doesn't touch anything else in the collector, so the resulting users/groups/ACLs/GPOs/containers are 100% real.</p>
@@ -154,7 +154,7 @@ INFO: Found 46 groups
 INFO: Found 2 gpos
 ...
 INFO: Compressing output into &lt;timestamp&gt;_bloodhound.zip</pre>
-    <p><code>-c DCOnly</code> only queries LDAP (no SMB sessions against member hosts), which is exactly what the wrapper needs. netexec's built-in collector (<code>nxc ldap --bloodhound</code>) still doesn't work against this DC — it hits the same NTLM bind failure as every other <code>nxc ldap</code> module (see AD 02); always use the wrapper above.</p>
+    <p><code>-c DCOnly</code> only queries LDAP (no SMB sessions against member hosts), which is exactly what the wrapper needs. netexec's built-in collector (<code>nxc ldap --bloodhound</code>) still doesn't work against this DC — it hits the same NTLM bind failure as every other <code>nxc ldap</code> module (see AD02); always use the wrapper above.</p>
 
     <h3>3 · Install and start BloodHound CE</h3>
     <p>Full guide: <a href="https://afsh4ck.gitbook.io/ethical-hacking-cheatsheet/active-directory/active-directory/bloodhound" target="_blank" rel="noopener">afsh4ck.gitbook.io — BloodHound</a>. Install Docker if you don't have it:</p>

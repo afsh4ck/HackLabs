@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 15 – MachineAccountQuota & RBCD – HackLabs{% endblock %}
+{% block title %}AD15 – MachineAccountQuota & RBCD – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -26,7 +26,7 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     <p>El atributo de dominio <code>ms-DS-MachineAccountQuota</code> (por defecto <strong>10</strong>) define cuántas cuentas de equipo puede crear un usuario cualquiera. No es una vulnerabilidad por sí sola, pero es la pieza que habilita ataques como <em>Resource-Based Constrained Delegation</em> (RBCD) y <em>noPac</em>: una cuenta de máquina bajo tu control es un principal Kerberos de pleno derecho que tú manejas.</p>
 
     <h3>2 · Comprobar la cuota</h3>
-    <pre># nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
+    <pre># nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD02); ldapsearch sí:
 ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
 # ms-DS-MachineAccountQuota: 10   → &gt; 0 significa que podemos crear equipos</pre>
@@ -77,7 +77,7 @@ impacket-getST -spn 'cifs/{{ ad_dc_fqdn }}' -impersonate Administrator \
     <p>The domain attribute <code>ms-DS-MachineAccountQuota</code> (default <strong>10</strong>) sets how many computer accounts any user can create. It is not a vulnerability on its own, but it is the enabler for attacks like <em>Resource-Based Constrained Delegation</em> (RBCD) and <em>noPac</em>: a machine account under your control is a first-class Kerberos principal you own.</p>
 
     <h3>2 · Check the quota</h3>
-    <pre># nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD 02); ldapsearch sí:
+    <pre># nxc ldap -M maq no funciona contra este DC (falla el bind NTLM, ver AD02); ldapsearch sí:
 ldapsearch -x -H ldap://{{ ad_dc_ip }} -D 'svc.readonly@{{ ad_realm_lower }}' -w 'ReadOnly123!' \
   -b "DC={{ ad_realm_lower.split('.')[0] }},DC={{ ad_realm_lower.split('.')[1] }}" -s base '(objectClass=*)' 'ms-DS-MachineAccountQuota'
 # ms-DS-MachineAccountQuota: 10   → &gt; 0 means we can create computers</pre>

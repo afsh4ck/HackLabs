@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 05 – Kerberoasting – HackLabs{% endblock %}
+{% block title %}AD05 – Kerberoasting – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -14,7 +14,7 @@
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este Domain Controller</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400"><code>impacket-GetUserSPNs</code> tal cual falla contra este DC por dos bugs distintos: (1) su enumeración LDAP automática usa el bind NTLM/Sicily que Samba no implementa (ver AD 02); y (2), aunque te lo saltes, el TGS-REQ que pide el ticket de servicio revienta con <code>KRB_AP_ERR_INAPP_CKSUM</code> porque impacket no envía el checksum keyed que el KDC de Samba exige en el Authenticator (RFC 4120 §5.5.1) — algo que Windows recibe casi siempre de sus propios clientes, por eso el bug de impacket pasa desapercibido en producción. <strong>Root cause identificado y arreglado</strong>: descarga <code>GetUserSPNs_fixed.py</code> del share <code>public</code> — pide el TGS con ese checksum añadido y produce un hash <strong>real, obtenido en vivo</strong>, no uno pre-capturado.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400"><code>impacket-GetUserSPNs</code> tal cual falla contra este DC por dos bugs distintos: (1) su enumeración LDAP automática usa el bind NTLM/Sicily que Samba no implementa (ver AD02); y (2), aunque te lo saltes, el TGS-REQ que pide el ticket de servicio revienta con <code>KRB_AP_ERR_INAPP_CKSUM</code> porque impacket no envía el checksum keyed que el KDC de Samba exige en el Authenticator (RFC 4120 §5.5.1) — algo que Windows recibe casi siempre de sus propios clientes, por eso el bug de impacket pasa desapercibido en producción. <strong>Root cause identificado y arreglado</strong>: descarga <code>GetUserSPNs_fixed.py</code> del share <code>public</code> — pide el TGS con ese checksum añadido y produce un hash <strong>real, obtenido en vivo</strong>, no uno pre-capturado.</p>
   </div>
 
   <div class="hl-card mb-4">
@@ -64,7 +64,7 @@ hashcat -m 13100 tgs.hash /usr/share/wordlists/rockyou.txt --force
 
 # john
 john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt tgs.hash</pre>
-    <p>La contraseña recuperada es <code>ranger</code> (la de <code>svc.mssql</code>). Guárdala: también existe <code>svc.delegate : iloveyou1</code>, que usarás en el lab AD 14.</p>
+    <p>La contraseña recuperada es <code>ranger</code> (la de <code>svc.mssql</code>). Guárdala: también existe <code>svc.delegate : iloveyou1</code>, que usarás en el lab AD14.</p>
 
     <h3>5 · Capturar la flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.mssql' -p 'ranger' --shares
@@ -123,7 +123,7 @@ hashcat -m 13100 tgs.hash /usr/share/wordlists/rockyou.txt --force
 
 # john
 john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt tgs.hash</pre>
-    <p>The recovered password is <code>ranger</code> (for <code>svc.mssql</code>). Keep it — there is also <code>svc.delegate : iloveyou1</code>, which you will need in lab AD 14.</p>
+    <p>The recovered password is <code>ranger</code> (for <code>svc.mssql</code>). Keep it — there is also <code>svc.delegate : iloveyou1</code>, which you will need in lab AD14.</p>
 
     <h3>5 · Capture the flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.mssql' -p 'ranger' --shares

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}AD 01 – SMB Enumeration & Null Session – HackLabs{% endblock %}
+{% block title %}AD01 – SMB Enumeration & Null Session – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -68,7 +68,7 @@ Password: ReadOnly123!
 
 # Verifícalo:
 nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
-    <p>Esa credencial es la que usarás en el siguiente laboratorio (AD 02) para enumerar los usuarios del dominio — la enumeración anónima de usuarios (RID cycling con sesión nula o <code>guest</code>) no funciona contra este Domain Controller.</p>
+    <p>Esa credencial es la que usarás en el siguiente laboratorio (AD02) para enumerar los usuarios del dominio — la enumeración anónima de usuarios (RID cycling con sesión nula o <code>guest</code>) no funciona contra este Domain Controller.</p>
 
     <h3>Mitigación</h3>
     <ul>
@@ -125,7 +125,7 @@ Password: ReadOnly123!
 
 # Verify it:
 nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!'</pre>
-    <p>That credential is what you'll use in the next lab (AD 02) to enumerate domain users — anonymous user enumeration (RID cycling with a null or <code>guest</code> session) does not work against this Domain Controller.</p>
+    <p>That credential is what you'll use in the next lab (AD02) to enumerate domain users — anonymous user enumeration (RID cycling with a null or <code>guest</code> session) does not work against this Domain Controller.</p>
 
     <h3>Mitigation</h3>
     <ul>

