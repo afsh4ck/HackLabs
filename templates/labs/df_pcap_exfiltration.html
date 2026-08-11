@@ -11,12 +11,13 @@
   </div>
 
   {% include 'labs/_forensic_evidence.html' %}
-  {% include 'labs/_forensic_questions.html' %}
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
     <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">tshark -r dns_traffic.pcap -Y "dns.flags.response==0" -T fields -e dns.qry.name</pre>
   </div>
+
+  {% include 'labs/_forensic_questions.html' %}
 </div>
 
 <div id="resolution-data" class="hidden">
