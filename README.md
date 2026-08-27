@@ -102,7 +102,7 @@ Los labs que antes estaban agrupados como `Vulnerabilidades` se dividen en dos r
 | H03 – Metasploit: ActiveMQ RCE to Meterpreter | 🔴 Critical | CVE-2023-46604 en ActiveMQ 5.18.2 → Meterpreter Linux x64 |
 | H04 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration y cron |
 | H05 – Container Escape | 🔴 Critical | Docker socket, privileged container y cgroup release_agent |
-| H06 – C2 – Sliver Command & Control | 🔴 Critical | Implant, mTLS listener y ejecución de payloads |
+| H06 – Command & Control: Sliver | 🔴 Critical | Implant, mTLS listener y ejecución de payloads |
 | H07 – Network & Service Enumeration | 🟡 Medium | Nmap, detección de versiones y superficie de ataque |
 | H08 – Linux Credential Hunting | 🟠 High | Secretos en ficheros, entornos, historiales y claves |
 | H09 – Sudo, SUID & Capabilities Abuse | 🔴 Critical | Ruptura de límites de privilegios en Linux |
@@ -399,7 +399,7 @@ Flag: `HL{···}` (dentro de las credenciales IAM del endpoint de metadatos)
 </details>
 
 <details>
-<summary><strong>H01 – C2 — Sliver (Command & Control)</strong></summary>
+<summary><strong>H06 – Command &amp; Control: Sliver</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|

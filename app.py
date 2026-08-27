@@ -1897,7 +1897,7 @@ def get_lab_list():
         {'id': 'metasploit_exploitation', 'title': 'H03 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Host Attacks', 'risk': 'critical'},
         {'id': 'privesc',            'title': 'H04 – Privilege Escalation (SSH)',                  'category': 'Host Attacks', 'risk': 'critical'},
         {'id': 'container_escape',   'title': 'H05 – Container Escape',                            'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'c2_sliver',          'title': 'H06 – C2 – Sliver Command & Control',               'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'c2_sliver',          'title': 'H06 – Command & Control: Sliver',                   'category': 'Host Attacks', 'risk': 'critical'},
         {'id': 'host_enum',          'title': 'H07 – Network & Service Enumeration',              'category': 'Host Attacks', 'risk': 'medium'},
         {'id': 'credential_hunting', 'title': 'H08 – Linux Credential Hunting',                   'category': 'Host Attacks', 'risk': 'high'},
         {'id': 'sudo_suid',          'title': 'H09 – Sudo, SUID & Capabilities Abuse',             'category': 'Host Attacks', 'risk': 'critical'},
