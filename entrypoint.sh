@@ -94,6 +94,7 @@ local_enable=YES
 write_enable=NO
 local_umask=022
 dirmessage_enable=YES
+ftpd_banner=vsftpd 3.0.5
 connect_from_port_20=YES
 chroot_local_user=YES
 allow_writeable_chroot=YES
@@ -192,10 +193,92 @@ chmod 644 /etc/cron.d/maintenance
 printf 'Tip: check what runs automatically on this system...\n' > /home/charlie/note.txt
 chmod 644 /home/charlie/note.txt 2>/dev/null || true
 
-# Iniciar cron (necesario para el vector de charlie)
+echo '  [+] Vectores de privesc configurados.'
+
+# ── Host Attacks H05/H07-H10/H13: artefactos reales dentro del objetivo ──
+echo '  [*] Configurando cadena de post-explotación Host Attacks...'
+mkdir -p /opt/hacklabs/app /root/host-labs /opt/hostlabs /opt/backups/.ssh /srv/internal /opt/hacklabs-db
+
+# H12 — marcador legible únicamente desde una sesión obtenida en el objetivo.
+mkdir -p /opt/hacklabs/c2
+printf 'HL{c2_511v3r_c41184ck_35748115h3d}\n' > /opt/hacklabs/c2/session-marker.txt
+chown root:admin /opt/hacklabs/c2/session-marker.txt
+chmod 640 /opt/hacklabs/c2/session-marker.txt
+
+# H05 — secretos legibles únicamente tras obtener shell como admin.
+cat > /opt/hacklabs/app/.env << 'HOSTENV'
+APP_ENV=production
+DB_ENGINE=sqlite
+DB_PATH=/opt/hacklabs-db/production.db
+DB_USER=app_reader
+BACKUP_KEY=/opt/backups/.ssh/id_rsa
+LAB_MARKER=HL{cr3d5_1n_c0nf19_4nd_h1570ry}
+HOSTENV
+chown root:admin /opt/hacklabs/app/.env
+chmod 640 /opt/hacklabs/app/.env
+
+# H07 — el vector SUID/capabilities permite llegar a root y leer este marcador.
+printf 'HL{5u1d_c4p5_70_r007_3sc4l4710n}\n' > /root/host-labs/h07.txt
+chmod 600 /root/host-labs/h07.txt
+
+# H08 — tarea root modificable: la flag fuente no es legible sin explotar cron.
+printf 'HL{cr0n_j08_p3r51573nc3_4ch13v3d}\n' > /root/host-labs/h08.txt
+chmod 600 /root/host-labs/h08.txt
+cat > /opt/hostlabs/telemetry.sh << 'HOSTCRON'
+#!/bin/sh
+find /var/log -type f -name '*.log' -mtime +30 -delete 2>/dev/null
+HOSTCRON
+chown root:root /opt/hostlabs/telemetry.sh
+chmod 777 /opt/hostlabs/telemetry.sh
+printf '* * * * * root /opt/hostlabs/telemetry.sh\n' > /etc/cron.d/hacklabs-telemetry
+chmod 644 /etc/cron.d/hacklabs-telemetry
+
+# H09 — clave privada abandonada que permite movimiento lateral a svc-backup.
+id svc-backup >/dev/null 2>&1 || useradd -m -s /bin/bash svc-backup
+mkdir -p /home/svc-backup/.ssh
+rm -f /opt/backups/.ssh/id_rsa /opt/backups/.ssh/id_rsa.pub
+ssh-keygen -q -t ed25519 -N '' -f /opt/backups/.ssh/id_rsa >/dev/null 2>&1
+cp /opt/backups/.ssh/id_rsa.pub /home/svc-backup/.ssh/authorized_keys
+printf 'HL{55h_k3y_l473r41_m0v3m3n7}\n' > /home/svc-backup/lateral.txt
+chown -R svc-backup:svc-backup /home/svc-backup/.ssh /home/svc-backup/lateral.txt
+chmod 700 /home/svc-backup/.ssh
+chmod 600 /home/svc-backup/.ssh/authorized_keys /home/svc-backup/lateral.txt
+chown root:admin /opt/backups/.ssh/id_rsa /opt/backups/.ssh/id_rsa.pub
+chmod 640 /opt/backups/.ssh/id_rsa
+chmod 644 /opt/backups/.ssh/id_rsa.pub
+
+# H10 — servicio interno ligado solo a loopback, alcanzable mediante túnel SSH.
+printf 'HL{p1v07_70_1n73rn41_n37w0rk}\n' > /srv/internal/index.html
+chmod 600 /srv/internal/index.html
+python3 -m http.server 9090 --bind 127.0.0.1 --directory /srv/internal >/var/log/hacklabs-internal.log 2>&1 &
+
+# H13 — base de datos real con hash MD5 para cracking offline.
+rm -f /opt/hacklabs-db/production.db
+sqlite3 /opt/hacklabs-db/production.db << 'DBEOF'
+CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, role TEXT);
+CREATE TABLE audit_log (id INTEGER PRIMARY KEY, event TEXT, created_at TEXT);
+INSERT INTO users VALUES (1, 'administrator', '878ee978a29fbf5f016e853b10f40d03', 'admin');
+INSERT INTO users VALUES (2, 'reporting', '5f4dcc3b5aa765d61d8327deb882cf99', 'reader');
+INSERT INTO audit_log VALUES (1, 'legacy password migration pending', '2026-08-28T01:30:00Z');
+DBEOF
+chown root:admin /opt/hacklabs-db/production.db
+chmod 640 /opt/hacklabs-db/production.db
+cat > /opt/hacklabs/app/company-passwords.txt << 'WORDLIST'
+Winter2025!
+HackLabs2026
+Adm1n-DB-2026!
+Database123!
+Summer2026!
+WORDLIST
+chown root:admin /opt/hacklabs/app/company-passwords.txt
+chmod 640 /opt/hacklabs/app/company-passwords.txt
+
+# Iniciar cron solo cuando todas las tareas del sistema y de los Host labs existen.
+# Esto evita la carrera de arranque en la que /etc/cron.d/hacklabs-telemetry
+# podía crearse después del primer escaneo del daemon y no ejecutarse.
 cron 2>/dev/null || true
 
-echo '  [+] Vectores de privesc configurados.'
+echo '  [+] Artefactos Host Attacks listos.'
 
 /usr/sbin/smbd 2>/dev/null &
 /usr/sbin/vsftpd &

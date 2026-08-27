@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **76 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + AI Attacks + Active Directory + Forense Digital
+- **83 laboratorios** repartidos entre Web Attacks, Host Attacks, OWASP Top 10, AI Attacks, Active Directory y Forense Digital
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -61,11 +61,9 @@
 | A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
 | A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
 
-### Web Attacks y Host Attacks
+## Laboratorios disponibles
 
-Los labs que antes estaban agrupados como `Vulnerabilidades` se dividen en dos rutas dedicadas: [`/category/web-attacks`](/category/web-attacks) para aplicaciones y APIs, y [`/category/host-attacks`](/category/host-attacks) para sistemas, contenedores y servicios. Las páginas también están disponibles desde el menú lateral y la consola de administración.
-
-#### Web Attacks (W01–W23)
+### Web Attacks (W01–W23)
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
@@ -93,24 +91,23 @@ Los labs que antes estaban agrupados como `Vulnerabilidades` se dividen en dos r
 | W22 – Account Takeover via Recovery IDOR | 🔴 Critical | IDOR/BOLA en recuperación |
 | W23 – Business Logic: Price Manipulation | 🔴 Critical | Precio controlado por cliente |
 
-#### Host Attacks (H01–H05)
+### Host Attacks (H01–H13)
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| H01 – Login Bruteforce | 🟡 Medium | Hydra, Medusa y credenciales expuestas en servicios |
-| H02 – Reverse Shell | 🔴 Critical | Command injection y shell interactiva |
-| H03 – Metasploit: ActiveMQ RCE to Meterpreter | 🔴 Critical | CVE-2023-46604 en ActiveMQ 5.18.2 → Meterpreter Linux x64 |
-| H04 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration y cron |
-| H05 – Container Escape | 🔴 Critical | Docker socket, privileged container y cgroup release_agent |
-| H06 – Command & Control: Sliver | 🔴 Critical | Implant, mTLS listener y ejecución de payloads |
-| H07 – Network & Service Enumeration | 🟡 Medium | Nmap, detección de versiones y superficie de ataque |
-| H08 – Linux Credential Hunting | 🟠 High | Secretos en ficheros, entornos, historiales y claves |
-| H09 – Sudo, SUID & Capabilities Abuse | 🔴 Critical | Ruptura de límites de privilegios en Linux |
-| H10 – Cron & Systemd Persistence | 🟠 High | Persistencia mediante tareas y servicios modificables |
-| H11 – SSH Keys & Lateral Movement | 🟠 High | Robo de claves, agent forwarding y movimiento lateral |
-| H12 – Network Pivoting & Tunneling | 🟠 High | Túneles SSH/Chisel hacia redes internas |
-
-Los labs H07–H12 incluyen un endpoint vulnerable controlado bajo `/host-lab/<lab>/probe` para practicar la fase con tráfico HTTP reproducible desde Kali. Las respuestas exponen únicamente la evidencia necesaria y devuelven la flag cuando se completa la técnica indicada en la guía integrada.
+| H01 – Network & Service Enumeration | 🟡 Medium | Nmap, detección de versiones y respuesta sobre FTP |
+| H02 – Login Bruteforce | 🟡 Medium | Hydra, Medusa y credenciales expuestas en servicios |
+| H03 – Reverse Shell | 🔴 Critical | Command injection y shell interactiva |
+| H04 – Metasploit: ActiveMQ RCE to Meterpreter | 🔴 Critical | CVE-2023-46604 en ActiveMQ 5.18.2 → Meterpreter Linux x64 |
+| H05 – Linux Credential Hunting | 🟠 High | Secretos reales en configuraciones e historiales del objetivo |
+| H06 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration y cron |
+| H07 – Sudo, SUID & Capabilities Abuse | 🔴 Critical | Ruptura de límites de privilegios desde una shell |
+| H08 – Cron Persistence | 🟠 High | Tarea root con script modificable |
+| H09 – SSH Keys & Lateral Movement | 🟠 High | Clave privada abandonada y cambio de identidad |
+| H10 – Network Pivoting & Tunneling | 🟠 High | Servicio loopback alcanzable mediante túnel SSH |
+| H11 – Container Escape | 🔴 Critical | Docker socket, privileged container y cgroup release_agent |
+| H12 – Command & Control: Sliver | 🔴 Critical | Implant, mTLS listener y ejecución de payloads |
+| H13 – Database Access | 🟠 High | Enumeración SQLite, extracción de MD5 y cracking offline |
 
 ### AI Attacks
 
@@ -399,7 +396,7 @@ Flag: `HL{···}` (dentro de las credenciales IAM del endpoint de metadatos)
 </details>
 
 <details>
-<summary><strong>H06 – Command &amp; Control: Sliver</strong></summary>
+<summary><strong>H12 – Command &amp; Control: Sliver</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -521,7 +518,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>H03 – Login Bruteforce (HTTP + FTP)</strong></summary>
+<summary><strong>H02 – Login Bruteforce (HTTP + FTP)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -576,7 +573,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>H04 – Privilege Escalation (SSH)</strong></summary>
+<summary><strong>H06 – Privilege Escalation (SSH)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -659,7 +656,7 @@ Flag: `HL{···}`
 </details>
 
 <details>
-<summary><strong>H02 – Container Escape</strong></summary>
+<summary><strong>H11 – Container Escape</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -783,7 +780,7 @@ Flags: `HL{···}` / `HL{···}` / `HL{···}`
 </details>
 
 <details>
-<summary><strong>H05 – Reverse Shell</strong></summary>
+<summary><strong>H03 – Reverse Shell</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -939,7 +936,7 @@ cd HackLabs
 sudo bash deploy.sh
 ```
 
-El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** dentro del rango `.100–.199` a la aplicación web, al objetivo ActiveMQ de H06 y al DC opcional, y muestra el resultado:
+El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** dentro del rango `.100–.199` a la aplicación web, al objetivo ActiveMQ de H04 y al DC opcional, y muestra el resultado:
 
 ```
     __  __              __    __           __
@@ -961,7 +958,7 @@ El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** de
 
   nmap -sV -p 21,22,80,445 192.168.1.147
 
-  ActiveMQ H06:      192.168.1.151
+  ActiveMQ H04:      192.168.1.151
   OpenWire → 192.168.1.151:61616
   Consola → http://192.168.1.151:8161
   nmap -sV -p 61616,8161 192.168.1.151
@@ -988,7 +985,7 @@ Pulsa **Ctrl+C** para detener y eliminar el contenedor automáticamente.
 
 #### Domain Controller vulnerable (Active Directory)
 
-`deploy.sh` levanta **automáticamente** el objetivo ActiveMQ de H06 en una máquina/IP propia y, salvo que uses `HL_SKIP_AD=1`, una segunda máquina adicional: un Domain Controller real basado en Samba AD DC (`HACKLABS.LOCAL`) con su propia IP.
+`deploy.sh` levanta **automáticamente** el objetivo ActiveMQ de H04 en una máquina/IP propia y, salvo que uses `HL_SKIP_AD=1`, una segunda máquina adicional: un Domain Controller real basado en Samba AD DC (`HACKLABS.LOCAL`) con su propia IP.
 
 - La primera vez, el DC provisiona el dominio al arrancar (~1 min): crea usuarios, grupos, SPNs, ACLs abusables y las flags de cada lab.
 - `deploy.sh` añade a tu `/etc/hosts` la entrada `dc01.hacklabs.local` (Kerberos exige resolver el FQDN) y la limpia al detener el laboratorio con Ctrl+C.
@@ -1006,7 +1003,7 @@ nxc smb 127.0.0.1 -u '' -p '' --shares
 
 #### Objetivo vulnerable para Metasploit
 
-El lab **H06** usa un contenedor separado con Apache ActiveMQ 5.18.2, vulnerable a
+El lab **H04** usa un contenedor separado con Apache ActiveMQ 5.18.2, vulnerable a
 CVE-2023-46604. `build.sh` levanta automáticamente la aplicación y este objetivo,
 manteniéndolos como servicios separados dentro del mismo proyecto Compose. En
 modo macvlan, `deploy.sh` asigna una IP propia al objetivo y muestra esa IP para
@@ -1019,7 +1016,7 @@ nmap -sV -p 61616,8161 127.0.0.1
 
 En Metasploit usa
 `exploit/multi/misc/apache_activemq_rce_cve_2023_46604`, target Linux y el
-payload `cmd/linux/http/x64/meterpreter/reverse_tcp`. La guía integrada de H06
+payload `cmd/linux/http/x64/meterpreter/reverse_tcp`. La guía integrada de H04
 incluye la configuración completa de `RHOSTS`, `SRVHOST` y `LHOST`.
 
 ```bash

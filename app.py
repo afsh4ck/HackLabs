@@ -840,13 +840,16 @@ def get_lab_flag_map():
         'account_takeover': ['HL{4cc0un7_74k30v3r_r3c0v3ry_1d0r}'],
         'price_manipulation': ['HL{pr1c3_0v3rr1d3_ch3ck0u7_fr33}'],
         'metasploit_exploitation': ['HL{m373rpr373r_c43_2023_46604}'],
-        'c2_sliver': ['HL{c2_sliver_callback_established}'],
-        'host_enum': ['HL{h07_nmap_service_map_complete}'],
-        'credential_hunting': ['HL{h08_linux_secrets_hunted}'],
-        'sudo_suid': ['HL{h09_privilege_boundaries_broken}'],
-        'cron_persistence': ['HL{h10_persistence_established}'],
-        'ssh_lateral': ['HL{h11_lateral_movement_complete}'],
-        'network_pivoting': ['HL{h12_pivot_tunnel_established}'],
+        'c2_sliver': ['HL{c2_511v3r_c41184ck_35748115h3d}'],
+        # Host Attacks: las flags H05/H07-H10 viven exclusivamente dentro del objetivo.
+        # H01 y H13 se completan mediante respuesta guiada, no mediante la caja global.
+        'host_enum': ['vsftpd 3.0.5'],
+        'credential_hunting': ['HL{cr3d5_1n_c0nf19_4nd_h1570ry}'],
+        'sudo_suid': ['HL{5u1d_c4p5_70_r007_3sc4l4710n}'],
+        'cron_persistence': ['HL{cr0n_j08_p3r51573nc3_4ch13v3d}'],
+        'ssh_lateral': ['HL{55h_k3y_l473r41_m0v3m3n7}'],
+        'network_pivoting': ['HL{p1v07_70_1n73rn41_n37w0rk}'],
+        'database_access': ['Adm1n-DB-2026!'],
         'container_escape': ['HL{c0n741n3r_35c4p3_h057_4cc355}'],
         'cors': ['HL{c0r5_cr3d3n7141_7h3f7_5ucc355}'],
         'csrf': ['HL{c5rf_57473_ch4n93_5ucc355}'],
@@ -967,7 +970,7 @@ def get_lab_flag_map():
         'indirect_injection',
         'ai_supply_chain',
         'final_boss',
-        'host_enum', 'credential_hunting', 'sudo_suid', 'cron_persistence', 'ssh_lateral', 'network_pivoting',
+        'host_enum', 'credential_hunting', 'sudo_suid', 'cron_persistence', 'ssh_lateral', 'network_pivoting', 'database_access',
     }
     # Los labs de Active Directory tienen su flag en el Domain Controller:
     # la flag de root de la máquina web nunca es una respuesta válida.
@@ -1774,46 +1777,44 @@ def forensics_check_answer():
 
     return jsonify({'correct': correct})
 
-@app.route('/host-lab/<lab_id>/probe', methods=['GET', 'POST'])
-def host_lab_probe(lab_id):
-    """Controlled vulnerable services used by H07-H12.
+HOST_ANSWER_LABS = {
+    'host_enum': {'answers': ['vsftpd 3.0.5'], 'marker': 'answer:vsftpd-3.0.5'},
+    'database_access': {'answers': ['Adm1n-DB-2026!'], 'marker': 'answer:database-password'},
+}
 
-    These endpoints model the evidence an operator would discover on a host
-    during each phase; they deliberately expose realistic misconfigurations
-    and return the lab flag only after the corresponding technique is used.
-    """
-    if lab_id == 'host_enum':
-        ports = {p.strip() for p in request.args.get('ports', '').split(',') if p.strip()}
-        services = {'21': 'vsftpd 3.0.5', '22': 'OpenSSH 9.2', '80': 'nginx 1.24', '445': 'Samba 4.17', '61616': 'ActiveMQ OpenWire 5.18.2', '8161': 'Jetty Web Console'}
-        found = {p: services[p] for p in sorted(ports, key=lambda x: int(x)) if p in services}
-        complete = {'21','22','80','445','61616','8161'}.issubset(ports)
-        return jsonify({'host': request.host.split(':')[0], 'services': found, 'flag': 'HL{h07_nmap_service_map_complete}' if complete else None})
-    if lab_id == 'credential_hunting':
-        path = request.args.get('path', '')
-        if path in ('/.env', '/opt/app/.env', '/home/analyst/.bash_history'):
-            return jsonify({'path': path, 'content': 'DB_USER=backup\nDB_PASSWORD=Vault-Backup-2026!\nSSH_KEY=/opt/backup/.ssh/id_rsa', 'flag': 'HL{h08_linux_secrets_hunted}'})
-        return jsonify({'files': ['/opt/app/.env', '/opt/backup/.ssh/id_rsa', '/home/analyst/.bash_history'], 'hint': 'Inspect readable configuration and history files.'})
-    if lab_id == 'sudo_suid':
-        binary = request.args.get('binary', '')
-        if binary == 'python3':
-            return jsonify({'sudo': '(ALL) NOPASSWD: /usr/bin/python3', 'capabilities': 'cap_setuid+ep', 'uid': 0, 'flag': 'HL{h09_privilege_boundaries_broken}'})
-        return jsonify({'sudo': 'User analyst may run /usr/bin/python3 as root', 'suid': ['/usr/bin/passwd', '/usr/bin/python3'], 'hint': 'Check GTFOBins and Linux capabilities.'})
-    if lab_id == 'cron_persistence':
-        command = request.form.get('command', '') if request.method == 'POST' else request.args.get('command', '')
-        if request.method == 'POST' and command and ('/tmp' in command or 'bash' in command):
-            return jsonify({'installed': True, 'unit': 'backup.timer', 'runs_as': 'root', 'flag': 'HL{h10_persistence_established}'})
-        return jsonify({'cron': '* * * * * root /opt/backup/rotate.sh', 'writable': True, 'systemd': 'backup.timer -> /opt/backup/rotate.sh'})
-    if lab_id == 'ssh_lateral':
-        key = request.args.get('key', '')
-        if key == 'legacy-admin':
-            return jsonify({'user': 'svc-backup', 'authorized_key': 'ssh-rsa AAAA...legacy-admin', 'next_hop': '10.10.20.15', 'flag': 'HL{h11_lateral_movement_complete}'})
-        return jsonify({'keys': ['legacy-admin', 'svc-backup'], 'agent_forwarding': True, 'hint': 'Enumerate authorized_keys and pivot to the backup host.'})
-    if lab_id == 'network_pivoting':
-        target = request.args.get('target', '')
-        if target in ('10.10.20.15', 'db.internal'):
-            return jsonify({'tunnel': 'established', 'target': target, 'service': 'PostgreSQL 5432', 'flag': 'HL{h12_pivot_tunnel_established}'})
-        return jsonify({'routes': ['172.18.0.0/16', '10.10.20.0/24'], 'internal_hosts': ['10.10.20.15', '10.10.20.25'], 'hint': 'Use SSH local forwarding or Chisel.'})
-    abort(404)
+
+@app.route('/host-labs/check-answer', methods=['POST'])
+def host_labs_check_answer():
+    """Validate answer-based Host labs and persist completion without exposing a flag."""
+    app_user = session.get('app_user')
+    if not app_user or session.get('app_user_type') != 'account':
+        return jsonify({'error': 'not_logged_in'}), 401
+    data = request.get_json(silent=True) or {}
+    lab_id = (data.get('lab_id') or '').strip()
+    answer = (data.get('answer') or '').strip()
+    config = HOST_ANSWER_LABS.get(lab_id)
+    if not config:
+        return jsonify({'error': 'invalid_lab'}), 400
+    if not answer:
+        return jsonify({'error': 'empty_answer'}), 400
+    accepted = {value.casefold() for value in config['answers']}
+    if answer.casefold() not in accepted:
+        return jsonify({'correct': False}), 200
+
+    db = get_db()
+    db.execute(
+        '''INSERT INTO user_progress (account_username, lab_id, validated_flag, completed_at)
+           VALUES (?,?,?,datetime('now'))
+           ON CONFLICT(account_username, lab_id)
+           DO UPDATE SET validated_flag=excluded.validated_flag, completed_at=datetime('now')''',
+        (app_user, lab_id, config['marker'])
+    )
+    _unlock_completion_rewards(db, app_user, get_lab_list())
+    db.commit()
+    count = db.execute(
+        'SELECT COUNT(*) FROM user_progress WHERE account_username=?', (app_user,)
+    ).fetchone()[0]
+    return jsonify({'correct': True, 'completed': True, 'count': count, 'total': len(get_lab_list())})
 
 @app.route('/lab/<lab_id>')
 def lab(lab_id):
@@ -1871,7 +1872,7 @@ def lab(lab_id):
     if not lab_info:
         return render_template('index.html', error='Laboratorio no encontrado'), 404
     try:
-        if lab_info.get('category') == 'Host Attacks' and lab_id.startswith(('host_', 'credential_', 'sudo_', 'cron_', 'ssh_', 'network_')):
+        if lab_info.get('category') == 'Host Attacks' and lab_id.startswith(('host_', 'credential_', 'sudo_', 'cron_', 'ssh_', 'network_', 'database_')):
             return render_template('labs/host_attack.html', lab=lab_info, host_lab_id=lab_id)
         return render_template(f'labs/{lab_id}.html', lab=lab_info)
     except Exception:
@@ -1891,19 +1892,20 @@ def get_lab_list():
         {'id': 'integrity',       'title': 'A08 – Software & Data Integrity Failures',     'category': 'OWASP Top 10', 'risk': 'high'},
         {'id': 'logging',         'title': 'A09 – Security Logging & Monitoring Failures', 'category': 'OWASP Top 10', 'risk': 'medium'},
         {'id': 'ssrf',            'title': 'A10 – Server-Side Request Forgery (SSRF)',     'category': 'OWASP Top 10', 'risk': 'high'},
-        # Host Attacks (H01-H06): infraestructura, sistemas y servicios
-        {'id': 'bruteforce',         'title': 'H01 – Login Bruteforce',                            'category': 'Host Attacks', 'risk': 'medium'},
-        {'id': 'reverse_shell',      'title': 'H02 – Reverse Shell',                               'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'metasploit_exploitation', 'title': 'H03 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'privesc',            'title': 'H04 – Privilege Escalation (SSH)',                  'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'container_escape',   'title': 'H05 – Container Escape',                            'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'c2_sliver',          'title': 'H06 – Command & Control: Sliver',                   'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'host_enum',          'title': 'H07 – Network & Service Enumeration',              'category': 'Host Attacks', 'risk': 'medium'},
-        {'id': 'credential_hunting', 'title': 'H08 – Linux Credential Hunting',                   'category': 'Host Attacks', 'risk': 'high'},
-        {'id': 'sudo_suid',          'title': 'H09 – Sudo, SUID & Capabilities Abuse',             'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'cron_persistence',   'title': 'H10 – Cron & Systemd Persistence',                 'category': 'Host Attacks', 'risk': 'high'},
-        {'id': 'ssh_lateral',        'title': 'H11 – SSH Keys & Lateral Movement',                'category': 'Host Attacks', 'risk': 'high'},
-        {'id': 'network_pivoting',   'title': 'H12 – Network Pivoting & Tunneling',               'category': 'Host Attacks', 'risk': 'high'},
+        # Host Attacks (H01-H13): orden de una cadena de pentesting real
+        {'id': 'host_enum',          'title': 'H01 – Network & Service Enumeration',              'category': 'Host Attacks', 'risk': 'medium'},
+        {'id': 'bruteforce',         'title': 'H02 – Login Bruteforce',                            'category': 'Host Attacks', 'risk': 'medium'},
+        {'id': 'reverse_shell',      'title': 'H03 – Reverse Shell',                               'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'metasploit_exploitation', 'title': 'H04 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'credential_hunting', 'title': 'H05 – Linux Credential Hunting',                   'category': 'Host Attacks', 'risk': 'high'},
+        {'id': 'privesc',            'title': 'H06 – Privilege Escalation (SSH)',                  'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'sudo_suid',          'title': 'H07 – Sudo, SUID & Capabilities Abuse',             'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'cron_persistence',   'title': 'H08 – Cron Persistence',                           'category': 'Host Attacks', 'risk': 'high'},
+        {'id': 'ssh_lateral',        'title': 'H09 – SSH Keys & Lateral Movement',                'category': 'Host Attacks', 'risk': 'high'},
+        {'id': 'network_pivoting',   'title': 'H10 – Network Pivoting & Tunneling',               'category': 'Host Attacks', 'risk': 'high'},
+        {'id': 'container_escape',   'title': 'H11 – Container Escape',                            'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'c2_sliver',          'title': 'H12 – Command & Control: Sliver',                   'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'database_access',    'title': 'H13 – Database Access',                             'category': 'Host Attacks', 'risk': 'high'},
         # Web Attacks (W01-W23): aplicaciones y APIs
         {'id': 'api_attacks',        'title': 'W01 – API Attacks – Laboratorio de APIs Inseguras', 'category': 'Web Attacks', 'risk': 'critical'},
         {'id': 'business_logic',     'title': 'W02 – Business Logic Flaws',                        'category': 'Web Attacks', 'risk': 'high'},

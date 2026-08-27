@@ -2,6 +2,18 @@
 
 All notable changes to this repository are documented in this file.
 
+## 2026-08-28
+
+- feat(host-attacks): Reordenada la ruta H01–H13 como una cadena de pentesting real, desde enumeración y acceso inicial hasta post-explotación, pivoting, escape, C2 y acceso a base de datos.
+- feat(host-attacks): H05 y H07–H10 usan artefactos, permisos, SUID, cron, SSH y servicios loopback reales dentro del objetivo; se eliminan los antiguos endpoints `/host-lab/*/probe`.
+- feat(database-access): Nuevo H13 con configuración de producción, SQLite real, enumeración de tablas, hash MD5 de administrador y cracking offline mediante una wordlist recuperada del sistema.
+- feat(progress): H01 y H13 validan respuestas técnicas y persisten el progreso; H02–H12 usan una única caja global de flag. Las flags Host nuevas usan formato l33t y solo existen en el objetivo.
+- fix(host-guides): Guías completas ES/EN, comandos con la IP dinámica, iconos Host únicos y contenido alineado al mismo ancho que la caja de validación.
+- fix(host-runtime): El objetivo incluye `sqlite3`, capabilities e `iproute2`; cron arranca después de crear todos sus jobs para que H08 se ejecute de forma fiable.
+- docs: README divide Web Attacks y Host Attacks, documenta los 83 labs y actualiza la nomenclatura vigente.
+- fix(host-attacks): H07 y H13 (`sudo_suid`/`database_access`) ya no comparten icono con `ad_gpp_passwords`/`sqli`; los 13 iconos de Host Attacks son distintos entre sí en los cuatro mapas.
+- fix(host-attacks): H01/H13 (preguntas de respuesta) usan ahora `data-i18n`/`t()` igual que el resto de la app en vez de comprobar `document.documentElement.lang` (que nunca cambia), y "Inicio rápido" ya no queda fijo en inglés al cambiar de idioma.
+
 ## 2026-08-27
 
 - fix(price_manipulation): El checkout de V28 muestra un estado visual de compra completada y la flag debajo; no deja JSON crudo en el carrito, y los errores se presentan como mensajes visuales.

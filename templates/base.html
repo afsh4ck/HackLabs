@@ -38,7 +38,7 @@
   <!-- highlight.js (syntax highlighting) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css" />
 
-  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css?v=10" />
+  <link rel="stylesheet" href="http://{{ request.host }}/static/css/style.css?v=11" />
 
   <!-- Inject saved theme before render to avoid flash -->
   <script>
@@ -299,7 +299,7 @@
           'html_injection':  'ph-code-block',
           'xxe':             'ph-file-code',
           'path_traversal':  'ph-folder-dotted',
-          'bruteforce':      'ph-hammer',
+          'bruteforce':      'ph-password',
           'ssti':            'ph-brackets-curly',
           'open_redirect':   'ph-arrow-bend-up-right',
           'jwt':             'ph-seal',
@@ -312,15 +312,17 @@
           'api_attacks':      'ph-globe',
           'business_logic':   'ph-shopping-cart',
           'container_escape': 'ph-cube',
+          'metasploit_exploitation': 'ph-crosshair',
           'oauth':            'ph-handshake',
           'race_condition':    'ph-timer',
           'c2_sliver':        'ph-broadcast',
-          'host_enum':        'ph-radar',
-          'credential_hunting':'ph-key',
+          'host_enum':        'ph-binoculars',
+          'credential_hunting':'ph-keyhole',
           'sudo_suid':        'ph-shield-warning',
-          'cron_persistence': 'ph-clock',
-          'ssh_lateral':      'ph-arrows-left-right',
-          'network_pivoting': 'ph-arrows-out-cardinal',
+          'cron_persistence': 'ph-calendar-check',
+          'ssh_lateral':      'ph-signpost',
+          'network_pivoting': 'ph-git-branch',
+          'database_access':  'ph-hard-drives',
           'reverse_shell':    'ph-terminal',
           'session_hijacking':'ph-fingerprint-simple',
           'clickjacking':     'ph-cursor-click',
@@ -404,9 +406,9 @@
     <main class="flex-1 overflow-y-auto {% block main_class %}{% endblock %}">
       {% block content %}{% endblock %}
 
-      {% if current_lab_id and current_lab_id != 'c2_sliver' %}
-      {% set _wide_flag_labs = ['ai_supply_chain', 'llm_exfil'] %}
-      <div class="{% if current_lab_id in _wide_flag_labs %}max-w-5xl{% elif current_lab_id == 'final_boss' %}max-w-4xl{% else %}max-w-3xl{% endif %} mx-auto px-6 pb-6">
+      {% set _answer_labs = ['host_enum', 'database_access'] %}
+      {% if current_lab_id and current_lab_id not in _answer_labs %}
+      <div class="max-w-4xl mx-auto px-6 pb-6">
         <div class="hl-card border-l-4" style="border-left-color:var(--hl-primary)">
           <div class="text-xs uppercase tracking-wider mb-2" style="color:var(--hl-primary)">Validar Flag</div>
           {% if is_progress_user %}

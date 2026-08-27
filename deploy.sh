@@ -134,7 +134,7 @@ while read -r OCTET; do
 done < <(shuf -i 100-199)
 [[ -z "$CONTAINER_IP" ]] && err "No se encontró ninguna IP libre en ${NET_BASE}.100-199."
 if [[ $DEPLOY_MSF -eq 1 && -z "$MSF_IP" ]]; then
-    warn "No se encontró una IP libre para ActiveMQ — se continúa sin V29."
+    warn "No se encontró una IP libre para ActiveMQ — se continúa sin H04."
     DEPLOY_MSF=0
 fi
 if [[ $DEPLOY_AD -eq 1 && -z "$DC_IP" ]]; then
@@ -228,11 +228,11 @@ docker run -d \
     "$IMAGE_NAME" > /dev/null \
     || err "No se pudo iniciar el contenedor."
 
-# ── Iniciar objetivo ActiveMQ vulnerable (V29) ──
+# ── Iniciar objetivo ActiveMQ vulnerable (H04) ──
 if [[ $DEPLOY_MSF -eq 1 ]]; then
     log "Construyendo imagen del objetivo ActiveMQ 5.18.2..."
     if ! docker build -t "$MSF_IMAGE_NAME" "$SCRIPT_DIR/ad_hoc/metasploit" --quiet >/dev/null; then
-        warn "No se pudo construir ActiveMQ — se continúa sin V29."
+        warn "No se pudo construir ActiveMQ — se continúa sin H04."
         DEPLOY_MSF=0
     elif ! docker run -d \
         --name "$MSF_CONTAINER_NAME" \
@@ -240,7 +240,7 @@ if [[ $DEPLOY_MSF -eq 1 ]]; then
         --ip "$MSF_IP" \
         --hostname metasploit-target \
         "$MSF_IMAGE_NAME" > /dev/null; then
-        warn "No se pudo iniciar ActiveMQ — se continúa sin V29."
+        warn "No se pudo iniciar ActiveMQ — se continúa sin H04."
         DEPLOY_MSF=0
     fi
 fi
@@ -323,7 +323,7 @@ echo ""
 echo "  ${DIM}  nmap -sV -p 21,22,80,445 ${CONTAINER_IP}${NC}"
 echo ""
 if [[ $DEPLOY_MSF -eq 1 ]]; then
-    echo "  ${CYAN}${BOLD}  ActiveMQ V29:      ${MSF_IP}${NC}"
+    echo "  ${CYAN}${BOLD}  ActiveMQ H04:      ${MSF_IP}${NC}"
     echo "  ${DIM}  OpenWire → ${MSF_IP}:61616${NC}"
     echo "  ${DIM}  Consola → http://${MSF_IP}:8161${NC}"
     echo "  ${DIM}  nmap -sV -p 61616,8161 ${MSF_IP}${NC}"

@@ -16,11 +16,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     curl \
     iputils-ping \
+    iproute2 \
     cron \
     findutils \
     php-cli \
     php-cgi \
     docker.io \
+    sqlite3 \
+    libcap2-bin \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

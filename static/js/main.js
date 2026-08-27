@@ -137,7 +137,7 @@ const T = {
     lab_title_business_logic: 'W02 – Business Logic Flaws',
     lab_title_account_takeover: 'W22 – Account Takeover mediante IDOR de recuperación',
     lab_title_price_manipulation: 'W23 – Lógica de Negocio: Manipulación de Precio',
-    lab_title_metasploit_exploitation: 'H03 – Metasploit: RCE en ActiveMQ a Meterpreter',
+    lab_title_metasploit_exploitation: 'H04 – Metasploit: RCE en ActiveMQ a Meterpreter',
     // ── W22 Account Takeover ──
     ato_portal_title: 'Portal de identidad de HackLabs',
     ato_signed_in: 'Sesión iniciada:',
@@ -185,12 +185,12 @@ const T = {
     price_empty_cart: 'El carrito está vacío.',
     price_clear_cart: 'Vaciar carrito',
     price_remove_item: 'Eliminar',
-    // ── H06 Metasploit ──
+    // ── H04 Metasploit ──
     msf_isolated_target: 'Objetivo aislado · CVE-2023-46604',
     msf_web_console: 'Consola web',
     msf_recon_checkpoint: 'Punto de control de reconocimiento',
-    lab_title_container_escape: 'H05 – Container Escape',
-    lab_title_bruteforce: 'H01 – Login Bruteforce',
+    lab_title_container_escape: 'H11 – Container Escape',
+    lab_title_bruteforce: 'H02 – Login Bruteforce',
     lab_title_forgot_recovery: 'W06 – Forgot Password Recovery (Authentication Flaws)',
     lab_title_html_injection: 'W07 – HTML Injection (GET/POST/Stored)',
     lab_title_oauth:          'W11 – OAuth 2.0 Attacks',
@@ -241,6 +241,13 @@ const T = {
     df_quiz_footer:           'Responde todas las preguntas para completar el análisis; la flag final se valida en la caja «Validar Flag» al final de esta página.',
     df_quiz_correct:          '✓ Correcto',
     df_quiz_incorrect:        '✗ Incorrecto, inténtalo de nuevo',
+    host_answer_title:        'Validar respuesta',
+    host_answer_btn:          'Validar respuesta',
+    host_answer_done:         'Completado',
+    host_answer_login:        'para validar y guardar la respuesta.',
+    host_answer_login_link:   'Inicia sesión',
+    host_answer_correct:      'Respuesta correcta. Laboratorio completado.',
+    host_answer_incorrect:    'Respuesta incorrecta. Revisa la evidencia.',
     df_file_signatures_obj_desc: 'Un empleado te ha pasado un documento con extensión .docx que "no se abre bien" en Word. Antes de intentar repararlo, comprueba qué tipo de fichero es en realidad — la extensión no siempre dice la verdad.',
     df_metadata_exif_obj_desc: 'Una foto subida a la intranet corporativa revela más de lo que parece. Extrae sus metadatos EXIF para descubrir dónde y con qué dispositivo se tomó.',
     df_steganography_obj_desc: 'Esta imagen de una puesta de sol esconde algo más que píxeles. Analiza sus bits menos significativos para recuperar el mensaje oculto.',
@@ -625,7 +632,7 @@ const T = {
     lab_title_business_logic: 'W02 – Business Logic Flaws',
     lab_title_account_takeover: 'W22 – Account Takeover via Recovery IDOR',
     lab_title_price_manipulation: 'W23 – Business Logic: Price Manipulation',
-    lab_title_metasploit_exploitation: 'H03 – Metasploit: ActiveMQ RCE to Meterpreter',
+    lab_title_metasploit_exploitation: 'H04 – Metasploit: ActiveMQ RCE to Meterpreter',
     // ── W22 Account Takeover ──
     ato_portal_title: 'HackLabs Identity Portal',
     ato_signed_in: 'Signed in:',
@@ -673,12 +680,12 @@ const T = {
     price_empty_cart: 'Cart is empty.',
     price_clear_cart: 'Clear cart',
     price_remove_item: 'Remove',
-    // ── H06 Metasploit ──
+    // ── H04 Metasploit ──
     msf_isolated_target: 'Isolated target · CVE-2023-46604',
     msf_web_console: 'Web console',
     msf_recon_checkpoint: 'Recon checkpoint',
-    lab_title_container_escape: 'H05 – Container Escape',
-    lab_title_bruteforce: 'H01 – Login Bruteforce',
+    lab_title_container_escape: 'H11 – Container Escape',
+    lab_title_bruteforce: 'H02 – Login Bruteforce',
     lab_title_forgot_recovery: 'W06 – Forgot Password Recovery (Authentication Flaws)',
     lab_title_html_injection: 'W07 – HTML Injection (GET/POST/Stored)',
     lab_title_oauth:          'W11 – OAuth 2.0 Attacks',
@@ -729,6 +736,13 @@ const T = {
     df_quiz_footer:           'Answer every question to complete the analysis; validate the final flag in the "Validate Flag" box at the bottom of this page.',
     df_quiz_correct:          '✓ Correct',
     df_quiz_incorrect:        '✗ Incorrect, try again',
+    host_answer_title:        'Validate answer',
+    host_answer_btn:          'Validate answer',
+    host_answer_done:         'Completed',
+    host_answer_login:        'to validate and save the answer.',
+    host_answer_login_link:   'Log in',
+    host_answer_correct:      'Correct answer. Lab completed.',
+    host_answer_incorrect:    'Incorrect answer. Check your evidence.',
     df_file_signatures_obj_desc: 'An employee handed you a .docx file that "won’t open properly" in Word. Before trying to repair it, check what the file actually is — the extension doesn’t always tell the truth.',
     df_metadata_exif_obj_desc: 'A photo uploaded to the corporate intranet reveals more than it seems. Extract its EXIF metadata to find out where and with what device it was taken.',
     df_steganography_obj_desc: 'This sunset image hides more than just pixels. Analyze its least significant bits to recover the hidden message.',
@@ -1956,3 +1970,38 @@ function initForensicQuiz() {
   });
 }
 document.addEventListener('DOMContentLoaded', initForensicQuiz);
+
+// ── Host Attacks: preguntas de respuesta (H01/H13) ───────────────
+function initHostAnswer() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.host-answer-btn');
+    if (!btn) return;
+    const wrap = btn.closest('[data-host-answer]');
+    const input = wrap.querySelector('.host-answer-input');
+    const result = wrap.querySelector('.host-answer-result');
+    const answer = (input.value || '').trim();
+    if (!answer) return;
+
+    btn.disabled = true;
+    fetch('/host-labs/check-answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lab_id: wrap.dataset.labId, answer: answer })
+    })
+    .then(r => r.json())
+    .then(data => {
+      result.classList.remove('hidden');
+      if (data.correct) {
+        result.style.color = '#22c55e';
+        result.textContent = t('host_answer_correct');
+        setTimeout(() => window.location.reload(), 650);
+      } else {
+        btn.disabled = false;
+        result.style.color = '#ef4444';
+        result.textContent = t('host_answer_incorrect');
+      }
+    })
+    .catch(() => { btn.disabled = false; });
+  });
+}
+document.addEventListener('DOMContentLoaded', initHostAnswer);
