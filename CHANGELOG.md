@@ -17,6 +17,7 @@ All notable changes to this repository are documented in this file.
 - fix(account_takeover): La PoC de V27 usa comandos curl de una sola linea, comillas seguras para zsh y `--data-urlencode`; se ha verificado la cadena completa desde Kali sin caer en el prompt `dquote>`.
 - feat(price_manipulation): Cada linea del carrito de V28 tiene un identificador estable y puede eliminarse individualmente desde la interfaz o mediante `DELETE /price-manipulation/api/cart/items/<line_id>`.
 - fix(price_manipulation): El flujo interceptado con Burp ya no recarga la pagina ni vuelve a solicitar Tailwind desde el CDN: alta, total y borrado se actualizan directamente en el DOM. El formulario conserva HTTP 303 como fallback sin JavaScript y los clientes JSON mantienen HTTP 201.
+- fix(price_manipulation): Las respuestas JSON internas de alta y borrado ya no se imprimen dentro del carrito cuando la operacion tiene exito; el JSON visible se reserva para errores y para el checkout que entrega la flag.
 
 </details>
 

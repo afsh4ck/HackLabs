@@ -100,8 +100,13 @@ document.getElementById('price-add-form')?.addEventListener('submit', async (eve
     body: JSON.stringify(body),
   });
   const data = await response.json();
-  document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
-  if (response.ok) priceAppendCartLine(data.item, data.cart_total);
+  const result = document.getElementById('price-api-result');
+  if (response.ok) {
+    result.textContent = '';
+    priceAppendCartLine(data.item, data.cart_total);
+  } else {
+    result.textContent = JSON.stringify(data, null, 2);
+  }
 });
 
 document.getElementById('price-checkout')?.addEventListener('click', async () => {
@@ -114,10 +119,13 @@ document.getElementById('price-cart-lines').addEventListener('click', async (eve
   if (button) {
     const response = await fetch(`/price-manipulation/api/cart/items/${encodeURIComponent(button.dataset.lineId)}`, {method: 'DELETE'});
     const data = await response.json();
-    document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
+    const result = document.getElementById('price-api-result');
     if (response.ok) {
+      result.textContent = '';
       button.closest('.price-cart-line').remove();
       priceSetCartState(data.cart_total);
+    } else {
+      result.textContent = JSON.stringify(data, null, 2);
     }
   }
 });
