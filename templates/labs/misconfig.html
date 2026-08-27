@@ -5,6 +5,11 @@
   {% include '_lab_header.html' %}
 
   {% if admin %}
+  <div class="hl-card mb-4 flex flex-wrap items-center gap-3">
+    <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Catálogo de ataques</span>
+    <a href="/category/web-attacks" class="reward-chip reward-chip--gold"><i class="ph ph-globe"></i> Web Attacks (W01–W23)</a>
+    <a href="/category/host-attacks" class="reward-chip reward-chip--gold"><i class="ph ph-shield-check"></i> Host Attacks (H01–H06)</a>
+  </div>
   <div class="hl-card mb-4 overflow-x-auto">
     <div class="text-xs font-semibold mb-3" style="color:#ef4444" data-i18n="misconfig_admin_panel">Panel de administración — Sin autenticación</div>
     <table class="hl-table">

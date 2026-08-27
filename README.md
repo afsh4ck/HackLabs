@@ -61,39 +61,48 @@
 | A09 | Logging Failures | 🟡 Medium | Acciones críticas sin auditoría |
 | A10 | SSRF | 🟠 High | `/fetch?url=` → recursos internos |
 
-### Vulnerabilidades
+### Web Attacks y Host Attacks
+
+Los labs que antes estaban agrupados como `Vulnerabilidades` se dividen en dos rutas dedicadas: [`/category/web-attacks`](/category/web-attacks) para aplicaciones y APIs, y [`/category/host-attacks`](/category/host-attacks) para sistemas, contenedores y servicios. Las páginas también están disponibles desde el menú lateral y la consola de administración.
+
+#### Web Attacks (W01–W23)
 
 | Lab | Riesgo | Técnica |
 |-----|--------|---------|
-| V01 – API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes`: `HL{···}` |
-| V02 – Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
-| V03 – C2 – Sliver (Command & Control) | 🔴 Critical | Sliver C2: generar implant, mTLS listener, transferir y ejecutar payloads |
-| V04 – Container Escape | 🔴 Critical | Docker socket, privileged container, cgroup release_agent |
-| V05 – CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
-| V06 – CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
-| V07 – File Upload sin restricciones | 🔴 Critical | Webshell PHP, bypass doble extensión, reverse shell |
-| V08 – Forgot Password Recovery (Authentication Flaws) | 🟠 High | Toma de cuenta por validación insuficiente en 2 fases, enumeración de usuarios |
-| V09 – HTML Injection (GET/POST/Stored) | 🟠 High | Inyección HTML reflejada, por POST y almacenada en blog; bypass de filtros por dificultad |
-| V10 – Insecure Deserialization | 🔴 Critical | Python `pickle.loads()` → RCE |
-| V11 – JWT Manipulation | 🟠 High | `alg=none`, secreto débil (hashcat), algorithm confusion RS256→HS256 |
-| V12 – Login Bruteforce | 🟡 Medium | Hydra, Medusa, CrackMapExec |
-| V13 – CAPTCHA Bypass | 🟡 Medium | Login bancario con CAPTCHA matemático automatizable, oráculo de errores y bruteforce de credenciales |
-| V14 – OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar → robo de authorization code |
-| V15 – Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
-| V16 – Path Traversal / LFI | 🟠 High | `../../etc/passwd`, log poisoning → RCE |
-| V17 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration, cron |
-| V18 – 2FA / MFA Bypass | 🔴 Critical | OTP leak en headers, brute force 4 dígitos, TOCTOU race condition |
-| V19 – Clickjacking | 🟠 High | Iframe overlay con slider de opacidad, frame-busting JS bypass via sandbox |
-| V20 – Password Reset Poisoning | 🟠 High | Host header, X-Forwarded-Host, X-Host → token de reset enviado al atacante |
-| V21 – Race Condition / TOCTOU | 🟠 High | Transferencias concurrentes, TOCTOU, requests paralelos |
-| V22 – Reverse Shell | 🔴 Critical | URL Health Checker vulnerable, `curl` con `shell=True`, bash/python/perl reverse shells |
-| V23 – Session Hijacking | 🟠 High | SID predecible, token base64 sin firma, session fixation |
-| V24 – SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
-| V25 – XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
-| V26 – XXE – XML External Entity | 🟠 High | XML External Entity |
-| V27 – Account Takeover via Recovery IDOR | 🔴 Critical | IDOR/BOLA en correo de recuperación → reset de contraseña → takeover |
-| V28 – Business Logic: Price Manipulation | 🔴 Critical | Precio controlado por cliente persistido en carrito y checkout a $0.00 |
-| V29 – Metasploit: ActiveMQ RCE to Meterpreter | 🔴 Critical | CVE-2023-46604 en ActiveMQ 5.18.2 → Meterpreter Linux x64 |
+| W01 – API Attacks – Laboratorio de APIs Inseguras | 🔴 Critical | API con endpoints inseguros; flag dedicada en `GET /api/v1/notes`: `HL{···}` |
+| W02 – Business Logic Flaws | 🟠 High | Manipulación de precio client-side, cantidad negativa, cupones apilables |
+| W03 – CORS Misconfiguration | 🟠 High | Reflejo de Origin + Allow-Credentials |
+| W04 – CSRF – Cross-Site Request Forgery | 🟠 High | Cambio de contraseña sin token |
+| W05 – File Upload sin restricciones | 🔴 Critical | Webshell PHP y bypass de extensiones |
+| W06 – Forgot Password Recovery | 🟠 High | Validación insuficiente en recuperación |
+| W07 – HTML Injection | 🟠 High | Inyección reflejada, POST y almacenada |
+| W08 – Insecure Deserialization | 🔴 Critical | `pickle.loads()` → RCE |
+| W09 – JWT Manipulation | 🟠 High | `alg=none`, secreto débil y algorithm confusion |
+| W10 – CAPTCHA Bypass | 🟡 Medium | Oráculo de errores y automatización |
+| W11 – OAuth 2.0 Attacks | 🟠 High | `redirect_uri` sin validar |
+| W12 – Open Redirect | 🟡 Medium | Parámetro URL sin whitelist |
+| W13 – Path Traversal / LFI | 🟠 High | Lectura de ficheros y log poisoning |
+| W14 – 2FA / MFA Bypass | 🔴 Critical | OTP leak, brute force y TOCTOU |
+| W15 – Clickjacking | 🟠 High | Overlay de iframe y bypass de frame-busting |
+| W16 – Password Reset Poisoning | 🟠 High | Host header → robo de token |
+| W17 – Race Condition / TOCTOU | 🟠 High | Transferencias concurrentes |
+| W18 – Session Hijacking | 🟠 High | SID predecible y session fixation |
+| W19 – SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 → RCE |
+| W20 – XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored y DOM |
+| W21 – XXE – XML External Entity | 🟠 High | Entidades externas XML |
+| W22 – Account Takeover via Recovery IDOR | 🔴 Critical | IDOR/BOLA en recuperación |
+| W23 – Business Logic: Price Manipulation | 🔴 Critical | Precio controlado por cliente |
+
+#### Host Attacks (H01–H05)
+
+| Lab | Riesgo | Técnica |
+|-----|--------|---------|
+| H01 – Login Bruteforce | 🟡 Medium | Hydra, Medusa y credenciales expuestas en servicios |
+| H02 – Reverse Shell | 🔴 Critical | Command injection y shell interactiva |
+| H03 – Metasploit: ActiveMQ RCE to Meterpreter | 🔴 Critical | CVE-2023-46604 en ActiveMQ 5.18.2 → Meterpreter Linux x64 |
+| H04 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration y cron |
+| H05 – Container Escape | 🔴 Critical | Docker socket, privileged container y cgroup release_agent |
+| H06 – C2 – Sliver Command & Control | 🔴 Critical | Implant, mTLS listener y ejecución de payloads |
 
 ### AI Attacks
 
@@ -198,7 +207,8 @@ Cada lab otorga XP según su nivel de riesgo. Los umbrales de nivel se calculan 
 | ⚡ Speed Runner | Completar 5 labs |
 | 🏁 Half Way There | Alcanzar el 50% de labs completados |
 | 🛡️ OWASP Warrior | Completar todos los labs OWASP Top 10 |
-| 🐛 Bug Hunter | Completar todos los labs de Vulnerabilidades |
+| 🐛 Bug Hunter | Completar todos los labs de Web Attacks |
+| 🛡️ Host Hunter | Completar todos los labs de Host Attacks |
 | 🤖 AI Breaker | Completar todos los labs de AI Attacks |
 | 🏰 Domain Dominator | Completar todos los labs de Active Directory |
 | 🔍 Digital Detective | Completar todos los labs de Forense Digital |
@@ -381,7 +391,7 @@ Flag: `HL{···}` (dentro de las credenciales IAM del endpoint de metadatos)
 </details>
 
 <details>
-<summary><strong>V03 – C2 — Sliver (Command & Control)</strong></summary>
+<summary><strong>H01 – C2 — Sliver (Command & Control)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -412,7 +422,7 @@ sliver (ID) > ps
 </details>
 
 <details>
-<summary><strong>V05 – CORS Misconfiguration</strong></summary>
+<summary><strong>W03 – CORS Misconfiguration</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -425,7 +435,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V06 – CSRF</strong></summary>
+<summary><strong>W04 – CSRF</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -438,7 +448,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V07 – File Upload</strong></summary>
+<summary><strong>W05 – File Upload</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -449,7 +459,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V08 – Forgot Password Recovery (Authentication Flaws)</strong></summary>
+<summary><strong>W06 – Forgot Password Recovery (Authentication Flaws)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -462,7 +472,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V09 – HTML Injection (GET/POST/Stored)</strong></summary>
+<summary><strong>W07 – HTML Injection (GET/POST/Stored)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -477,7 +487,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V10 – Insecure Deserialization</strong></summary>
+<summary><strong>W08 – Insecure Deserialization</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -490,7 +500,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V11 – JWT Manipulation</strong></summary>
+<summary><strong>W09 – JWT Manipulation</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -503,7 +513,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V12 – Login Bruteforce (HTTP + FTP)</strong></summary>
+<summary><strong>H03 – Login Bruteforce (HTTP + FTP)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -514,7 +524,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V13 – CAPTCHA Bypass</strong></summary>
+<summary><strong>W10 – CAPTCHA Bypass</strong></summary>
 
 Login bancario protegido por CAPTCHA matematico. Al recuperar acceso como `admin`, el panel muestra datos financieros simulados y la flag aparece solo despues del login correcto.
 
@@ -531,7 +541,7 @@ Errores clave del lab:
 </details>
 
 <details>
-<summary><strong>V15 – Open Redirect</strong></summary>
+<summary><strong>W12 – Open Redirect</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -544,7 +554,7 @@ Flag dedicada: `HL{···}` (se expone en la cabecera `X-HackLabs-Flag` al forza
 </details>
 
 <details>
-<summary><strong>V16 – Path Traversal / LFI</strong></summary>
+<summary><strong>W13 – Path Traversal / LFI</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -558,7 +568,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>V17 – Privilege Escalation (SSH)</strong></summary>
+<summary><strong>H04 – Privilege Escalation (SSH)</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -569,7 +579,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>V24 – SSTI — Server-Side Template Injection</strong></summary>
+<summary><strong>W19 – SSTI — Server-Side Template Injection</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -580,7 +590,7 @@ También existe directory listing vulnerable en `/secrets` con flag dedicada `LF
 </details>
 
 <details>
-<summary><strong>V25 – XSS — Reflected / Stored / DOM</strong></summary>
+<summary><strong>W20 – XSS — Reflected / Stored / DOM</strong></summary>
 
 **Reflected & Stored:**
 
@@ -603,7 +613,7 @@ En Reflected/Stored, al ejecutar `alert(document.cookie)` se observa cookie de l
 </details>
 
 <details>
-<summary><strong>V26 – XXE — XML External Entity</strong></summary>
+<summary><strong>W21 – XXE — XML External Entity</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -616,7 +626,7 @@ Flag dedicada XXE: `HackLabs{···}` (lectura recomendada: `file:///app/secret/
 </details>
 
 <details>
-<summary><strong>V02 – Business Logic Flaws</strong></summary>
+<summary><strong>W02 – Business Logic Flaws</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -641,7 +651,7 @@ Flag: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V04 – Container Escape</strong></summary>
+<summary><strong>H02 – Container Escape</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -676,7 +686,7 @@ Flag objetivo: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V14 – OAuth 2.0 Attacks</strong></summary>
+<summary><strong>W11 – OAuth 2.0 Attacks</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -698,7 +708,7 @@ Flag: `HL{···}`
 </details>
 
 <details>
-<summary><strong>V21 – Race Condition / TOCTOU</strong></summary>
+<summary><strong>W17 – Race Condition / TOCTOU</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -765,7 +775,7 @@ Flags: `HL{···}` / `HL{···}` / `HL{···}`
 </details>
 
 <details>
-<summary><strong>V22 – Reverse Shell</strong></summary>
+<summary><strong>H05 – Reverse Shell</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -791,7 +801,7 @@ Flag valida del lab: solo `HL{···}` (`/root/root.txt`).
 </details>
 
 <details>
-<summary><strong>V19 – Clickjacking</strong></summary>
+<summary><strong>W15 – Clickjacking</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -804,7 +814,7 @@ El slider de opacidad en el lab muestra visualmente el overlay del iframe sobre 
 </details>
 
 <details>
-<summary><strong>V18 – 2FA / MFA Bypass</strong></summary>
+<summary><strong>W14 – 2FA / MFA Bypass</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -823,7 +833,7 @@ curl -i http://TARGET_IP/2fa/login -d "username=admin&password=password1" | grep
 </details>
 
 <details>
-<summary><strong>V20 – Password Reset Poisoning</strong></summary>
+<summary><strong>W16 – Password Reset Poisoning</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -849,7 +859,7 @@ curl -X POST http://TARGET_IP/reset/request \
 </details>
 
 <details>
-<summary><strong>V23 – Session Hijacking</strong></summary>
+<summary><strong>W18 – Session Hijacking</strong></summary>
 
 | Nivel | Comportamiento |
 |-------|---------------|
@@ -921,7 +931,7 @@ cd HackLabs
 sudo bash deploy.sh
 ```
 
-El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** dentro del rango `.100–.199` a la aplicación web, al objetivo ActiveMQ de V29 y al DC opcional, y muestra el resultado:
+El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** dentro del rango `.100–.199` a la aplicación web, al objetivo ActiveMQ de H06 y al DC opcional, y muestra el resultado:
 
 ```
     __  __              __    __           __
@@ -943,7 +953,7 @@ El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** de
 
   nmap -sV -p 21,22,80,445 192.168.1.147
 
-  ActiveMQ V29:      192.168.1.151
+  ActiveMQ H06:      192.168.1.151
   OpenWire → 192.168.1.151:61616
   Consola → http://192.168.1.151:8161
   nmap -sV -p 61616,8161 192.168.1.151
@@ -970,7 +980,7 @@ Pulsa **Ctrl+C** para detener y eliminar el contenedor automáticamente.
 
 #### Domain Controller vulnerable (Active Directory)
 
-`deploy.sh` levanta **automáticamente** el objetivo ActiveMQ de V29 en una máquina/IP propia y, salvo que uses `HL_SKIP_AD=1`, una segunda máquina adicional: un Domain Controller real basado en Samba AD DC (`HACKLABS.LOCAL`) con su propia IP.
+`deploy.sh` levanta **automáticamente** el objetivo ActiveMQ de H06 en una máquina/IP propia y, salvo que uses `HL_SKIP_AD=1`, una segunda máquina adicional: un Domain Controller real basado en Samba AD DC (`HACKLABS.LOCAL`) con su propia IP.
 
 - La primera vez, el DC provisiona el dominio al arrancar (~1 min): crea usuarios, grupos, SPNs, ACLs abusables y las flags de cada lab.
 - `deploy.sh` añade a tu `/etc/hosts` la entrada `dc01.hacklabs.local` (Kerberos exige resolver el FQDN) y la limpia al detener el laboratorio con Ctrl+C.
@@ -988,7 +998,7 @@ nxc smb 127.0.0.1 -u '' -p '' --shares
 
 #### Objetivo vulnerable para Metasploit
 
-El lab **V29** usa un contenedor separado con Apache ActiveMQ 5.18.2, vulnerable a
+El lab **H06** usa un contenedor separado con Apache ActiveMQ 5.18.2, vulnerable a
 CVE-2023-46604. `build.sh` levanta automáticamente la aplicación y este objetivo,
 manteniéndolos como servicios separados dentro del mismo proyecto Compose. En
 modo macvlan, `deploy.sh` asigna una IP propia al objetivo y muestra esa IP para
@@ -1001,7 +1011,7 @@ nmap -sV -p 61616,8161 127.0.0.1
 
 En Metasploit usa
 `exploit/multi/misc/apache_activemq_rce_cve_2023_46604`, target Linux y el
-payload `cmd/linux/http/x64/meterpreter/reverse_tcp`. La guía integrada de V29
+payload `cmd/linux/http/x64/meterpreter/reverse_tcp`. La guía integrada de H06
 incluye la configuración completa de `RHOSTS`, `SRVHOST` y `LHOST`.
 
 ```bash

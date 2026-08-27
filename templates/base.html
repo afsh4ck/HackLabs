@@ -355,7 +355,7 @@
           'df_memory_credentials': 'ph-key',
         } %}
 
-        {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks', 'Active Directory', 'Forense Digital'] %}
+        {% set desired_order = ['OWASP Top 10', 'Web Attacks', 'Host Attacks', 'AI Attacks', 'Active Directory', 'Forense Digital'] %}
         {% for cat in desired_order %}
           {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
           {% if labs_in_cat %}

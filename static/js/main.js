@@ -12,6 +12,8 @@ const T = {
     cat_owasp_top_10:       'OWASP Top 10',
     cat_extras:            'Extras',
     cat_vulnerabilidades:  'Vulnerabilidades',
+    cat_web_attacks:       'Web Attacks',
+    cat_host_attacks:      'Host Attacks',
     cat_ia_attacks:        'AI Attacks',
     cat_ai_attacks:        'AI Attacks',
     cat_active_directory:  'Active Directory',
@@ -130,13 +132,13 @@ const T = {
     csrf_btn_launch: 'Lanzar CSRF',
     // File Upload
     // Lab titles (only labs whose default title is not already in Spanish/neutral)
-    lab_title_file_upload:    'V07 – File Upload sin restricciones',
-    lab_title_api_attacks:    'V01 – API Attacks – Laboratorio de APIs Inseguras',
-    lab_title_business_logic: 'V02 – Business Logic Flaws',
-    lab_title_account_takeover: 'V27 – Account Takeover mediante IDOR de recuperación',
-    lab_title_price_manipulation: 'V28 – Lógica de Negocio: Manipulación de Precio',
-    lab_title_metasploit_exploitation: 'V29 – Metasploit: RCE en ActiveMQ a Meterpreter',
-    // ── V27 Account Takeover ──
+    lab_title_file_upload:    'W05 – File Upload sin restricciones',
+    lab_title_api_attacks:    'W01 – API Attacks – Laboratorio de APIs Inseguras',
+    lab_title_business_logic: 'W02 – Business Logic Flaws',
+    lab_title_account_takeover: 'W22 – Account Takeover mediante IDOR de recuperación',
+    lab_title_price_manipulation: 'W23 – Lógica de Negocio: Manipulación de Precio',
+    lab_title_metasploit_exploitation: 'H03 – Metasploit: RCE en ActiveMQ a Meterpreter',
+    // ── W22 Account Takeover ──
     ato_portal_title: 'Portal de identidad de HackLabs',
     ato_signed_in: 'Sesión iniciada:',
     ato_account_id: 'ID de cuenta:',
@@ -173,7 +175,7 @@ const T = {
     ato_msg_password_length: 'La nueva contraseña debe tener al menos 8 caracteres.',
     ato_msg_password_updated: 'Contraseña actualizada. Inicia sesión con la cuenta recuperada.',
     ato_msg_lab_reset: 'Estado del laboratorio reiniciado.',
-    // ── V28 Price Manipulation ──
+    // ── W23 Price Manipulation ──
     price_add_cart: 'Añadir al carrito',
     price_server_cart: 'Carrito del servidor',
     price_balance: 'Saldo:',
@@ -183,16 +185,17 @@ const T = {
     price_empty_cart: 'El carrito está vacío.',
     price_clear_cart: 'Vaciar carrito',
     price_remove_item: 'Eliminar',
-    // ── V29 Metasploit ──
+    // ── H06 Metasploit ──
     msf_isolated_target: 'Objetivo aislado · CVE-2023-46604',
     msf_web_console: 'Consola web',
     msf_recon_checkpoint: 'Punto de control de reconocimiento',
-    lab_title_container_escape: 'V04 – Container Escape',
-    lab_title_forgot_recovery: 'V08 – Forgot Password Recovery (Authentication Flaws)',
-    lab_title_html_injection: 'V09 – HTML Injection (GET/POST/Stored)',
-    lab_title_oauth:          'V14 – OAuth 2.0 Attacks',
-    lab_title_race_condition: 'V21 – Race Condition / TOCTOU',
-    lab_title_session_hijacking: 'V23 – Session Hijacking',
+    lab_title_container_escape: 'H05 – Container Escape',
+    lab_title_bruteforce: 'H01 – Login Bruteforce',
+    lab_title_forgot_recovery: 'W06 – Forgot Password Recovery (Authentication Flaws)',
+    lab_title_html_injection: 'W07 – HTML Injection (GET/POST/Stored)',
+    lab_title_oauth:          'W11 – OAuth 2.0 Attacks',
+    lab_title_race_condition: 'W17 – Race Condition / TOCTOU',
+    lab_title_session_hijacking: 'W18 – Session Hijacking',
     // ── Active Directory ──
     lab_title_ad_smb_enum:        'AD01 – Enumeración SMB y sesión nula',
     lab_title_ad_ldap_enum:       'AD02 – Enumeración LDAP',
@@ -497,6 +500,8 @@ const T = {
     cat_owasp_top_10:       'OWASP Top 10',
     cat_extras:            'Extras',
     cat_vulnerabilidades:  'Vulnerabilidades',
+    cat_web_attacks:       'Web Attacks',
+    cat_host_attacks:      'Host Attacks',
     cat_ia_attacks:        'AI Attacks',
     cat_ai_attacks:        'AI Attacks',
     cat_active_directory:  'Active Directory',
@@ -615,13 +620,13 @@ const T = {
     csrf_btn_launch: 'Launch CSRF',
     // File Upload
     // Lab titles
-    lab_title_file_upload:    'V07 – File Upload – No Restrictions',
-    lab_title_api_attacks:    'V01 – API Attacks – Insecure APIs Lab',
-    lab_title_business_logic: 'V02 – Business Logic Flaws',
-    lab_title_account_takeover: 'V27 – Account Takeover via Recovery IDOR',
-    lab_title_price_manipulation: 'V28 – Business Logic: Price Manipulation',
-    lab_title_metasploit_exploitation: 'V29 – Metasploit: ActiveMQ RCE to Meterpreter',
-    // ── V27 Account Takeover ──
+    lab_title_file_upload:    'W05 – File Upload – No Restrictions',
+    lab_title_api_attacks:    'W01 – API Attacks – Insecure APIs Lab',
+    lab_title_business_logic: 'W02 – Business Logic Flaws',
+    lab_title_account_takeover: 'W22 – Account Takeover via Recovery IDOR',
+    lab_title_price_manipulation: 'W23 – Business Logic: Price Manipulation',
+    lab_title_metasploit_exploitation: 'H03 – Metasploit: ActiveMQ RCE to Meterpreter',
+    // ── W22 Account Takeover ──
     ato_portal_title: 'HackLabs Identity Portal',
     ato_signed_in: 'Signed in:',
     ato_account_id: 'Account ID:',
@@ -658,7 +663,7 @@ const T = {
     ato_msg_password_length: 'The new password must be at least 8 characters long.',
     ato_msg_password_updated: 'Password updated. Sign in with the recovered account.',
     ato_msg_lab_reset: 'Lab state reset.',
-    // ── V28 Price Manipulation ──
+    // ── W23 Price Manipulation ──
     price_add_cart: 'Add to cart',
     price_server_cart: 'Server-side cart',
     price_balance: 'Balance:',
@@ -668,16 +673,17 @@ const T = {
     price_empty_cart: 'Cart is empty.',
     price_clear_cart: 'Clear cart',
     price_remove_item: 'Remove',
-    // ── V29 Metasploit ──
+    // ── H06 Metasploit ──
     msf_isolated_target: 'Isolated target · CVE-2023-46604',
     msf_web_console: 'Web console',
     msf_recon_checkpoint: 'Recon checkpoint',
-    lab_title_container_escape: 'V04 – Container Escape',
-    lab_title_forgot_recovery: 'V08 – Forgot Password Recovery (Authentication Flaws)',
-    lab_title_html_injection: 'V09 – HTML Injection (GET/POST/Stored)',
-    lab_title_oauth:          'V14 – OAuth 2.0 Attacks',
-    lab_title_race_condition: 'V21 – Race Condition / TOCTOU',
-    lab_title_session_hijacking: 'V23 – Session Hijacking',
+    lab_title_container_escape: 'H05 – Container Escape',
+    lab_title_bruteforce: 'H01 – Login Bruteforce',
+    lab_title_forgot_recovery: 'W06 – Forgot Password Recovery (Authentication Flaws)',
+    lab_title_html_injection: 'W07 – HTML Injection (GET/POST/Stored)',
+    lab_title_oauth:          'W11 – OAuth 2.0 Attacks',
+    lab_title_race_condition: 'W17 – Race Condition / TOCTOU',
+    lab_title_session_hijacking: 'W18 – Session Hijacking',
     // ── Active Directory ──
     lab_title_ad_smb_enum:        'AD01 – SMB Enumeration & Null Session',
     lab_title_ad_ldap_enum:       'AD02 – LDAP Enumeration',

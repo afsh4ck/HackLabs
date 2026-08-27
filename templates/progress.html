@@ -156,12 +156,13 @@
   </div>
 
   <!-- ── Stats ── -->
-  {% set completed_by_cat = namespace(owasp=0, vulns=0, ia=0, ad=0, forensics=0) %}
+  {% set completed_by_cat = namespace(owasp=0, web=0, host=0, ia=0, ad=0, forensics=0) %}
   {% set pending_critical = namespace(n=0) %}
   {% for l in labs %}
     {% if l.id in completed %}
       {% if l.category == 'OWASP Top 10' %}{% set completed_by_cat.owasp = completed_by_cat.owasp + 1 %}{% endif %}
-      {% if l.category == 'Vulnerabilidades' %}{% set completed_by_cat.vulns = completed_by_cat.vulns + 1 %}{% endif %}
+      {% if l.category == 'Web Attacks' %}{% set completed_by_cat.web = completed_by_cat.web + 1 %}{% endif %}
+      {% if l.category == 'Host Attacks' %}{% set completed_by_cat.host = completed_by_cat.host + 1 %}{% endif %}
       {% if l.category == 'AI Attacks' %}{% set completed_by_cat.ia = completed_by_cat.ia + 1 %}{% endif %}
       {% if l.category == 'Active Directory' %}{% set completed_by_cat.ad = completed_by_cat.ad + 1 %}{% endif %}
       {% if l.category == 'Forense Digital' %}{% set completed_by_cat.forensics = completed_by_cat.forensics + 1 %}{% endif %}
@@ -170,7 +171,8 @@
     {% endif %}
   {% endfor %}
   {% set owasp_total      = labs | selectattr('category','equalto','OWASP Top 10')     | list | length %}
-  {% set vulns_total      = labs | selectattr('category','equalto','Vulnerabilidades')  | list | length %}
+  {% set web_total         = labs | selectattr('category','equalto','Web Attacks')      | list | length %}
+  {% set host_total        = labs | selectattr('category','equalto','Host Attacks')     | list | length %}
   {% set ia_total         = labs | selectattr('category','equalto','AI Attacks')        | list | length %}
   {% set ad_total         = labs | selectattr('category','equalto','Active Directory')  | list | length %}
   {% set forensics_total  = labs | selectattr('category','equalto','Forense Digital')   | list | length %}
@@ -242,10 +244,11 @@
   {% endif %}
 
   <!-- Category mini bars -->
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 mb-6">
     {% for cat, cat_i18n, done, total, color in [
       ('OWASP Top 10',     'cat_owasp_top_10',      completed_by_cat.owasp,     owasp_total,     '#ef4444'),
-      ('Vulnerabilidades', 'cat_vulnerabilidades',  completed_by_cat.vulns,     vulns_total,     '#f97316'),
+      ('Web Attacks',       'cat_web_attacks',       completed_by_cat.web,      web_total,       '#f97316'),
+      ('Host Attacks',      'cat_host_attacks',      completed_by_cat.host,     host_total,      '#f59e0b'),
       ('AI Attacks',       'cat_ia_attacks',        completed_by_cat.ia,        ia_total,        'var(--hl-primary)'),
       ('Active Directory', 'cat_active_directory',  completed_by_cat.ad,        ad_total,        '#38bdf8'),
       ('Forense Digital',  'cat_forense_digital',   completed_by_cat.forensics, forensics_total, '#a78bfa'),
@@ -302,11 +305,11 @@
 
   <!-- ── Lab grid ── -->
   {% set risk_color = {'critical': '#ef4444', 'high': '#f97316', 'medium': '#f59e0b'} %}
-  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Vulnerabilidades': '#f97316', 'AI Attacks': 'var(--hl-primary)',
+  {% set cat_color  = {'OWASP Top 10': '#ef4444', 'Web Attacks': '#f97316', 'Host Attacks': '#f59e0b', 'AI Attacks': 'var(--hl-primary)',
                         'Active Directory': '#38bdf8', 'Forense Digital': '#a78bfa'} %}
-  {% set cat_bg     = {'OWASP Top 10': '239,68,68', 'Vulnerabilidades': '249,115,22', 'AI Attacks': '206,255,0',
+  {% set cat_bg     = {'OWASP Top 10': '239,68,68', 'Web Attacks': '249,115,22', 'Host Attacks': '245,158,11', 'AI Attacks': '206,255,0',
                         'Active Directory': '56,189,248', 'Forense Digital': '167,139,250'} %}
-  {% set cat_i18n_map = {'OWASP Top 10': 'cat_owasp_top_10', 'Vulnerabilidades': 'cat_vulnerabilidades',
+  {% set cat_i18n_map = {'OWASP Top 10': 'cat_owasp_top_10', 'Web Attacks': 'cat_web_attacks', 'Host Attacks': 'cat_host_attacks',
                           'AI Attacks': 'cat_ia_attacks', 'Active Directory': 'cat_active_directory',
                           'Forense Digital': 'cat_forense_digital'} %}
 

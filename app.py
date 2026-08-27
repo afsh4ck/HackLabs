@@ -697,7 +697,8 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
 
     owasp_ids = {'idor', 'crypto', 'sqli', 'cmdi', 'insecure_design', 'misconfig',
                  'outdated', 'auth_failures', 'integrity', 'logging', 'ssrf'}
-    vuln_ids = {l['id'] for l in labs if l.get('category') == 'Vulnerabilidades'}
+    host_ids = {l['id'] for l in labs if l.get('category') == 'Host Attacks'}
+    web_ids = {l['id'] for l in labs if l.get('category') == 'Web Attacks'}
     ia_ids = {l['id'] for l in labs if l.get('category') == 'AI Attacks'}
     ad_ids = {l['id'] for l in labs if l.get('category') == 'Active Directory'}
     forensics_ids = {l['id'] for l in labs if l.get('category') == 'Forense Digital'}
@@ -707,7 +708,8 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
     ach_speed = done_count >= 5
     ach_halfway = pct >= 50
     ach_owasp = owasp_ids.issubset(completed_ids)
-    ach_vulns = vuln_ids.issubset(completed_ids)
+    ach_host = bool(host_ids) and host_ids.issubset(completed_ids)
+    ach_web = bool(web_ids) and web_ids.issubset(completed_ids)
     ach_ia = ia_ids.issubset(completed_ids)
     ach_ad = bool(ad_ids) and ad_ids.issubset(completed_ids)
     ach_forensics = bool(forensics_ids) and forensics_ids.issubset(completed_ids)
@@ -737,8 +739,13 @@ def _build_badge_catalog(completed_ids, labs, premium_unlocked=False):
         },
         {
             'id': 'bug_hunter', 'icon': '🐛', 'name': 'Bug Hunter', 'premium': False,
-            'desc_es': 'Completar todas las Vulnerabilidades', 'desc_en': 'Complete all Vulnerabilities labs',
-            'unlocked': ach_vulns,
+            'desc_es': 'Completar todos los labs de Web Attacks', 'desc_en': 'Complete all Web Attacks labs',
+            'unlocked': ach_web,
+        },
+        {
+            'id': 'host_hunter', 'icon': '🛡️', 'name': 'Host Hunter', 'premium': False,
+            'desc_es': 'Completar todos los labs de Host Attacks', 'desc_en': 'Complete all Host Attacks labs',
+            'unlocked': ach_host,
         },
         {
             'id': 'ai_breaker', 'icon': '🤖', 'name': 'AI Breaker', 'premium': False,
@@ -1655,7 +1662,8 @@ def index():
 
 CATEGORY_SLUGS = {
     'owasp':            'OWASP Top 10',
-    'vulnerabilidades': 'Vulnerabilidades',
+    'host-attacks':     'Host Attacks',
+    'web-attacks':      'Web Attacks',
     'ai-attacks':       'AI Attacks',
     'active-directory': 'Active Directory',
     'forense-digital':  'Forense Digital',
@@ -1833,36 +1841,37 @@ def get_lab_list():
         {'id': 'integrity',       'title': 'A08 – Software & Data Integrity Failures',     'category': 'OWASP Top 10', 'risk': 'high'},
         {'id': 'logging',         'title': 'A09 – Security Logging & Monitoring Failures', 'category': 'OWASP Top 10', 'risk': 'medium'},
         {'id': 'ssrf',            'title': 'A10 – Server-Side Request Forgery (SSRF)',     'category': 'OWASP Top 10', 'risk': 'high'},
-        # Vulnerabilidades (numeración V01-V26 = orden de aparición en el sidebar)
-        {'id': 'api_attacks',        'title': 'V01 – API Attacks – Laboratorio de APIs Inseguras', 'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'business_logic',     'title': 'V02 – Business Logic Flaws',                        'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'c2_sliver',          'title': 'V03 – C2 – Sliver Command & Control',               'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'container_escape',   'title': 'V04 – Container Escape',                            'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'cors',               'title': 'V05 – CORS Misconfiguration',                       'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'csrf',               'title': 'V06 – CSRF – Cross-Site Request Forgery',           'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'file_upload',        'title': 'V07 – File Upload sin restricciones',               'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'forgot_recovery',    'title': 'V08 – Forgot Password Recovery (Authentication Flaws)', 'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'html_injection',     'title': 'V09 – HTML Injection (GET/POST/Stored)',            'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'deserialization',    'title': 'V10 – Insecure Deserialization',                    'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'jwt',                'title': 'V11 – JWT Manipulation',                            'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'bruteforce',         'title': 'V12 – Login Bruteforce',                            'category': 'Vulnerabilidades', 'risk': 'medium'},
-        {'id': 'captcha_math',       'title': 'V13 – CAPTCHA Bypass',                              'category': 'Vulnerabilidades', 'risk': 'medium'},
-        {'id': 'oauth',              'title': 'V14 – OAuth 2.0 Attacks',                           'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'open_redirect',      'title': 'V15 – Open Redirect',                               'category': 'Vulnerabilidades', 'risk': 'medium'},
-        {'id': 'path_traversal',     'title': 'V16 – Path Traversal / LFI',                       'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'privesc',            'title': 'V17 – Privilege Escalation (SSH)',                  'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': '2fa_bypass',         'title': 'V18 – 2FA / MFA Bypass',                            'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'clickjacking',       'title': 'V19 – Clickjacking',                                'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'reset_poisoning',    'title': 'V20 – Password Reset Poisoning',                    'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'race_condition',     'title': 'V21 – Race Condition / TOCTOU',                     'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'reverse_shell',      'title': 'V22 – Reverse Shell',                               'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'session_hijacking',  'title': 'V23 – Session Hijacking',                           'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'ssti',               'title': 'V24 – SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'xss',                'title': 'V25 – XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'xxe',                'title': 'V26 – XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
-        {'id': 'account_takeover',   'title': 'V27 – Account Takeover via Recovery IDOR',          'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'price_manipulation', 'title': 'V28 – Business Logic: Price Manipulation',          'category': 'Vulnerabilidades', 'risk': 'critical'},
-        {'id': 'metasploit_exploitation', 'title': 'V29 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Vulnerabilidades', 'risk': 'critical'},
+        # Host Attacks (H01-H06): infraestructura, sistemas y servicios
+        {'id': 'bruteforce',         'title': 'H01 – Login Bruteforce',                            'category': 'Host Attacks', 'risk': 'medium'},
+        {'id': 'reverse_shell',      'title': 'H02 – Reverse Shell',                               'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'metasploit_exploitation', 'title': 'H03 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'privesc',            'title': 'H04 – Privilege Escalation (SSH)',                  'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'container_escape',   'title': 'H05 – Container Escape',                            'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'c2_sliver',          'title': 'H06 – C2 – Sliver Command & Control',               'category': 'Host Attacks', 'risk': 'critical'},
+        # Web Attacks (W01-W23): aplicaciones y APIs
+        {'id': 'api_attacks',        'title': 'W01 – API Attacks – Laboratorio de APIs Inseguras', 'category': 'Web Attacks', 'risk': 'critical'},
+        {'id': 'business_logic',     'title': 'W02 – Business Logic Flaws',                        'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'cors',               'title': 'W03 – CORS Misconfiguration',                       'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'csrf',               'title': 'W04 – CSRF – Cross-Site Request Forgery',           'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'file_upload',        'title': 'W05 – File Upload sin restricciones',               'category': 'Web Attacks', 'risk': 'critical'},
+        {'id': 'forgot_recovery',    'title': 'W06 – Forgot Password Recovery (Authentication Flaws)', 'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'html_injection',     'title': 'W07 – HTML Injection (GET/POST/Stored)',            'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'deserialization',    'title': 'W08 – Insecure Deserialization',                    'category': 'Web Attacks', 'risk': 'critical'},
+        {'id': 'jwt',                'title': 'W09 – JWT Manipulation',                            'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'captcha_math',       'title': 'W10 – CAPTCHA Bypass',                              'category': 'Web Attacks', 'risk': 'medium'},
+        {'id': 'oauth',              'title': 'W11 – OAuth 2.0 Attacks',                           'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'open_redirect',      'title': 'W12 – Open Redirect',                               'category': 'Web Attacks', 'risk': 'medium'},
+        {'id': 'path_traversal',     'title': 'W13 – Path Traversal / LFI',                       'category': 'Web Attacks', 'risk': 'high'},
+        {'id': '2fa_bypass',         'title': 'W14 – 2FA / MFA Bypass',                            'category': 'Web Attacks', 'risk': 'critical'},
+        {'id': 'clickjacking',       'title': 'W15 – Clickjacking',                                'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'reset_poisoning',    'title': 'W16 – Password Reset Poisoning',                    'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'race_condition',     'title': 'W17 – Race Condition / TOCTOU',                     'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'session_hijacking',  'title': 'W18 – Session Hijacking',                           'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'ssti',               'title': 'W19 – SSTI – Server-Side Template Injection',       'category': 'Web Attacks', 'risk': 'critical'},
+        {'id': 'xss',                'title': 'W20 – XSS – Cross-Site Scripting',                  'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'xxe',                'title': 'W21 – XXE – XML External Entity',                   'category': 'Web Attacks', 'risk': 'high'},
+        {'id': 'account_takeover',   'title': 'W22 – Account Takeover via Recovery IDOR',          'category': 'Web Attacks', 'risk': 'critical'},
+        {'id': 'price_manipulation', 'title': 'W23 – Business Logic: Price Manipulation',          'category': 'Web Attacks', 'risk': 'critical'},
         # AI Attacks (numeración AI01-AI06 = orden de aparición en el sidebar)
         {'id': 'ai_jailbreak',       'title': 'AI01 – AI Jailbreak',                                'category': 'AI Attacks',       'risk': 'medium'},
         {'id': 'ai_supply_chain',    'title': 'AI02 – AI Supply Chain Poisoning',                   'category': 'AI Attacks',       'risk': 'critical'},
@@ -2017,8 +2026,8 @@ def inject_labs():
 
     base_difficulty = session.get('difficulty', 'easy')
 
-    # Ordena labs alfabéticamente por título para mostrar secciones ordenadas
-    all_labs_sorted = sorted(get_lab_list(), key=lambda l: l['title'].lower())
+    # Mantiene el orden pedagógico definido en get_lab_list (especialmente Host Attacks).
+    all_labs_sorted = get_lab_list()
 
     # Progress tracking — only for custom account users (app_user_type == 'account')
     completed_lab_ids = set()

@@ -147,8 +147,8 @@
     'df_memory_credentials': ('ph-key',                     'Memory: Credentials in RAM'),
   } %}
 
-  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Vulnerabilidades': 'vulnerabilidades', 'AI Attacks': 'ai-attacks', 'Active Directory': 'active-directory', 'Forense Digital': 'forense-digital'} %}
-  {% set desired_order = ['OWASP Top 10', 'Vulnerabilidades', 'AI Attacks', 'Active Directory', 'Forense Digital'] %}
+  {% set cat_slug_map = {'OWASP Top 10': 'owasp', 'Web Attacks': 'web-attacks', 'Host Attacks': 'host-attacks', 'AI Attacks': 'ai-attacks', 'Active Directory': 'active-directory', 'Forense Digital': 'forense-digital'} %}
+  {% set desired_order = ['OWASP Top 10', 'Web Attacks', 'Host Attacks', 'AI Attacks', 'Active Directory', 'Forense Digital'] %}
   {% for cat in desired_order %}
     {% set labs_in_cat = all_labs | selectattr('category','equalto',cat) | list %}
     {% if labs_in_cat %}
