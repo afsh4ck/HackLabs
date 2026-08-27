@@ -103,6 +103,14 @@ Los labs que antes estaban agrupados como `Vulnerabilidades` se dividen en dos r
 | H04 – Privilege Escalation (SSH) | 🔴 Critical | SUID, sudo misconfiguration y cron |
 | H05 – Container Escape | 🔴 Critical | Docker socket, privileged container y cgroup release_agent |
 | H06 – C2 – Sliver Command & Control | 🔴 Critical | Implant, mTLS listener y ejecución de payloads |
+| H07 – Network & Service Enumeration | 🟡 Medium | Nmap, detección de versiones y superficie de ataque |
+| H08 – Linux Credential Hunting | 🟠 High | Secretos en ficheros, entornos, historiales y claves |
+| H09 – Sudo, SUID & Capabilities Abuse | 🔴 Critical | Ruptura de límites de privilegios en Linux |
+| H10 – Cron & Systemd Persistence | 🟠 High | Persistencia mediante tareas y servicios modificables |
+| H11 – SSH Keys & Lateral Movement | 🟠 High | Robo de claves, agent forwarding y movimiento lateral |
+| H12 – Network Pivoting & Tunneling | 🟠 High | Túneles SSH/Chisel hacia redes internas |
+
+Los labs H07–H12 incluyen un endpoint vulnerable controlado bajo `/host-lab/<lab>/probe` para practicar la fase con tráfico HTTP reproducible desde Kali. Las respuestas exponen únicamente la evidencia necesaria y devuelven la flag cuando se completa la técnica indicada en la guía integrada.
 
 ### AI Attacks
 

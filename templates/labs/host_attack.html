@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ lab.title }} – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 lg:p-8 max-w-4xl mx-auto">
+  {% include '_lab_header.html' %}
+  {% set data = {
+    'host_enum': ('Reconocimiento de red y servicios', 'Network and service reconnaissance', 'nmap -sV -sC -p- --min-rate 2000 {{ target_ip }}\ncurl "http://{{ target_ip }}/host-lab/host_enum/probe?ports=21,22,80,445,61616,8161"', 'HL{h07_nmap_service_map_complete}'),
+    'credential_hunting': ('Búsqueda de credenciales en Linux', 'Linux credential hunting', 'curl "http://{{ target_ip }}/host-lab/credential_hunting/probe"\ncurl "http://{{ target_ip }}/host-lab/credential_hunting/probe?path=/opt/app/.env"', 'HL{h08_linux_secrets_hunted}'),
+    'sudo_suid': ('Abuso de sudo, SUID y capabilities', 'Sudo, SUID and capabilities abuse', 'curl "http://{{ target_ip }}/host-lab/sudo_suid/probe"\ncurl "http://{{ target_ip }}/host-lab/sudo_suid/probe?binary=python3"', 'HL{h09_privilege_boundaries_broken}'),
+    'cron_persistence': ('Persistencia mediante cron y systemd', 'Cron and systemd persistence', 'curl "http://{{ target_ip }}/host-lab/cron_persistence/probe"\ncurl -X POST "http://{{ target_ip }}/host-lab/cron_persistence/probe" -d "command=/bin/bash -c id > /tmp/pwned"', 'HL{h10_persistence_established}'),
+    'ssh_lateral': ('Claves SSH y movimiento lateral', 'SSH keys and lateral movement', 'curl "http://{{ target_ip }}/host-lab/ssh_lateral/probe"\ncurl "http://{{ target_ip }}/host-lab/ssh_lateral/probe?key=legacy-admin"', 'HL{h11_lateral_movement_complete}'),
+    'network_pivoting': ('Pivoting y túneles de red', 'Network pivoting and tunneling', 'curl "http://{{ target_ip }}/host-lab/network_pivoting/probe"\ncurl "http://{{ target_ip }}/host-lab/network_pivoting/probe?target=10.10.20.15"', 'HL{h12_pivot_tunnel_established}')
+  }[host_lab_id] %}
+  <div class="hl-card mb-6">
+    <div class="lang-content" data-lang="es">
+      <h2 class="text-lg font-semibold mb-2">{{ data[0] }}</h2>
+      <p class="text-sm text-gray-400">Completa la fase usando herramientas reales de Kali contra el objetivo del laboratorio. Documenta el acceso obtenido y valida la flag en <a href="/progress" style="color:var(--hl-primary)">Mi progreso</a>.</p>
+    </div>
+    <div class="lang-content" data-lang="en" style="display:none">
+      <h2 class="text-lg font-semibold mb-2">{{ data[1] }}</h2>
+      <p class="text-sm text-gray-400">Complete this phase with real Kali tooling against the lab target. Document your access and validate the flag in <a href="/progress" style="color:var(--hl-primary)">My progress</a>.</p>
+    </div>
+    <div class="mt-5 p-4 rounded-lg" style="background:#09090f;border:1px solid rgba(206,255,0,.18)">
+      <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">Kali Linux</div>
+      <pre class="text-xs whitespace-pre-wrap text-gray-300"><code>{{ data[2] }}</code></pre>
+    </div>
+  </div>
+  <div id="resolution-data" class="hidden">
+    <div class="lang-content" data-lang="es"><h3>Guía de resolución</h3><p>Ejecuta el reconocimiento indicado, identifica la debilidad de esta fase y demuestra el acceso con la herramienta correspondiente. La flag se obtiene al completar la técnica: <code>{{ data[3] }}</code>.</p></div>
+    <div class="lang-content" data-lang="en" style="display:none"><h3>Resolution guide</h3><p>Run the reconnaissance shown above, identify the weakness for this phase and demonstrate access with the appropriate tool. The flag for this phase is <code>{{ data[3] }}</code>.</p></div>
+  </div>
+</div>
+{% endblock %}
