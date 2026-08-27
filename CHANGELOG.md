@@ -14,6 +14,9 @@ All notable changes to this repository are documented in this file.
 - docs: Guias bilingues ES/EN, mitigaciones, comandos de explotacion y despliegue actualizados. Total: 76 laboratorios.
 - fix(i18n): Toda la interfaz visible de V27, V28 y V29 —incluidos formularios, placeholders, buzones, estados vacios, mensajes Flask y la pantalla secundaria de reset— cambia ahora correctamente entre español e ingles.
 - fix(guides): Los comandos de V27-V29 usan ahora `target_base`, `target_ip` y `client_ip` inyectados desde la instancia real; se eliminan `127.0.0.1:5000` y los marcadores manuales que hacian fallar curl/Metasploit desde Kali.
+- fix(account_takeover): La PoC de V27 usa comandos curl de una sola linea, comillas seguras para zsh y `--data-urlencode`; se ha verificado la cadena completa desde Kali sin caer en el prompt `dquote>`.
+- feat(price_manipulation): Cada linea del carrito de V28 tiene un identificador estable y puede eliminarse individualmente desde la interfaz o mediante `DELETE /price-manipulation/api/cart/items/<line_id>`.
+- fix(price_manipulation): El alta desde el formulario usa Post/Redirect/Get y vuelve con HTTP 303 a la pagina completa tras reenviar la peticion manipulada en Burp; los clientes JSON conservan la respuesta API 201.
 
 </details>
 

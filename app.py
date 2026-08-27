@@ -1997,6 +1997,8 @@ def inject_labs():
         current_lab_id = path[5:]
     if not current_lab_id and path.startswith('/reset_poisoning/confirm/'):
         current_lab_id = 'reset_poisoning'
+    if not current_lab_id and path.startswith('/price-manipulation/api/cart/items/'):
+        current_lab_id = 'price_manipulation'
 
     # Detect real host for TARGET_IP replacement
     host_header = request.host          # e.g. "192.168.1.147" or "localhost:5000"
@@ -5214,10 +5216,23 @@ def _price_cart_total(cart):
     return sum(item['unit_price_cents'] * item['quantity'] for item in cart)
 
 
+def _price_cart_with_line_ids():
+    """Return the session cart, migrating pre-existing entries with stable line IDs."""
+    cart = session.get('price_cart', [])
+    changed = False
+    for item in cart:
+        if not item.get('line_id'):
+            item['line_id'] = secrets.token_hex(4)
+            changed = True
+    if changed:
+        session['price_cart'] = cart
+    return cart
+
+
 @app.route('/price-manipulation')
 def price_manipulation_lab():
     lab = next(l for l in get_lab_list() if l['id'] == 'price_manipulation')
-    cart = session.get('price_cart', [])
+    cart = _price_cart_with_line_ids()
     flag = session.pop('price_flag', None)
     return render_template('labs/price_manipulation.html', lab=lab, product=_price_product,
                            cart=cart, total_cents=_price_cart_total(cart),
@@ -5227,7 +5242,7 @@ def price_manipulation_lab():
 @app.route('/price-manipulation/api/cart/items', methods=['GET', 'POST'])
 def price_manipulation_cart_api():
     if request.method == 'GET':
-        cart = session.get('price_cart', [])
+        cart = _price_cart_with_line_ids()
         return jsonify({'items': cart, 'total': f'{_price_cart_total(cart) / 100:.2f}', 'currency': 'USD'})
     data = request.get_json(silent=True) or request.form
     product_id = str(data.get('product_id') or '')
@@ -5244,17 +5259,33 @@ def price_manipulation_cart_api():
         return jsonify({'error': 'invalid_item'}), 400
     # INTENTIONALLY VULNERABLE: the API persists a client-controlled price.
     # Checkout trusts this server-side cart snapshot instead of reloading catalog pricing.
-    cart = session.get('price_cart', [])
-    cart.append({'product_id': product_id, 'name': _price_product['name'],
+    cart = _price_cart_with_line_ids()
+    cart.append({'line_id': secrets.token_hex(4), 'product_id': product_id, 'name': _price_product['name'],
                  'quantity': quantity, 'unit_price_cents': unit_price_cents})
     session['price_cart'] = cart
+    # Browser form submissions use Post/Redirect/Get so forwarding the request in
+    # Burp always returns to the fully styled lab. JSON clients keep the API response.
+    if not request.is_json:
+        return redirect('/price-manipulation', code=303)
     return jsonify({'status': 'added', 'item': cart[-1],
                     'cart_total': f'{_price_cart_total(cart) / 100:.2f}'}), 201
 
 
+@app.route('/price-manipulation/api/cart/items/<line_id>', methods=['DELETE'])
+def price_manipulation_remove_cart_item(line_id):
+    cart = _price_cart_with_line_ids()
+    item_index = next((i for i, item in enumerate(cart) if item['line_id'] == line_id), None)
+    if item_index is None:
+        return jsonify({'error': 'cart_item_not_found'}), 404
+    removed = cart.pop(item_index)
+    session['price_cart'] = cart
+    return jsonify({'status': 'removed', 'line_id': removed['line_id'],
+                    'cart_total': f'{_price_cart_total(cart) / 100:.2f}'})
+
+
 @app.route('/price-manipulation/api/checkout', methods=['POST'])
 def price_manipulation_checkout():
-    cart = session.get('price_cart', [])
+    cart = _price_cart_with_line_ids()
     if not cart:
         return jsonify({'error': 'empty_cart'}), 400
     total = _price_cart_total(cart)

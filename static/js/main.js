@@ -180,6 +180,7 @@ const T = {
     price_checkout: 'Finalizar compra',
     price_empty_cart: 'El carrito está vacío.',
     price_clear_cart: 'Vaciar carrito',
+    price_remove_item: 'Eliminar',
     // ── V29 Metasploit ──
     msf_isolated_target: 'Objetivo aislado · CVE-2023-46604',
     msf_web_console: 'Consola web',
@@ -662,6 +663,7 @@ const T = {
     price_checkout: 'Checkout',
     price_empty_cart: 'Cart is empty.',
     price_clear_cart: 'Clear cart',
+    price_remove_item: 'Remove',
     // ── V29 Metasploit ──
     msf_isolated_target: 'Isolated target · CVE-2023-46604',
     msf_web_console: 'Web console',

