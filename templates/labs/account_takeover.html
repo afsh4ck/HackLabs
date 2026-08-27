@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}V27 – Account Takeover via Recovery IDOR – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-4xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}
+      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="hl-card mb-4 border-l-4" style="border-left-color:#ef4444">
+    <h3 class="font-semibold text-sm mb-2" data-i18n="obj_title">Objetivo</h3>
+    <div class="lang-content text-sm text-gray-400" data-lang="es">Compromete la cuenta <code>administrator</code> encadenando un fallo de autorización por objeto en el perfil con el flujo real de recuperación de contraseña.</div>
+    <div class="lang-content text-sm text-gray-400" data-lang="en" style="display:none">Compromise the <code>administrator</code> account by chaining a profile object-authorization flaw with the real password recovery workflow.</div>
+    <p class="text-xs font-mono mt-2"><span data-i18n="obj_flag_lbl">Flag:</span> <code>HL{···}</code> <span data-i18n="obj_flag_hint">— valídala en la barra lateral.</span></p>
+  </div>
+
+  {% if flag %}
+  <div class="hl-card mb-4" style="border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.07)">
+    <div class="text-xs font-semibold text-green-400 mb-1">Flag</div>
+    <code class="text-sm font-mono text-green-400">{{ flag }}</code>
+  </div>
+  {% endif %}
+
+  <div class="grid md:grid-cols-2 gap-4 mb-4">
+    <div class="hl-card">
+      <h2 class="font-semibold text-sm mb-3">Northstar Identity Portal</h2>
+      {% if current %}
+        <div class="text-xs space-y-2 mb-4">
+          <div><span class="text-gray-500">Signed in:</span> <strong>{{ current.username }}</strong></div>
+          <div><span class="text-gray-500">Account ID:</span> <code>{{ current.id }}</code></div>
+          <div><span class="text-gray-500">Recovery email:</span> <code>{{ current.recovery_email }}</code></div>
+        </div>
+        <form method="POST" action="/account-takeover/profile/recovery-email" class="space-y-2">
+          <input type="hidden" name="account_id" value="{{ current.id }}">
+          <label class="block text-xs text-gray-500">Recovery email</label>
+          <input class="hl-input" name="recovery_email" value="{{ current.recovery_email }}">
+          <button class="btn-primary text-xs" type="submit">Update profile</button>
+        </form>
+        <form method="POST" action="/account-takeover/logout" class="mt-3">
+          <button class="text-xs text-gray-400 hover:text-white" type="submit">Sign out</button>
+        </form>
+      {% else %}
+        <form method="POST" action="/account-takeover/login" class="space-y-3">
+          <input class="hl-input" name="username" placeholder="Username" autocomplete="off">
+          <input class="hl-input" name="password" type="password" placeholder="Password" autocomplete="off">
+          <button class="btn-primary" type="submit">Sign in</button>
+        </form>
+        <div class="mt-4 p-3 rounded text-xs font-mono" style="background:rgba(255,255,255,.04)">
+          <div class="text-gray-500 mb-1">External auditor access</div>
+          <div>auditor / Audit2026!</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="hl-card">
+      <h2 class="font-semibold text-sm mb-3">Password recovery</h2>
+      <p class="text-xs text-gray-500 mb-3">Reset links are delivered to the recovery address stored on the target account.</p>
+      <form method="POST" action="/account-takeover/reset/request" class="space-y-3">
+        <input class="hl-input" name="username" placeholder="Username (e.g. administrator)">
+        <button class="btn-primary" type="submit">Send reset link</button>
+      </form>
+      <div class="mt-4 text-xs">
+        <div class="text-gray-500 mb-1">Employee directory API</div>
+        <a class="font-mono hover:underline" style="color:var(--hl-primary)" href="/account-takeover/api/directory?q=administrator" target="_blank">GET /api/directory?q=administrator</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="hl-card mb-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-sm">Recovery mailbox</h2>
+      <span class="text-xs text-gray-500">Visible only to the signed-in identity</span>
+    </div>
+    {% if not current %}
+      <p class="text-xs text-gray-500 italic">Sign in to view your recovery mailbox.</p>
+    {% elif mailbox %}
+      {% for message in mailbox %}
+      <div class="rounded p-3 mb-2 text-xs" style="border:1px solid rgba(255,255,255,.1)">
+        <div><span class="text-gray-500">To:</span> {{ message.to }}</div>
+        <div><span class="text-gray-500">Subject:</span> {{ message.subject }}</div>
+        <a class="inline-block mt-2 font-mono hover:underline" style="color:var(--hl-primary)" href="{{ message.link }}">Open reset link</a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-xs text-gray-500 italic">No messages for {{ current.recovery_email }}.</p>
+    {% endif %}
+  </div>
+
+  <form method="POST" action="/account-takeover/reset-lab">
+    <button type="submit" class="text-xs text-gray-500 hover:text-red-400">Reset lab state</button>
+  </form>
+</div>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Cadena de explotación</h3>
+    <ol>
+      <li>Inicia sesión con <code>auditor / Audit2026!</code>.</li>
+      <li>Consulta <code>GET /account-takeover/api/directory?q=administrator</code> y anota el <code>account_id</code> del objetivo.</li>
+      <li>Intercepta la petición de actualización de perfil. Sustituye <code>account_id=1002</code> por el ID del administrador y conserva <code>recovery_email=auditor@hacklabs.local</code>.</li>
+      <li>Solicita un reset para <code>administrator</code>. El enlace llega ahora al buzón del auditor.</li>
+      <li>Abre el enlace, fija una contraseña nueva y autentícate como <code>administrator</code>. La aplicación mostrará <code>HL{···}</code>.</li>
+    </ol>
+    <h3>Por qué funciona</h3>
+    <p>El endpoint exige autenticación, pero autoriza por el <code>account_id</code> suministrado por el cliente. El reset sí está correctamente vinculado a un token de un solo uso; el takeover nace del cambio IDOR previo.</p>
+    <h3>Mitigación</h3>
+    <pre># Derivar el usuario de la sesión, no del body
+target_id = session.user_id
+# Reautenticar y verificar el correo anterior/nuevo
+# Alertar al correo anterior y revocar sesiones</pre>
+    <h3>Herramientas</h3><div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">DevTools</span></div>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploit chain</h3>
+    <ol>
+      <li>Sign in with <code>auditor / Audit2026!</code>.</li>
+      <li>Request <code>GET /account-takeover/api/directory?q=administrator</code> and note the target <code>account_id</code>.</li>
+      <li>Intercept the profile update. Replace <code>account_id=1002</code> with the administrator ID while keeping <code>recovery_email=auditor@hacklabs.local</code>.</li>
+      <li>Request a password reset for <code>administrator</code>. The link now reaches the auditor mailbox.</li>
+      <li>Open it, set a new password, and authenticate as <code>administrator</code>. The application reveals <code>HL{···}</code>.</li>
+    </ol>
+    <h3>Why it works</h3>
+    <p>The endpoint authenticates the caller but authorizes the object using a client-supplied <code>account_id</code>. The one-time reset token itself is sound; the preceding IDOR creates the takeover.</p>
+    <h3>Mitigation</h3>
+    <pre># Derive the target from the authenticated session
+target_id = session.user_id
+# Require reauthentication and verify old/new addresses
+# Notify the previous address and revoke sessions</pre>
+    <h3>Tools</h3><div><span class="tools-badge">Burp Suite</span> <span class="tools-badge">curl</span> <span class="tools-badge">DevTools</span></div>
+  </div>
+</div>
+{% endblock %}

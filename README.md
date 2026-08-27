@@ -32,7 +32,7 @@
 
 ## 🎯 Características
 
-- **73 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + AI Attacks + Active Directory + Forense Digital
+- **76 laboratorios** cubriendo OWASP Top 10 + vulnerabilidades avanzadas + AI Attacks + Active Directory + Forense Digital
 - Guías de resolución paso a paso (ES/EN)
 - Filtros de labs por criticidad (Critical / High / Medium)
 - Soporte **bilingüe** (Español / English)
@@ -91,6 +91,9 @@
 | V24 – SSTI – Server-Side Template Injection | 🔴 Critical | Jinja2 `render_template_string` → RCE |
 | V25 – XSS – Cross-Site Scripting | 🟠 High | Reflected, Stored, DOM |
 | V26 – XXE – XML External Entity | 🟠 High | XML External Entity |
+| V27 – Account Takeover via Recovery IDOR | 🔴 Critical | IDOR/BOLA en correo de recuperación → reset de contraseña → takeover |
+| V28 – Business Logic: Price Manipulation | 🔴 Critical | Precio controlado por cliente persistido en carrito y checkout a $0.00 |
+| V29 – Metasploit: ActiveMQ RCE to Meterpreter | 🔴 Critical | CVE-2023-46604 en ActiveMQ 5.18.2 → Meterpreter Linux x64 |
 
 ### AI Attacks
 
@@ -977,6 +980,29 @@ nxc smb 127.0.0.1 -u '' -p '' --shares
 ```
 
 > **Nota:** en modo bridge el DC publica 445 (SMB) igual que el contenedor web; no levantes ambos con `docker compose` a la vez sin ajustar los puertos. Con `deploy.sh` no hay conflicto porque cada máquina recibe su propia IP.
+
+#### Objetivo vulnerable para Metasploit
+
+El lab **V29** usa un contenedor separado con Apache ActiveMQ 5.18.2, vulnerable a
+CVE-2023-46604. `build.sh` levanta automáticamente la aplicación y este objetivo,
+manteniéndolos como servicios separados dentro del mismo proyecto Compose.
+
+```bash
+bash build.sh
+nmap -sV -p 61616,8161 127.0.0.1
+```
+
+En Metasploit usa
+`exploit/multi/misc/apache_activemq_rce_cve_2023_46604`, target Linux y el
+payload `cmd/linux/http/x64/meterpreter/reverse_tcp`. La guía integrada de V29
+incluye la configuración completa de `RHOSTS`, `SRVHOST` y `LHOST`.
+
+```bash
+bash build.sh down
+```
+
+> ⚠️ Este contenedor es vulnerable de forma intencionada. Ejecútalo solo en una
+> VM o red de laboratorio aislada y nunca publiques 61616/8161 en Internet.
 
 ---
 

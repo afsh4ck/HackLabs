@@ -1,0 +1,14 @@
+# Deliberately vulnerable target. Never expose it to an untrusted network.
+services:
+  activemq:
+    build: ./ad_hoc/metasploit
+    restart: unless-stopped
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    networks:
+      - metasploit_lab
+
+networks:
+  metasploit_lab:
+    driver: bridge

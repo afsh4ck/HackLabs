@@ -106,6 +106,10 @@ _forgot_reset_store = {}  # username -> {token, created_at}
 _forgot_last_token = None
 _forgot_mailbox = []
 
+# Account Takeover lab state.  Each browser receives an isolated, server-side
+# tenant so one learner's takeover does not solve the lab for everyone else.
+_ato_tenants = {}
+
 # LLM Data Exfiltration lab store
 _exfil_log = []  # list of {url, data, timestamp}
 
@@ -826,6 +830,9 @@ def get_lab_flag_map():
         # Vulnerabilidades
         'api_attacks': ['HL{4p1_n0735_3xf11_0wn3d}'],
         'business_logic': ['HL{bu51n355_l0g1c_0wn3d}'],
+        'account_takeover': ['HL{4cc0un7_74k30v3r_r3c0v3ry_1d0r}'],
+        'price_manipulation': ['HL{pr1c3_0v3rr1d3_ch3ck0u7_fr33}'],
+        'metasploit_exploitation': ['HL{m373rpr373r_c43_2023_46604}'],
         'c2_sliver': ['HL{c2_sliver_callback_established}'],
         'container_escape': ['HL{c0n741n3r_35c4p3_h057_4cc355}'],
         'cors': ['HL{c0r5_cr3d3n7141_7h3f7_5ucc355}'],
@@ -916,6 +923,9 @@ def get_lab_flag_map():
     explicit_screen_flag_labs = {
         'api_attacks',
         'business_logic',
+        'account_takeover',
+        'price_manipulation',
+        'metasploit_exploitation',
         'container_escape',
         'cors',
         'csrf',
@@ -1787,6 +1797,8 @@ def lab(lab_id):
         '2fa_bypass':      '/2fa',
         'reset_poisoning': '/reset_poisoning',
         'business_logic':  '/shop',
+        'account_takeover': '/account-takeover',
+        'price_manipulation': '/price-manipulation',
         'container_escape':'/container',
         'oauth':           '/oauth',
         'ssti':            '/ssti',
@@ -1848,6 +1860,9 @@ def get_lab_list():
         {'id': 'ssti',               'title': 'V24 – SSTI – Server-Side Template Injection',       'category': 'Vulnerabilidades', 'risk': 'critical'},
         {'id': 'xss',                'title': 'V25 – XSS – Cross-Site Scripting',                  'category': 'Vulnerabilidades', 'risk': 'high'},
         {'id': 'xxe',                'title': 'V26 – XXE – XML External Entity',                   'category': 'Vulnerabilidades', 'risk': 'high'},
+        {'id': 'account_takeover',   'title': 'V27 – Account Takeover via Recovery IDOR',          'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'price_manipulation', 'title': 'V28 – Business Logic: Price Manipulation',          'category': 'Vulnerabilidades', 'risk': 'critical'},
+        {'id': 'metasploit_exploitation', 'title': 'V29 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Vulnerabilidades', 'risk': 'critical'},
         # AI Attacks (numeración AI01-AI06 = orden de aparición en el sidebar)
         {'id': 'ai_jailbreak',       'title': 'AI01 – AI Jailbreak',                                'category': 'AI Attacks',       'risk': 'medium'},
         {'id': 'ai_supply_chain',    'title': 'AI02 – AI Supply Chain Poisoning',                   'category': 'AI Attacks',       'risk': 'critical'},
@@ -1953,6 +1968,19 @@ def inject_labs():
         '/reset_poisoning/request':      'reset_poisoning',
         '/reset_poisoning/clear':        'reset_poisoning',
         '/shop':           'business_logic',
+        '/account-takeover': 'account_takeover',
+        '/account-takeover/login': 'account_takeover',
+        '/account-takeover/api/directory': 'account_takeover',
+        '/account-takeover/logout': 'account_takeover',
+        '/account-takeover/profile/recovery-email': 'account_takeover',
+        '/account-takeover/reset/request': 'account_takeover',
+        '/account-takeover/reset': 'account_takeover',
+        '/account-takeover/reset/confirm': 'account_takeover',
+        '/account-takeover/reset-lab': 'account_takeover',
+        '/price-manipulation': 'price_manipulation',
+        '/price-manipulation/api/cart/items': 'price_manipulation',
+        '/price-manipulation/api/checkout': 'price_manipulation',
+        '/price-manipulation/reset': 'price_manipulation',
         '/container':      'container_escape',
         '/oauth':           'oauth',
         '/oauth/authorize': 'oauth',
@@ -5015,6 +5043,238 @@ def race_reset():
 # ─────────────────────────────────────────────
 # Business Logic Flaws
 # ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
+# Account Takeover — recovery-email IDOR chain
+# ─────────────────────────────────────────────
+
+def _ato_state():
+    sid = session.setdefault('ato_sid', secrets.token_hex(16))
+    if sid not in _ato_tenants:
+        _ato_tenants[sid] = {
+            'users': {
+                1001: {'id': 1001, 'username': 'administrator', 'display_name': 'Sofia Martin',
+                       'recovery_email': 'sofia.martin@hacklabs.local', 'password': 'N0rthstar!Vault#27', 'role': 'Administrator'},
+                1002: {'id': 1002, 'username': 'auditor', 'display_name': 'External Auditor',
+                       'recovery_email': 'auditor@hacklabs.local', 'password': 'Audit2026!', 'role': 'Auditor'},
+                1003: {'id': 1003, 'username': 'mreyes', 'display_name': 'Mateo Reyes',
+                       'recovery_email': 'mateo.reyes@hacklabs.local', 'password': 'Mateo-Internal-88', 'role': 'Employee'},
+            },
+            'tokens': {},
+            'mailbox': [],
+            'admin_compromised': False,
+        }
+    return _ato_tenants[sid]
+
+
+@app.route('/account-takeover')
+def account_takeover_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'account_takeover')
+    state = _ato_state()
+    current_id = session.get('ato_user_id')
+    current = state['users'].get(current_id)
+    mailbox = []
+    if current:
+        mailbox = [m for m in state['mailbox'] if m['to'] == current['recovery_email']]
+    flag = session.pop('ato_flag', None)
+    return render_template('labs/account_takeover.html', lab=lab, current=current,
+                           mailbox=mailbox, flag=flag)
+
+
+@app.route('/account-takeover/api/directory')
+def account_takeover_directory():
+    state = _ato_state()
+    q = (request.args.get('q') or '').strip().lower()
+    results = [
+        {'account_id': user['id'], 'username': user['username'], 'display_name': user['display_name'], 'role': user['role']}
+        for user in state['users'].values()
+        if not q or q in user['username'].lower() or q in user['display_name'].lower()
+    ]
+    return jsonify({'results': results})
+
+
+@app.route('/account-takeover/login', methods=['POST'])
+def account_takeover_login():
+    state = _ato_state()
+    username = (request.form.get('username') or '').strip()
+    password = request.form.get('password') or ''
+    user = next((u for u in state['users'].values()
+                 if u['username'] == username and u['password'] == password), None)
+    if not user:
+        flash('Credenciales incorrectas.', 'error')
+        return redirect('/account-takeover')
+    session['ato_user_id'] = user['id']
+    if user['id'] == 1001 and state['admin_compromised']:
+        session['ato_flag'] = 'HL{4cc0un7_74k30v3r_r3c0v3ry_1d0r}'
+    flash(f'Sesion iniciada como {user["username"]}.', 'success')
+    return redirect('/account-takeover')
+
+
+@app.route('/account-takeover/logout', methods=['POST'])
+def account_takeover_logout():
+    session.pop('ato_user_id', None)
+    return redirect('/account-takeover')
+
+
+@app.route('/account-takeover/profile/recovery-email', methods=['POST'])
+def account_takeover_change_recovery_email():
+    state = _ato_state()
+    if session.get('ato_user_id') not in state['users']:
+        return jsonify({'error': 'authentication_required'}), 401
+    try:
+        account_id = int(request.form.get('account_id', 0))
+    except ValueError:
+        return jsonify({'error': 'invalid_account_id'}), 400
+    new_email = (request.form.get('recovery_email') or '').strip().lower()
+    if account_id not in state['users'] or '@' not in new_email:
+        return jsonify({'error': 'invalid_request'}), 400
+    # INTENTIONALLY VULNERABLE: authentication exists, object ownership does not.
+    # The service updates whichever account_id the client submits.
+    state['users'][account_id]['recovery_email'] = new_email
+    flash('Correo de recuperacion actualizado.', 'success')
+    return redirect('/account-takeover')
+
+
+@app.route('/account-takeover/reset/request', methods=['POST'])
+def account_takeover_request_reset():
+    state = _ato_state()
+    username = (request.form.get('username') or '').strip()
+    user = next((u for u in state['users'].values() if u['username'] == username), None)
+    # A uniform response avoids making enumeration the intended vulnerability.
+    if user:
+        token = secrets.token_urlsafe(24)
+        state['tokens'][token] = {'user_id': user['id'], 'expires': time.time() + 600, 'used': False}
+        state['mailbox'].append({
+            'to': user['recovery_email'],
+            'subject': f'Password reset for {user["username"]}',
+            'link': f'/account-takeover/reset?token={token}',
+        })
+    flash('Si la cuenta existe, se ha enviado un enlace a su correo de recuperacion.', 'success')
+    return redirect('/account-takeover')
+
+
+@app.route('/account-takeover/reset')
+def account_takeover_reset_form():
+    lab = next(l for l in get_lab_list() if l['id'] == 'account_takeover')
+    state = _ato_state()
+    token = request.args.get('token') or ''
+    token_data = state['tokens'].get(token)
+    valid = bool(token_data and not token_data['used'] and token_data['expires'] >= time.time())
+    return render_template('labs/account_takeover_reset.html', lab=lab, token=token, valid=valid)
+
+
+@app.route('/account-takeover/reset/confirm', methods=['POST'])
+def account_takeover_confirm_reset():
+    state = _ato_state()
+    token = request.form.get('token') or ''
+    new_password = request.form.get('new_password') or ''
+    token_data = state['tokens'].get(token)
+    if not token_data or token_data['used'] or token_data['expires'] < time.time():
+        return render_template('labs/account_takeover_reset.html',
+                               lab=next(l for l in get_lab_list() if l['id'] == 'account_takeover'),
+                               token=token, valid=False), 400
+    if len(new_password) < 8:
+        flash('La nueva contrasena debe tener al menos 8 caracteres.', 'error')
+        return redirect(f'/account-takeover/reset?token={_urlquote(token)}')
+    user_id = token_data['user_id']
+    state['users'][user_id]['password'] = new_password
+    token_data['used'] = True
+    if user_id == 1001:
+        state['admin_compromised'] = True
+    session.pop('ato_user_id', None)
+    flash('Contrasena actualizada. Inicia sesion con la cuenta recuperada.', 'success')
+    return redirect('/account-takeover')
+
+
+@app.route('/account-takeover/reset-lab', methods=['POST'])
+def account_takeover_reset_lab():
+    sid = session.get('ato_sid')
+    if sid:
+        _ato_tenants.pop(sid, None)
+    session.pop('ato_sid', None)
+    session.pop('ato_user_id', None)
+    session.pop('ato_flag', None)
+    flash('Estado del laboratorio reiniciado.', 'success')
+    return redirect('/account-takeover')
+
+
+# ─────────────────────────────────────────────
+# Price Manipulation — client-controlled cart price
+# ─────────────────────────────────────────────
+
+_price_product = {
+    'id': 'hsm-enterprise-1',
+    'name': 'Northstar Enterprise HSM',
+    'description': 'Hardware security module with enterprise support',
+    'price_cents': 249900,
+}
+
+
+def _price_cart_total(cart):
+    return sum(item['unit_price_cents'] * item['quantity'] for item in cart)
+
+
+@app.route('/price-manipulation')
+def price_manipulation_lab():
+    lab = next(l for l in get_lab_list() if l['id'] == 'price_manipulation')
+    cart = session.get('price_cart', [])
+    flag = session.pop('price_flag', None)
+    return render_template('labs/price_manipulation.html', lab=lab, product=_price_product,
+                           cart=cart, total_cents=_price_cart_total(cart),
+                           balance_cents=500, flag=flag)
+
+
+@app.route('/price-manipulation/api/cart/items', methods=['GET', 'POST'])
+def price_manipulation_cart_api():
+    if request.method == 'GET':
+        cart = session.get('price_cart', [])
+        return jsonify({'items': cart, 'total': f'{_price_cart_total(cart) / 100:.2f}', 'currency': 'USD'})
+    data = request.get_json(silent=True) or request.form
+    product_id = str(data.get('product_id') or '')
+    if product_id != _price_product['id']:
+        return jsonify({'error': 'product_not_found'}), 404
+    try:
+        quantity = int(data.get('quantity', 1))
+        supplied_price = str(data.get('unit_price', _price_product['price_cents'] / 100))
+        from decimal import Decimal, InvalidOperation
+        unit_price_cents = int(Decimal(supplied_price) * 100)
+    except (ValueError, TypeError, InvalidOperation):
+        return jsonify({'error': 'invalid_item'}), 400
+    if quantity < 1 or quantity > 5 or unit_price_cents < 0:
+        return jsonify({'error': 'invalid_item'}), 400
+    # INTENTIONALLY VULNERABLE: the API persists a client-controlled price.
+    # Checkout trusts this server-side cart snapshot instead of reloading catalog pricing.
+    cart = session.get('price_cart', [])
+    cart.append({'product_id': product_id, 'name': _price_product['name'],
+                 'quantity': quantity, 'unit_price_cents': unit_price_cents})
+    session['price_cart'] = cart
+    return jsonify({'status': 'added', 'item': cart[-1],
+                    'cart_total': f'{_price_cart_total(cart) / 100:.2f}'}), 201
+
+
+@app.route('/price-manipulation/api/checkout', methods=['POST'])
+def price_manipulation_checkout():
+    cart = session.get('price_cart', [])
+    if not cart:
+        return jsonify({'error': 'empty_cart'}), 400
+    total = _price_cart_total(cart)
+    if total > 500:
+        return jsonify({'error': 'insufficient_balance', 'total': f'{total / 100:.2f}', 'balance': '5.00'}), 402
+    bought_target = any(item['product_id'] == _price_product['id'] for item in cart)
+    response = {'status': 'paid', 'charged': f'{total / 100:.2f}', 'order_id': f'NS-{secrets.token_hex(4).upper()}'}
+    if bought_target and total == 0:
+        response['flag'] = 'HL{pr1c3_0v3rr1d3_ch3ck0u7_fr33}'
+        session['price_flag'] = response['flag']
+    session['price_cart'] = []
+    return jsonify(response)
+
+
+@app.route('/price-manipulation/reset', methods=['POST'])
+def price_manipulation_reset():
+    session.pop('price_cart', None)
+    session.pop('price_flag', None)
+    return redirect('/price-manipulation')
+
 
 _shop_products = [
     {'id': 1, 'name': 'HackLabs Pro License', 'price': 9999, 'stock': 10},

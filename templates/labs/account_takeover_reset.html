@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Password Reset – Northstar Identity{% endblock %}
+{% block content %}
+<div class="p-6 max-w-xl mx-auto">
+  {% include '_lab_header.html' %}
+  <div class="hl-card">
+    <h2 class="font-semibold mb-3">Set a new password</h2>
+    {% if valid %}
+    <form method="POST" action="/account-takeover/reset/confirm" class="space-y-3">
+      <input type="hidden" name="token" value="{{ token }}">
+      <input class="hl-input" type="password" name="new_password" minlength="8" placeholder="New password" required>
+      <button class="btn-primary" type="submit">Update password</button>
+    </form>
+    {% else %}
+    <div class="alert-error text-sm">This reset token is invalid, expired, or already used.</div>
+    {% endif %}
+    <a href="/account-takeover" class="inline-block mt-4 text-xs hover:underline" style="color:var(--hl-primary)">Return to identity portal</a>
+  </div>
+</div>
+{% endblock %}

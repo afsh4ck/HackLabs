@@ -2,6 +2,19 @@
 
 All notable changes to this repository are documented in this file.
 
+## 2026-08-27
+
+<details>
+<summary><h4>Nuevos labs: Account Takeover, Price Manipulation y Metasploit</h4></summary>
+
+- feat(account_takeover): Nuevo lab V27 con una cadena realista de cuenta autenticada de bajo privilegio, enumeracion de directorio, IDOR/BOLA sobre el correo de recuperacion, token de reset de un solo uso y toma de la cuenta administradora. Los correos internos usan exclusivamente `@hacklabs.local`.
+- feat(price_manipulation): Nuevo lab V28 con API JSON de carrito que persiste un `unit_price` controlado por el cliente y un checkout server-side que confia en el dato contaminado, permitiendo comprar el producto objetivo por `$0.00`.
+- feat(metasploit): Nuevo lab V29 contra Apache ActiveMQ 5.18.2 vulnerable a CVE-2023-46604, explotable con el modulo oficial de Metasploit y el payload Linux x64 Meterpreter.
+- feat(build): Nuevo `build.sh` que construye, levanta, inspecciona y detiene conjuntamente HackLabs y el objetivo aislado de Metasploit.
+- docs: Guias bilingues ES/EN, mitigaciones, comandos de explotacion y despliegue actualizados. Total: 76 laboratorios.
+
+</details>
+
 ## 2026-08-10
 
 <details>

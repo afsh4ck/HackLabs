@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ──────────────────────────────────────────────────────────────────
 # HackLabs – Docker Compose (bridge, acceso por IP del host)
 #
@@ -14,7 +12,6 @@ version: "3.9"
 services:
   hacklabs:
     build: .
-    container_name: hacklabs
     restart: unless-stopped
     environment:
       - APP_PORT=5000

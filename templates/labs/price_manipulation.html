@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}V28 – Business Logic: Price Manipulation – HackLabs{% endblock %}
+{% block content %}
+<div class="p-6 max-w-3xl mx-auto">
+  {% include '_lab_header.html' %}
+
+  <div class="hl-card mb-4 border-l-4" style="border-left-color:#ef4444">
+    <h3 class="font-semibold text-sm mb-2" data-i18n="obj_title">Objetivo</h3>
+    <div class="lang-content text-sm text-gray-400" data-lang="es">Compra gratis el HSM empresarial manipulando el contrato HTTP entre el frontend, la API de carrito y el checkout.</div>
+    <div class="lang-content text-sm text-gray-400" data-lang="en" style="display:none">Buy the enterprise HSM for free by tampering with the HTTP contract between the frontend, cart API, and checkout.</div>
+    <p class="text-xs font-mono mt-2"><span data-i18n="obj_flag_lbl">Flag:</span> <code>HL{···}</code> <span data-i18n="obj_flag_hint">— valídala en la barra lateral.</span></p>
+  </div>
+
+  {% if flag %}<div class="hl-card mb-4 text-green-400 font-mono">{{ flag }}</div>{% endif %}
+
+  <div class="hl-card mb-4">
+    <div class="flex justify-between gap-4">
+      <div>
+        <div class="text-xs text-gray-500 font-mono">SKU {{ product.id }}</div>
+        <h2 class="font-semibold text-lg mt-1">{{ product.name }}</h2>
+        <p class="text-xs text-gray-500 mt-1">{{ product.description }}</p>
+      </div>
+      <div class="text-xl font-bold font-mono" style="color:var(--hl-primary)">${{ '%.2f'|format(product.price_cents / 100) }}</div>
+    </div>
+    <form id="price-add-form" class="mt-4" method="POST" action="/price-manipulation/api/cart/items">
+      <input type="hidden" name="product_id" value="{{ product.id }}">
+      <input type="hidden" name="unit_price" value="{{ '%.2f'|format(product.price_cents / 100) }}">
+      <input type="hidden" name="quantity" value="1">
+      <button class="btn-primary" type="submit">Add to cart</button>
+    </form>
+  </div>
+
+  <div class="hl-card mb-4">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="font-semibold text-sm">Server-side cart</h2>
+      <span class="text-xs font-mono">Balance: $5.00</span>
+    </div>
+    {% if cart %}
+      {% for item in cart %}
+      <div class="flex justify-between text-xs font-mono py-2 border-b" style="border-color:rgba(255,255,255,.08)">
+        <span>{{ item.name }} × {{ item.quantity }}</span>
+        <span>${{ '%.2f'|format(item.unit_price_cents * item.quantity / 100) }}</span>
+      </div>
+      {% endfor %}
+      <div class="flex justify-between font-semibold mt-3"><span>Total</span><span>${{ '%.2f'|format(total_cents / 100) }}</span></div>
+      <button id="price-checkout" class="btn-primary mt-4" type="button">Checkout</button>
+    {% else %}
+      <p class="text-xs text-gray-500 italic">Cart is empty.</p>
+    {% endif %}
+    <pre id="price-api-result" class="mt-3 text-xs font-mono whitespace-pre-wrap"></pre>
+  </div>
+
+  <form method="POST" action="/price-manipulation/reset"><button type="submit" class="text-xs text-gray-500 hover:text-red-400">Clear cart</button></form>
+</div>
+
+<script>
+document.getElementById('price-add-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  body.quantity = Number(body.quantity);
+  const response = await fetch(form.action, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  document.getElementById('price-api-result').textContent = JSON.stringify(await response.json(), null, 2);
+  if (response.ok) setTimeout(() => location.reload(), 500);
+});
+document.getElementById('price-checkout')?.addEventListener('click', async () => {
+  const response = await fetch('/price-manipulation/api/checkout', {method: 'POST'});
+  const data = await response.json();
+  document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
+});
+</script>
+
+<div id="resolution-data" class="hidden">
+  <div class="lang-content" data-lang="es">
+    <h3>Explotación</h3>
+    <ol>
+      <li>Abre DevTools o intercepta <code>POST /price-manipulation/api/cart/items</code> con Burp.</li>
+      <li>El JSON contiene <code>product_id</code>, <code>quantity</code> y <code>unit_price</code>. Modifica únicamente <code>unit_price</code> a <code>0.00</code>.</li>
+      <li>El carrito del servidor mostrará total $0.00. Ejecuta el checkout sin volver a añadir el producto.</li>
+      <li>La respuesta JSON de la orden incluye <code>HL{···}</code>.</li>
+    </ol>
+    <pre>curl -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie \
+  -H 'Content-Type: application/json' \
+  -d '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' \
+  http://127.0.0.1:5000/price-manipulation/api/cart/items
+
+curl -b /tmp/hl-price.cookie -X POST \
+  http://127.0.0.1:5000/price-manipulation/api/checkout</pre>
+    <h3>Causa raíz</h3><p>El backend persiste el precio enviado por el cliente. El checkout recalcula desde un carrito del servidor, pero ese carrito ya contiene datos manipulados; «server-side» no equivale a «confiable».</p>
+    <h3>Mitigación</h3><pre># Aceptar solo product_id y quantity
+unit_price = catalog.get(product_id).price
+# Reconsultar precio, stock, impuestos y descuentos en checkout</pre>
+  </div>
+  <div class="lang-content" data-lang="en" style="display:none">
+    <h3>Exploitation</h3>
+    <ol>
+      <li>Open DevTools or intercept <code>POST /price-manipulation/api/cart/items</code> with Burp.</li>
+      <li>The JSON contains <code>product_id</code>, <code>quantity</code>, and <code>unit_price</code>. Change only <code>unit_price</code> to <code>0.00</code>.</li>
+      <li>The server cart now totals $0.00. Check out without adding the product again.</li>
+      <li>The order JSON response includes <code>HL{···}</code>.</li>
+    </ol>
+    <pre>curl -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie \
+  -H 'Content-Type: application/json' \
+  -d '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' \
+  http://127.0.0.1:5000/price-manipulation/api/cart/items
+
+curl -b /tmp/hl-price.cookie -X POST \
+  http://127.0.0.1:5000/price-manipulation/api/checkout</pre>
+    <h3>Root cause</h3><p>The backend persists a client-supplied price. Checkout recomputes from a server-side cart, but the cart already contains tainted data; server-side does not automatically mean trusted.</p>
+    <h3>Mitigation</h3><pre># Accept product_id and quantity only
+unit_price = catalog.get(product_id).price
+# Reload price, stock, tax and discounts at checkout</pre>
+  </div>
+</div>
+{% endblock %}
