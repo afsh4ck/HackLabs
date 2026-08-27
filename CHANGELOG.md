@@ -13,6 +13,7 @@ All notable changes to this repository are documented in this file.
 - docs: README divide Web Attacks y Host Attacks, documenta los 83 labs y actualiza la nomenclatura vigente.
 - fix(host-attacks): H07 y H13 (`sudo_suid`/`database_access`) ya no comparten icono con `ad_gpp_passwords`/`sqli`; los 13 iconos de Host Attacks son distintos entre sí en los cuatro mapas.
 - fix(host-attacks): H01/H13 (preguntas de respuesta) usan ahora `data-i18n`/`t()` igual que el resto de la app en vez de comprobar `document.documentElement.lang` (que nunca cambia), y "Inicio rápido" ya no queda fijo en inglés al cambiar de idioma.
+- fix(host-attacks): `/host-labs/check-answer` guarda ahora la respuesta real enviada por el usuario (no un marcador interno), y el input de H01/H13 la muestra precargada y bloqueada tras validarse, igual que el input de la caja «Validar Flag».
 
 ## 2026-08-27
 

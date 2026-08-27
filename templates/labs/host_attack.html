@@ -45,7 +45,9 @@ hostname</code></pre>{% endif %}
     <div class="lang-content text-sm text-gray-300 mb-3" data-lang="en" style="display:none">{% if host_lab_id == 'host_enum' %}Which version is used by the HackLabs FTP service?{% else %}What is the plaintext password for the <code>administrator</code> user?{% endif %}</div>
     {% if is_progress_user %}
     <div class="flex gap-2 items-end flex-wrap">
-      <input class="host-answer-input hl-input font-mono text-xs flex-1 min-w-[220px]" autocomplete="off" {% if host_lab_id in completed_lab_ids %}disabled{% endif %}>
+      <input class="host-answer-input hl-input font-mono text-xs flex-1 min-w-[220px]" autocomplete="off"
+             value="{{ current_lab_validated_flag | e }}"
+             {% if host_lab_id in completed_lab_ids %}disabled{% endif %}>
       <button class="host-answer-btn lab-complete-btn h-[34px] {% if host_lab_id in completed_lab_ids %}lab-complete-btn--done{% endif %}" {% if host_lab_id in completed_lab_ids %}disabled{% endif %}><i class="ph ph-check-circle"></i><span {% if host_lab_id in completed_lab_ids %}data-i18n="host_answer_done"{% else %}data-i18n="host_answer_btn"{% endif %}>{% if host_lab_id in completed_lab_ids %}Completado{% else %}Validar respuesta{% endif %}</span></button>
     </div>
     {% else %}<p class="text-xs text-gray-500"><a href="/account/login?next={{ request.path }}" style="color:var(--hl-primary)" data-i18n="host_answer_login_link">Inicia sesión</a> <span data-i18n="host_answer_login">para validar y guardar la respuesta.</span></p>{% endif %}

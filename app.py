@@ -1778,8 +1778,8 @@ def forensics_check_answer():
     return jsonify({'correct': correct})
 
 HOST_ANSWER_LABS = {
-    'host_enum': {'answers': ['vsftpd 3.0.5'], 'marker': 'answer:vsftpd-3.0.5'},
-    'database_access': {'answers': ['Adm1n-DB-2026!'], 'marker': 'answer:database-password'},
+    'host_enum': {'answers': ['vsftpd 3.0.5']},
+    'database_access': {'answers': ['Adm1n-DB-2026!']},
 }
 
 
@@ -1807,7 +1807,7 @@ def host_labs_check_answer():
            VALUES (?,?,?,datetime('now'))
            ON CONFLICT(account_username, lab_id)
            DO UPDATE SET validated_flag=excluded.validated_flag, completed_at=datetime('now')''',
-        (app_user, lab_id, config['marker'])
+        (app_user, lab_id, answer)
     )
     _unlock_completion_rewards(db, app_user, get_lab_list())
     db.commit()
