@@ -921,7 +921,7 @@ cd HackLabs
 sudo bash deploy.sh
 ```
 
-El script detecta automáticamente tu red (`eth0`), asigna una **IP aleatoria** al laboratorio dentro del rango `.100–.199` y muestra el resultado:
+El script detecta automáticamente tu red (`eth0`), asigna **IPs aleatorias** dentro del rango `.100–.199` a la aplicación web, al objetivo ActiveMQ de V29 y al DC opcional, y muestra el resultado:
 
 ```
     __  __              __    __           __
@@ -942,6 +942,11 @@ El script detecta automáticamente tu red (`eth0`), asigna una **IP aleatoria** 
   SMB   →  192.168.1.147:445
 
   nmap -sV -p 21,22,80,445 192.168.1.147
+
+  ActiveMQ V29:      192.168.1.151
+  OpenWire → 192.168.1.151:61616
+  Consola → http://192.168.1.151:8161
+  nmap -sV -p 61616,8161 192.168.1.151
 
   ════════════════════════════════════════════════════
 
@@ -965,7 +970,7 @@ Pulsa **Ctrl+C** para detener y eliminar el contenedor automáticamente.
 
 #### Domain Controller vulnerable (Active Directory)
 
-`deploy.sh` levanta **automáticamente** una segunda máquina: un Domain Controller real basado en Samba AD DC (`HACKLABS.LOCAL`) con su propia IP, contra el que se explotan los 15 laboratorios de la categoría **Active Directory**.
+`deploy.sh` levanta **automáticamente** el objetivo ActiveMQ de V29 en una máquina/IP propia y, salvo que uses `HL_SKIP_AD=1`, una segunda máquina adicional: un Domain Controller real basado en Samba AD DC (`HACKLABS.LOCAL`) con su propia IP.
 
 - La primera vez, el DC provisiona el dominio al arrancar (~1 min): crea usuarios, grupos, SPNs, ACLs abusables y las flags de cada lab.
 - `deploy.sh` añade a tu `/etc/hosts` la entrada `dc01.hacklabs.local` (Kerberos exige resolver el FQDN) y la limpia al detener el laboratorio con Ctrl+C.
@@ -985,7 +990,9 @@ nxc smb 127.0.0.1 -u '' -p '' --shares
 
 El lab **V29** usa un contenedor separado con Apache ActiveMQ 5.18.2, vulnerable a
 CVE-2023-46604. `build.sh` levanta automáticamente la aplicación y este objetivo,
-manteniéndolos como servicios separados dentro del mismo proyecto Compose.
+manteniéndolos como servicios separados dentro del mismo proyecto Compose. En
+modo macvlan, `deploy.sh` asigna una IP propia al objetivo y muestra esa IP para
+Nmap/Metasploit.
 
 ```bash
 bash build.sh

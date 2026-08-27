@@ -2003,6 +2003,10 @@ def inject_labs():
     # Detect real host for TARGET_IP replacement
     host_header = request.host          # e.g. "192.168.1.147" or "localhost:5000"
     target_ip   = host_header.split(':')[0]   # just IP/hostname
+    # In the macvlan deployment V29 runs as a sibling container with its own IP.
+    # Bridge/compose deployments leave this unset and use the published host IP.
+    if current_lab_id == 'metasploit_exploitation' and os.environ.get('MSF_TARGET_IP'):
+        target_ip = os.environ['MSF_TARGET_IP']
     target_port = request.host.split(':')[1] if ':' in request.host else ('80' if not request.is_secure else '443')
     if target_port == '80':
         target_base = f'http://{target_ip}'

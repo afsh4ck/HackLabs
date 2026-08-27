@@ -4,6 +4,10 @@ All notable changes to this repository are documented in this file.
 
 ## 2026-08-27
 
+- fix(price_manipulation): El checkout de V28 muestra un estado visual de compra completada y la flag debajo; no deja JSON crudo en el carrito, y los errores se presentan como mensajes visuales.
+- fix(progress): V27, V28 y V29 quedan integrados en la caja de validación, el círculo de progreso y la página `/progress`, con iconos propios y persistencia de sus flags dedicadas.
+- fix(metasploit): V29 elimina la caja redundante de objetivo aislado; `deploy.sh` levanta ActiveMQ 5.18.2 en un contenedor/IP macvlan propia, espera Jetty/ OpenWire y publica los puertos 61616/8161 en su resumen y comando Nmap.
+
 <details>
 <summary><h4>Nuevos labs: Account Takeover, Price Manipulation y Metasploit</h4></summary>
 

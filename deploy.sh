@@ -10,6 +10,8 @@ CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; DIM=$'\033[2m'; NC=$'\033[0m'
 
 CONTAINER_NAME="hacklabs"
 IMAGE_NAME="hacklabs:latest"
+MSF_CONTAINER_NAME="hacklabs-metasploit"
+MSF_IMAGE_NAME="hacklabs-metasploit:latest"
 NET_NAME="hacklabs_net"
 SHIM="macvlan0"
 
@@ -24,6 +26,7 @@ AD_ADMIN_PASSWORD='Adm1nP@ss2024!'
 AD_FQDN="dc01.hacklabs.local"
 DEPLOY_AD=1
 [[ "${HL_SKIP_AD:-0}" == "1" ]] && DEPLOY_AD=0
+DEPLOY_MSF=1
 
 log()  { echo "${GREEN}[+]${NC} $1"; }
 warn() { echo "${YELLOW}[!]${NC} $1"; }
@@ -108,33 +111,46 @@ GATEWAY=$(ip route | awk "/default.*$IFACE/{print \$3; exit}")
 
 log "Red detectada: ${BOLD}$SUBNET${NC} en ${BOLD}$IFACE${NC} (gateway ${BOLD}$GATEWAY${NC})"
 
-# ── Seleccionar IPs libres en rango .100–.199 (web + Domain Controller) ──
+# ── Seleccionar IPs libres en rango .100–.199 (web + ActiveMQ + DC) ──
 CONTAINER_IP=""
 DC_IP=""
+MSF_IP=""
 NEEDED=1
 [[ $DEPLOY_AD -eq 1 ]] && NEEDED=2
+[[ $DEPLOY_MSF -eq 1 ]] && NEEDED=$((NEEDED + 1))
 while read -r OCTET; do
     CANDIDATE="${NET_BASE}.${OCTET}"
     ping -c1 -W1 "$CANDIDATE" &>/dev/null 2>&1 && continue
     if [[ -z "$CONTAINER_IP" ]]; then
         CONTAINER_IP="$CANDIDATE"
-    else
+    elif [[ $DEPLOY_MSF -eq 1 && -z "$MSF_IP" ]]; then
+        MSF_IP="$CANDIDATE"
+    elif [[ $DEPLOY_AD -eq 1 && -z "$DC_IP" ]]; then
         DC_IP="$CANDIDATE"
+        break
+    else
         break
     fi
 done < <(shuf -i 100-199)
 [[ -z "$CONTAINER_IP" ]] && err "No se encontró ninguna IP libre en ${NET_BASE}.100-199."
-if [[ $NEEDED -eq 2 && -z "$DC_IP" ]]; then
+if [[ $DEPLOY_MSF -eq 1 && -z "$MSF_IP" ]]; then
+    warn "No se encontró una IP libre para ActiveMQ — se continúa sin V29."
+    DEPLOY_MSF=0
+fi
+if [[ $DEPLOY_AD -eq 1 && -z "$DC_IP" ]]; then
     warn "Solo se encontró una IP libre — el Domain Controller no se desplegará."
     DEPLOY_AD=0
 fi
 log "IP asignada al laboratorio: ${BOLD}${CONTAINER_IP}${NC}"
+[[ $DEPLOY_MSF -eq 1 ]] && log "IP asignada al objetivo ActiveMQ: ${BOLD}${MSF_IP}${NC}"
 [[ $DEPLOY_AD -eq 1 ]] && log "IP asignada al Domain Controller: ${BOLD}${DC_IP}${NC}"
 
 # ── Limpiar instancias previas ──
 warn "Limpiando instancias previas si existen..."
 docker stop  "$DC_CONTAINER_NAME" &>/dev/null || true
 docker rm    "$DC_CONTAINER_NAME" &>/dev/null || true
+docker stop  "$MSF_CONTAINER_NAME" &>/dev/null || true
+docker rm    "$MSF_CONTAINER_NAME" &>/dev/null || true
 docker stop  "$CONTAINER_NAME" &>/dev/null || true
 docker rm    "$CONTAINER_NAME" &>/dev/null || true
 docker network rm "$NET_NAME"  &>/dev/null || true
@@ -146,6 +162,8 @@ cleanup() {
     warn "Deteniendo el laboratorio..."
     docker stop  "$DC_CONTAINER_NAME" &>/dev/null || true
     docker rm    "$DC_CONTAINER_NAME" &>/dev/null || true
+    docker stop  "$MSF_CONTAINER_NAME" &>/dev/null || true
+    docker rm    "$MSF_CONTAINER_NAME" &>/dev/null || true
     docker stop  "$CONTAINER_NAME" &>/dev/null || true
     docker rm    "$CONTAINER_NAME" &>/dev/null || true
     docker network rm "$NET_NAME"  &>/dev/null || true
@@ -188,6 +206,7 @@ ip link add "$SHIM" link "$IFACE" type macvlan mode bridge 2>/dev/null || true
 ip addr add "${NET_BASE}.200/32" dev "$SHIM"               2>/dev/null || true
 ip link set "$SHIM" up
 ip route add "${CONTAINER_IP}/32" dev "$SHIM"              2>/dev/null || true
+[[ $DEPLOY_MSF -eq 1 ]] && ip route add "${MSF_IP}/32" dev "$SHIM" 2>/dev/null || true
 [[ $DEPLOY_AD -eq 1 ]] && ip route add "${DC_IP}/32" dev "$SHIM" 2>/dev/null || true
 
 # ── Iniciar contenedor ──
@@ -198,6 +217,7 @@ docker run -d \
     --ip "$CONTAINER_IP" \
     --hostname hacklabs \
     --cap-add NET_ADMIN \
+    -e MSF_TARGET_IP="${MSF_IP}" \
     -e AD_DC_IP="${DC_IP}" \
     -e AD_REALM="${AD_REALM}" \
     -e AD_DOMAIN="${AD_DOMAIN}" \
@@ -207,6 +227,23 @@ docker run -d \
     -v hacklabs_logs:/app/logs \
     "$IMAGE_NAME" > /dev/null \
     || err "No se pudo iniciar el contenedor."
+
+# ── Iniciar objetivo ActiveMQ vulnerable (V29) ──
+if [[ $DEPLOY_MSF -eq 1 ]]; then
+    log "Construyendo imagen del objetivo ActiveMQ 5.18.2..."
+    if ! docker build -t "$MSF_IMAGE_NAME" "$SCRIPT_DIR/ad_hoc/metasploit" --quiet >/dev/null; then
+        warn "No se pudo construir ActiveMQ — se continúa sin V29."
+        DEPLOY_MSF=0
+    elif ! docker run -d \
+        --name "$MSF_CONTAINER_NAME" \
+        --network "$NET_NAME" \
+        --ip "$MSF_IP" \
+        --hostname metasploit-target \
+        "$MSF_IMAGE_NAME" > /dev/null; then
+        warn "No se pudo iniciar ActiveMQ — se continúa sin V29."
+        DEPLOY_MSF=0
+    fi
+fi
 
 # ── Iniciar el Domain Controller vulnerable ──
 if [[ $DEPLOY_AD -eq 1 ]]; then
@@ -260,6 +297,15 @@ for _ in $(seq 1 30); do
     sleep 1
 done
 echo ""
+if [[ $DEPLOY_MSF -eq 1 ]]; then
+    echo -n "${GREEN}[+]${NC} Esperando ActiveMQ OpenWire/Jetty"
+    for _ in $(seq 1 30); do
+        if curl -sf --connect-timeout 1 "http://${MSF_IP}:8161/" &>/dev/null; then break; fi
+        echo -n "."
+        sleep 1
+    done
+    echo ""
+fi
 
 # ── Panel de información ──
 echo ""
@@ -276,6 +322,13 @@ echo "  ${DIM}  SMB   →  //${CONTAINER_IP}/  (puerto 445)${NC}"
 echo ""
 echo "  ${DIM}  nmap -sV -p 21,22,80,445 ${CONTAINER_IP}${NC}"
 echo ""
+if [[ $DEPLOY_MSF -eq 1 ]]; then
+    echo "  ${CYAN}${BOLD}  ActiveMQ V29:      ${MSF_IP}${NC}"
+    echo "  ${DIM}  OpenWire → ${MSF_IP}:61616${NC}"
+    echo "  ${DIM}  Consola → http://${MSF_IP}:8161${NC}"
+    echo "  ${DIM}  nmap -sV -p 61616,8161 ${MSF_IP}${NC}"
+    echo ""
+fi
 if [[ $DEPLOY_AD -eq 1 ]]; then
     echo "  ${CYAN}${BOLD}  Domain Controller:  ${DC_IP}   (${AD_FQDN})${NC}"
     echo ""
@@ -340,6 +393,11 @@ while true; do
     if ! docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" &>/dev/null 2>&1; then
         echo ""
         warn "El contenedor se ha detenido inesperadamente."
+        break
+    fi
+    if [[ $DEPLOY_MSF -eq 1 ]] && ! docker inspect -f '{{.State.Running}}' "$MSF_CONTAINER_NAME" &>/dev/null 2>&1; then
+        echo ""
+        warn "El objetivo ActiveMQ se ha detenido inesperadamente."
         break
     fi
     sleep 5
