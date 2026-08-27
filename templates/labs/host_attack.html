@@ -22,7 +22,7 @@
     </div>
     <div class="mt-5 p-4 rounded-lg" style="background:#09090f;border:1px solid rgba(206,255,0,.18)">
       <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">Kali Linux</div>
-      <pre class="text-xs whitespace-pre-wrap text-gray-300"><code>{{ data[2] }}</code></pre>
+      <pre class="text-xs whitespace-pre-wrap text-gray-300"><code>{{ data[2] | replace('{{ target_ip }}', target_ip) }}</code></pre>
     </div>
   </div>
   <div id="resolution-data" class="hidden">
