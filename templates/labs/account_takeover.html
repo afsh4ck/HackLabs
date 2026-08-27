@@ -6,7 +6,7 @@
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, msg in messages %}
-      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono">{{ msg }}</div>
+      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono" data-i18n="{{ msg }}">{{ msg }}</div>
     {% endfor %}
   {% endwith %}
 
@@ -26,44 +26,44 @@
 
   <div class="grid md:grid-cols-2 gap-4 mb-4">
     <div class="hl-card">
-      <h2 class="font-semibold text-sm mb-3">Northstar Identity Portal</h2>
+      <h2 class="font-semibold text-sm mb-3" data-i18n="ato_portal_title">Portal de identidad de HackLabs</h2>
       {% if current %}
         <div class="text-xs space-y-2 mb-4">
-          <div><span class="text-gray-500">Signed in:</span> <strong>{{ current.username }}</strong></div>
-          <div><span class="text-gray-500">Account ID:</span> <code>{{ current.id }}</code></div>
-          <div><span class="text-gray-500">Recovery email:</span> <code>{{ current.recovery_email }}</code></div>
+          <div><span class="text-gray-500" data-i18n="ato_signed_in">Sesión iniciada:</span> <strong>{{ current.username }}</strong></div>
+          <div><span class="text-gray-500" data-i18n="ato_account_id">ID de cuenta:</span> <code>{{ current.id }}</code></div>
+          <div><span class="text-gray-500" data-i18n="ato_recovery_email">Correo de recuperación:</span> <code>{{ current.recovery_email }}</code></div>
         </div>
         <form method="POST" action="/account-takeover/profile/recovery-email" class="space-y-2">
           <input type="hidden" name="account_id" value="{{ current.id }}">
-          <label class="block text-xs text-gray-500">Recovery email</label>
+          <label class="block text-xs text-gray-500" data-i18n="ato_recovery_email">Correo de recuperación</label>
           <input class="hl-input" name="recovery_email" value="{{ current.recovery_email }}">
-          <button class="btn-primary text-xs" type="submit">Update profile</button>
+          <button class="btn-primary text-xs" type="submit" data-i18n="ato_update_profile">Actualizar perfil</button>
         </form>
         <form method="POST" action="/account-takeover/logout" class="mt-3">
-          <button class="text-xs text-gray-400 hover:text-white" type="submit">Sign out</button>
+          <button class="text-xs text-gray-400 hover:text-white" type="submit" data-i18n="ato_sign_out">Cerrar sesión</button>
         </form>
       {% else %}
         <form method="POST" action="/account-takeover/login" class="space-y-3">
-          <input class="hl-input" name="username" placeholder="Username" autocomplete="off">
-          <input class="hl-input" name="password" type="password" placeholder="Password" autocomplete="off">
-          <button class="btn-primary" type="submit">Sign in</button>
+          <input class="hl-input" name="username" placeholder="Usuario" data-i18n-placeholder="ato_ph_username" autocomplete="off">
+          <input class="hl-input" name="password" type="password" placeholder="Contraseña" data-i18n-placeholder="ato_ph_password" autocomplete="off">
+          <button class="btn-primary" type="submit" data-i18n="ato_sign_in">Iniciar sesión</button>
         </form>
         <div class="mt-4 p-3 rounded text-xs font-mono" style="background:rgba(255,255,255,.04)">
-          <div class="text-gray-500 mb-1">External auditor access</div>
+          <div class="text-gray-500 mb-1" data-i18n="ato_auditor_access">Acceso de auditor externo</div>
           <div>auditor / Audit2026!</div>
         </div>
       {% endif %}
     </div>
 
     <div class="hl-card">
-      <h2 class="font-semibold text-sm mb-3">Password recovery</h2>
-      <p class="text-xs text-gray-500 mb-3">Reset links are delivered to the recovery address stored on the target account.</p>
+      <h2 class="font-semibold text-sm mb-3" data-i18n="ato_password_recovery">Recuperación de contraseña</h2>
+      <p class="text-xs text-gray-500 mb-3" data-i18n="ato_reset_delivery">Los enlaces de reset se envían al correo de recuperación almacenado en la cuenta objetivo.</p>
       <form method="POST" action="/account-takeover/reset/request" class="space-y-3">
-        <input class="hl-input" name="username" placeholder="Username (e.g. administrator)">
-        <button class="btn-primary" type="submit">Send reset link</button>
+        <input class="hl-input" name="username" placeholder="Usuario (p. ej. administrator)" data-i18n-placeholder="ato_ph_target_username">
+        <button class="btn-primary" type="submit" data-i18n="ato_send_reset">Enviar enlace de reset</button>
       </form>
       <div class="mt-4 text-xs">
-        <div class="text-gray-500 mb-1">Employee directory API</div>
+        <div class="text-gray-500 mb-1" data-i18n="ato_directory_api">API del directorio de empleados</div>
         <a class="font-mono hover:underline" style="color:var(--hl-primary)" href="/account-takeover/api/directory?q=administrator" target="_blank">GET /api/directory?q=administrator</a>
       </div>
     </div>
@@ -71,26 +71,26 @@
 
   <div class="hl-card mb-4">
     <div class="flex items-center justify-between mb-3">
-      <h2 class="font-semibold text-sm">Recovery mailbox</h2>
-      <span class="text-xs text-gray-500">Visible only to the signed-in identity</span>
+      <h2 class="font-semibold text-sm" data-i18n="ato_mailbox">Buzón de recuperación</h2>
+      <span class="text-xs text-gray-500" data-i18n="ato_mailbox_visibility">Visible únicamente para la identidad autenticada</span>
     </div>
     {% if not current %}
-      <p class="text-xs text-gray-500 italic">Sign in to view your recovery mailbox.</p>
+      <p class="text-xs text-gray-500 italic" data-i18n="ato_mailbox_login_hint">Inicia sesión para ver tu buzón de recuperación.</p>
     {% elif mailbox %}
       {% for message in mailbox %}
       <div class="rounded p-3 mb-2 text-xs" style="border:1px solid rgba(255,255,255,.1)">
-        <div><span class="text-gray-500">To:</span> {{ message.to }}</div>
-        <div><span class="text-gray-500">Subject:</span> {{ message.subject }}</div>
-        <a class="inline-block mt-2 font-mono hover:underline" style="color:var(--hl-primary)" href="{{ message.link }}">Open reset link</a>
+        <div><span class="text-gray-500" data-i18n="ato_to">Para:</span> {{ message.to }}</div>
+        <div><span class="text-gray-500" data-i18n="ato_subject">Asunto:</span> <span data-i18n="ato_reset_subject">Restablecimiento de contraseña</span></div>
+        <a class="inline-block mt-2 font-mono hover:underline" style="color:var(--hl-primary)" href="{{ message.link }}" data-i18n="ato_open_reset">Abrir enlace de reset</a>
       </div>
       {% endfor %}
     {% else %}
-      <p class="text-xs text-gray-500 italic">No messages for {{ current.recovery_email }}.</p>
+      <p class="text-xs text-gray-500 italic"><span data-i18n="ato_no_messages">No hay mensajes para</span> {{ current.recovery_email }}.</p>
     {% endif %}
   </div>
 
   <form method="POST" action="/account-takeover/reset-lab">
-    <button type="submit" class="text-xs text-gray-500 hover:text-red-400">Reset lab state</button>
+    <button type="submit" class="text-xs text-gray-500 hover:text-red-400" data-i18n="ato_reset_lab">Reiniciar estado del lab</button>
   </form>
 </div>
 

@@ -5101,12 +5101,12 @@ def account_takeover_login():
     user = next((u for u in state['users'].values()
                  if u['username'] == username and u['password'] == password), None)
     if not user:
-        flash('Credenciales incorrectas.', 'error')
+        flash('ato_msg_bad_credentials', 'error')
         return redirect('/account-takeover')
     session['ato_user_id'] = user['id']
     if user['id'] == 1001 and state['admin_compromised']:
         session['ato_flag'] = 'HL{4cc0un7_74k30v3r_r3c0v3ry_1d0r}'
-    flash(f'Sesion iniciada como {user["username"]}.', 'success')
+    flash('ato_msg_login_success', 'success')
     return redirect('/account-takeover')
 
 
@@ -5131,7 +5131,7 @@ def account_takeover_change_recovery_email():
     # INTENTIONALLY VULNERABLE: authentication exists, object ownership does not.
     # The service updates whichever account_id the client submits.
     state['users'][account_id]['recovery_email'] = new_email
-    flash('Correo de recuperacion actualizado.', 'success')
+    flash('ato_msg_email_updated', 'success')
     return redirect('/account-takeover')
 
 
@@ -5149,7 +5149,7 @@ def account_takeover_request_reset():
             'subject': f'Password reset for {user["username"]}',
             'link': f'/account-takeover/reset?token={token}',
         })
-    flash('Si la cuenta existe, se ha enviado un enlace a su correo de recuperacion.', 'success')
+    flash('ato_msg_reset_sent', 'success')
     return redirect('/account-takeover')
 
 
@@ -5174,7 +5174,7 @@ def account_takeover_confirm_reset():
                                lab=next(l for l in get_lab_list() if l['id'] == 'account_takeover'),
                                token=token, valid=False), 400
     if len(new_password) < 8:
-        flash('La nueva contrasena debe tener al menos 8 caracteres.', 'error')
+        flash('ato_msg_password_length', 'error')
         return redirect(f'/account-takeover/reset?token={_urlquote(token)}')
     user_id = token_data['user_id']
     state['users'][user_id]['password'] = new_password
@@ -5182,7 +5182,7 @@ def account_takeover_confirm_reset():
     if user_id == 1001:
         state['admin_compromised'] = True
     session.pop('ato_user_id', None)
-    flash('Contrasena actualizada. Inicia sesion con la cuenta recuperada.', 'success')
+    flash('ato_msg_password_updated', 'success')
     return redirect('/account-takeover')
 
 
@@ -5194,7 +5194,7 @@ def account_takeover_reset_lab():
     session.pop('ato_sid', None)
     session.pop('ato_user_id', None)
     session.pop('ato_flag', None)
-    flash('Estado del laboratorio reiniciado.', 'success')
+    flash('ato_msg_lab_reset', 'success')
     return redirect('/account-takeover')
 
 
@@ -5204,7 +5204,7 @@ def account_takeover_reset_lab():
 
 _price_product = {
     'id': 'hsm-enterprise-1',
-    'name': 'Northstar Enterprise HSM',
+    'name': 'HackLabs Enterprise HSM',
     'description': 'Hardware security module with enterprise support',
     'price_cents': 249900,
 }

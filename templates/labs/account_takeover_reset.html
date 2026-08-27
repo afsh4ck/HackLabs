@@ -1,20 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Password Reset – Northstar Identity{% endblock %}
+{% block title %}Password Reset – HackLabs Identity{% endblock %}
 {% block content %}
 <div class="p-6 max-w-xl mx-auto">
   {% include '_lab_header.html' %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, msg in messages %}
+      <div class="alert-{{ category if category in ['success','warning','error'] else 'success' }} mb-4 text-sm font-mono" data-i18n="{{ msg }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
   <div class="hl-card">
-    <h2 class="font-semibold mb-3">Set a new password</h2>
+    <h2 class="font-semibold mb-3" data-i18n="ato_set_new_password">Establecer una contraseña nueva</h2>
     {% if valid %}
     <form method="POST" action="/account-takeover/reset/confirm" class="space-y-3">
       <input type="hidden" name="token" value="{{ token }}">
-      <input class="hl-input" type="password" name="new_password" minlength="8" placeholder="New password" required>
-      <button class="btn-primary" type="submit">Update password</button>
+      <input class="hl-input" type="password" name="new_password" minlength="8" placeholder="Contraseña nueva" data-i18n-placeholder="ato_ph_new_password" required>
+      <button class="btn-primary" type="submit" data-i18n="ato_update_password">Actualizar contraseña</button>
     </form>
     {% else %}
-    <div class="alert-error text-sm">This reset token is invalid, expired, or already used.</div>
+    <div class="alert-error text-sm" data-i18n="ato_invalid_token">Este token de reset no es válido, ha expirado o ya fue utilizado.</div>
     {% endif %}
-    <a href="/account-takeover" class="inline-block mt-4 text-xs hover:underline" style="color:var(--hl-primary)">Return to identity portal</a>
+    <a href="/account-takeover" class="inline-block mt-4 text-xs hover:underline" style="color:var(--hl-primary)" data-i18n="ato_return_portal">Volver al portal de identidad</a>
   </div>
 </div>
 {% endblock %}

@@ -12,6 +12,7 @@ All notable changes to this repository are documented in this file.
 - feat(metasploit): Nuevo lab V29 contra Apache ActiveMQ 5.18.2 vulnerable a CVE-2023-46604, explotable con el modulo oficial de Metasploit y el payload Linux x64 Meterpreter.
 - feat(build): Nuevo `build.sh` que construye, levanta, inspecciona y detiene conjuntamente HackLabs y el objetivo aislado de Metasploit.
 - docs: Guias bilingues ES/EN, mitigaciones, comandos de explotacion y despliegue actualizados. Total: 76 laboratorios.
+- fix(i18n): Toda la interfaz visible de V27, V28 y V29 —incluidos formularios, placeholders, buzones, estados vacios, mensajes Flask y la pantalla secundaria de reset— cambia ahora correctamente entre español e ingles.
 
 </details>
 
