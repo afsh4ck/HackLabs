@@ -5268,6 +5268,7 @@ def price_manipulation_cart_api():
     if not request.is_json:
         return redirect('/price-manipulation', code=303)
     return jsonify({'status': 'added', 'item': cart[-1],
+                    'item_html': render_template('labs/_price_cart_line.html', item=cart[-1]),
                     'cart_total': f'{_price_cart_total(cart) / 100:.2f}'}), 201
 
 

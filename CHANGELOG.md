@@ -18,6 +18,7 @@ All notable changes to this repository are documented in this file.
 - feat(price_manipulation): Cada linea del carrito de V28 tiene un identificador estable y puede eliminarse individualmente desde la interfaz o mediante `DELETE /price-manipulation/api/cart/items/<line_id>`.
 - fix(price_manipulation): El flujo interceptado con Burp ya no recarga la pagina ni vuelve a solicitar Tailwind desde el CDN: alta, total y borrado se actualizan directamente en el DOM. El formulario conserva HTTP 303 como fallback sin JavaScript y los clientes JSON mantienen HTTP 201.
 - fix(price_manipulation): Las respuestas JSON internas de alta y borrado ya no se imprimen dentro del carrito cuando la operacion tiene exito; el JSON visible se reserva para errores y para el checkout que entrega la flag.
+- fix(price_manipulation): La API devuelve tambien la linea del carrito renderizada por el servidor y el frontend la inserta inmediatamente tras el Forward de Burp, evitando depender de una reconstruccion manual del producto o de recargar la pagina. Alta, borrado y checkout mantienen ahora el DOM sincronizado con el carrito server-side.
 
 </details>
 

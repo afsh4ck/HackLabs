@@ -1,0 +1,5 @@
+<div class="price-cart-line flex justify-between items-center gap-3 text-xs font-mono py-2 border-b" data-line-id="{{ item.line_id }}" style="border-color:rgba(255,255,255,.08)">
+  <span class="flex-1">{{ item.name }} × {{ item.quantity }}</span>
+  <span>${{ '%.2f'|format(item.unit_price_cents * item.quantity / 100) }}</span>
+  <button type="button" class="price-remove-item text-red-400 hover:text-red-300" data-line-id="{{ item.line_id }}" data-i18n="price_remove_item">Eliminar</button>
+</div>

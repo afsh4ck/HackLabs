@@ -38,11 +38,7 @@
     </div>
     <div id="price-cart-lines">
       {% for item in cart %}
-      <div class="price-cart-line flex justify-between items-center gap-3 text-xs font-mono py-2 border-b" data-line-id="{{ item.line_id }}" style="border-color:rgba(255,255,255,.08)">
-        <span class="flex-1">{{ item.name }} × {{ item.quantity }}</span>
-        <span>${{ '%.2f'|format(item.unit_price_cents * item.quantity / 100) }}</span>
-        <button type="button" class="price-remove-item text-red-400 hover:text-red-300" data-line-id="{{ item.line_id }}" data-i18n="price_remove_item">Eliminar</button>
-      </div>
+      {% include 'labs/_price_cart_line.html' %}
       {% endfor %}
     </div>
     <p id="price-empty-cart" class="text-xs text-gray-500 italic{% if cart %} hidden{% endif %}" data-i18n="price_empty_cart">El carrito está vacío.</p>
@@ -64,29 +60,10 @@ function priceSetCartState(total) {
   document.getElementById('price-cart-total').textContent = `$${total}`;
 }
 
-function priceAppendCartLine(item, total) {
-  const line = document.createElement('div');
-  line.className = 'price-cart-line flex justify-between items-center gap-3 text-xs font-mono py-2 border-b';
-  line.dataset.lineId = item.line_id;
-  line.style.borderColor = 'rgba(255,255,255,.08)';
-
-  const name = document.createElement('span');
-  name.className = 'flex-1';
-  name.textContent = `${item.name} × ${item.quantity}`;
-
-  const price = document.createElement('span');
-  price.textContent = `$${(item.unit_price_cents * item.quantity / 100).toFixed(2)}`;
-
-  const remove = document.createElement('button');
-  remove.type = 'button';
-  remove.className = 'price-remove-item text-red-400 hover:text-red-300';
-  remove.dataset.lineId = item.line_id;
-  remove.dataset.i18n = 'price_remove_item';
-  remove.textContent = localStorage.getItem('hl_lang') === 'en' ? 'Remove' : 'Eliminar';
-
-  line.append(name, price, remove);
-  document.getElementById('price-cart-lines').appendChild(line);
+function priceAppendCartLine(itemHtml, total) {
+  document.getElementById('price-cart-lines').insertAdjacentHTML('beforeend', itemHtml);
   priceSetCartState(total);
+  if (typeof applyTranslations === 'function') applyTranslations();
 }
 
 document.getElementById('price-add-form')?.addEventListener('submit', async (event) => {
@@ -103,7 +80,7 @@ document.getElementById('price-add-form')?.addEventListener('submit', async (eve
   const result = document.getElementById('price-api-result');
   if (response.ok) {
     result.textContent = '';
-    priceAppendCartLine(data.item, data.cart_total);
+    priceAppendCartLine(data.item_html, data.cart_total);
   } else {
     result.textContent = JSON.stringify(data, null, 2);
   }
@@ -113,6 +90,10 @@ document.getElementById('price-checkout')?.addEventListener('click', async () =>
   const response = await fetch('/price-manipulation/api/checkout', {method: 'POST'});
   const data = await response.json();
   document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
+  if (response.ok) {
+    document.getElementById('price-cart-lines').replaceChildren();
+    priceSetCartState(data.charged || '0.00');
+  }
 });
 document.getElementById('price-cart-lines').addEventListener('click', async (event) => {
   const button = event.target.closest('.price-remove-item');
