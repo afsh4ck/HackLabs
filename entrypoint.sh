@@ -217,8 +217,11 @@ HOSTENV
 chown root:admin /opt/hacklabs/app/.env
 chmod 640 /opt/hacklabs/app/.env
 
-# H07 — el vector SUID/capabilities permite llegar a root y leer este marcador.
-printf 'HL{5u1d_c4p5_70_r007_3sc4l4710n}\n' > /root/host-labs/h07.txt
+# H07 — admin ya tiene sudo NOPASSWD:ALL (ver bloque de vectores de privesc
+# más arriba): el propio "sudo -l" revela el camino a root sin necesidad de
+# ningún binario SUID/capability adicional. Ese marcador solo es legible
+# como root, así que confirma que la ruta de abuso real es sudo, no SUID.
+printf 'HL{5ud0_n0p455wd_4ll_m15c0nf19}\n' > /root/host-labs/h07.txt
 chmod 600 /root/host-labs/h07.txt
 
 # H08 — tarea root modificable: la flag fuente no es legible sin explotar cron.

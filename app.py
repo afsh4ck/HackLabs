@@ -845,7 +845,7 @@ def get_lab_flag_map():
         # H01 y H13 se completan mediante respuesta guiada, no mediante la caja global.
         'host_enum': ['vsftpd 3.0.5'],
         'credential_hunting': ['HL{cr3d5_1n_c0nf19_4nd_h1570ry}'],
-        'sudo_suid': ['HL{5u1d_c4p5_70_r007_3sc4l4710n}'],
+        'sudo_suid': ['HL{5ud0_n0p455wd_4ll_m15c0nf19}'],
         'cron_persistence': ['HL{cr0n_j08_p3r51573nc3_4ch13v3d}'],
         'ssh_lateral': ['HL{55h_k3y_l473r41_m0v3m3n7}'],
         'network_pivoting': ['HL{p1v07_70_1n73rn41_n37w0rk}'],
@@ -1899,7 +1899,7 @@ def get_lab_list():
         {'id': 'metasploit_exploitation', 'title': 'H04 – Metasploit: ActiveMQ RCE to Meterpreter', 'category': 'Host Attacks', 'risk': 'critical'},
         {'id': 'credential_hunting', 'title': 'H05 – Linux Credential Hunting',                   'category': 'Host Attacks', 'risk': 'high'},
         {'id': 'privesc',            'title': 'H06 – Privilege Escalation (SSH)',                  'category': 'Host Attacks', 'risk': 'critical'},
-        {'id': 'sudo_suid',          'title': 'H07 – Sudo, SUID & Capabilities Abuse',             'category': 'Host Attacks', 'risk': 'critical'},
+        {'id': 'sudo_suid',          'title': 'H07 – Sudo Misconfiguration Abuse',                 'category': 'Host Attacks', 'risk': 'critical'},
         {'id': 'cron_persistence',   'title': 'H08 – Cron Persistence',                           'category': 'Host Attacks', 'risk': 'high'},
         {'id': 'ssh_lateral',        'title': 'H09 – SSH Keys & Lateral Movement',                'category': 'Host Attacks', 'risk': 'high'},
         {'id': 'network_pivoting',   'title': 'H10 – Network Pivoting & Tunneling',               'category': 'Host Attacks', 'risk': 'high'},

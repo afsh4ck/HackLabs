@@ -14,6 +14,8 @@ All notable changes to this repository are documented in this file.
 - fix(host-attacks): H07 y H13 (`sudo_suid`/`database_access`) ya no comparten icono con `ad_gpp_passwords`/`sqli`; los 13 iconos de Host Attacks son distintos entre sí en los cuatro mapas.
 - fix(host-attacks): H01/H13 (preguntas de respuesta) usan ahora `data-i18n`/`t()` igual que el resto de la app en vez de comprobar `document.documentElement.lang` (que nunca cambia), y "Inicio rápido" ya no queda fijo en inglés al cambiar de idioma.
 - fix(host-attacks): `/host-labs/check-answer` guarda ahora la respuesta real enviada por el usuario (no un marcador interno), y el input de H01/H13 la muestra precargada y bloqueada tras validarse, igual que el input de la caja «Validar Flag».
+- feat(host-attacks): Guías de H01, H05, H07–H10 y H13 reescritas con comandos completos de explotación en bloques `<pre>` copiables (antes eran una lista de pasos con fragmentos sueltos de código).
+- fix(host-attacks): H07 se reenfoca de "SUID/capabilities" a "Sudo Misconfiguration Abuse" — el punto de entrada documentado (`admin`, obtenido en H02/H03) ya tenía `sudo NOPASSWD: ALL` desde H06, lo que hacía que `sudo -l` revelara un atajo directo a root antes de intentar ningún vector SUID. Título, icono, flag (`HL{5ud0_n0p455wd_4ll_m15c0nf19}`) y comentario en `entrypoint.sh` actualizados para reflejar el vector real.
 
 ## 2026-08-27
 

