@@ -36,19 +36,20 @@
       <h2 class="font-semibold text-sm" data-i18n="price_server_cart">Carrito del servidor</h2>
       <span class="text-xs font-mono"><span data-i18n="price_balance">Saldo:</span> $5.00</span>
     </div>
-    {% if cart %}
+    <div id="price-cart-lines">
       {% for item in cart %}
-      <div class="flex justify-between items-center gap-3 text-xs font-mono py-2 border-b" style="border-color:rgba(255,255,255,.08)">
+      <div class="price-cart-line flex justify-between items-center gap-3 text-xs font-mono py-2 border-b" data-line-id="{{ item.line_id }}" style="border-color:rgba(255,255,255,.08)">
         <span class="flex-1">{{ item.name }} × {{ item.quantity }}</span>
         <span>${{ '%.2f'|format(item.unit_price_cents * item.quantity / 100) }}</span>
         <button type="button" class="price-remove-item text-red-400 hover:text-red-300" data-line-id="{{ item.line_id }}" data-i18n="price_remove_item">Eliminar</button>
       </div>
       {% endfor %}
-      <div class="flex justify-between font-semibold mt-3"><span>Total</span><span>${{ '%.2f'|format(total_cents / 100) }}</span></div>
+    </div>
+    <p id="price-empty-cart" class="text-xs text-gray-500 italic{% if cart %} hidden{% endif %}" data-i18n="price_empty_cart">El carrito está vacío.</p>
+    <div id="price-cart-summary"{% if not cart %} class="hidden"{% endif %}>
+      <div class="flex justify-between font-semibold mt-3"><span>Total</span><span id="price-cart-total">${{ '%.2f'|format(total_cents / 100) }}</span></div>
       <button id="price-checkout" class="btn-primary mt-4" type="button" data-i18n="price_checkout">Finalizar compra</button>
-    {% else %}
-      <p class="text-xs text-gray-500 italic" data-i18n="price_empty_cart">El carrito está vacío.</p>
-    {% endif %}
+    </div>
     <pre id="price-api-result" class="mt-3 text-xs font-mono whitespace-pre-wrap"></pre>
   </div>
 
@@ -56,18 +57,69 @@
 </div>
 
 <script>
+function priceSetCartState(total) {
+  const hasItems = document.querySelectorAll('.price-cart-line').length > 0;
+  document.getElementById('price-empty-cart').classList.toggle('hidden', hasItems);
+  document.getElementById('price-cart-summary').classList.toggle('hidden', !hasItems);
+  document.getElementById('price-cart-total').textContent = `$${total}`;
+}
+
+function priceAppendCartLine(item, total) {
+  const line = document.createElement('div');
+  line.className = 'price-cart-line flex justify-between items-center gap-3 text-xs font-mono py-2 border-b';
+  line.dataset.lineId = item.line_id;
+  line.style.borderColor = 'rgba(255,255,255,.08)';
+
+  const name = document.createElement('span');
+  name.className = 'flex-1';
+  name.textContent = `${item.name} × ${item.quantity}`;
+
+  const price = document.createElement('span');
+  price.textContent = `$${(item.unit_price_cents * item.quantity / 100).toFixed(2)}`;
+
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.className = 'price-remove-item text-red-400 hover:text-red-300';
+  remove.dataset.lineId = item.line_id;
+  remove.dataset.i18n = 'price_remove_item';
+  remove.textContent = localStorage.getItem('hl_lang') === 'en' ? 'Remove' : 'Eliminar';
+
+  line.append(name, price, remove);
+  document.getElementById('price-cart-lines').appendChild(line);
+  priceSetCartState(total);
+}
+
+document.getElementById('price-add-form')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  body.quantity = Number(body.quantity);
+  const response = await fetch(form.action, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
+  if (response.ok) priceAppendCartLine(data.item, data.cart_total);
+});
+
 document.getElementById('price-checkout')?.addEventListener('click', async () => {
   const response = await fetch('/price-manipulation/api/checkout', {method: 'POST'});
   const data = await response.json();
   document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
 });
-document.querySelectorAll('.price-remove-item').forEach((button) => {
-  button.addEventListener('click', async () => {
+document.getElementById('price-cart-lines').addEventListener('click', async (event) => {
+  const button = event.target.closest('.price-remove-item');
+  if (button) {
     const response = await fetch(`/price-manipulation/api/cart/items/${encodeURIComponent(button.dataset.lineId)}`, {method: 'DELETE'});
     const data = await response.json();
     document.getElementById('price-api-result').textContent = JSON.stringify(data, null, 2);
-    if (response.ok) location.reload();
-  });
+    if (response.ok) {
+      button.closest('.price-cart-line').remove();
+      priceSetCartState(data.cart_total);
+    }
+  }
 });
 </script>
 
