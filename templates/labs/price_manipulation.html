@@ -83,10 +83,10 @@ document.getElementById('price-checkout')?.addEventListener('click', async () =>
     <pre>curl -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie \
   -H 'Content-Type: application/json' \
   -d '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' \
-  http://127.0.0.1:5000/price-manipulation/api/cart/items
+  {{ target_base }}/price-manipulation/api/cart/items
 
 curl -b /tmp/hl-price.cookie -X POST \
-  http://127.0.0.1:5000/price-manipulation/api/checkout</pre>
+  {{ target_base }}/price-manipulation/api/checkout</pre>
     <h3>Causa raíz</h3><p>El backend persiste el precio enviado por el cliente. El checkout recalcula desde un carrito del servidor, pero ese carrito ya contiene datos manipulados; «server-side» no equivale a «confiable».</p>
     <h3>Mitigación</h3><pre># Aceptar solo product_id y quantity
 unit_price = catalog.get(product_id).price
@@ -103,10 +103,10 @@ unit_price = catalog.get(product_id).price
     <pre>curl -c /tmp/hl-price.cookie -b /tmp/hl-price.cookie \
   -H 'Content-Type: application/json' \
   -d '{"product_id":"hsm-enterprise-1","quantity":1,"unit_price":"0.00"}' \
-  http://127.0.0.1:5000/price-manipulation/api/cart/items
+  {{ target_base }}/price-manipulation/api/cart/items
 
 curl -b /tmp/hl-price.cookie -X POST \
-  http://127.0.0.1:5000/price-manipulation/api/checkout</pre>
+  {{ target_base }}/price-manipulation/api/checkout</pre>
     <h3>Root cause</h3><p>The backend persists a client-supplied price. Checkout recomputes from a server-side cart, but the cart already contains tainted data; server-side does not automatically mean trusted.</p>
     <h3>Mitigation</h3><pre># Accept product_id and quantity only
 unit_price = catalog.get(product_id).price

@@ -13,6 +13,7 @@ All notable changes to this repository are documented in this file.
 - feat(build): Nuevo `build.sh` que construye, levanta, inspecciona y detiene conjuntamente HackLabs y el objetivo aislado de Metasploit.
 - docs: Guias bilingues ES/EN, mitigaciones, comandos de explotacion y despliegue actualizados. Total: 76 laboratorios.
 - fix(i18n): Toda la interfaz visible de V27, V28 y V29 —incluidos formularios, placeholders, buzones, estados vacios, mensajes Flask y la pantalla secundaria de reset— cambia ahora correctamente entre español e ingles.
+- fix(guides): Los comandos de V27-V29 usan ahora `target_base`, `target_ip` y `client_ip` inyectados desde la instancia real; se eliminan `127.0.0.1:5000` y los marcadores manuales que hacian fallar curl/Metasploit desde Kali.
 
 </details>
 

