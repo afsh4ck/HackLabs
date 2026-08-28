@@ -6,8 +6,11 @@
 
   <div class="hl-card mb-4">
     <div class="lang-content" data-lang="es">
-      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
-        Este lab demuestra secuestro de sesión por cookies predecibles, tokens sin firma o session fixation.
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        Esta app "target" identifica tu sesión con una única cookie, <code>hl_hijack_sid</code>. Hay dos formas de conseguir un valor para ella: iniciando sesión de verdad (la app te lo asigna) o escribiéndolo tú mismo a mano — como haría un atacante que ha adivinado, forjado o interceptado la sesión de otra persona sin conocer su contraseña.
+      </p>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        <strong>Objetivo:</strong> consigue que la caja "Current Session" (abajo del todo) muestre al usuario <code>admin</code> como identidad activa, sin escribir nunca su contraseña real en el formulario de login.
       </p>
       <p class="text-xs text-gray-500">
         {% if difficulty == 'easy' %}Easy: SID predecible (<code>SID-username-2024</code>).
@@ -16,8 +19,11 @@
       </p>
     </div>
     <div class="lang-content" data-lang="en" style="display:none">
-      <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">
-        This lab demonstrates session hijacking via predictable cookies, unsigned tokens, or session fixation.
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        This target app identifies your session with a single cookie, <code>hl_hijack_sid</code>. There are two ways to get a value for it: logging in for real (the app assigns you one) or typing one in yourself — the way an attacker who guessed, forged, or intercepted someone else's session would, without ever knowing their password.
+      </p>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+        <strong>Goal:</strong> get the "Current Session" box (at the bottom) to show <code>admin</code> as the active identity, without ever typing their real password into the login form.
       </p>
       <p class="text-xs text-gray-500">
         {% if difficulty == 'easy' %}Easy: predictable SID (<code>SID-username-2024</code>).
@@ -45,7 +51,9 @@
   {% endif %}
 
   <div class="hl-card mb-4">
-    <h2 class="text-sm font-semibold mb-3" style="color:var(--hl-primary)">Login Target App</h2>
+    <h2 class="text-sm font-semibold mb-1" style="color:var(--hl-primary)">Login Target App</h2>
+    <p class="text-xs text-gray-500 mb-3 lang-content" data-lang="es">Inicia sesión de verdad con una cuenta de prueba cualquiera. El servidor te devolverá un SID válido en la cookie <code>hl_hijack_sid</code> — míralo abajo, en "Current Session", para entender cómo lo construye.</p>
+    <p class="text-xs text-gray-500 mb-3 lang-content" data-lang="en" style="display:none">Log in for real with any test account. The server will hand you back a valid SID in the <code>hl_hijack_sid</code> cookie — check "Current Session" below to see how it's built.</p>
     <form method="POST" action="/session-hijacking/login" class="space-y-3">
       <div>
         <label class="block text-xs text-gray-500 mb-1" data-i18n="lbl_username">Usuario</label>
@@ -60,7 +68,9 @@
   </div>
 
   <div class="hl-card mb-4">
-    <h2 class="text-sm font-semibold mb-3" style="color:var(--hl-primary)">Reuse / Inject Session ID</h2>
+    <h2 class="text-sm font-semibold mb-1" style="color:var(--hl-primary)">Reuse / Inject Session ID</h2>
+    <p class="text-xs text-gray-500 mb-3 lang-content" data-lang="es">Este campo <strong>no comprueba ninguna contraseña</strong>: lo que escribas se guarda tal cual en tu cookie <code>hl_hijack_sid</code>, sustituyendo la que tuvieras. Es el equivalente a editar la cookie a mano en el navegador o con Burp. Úsalo para probar un SID que hayas deducido, forjado o adivinado sin haber iniciado sesión con esas credenciales.</p>
+    <p class="text-xs text-gray-500 mb-3 lang-content" data-lang="en" style="display:none">This field <strong>checks no password at all</strong>: whatever you type is saved as-is into your <code>hl_hijack_sid</code> cookie, replacing whatever was there. It's the same as editing the cookie by hand in the browser or in Burp. Use it to try out a SID you've inferred, forged, or guessed without ever logging in with those credentials.</p>
     <form method="POST" action="/session-hijacking/use" class="space-y-3">
       <div>
         <label class="block text-xs text-gray-500 mb-1">Session ID</label>
@@ -68,21 +78,17 @@
       </div>
       <button type="submit" class="btn-primary">Use this SID</button>
     </form>
-
-    <div class="hl-code text-xs mt-4">
-      <div class="text-gray-400"># Easy — inicia sesión arriba con cualquier cuenta y observa el patrón del SID que te asigna</div>
-      <div>curl -i http://{{ target_ip }}/session-hijacking -H "Cookie: hl_hijack_sid=SID-&lt;username&gt;-2024"</div>
-      <div class="text-gray-400 mt-2"># Hard — este endpoint acepta un parámetro para fijar el SID antes de login; encuéntralo probando la app</div>
-    </div>
   </div>
 
   <div class="hl-card">
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between mb-1">
       <h2 class="text-sm font-semibold" style="color:var(--hl-primary)">Current Session</h2>
       <form method="POST" action="/session-hijacking/logout">
         <button type="submit" class="text-xs px-3 py-1 rounded border border-gray-600 text-gray-300 hover:text-white">Logout Session</button>
       </form>
     </div>
+    <p class="text-xs text-gray-500 mb-3 lang-content" data-lang="es">Esto es lo que el servidor entiende ahora mismo a partir de tu cookie <code>hl_hijack_sid</code> actual — sea porque iniciaste sesión de verdad o porque la inyectaste arriba. Cuando aquí aparezca <code>admin</code>, revisa si arriba apareció la caja verde con la flag.</p>
+    <p class="text-xs text-gray-500 mb-3 lang-content" data-lang="en" style="display:none">This is what the server currently believes based on your active <code>hl_hijack_sid</code> cookie — whether you logged in for real or injected it above. Once this shows <code>admin</code>, check whether the green flag box appeared above.</p>
 
     {% if identity %}
     <div class="space-y-1 text-sm">
@@ -131,7 +137,9 @@
         <pre>http://{{ target_ip }}/session-hijacking?sid=mi-sid-elegido</pre>
         Este parámetro no debería existir en una app bien diseñada — en un pentest real se descubre probando nombres habituales (<code>sid</code>, <code>session</code>, <code>token</code>...) tras observar el comportamiento de las cookies.
       </li>
-      <li>Sin tocar esa cookie, inicia sesión en el formulario de arriba con <code>admin</code> / <code>password1</code> (la cuenta de administrador estándar de HackLabs).</li>
+      <li>Sin tocar esa cookie, inicia sesión en el formulario de arriba con <code>admin</code> / <code>password1</code> (la cuenta de administrador estándar de HackLabs).
+        <div class="text-amber-500 text-xs mt-1">Nota: si ya completaste los labs de <em>Forgot Password Recovery</em> o <em>CSRF</em> y cambiaste la contraseña de <code>admin</code>, este login fallará — esos labs modifican la contraseña de forma permanente en la base de datos compartida. Usa la que fijaste en ese momento, o repite uno de esos dos labs para restablecerla a un valor que conozcas.</div>
+      </li>
       <li>El servidor reutiliza el mismo SID que ya tenías en vez de generar uno nuevo al autenticar — la sesión de <code>admin</code> queda ligada a un valor que elegiste tú de antemano, no el servidor.</li>
       <li>La página se recarga sola tras el login: la identidad activa es <code>admin</code> y aparece la flag.</li>
       <li>En un ataque real, el atacante enviaría ese enlace <code>?sid=...</code> a la víctima (phishing) y después usaría el mismo SID en su propio navegador para heredar la sesión ya autenticada de la víctima, sin necesitar sus credenciales.</li>
@@ -182,7 +190,9 @@ Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax</pre>
         <pre>http://{{ target_ip }}/session-hijacking?sid=my-chosen-sid</pre>
         A well-designed app shouldn't have this parameter — in a real pentest you'd find it by trying common names (<code>sid</code>, <code>session</code>, <code>token</code>...) after observing cookie behavior.
       </li>
-      <li>Without touching that cookie, log in above with <code>admin</code> / <code>password1</code> (HackLabs' standard admin account).</li>
+      <li>Without touching that cookie, log in above with <code>admin</code> / <code>password1</code> (HackLabs' standard admin account).
+        <div class="text-amber-500 text-xs mt-1">Note: if you already completed the <em>Forgot Password Recovery</em> or <em>CSRF</em> labs and changed <code>admin</code>'s password there, this login will fail — those labs permanently change it in the shared database. Use whatever you set it to, or redo one of those two labs to reset it to a value you know.</div>
+      </li>
       <li>The server reuses the SID you already had instead of generating a new one on login — the <code>admin</code> session ends up tied to a value you picked in advance, not the server.</li>
       <li>The page reloads itself after login: the active identity is <code>admin</code> and the flag appears.</li>
       <li>In a real attack, the attacker would send that <code>?sid=...</code> link to the victim (phishing) and then reuse the same SID in their own browser to inherit the victim's authenticated session, without ever needing their credentials.</li>
