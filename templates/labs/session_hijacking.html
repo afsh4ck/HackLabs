@@ -64,16 +64,15 @@
     <form method="POST" action="/session-hijacking/use" class="space-y-3">
       <div>
         <label class="block text-xs text-gray-500 mb-1">Session ID</label>
-        <input type="text" name="sid" class="hl-input font-mono" placeholder="SID-admin-2024" />
+        <input type="text" name="sid" class="hl-input font-mono" placeholder="SID-&lt;username&gt;-2024" />
       </div>
       <button type="submit" class="btn-primary">Use this SID</button>
     </form>
 
     <div class="hl-code text-xs mt-4">
-      <div class="text-gray-400"># Example (Easy)</div>
-      <div>curl -i http://{{ target_ip }}/session-hijacking -H "Cookie: hl_hijack_sid=SID-admin-2024"</div>
-      <div class="text-gray-400 mt-2"># Session fixation (Hard)</div>
-      <div>http://{{ target_ip }}/session-hijacking?sid=attacker-fixed-session</div>
+      <div class="text-gray-400"># Easy — inicia sesión arriba con cualquier cuenta y observa el patrón del SID que te asigna</div>
+      <div>curl -i http://{{ target_ip }}/session-hijacking -H "Cookie: hl_hijack_sid=SID-&lt;username&gt;-2024"</div>
+      <div class="text-gray-400 mt-2"># Hard — este endpoint acepta un parámetro para fijar el SID antes de login; encuéntralo probando la app</div>
     </div>
   </div>
 
@@ -102,34 +101,47 @@
   <div class="lang-content" data-lang="es">
     <h3>Easy — SID predecible</h3>
     <ol>
-      <li>El servidor acepta el formato fijo <code>SID-&lt;username&gt;-2024</code>.</li>
-      <li>Sin autenticarte, inyecta cookie de admin:
-        <pre>hl_hijack_sid=SID-admin-2024</pre></li>
-      <li>Abre o recarga <code>/session-hijacking</code> y verifica que el usuario activo sea <code>admin</code>.</li>
-      <li>Cuando el rol sea admin, aparece la flag del lab.</li>
+      <li>Inicia sesión arriba con cualquier cuenta de prueba (por ejemplo <code>alice</code> / <code>Password1</code>) y mira la caja "Current Session": el SID que te asigna la app sigue el patrón <code>SID-&lt;usuario&gt;-2024</code>.</li>
+      <li>Pulsa "Logout Session". Sin volver a autenticarte, usa el formulario "Reuse / Inject Session ID" para probar el mismo patrón sustituyendo el usuario por <code>admin</code>:
+        <pre>SID-admin-2024</pre>
+        Alternativa por línea de comandos:
+        <pre>curl -i http://{{ target_ip }}/session-hijacking -H "Cookie: hl_hijack_sid=SID-admin-2024"</pre>
+      </li>
+      <li>El servidor solo comprueba el formato del SID y busca ese usuario en la base de datos — nunca verifica que él mismo haya emitido esa cookie. Al enviar el formulario, la página se recarga y la identidad activa pasa a ser <code>admin</code>.</li>
+      <li>Con el rol <code>admin</code> activo aparece la caja verde "Flag" en esta misma página. Cópiala y valídala en la caja "Validar Flag" del lateral.</li>
     </ol>
 
     <h3>Medium — Token base64 sin firma</h3>
     <ol>
-      <li>El backend solo hace decode base64 y toma el primer campo como username.</li>
-      <li>Genera un token con estructura <code>admin|admin|timestamp|hacklabs-session-v1</code> y codifícalo en base64 URL-safe.</li>
-      <li>Envíalo en <code>hl_hijack_sid</code> usando el formulario o Burp Repeater.</li>
-      <li>Al no existir firma/HMAC, el servidor lo acepta y asigna sesión de admin.</li>
+      <li>Inicia sesión con cualquier cuenta de prueba y copia el SID que muestra "Current Session".</li>
+      <li>Decodifícalo para ver su estructura real:
+        <pre>echo '&lt;SID_COPIADO&gt;' | base64 -d</pre>
+        Verás algo como <code>alice|user|1735000000|hacklabs-session-v1</code>: el backend solo hace <code>base64 decode</code> y confía en el primer campo como usuario, sin firma ni verificación de integridad.
+      </li>
+      <li>Construye tu propio token sustituyendo usuario y rol por <code>admin</code>:
+        <pre>python3 -c "import base64; print(base64.urlsafe_b64encode(b'admin|admin|1735000000|hacklabs-session-v1').decode().rstrip('='))"</pre>
+      </li>
+      <li>Pega el resultado en el formulario "Reuse / Inject Session ID" (o reenvíalo con Burp Repeater) y envíalo.</li>
+      <li>La app decodifica tu token, confía en el campo <code>admin</code> sin comprobar ninguna firma, y te asigna esa identidad — aparece la flag.</li>
     </ol>
 
     <h3>Hard — Session Fixation</h3>
     <ol>
-      <li>Fija un SID controlado por atacante con:
-        <pre>/session-hijacking?sid=attacker-fixed-session</pre></li>
-      <li>Haz que la víctima inicie sesión (phishing/lure) sin regenerar sesión.</li>
-      <li>La aplicación reutiliza el SID fijado para la sesión autenticada.</li>
-      <li>Reutiliza ese mismo SID para secuestrar la sesión ya autenticada.</li>
+      <li>Visita la URL con el parámetro de fijación, eligiendo tú mismo el valor del SID:
+        <pre>http://{{ target_ip }}/session-hijacking?sid=mi-sid-elegido</pre>
+        Este parámetro no debería existir en una app bien diseñada — en un pentest real se descubre probando nombres habituales (<code>sid</code>, <code>session</code>, <code>token</code>...) tras observar el comportamiento de las cookies.
+      </li>
+      <li>Sin tocar esa cookie, inicia sesión en el formulario de arriba con <code>admin</code> / <code>password1</code> (la cuenta de administrador estándar de HackLabs).</li>
+      <li>El servidor reutiliza el mismo SID que ya tenías en vez de generar uno nuevo al autenticar — la sesión de <code>admin</code> queda ligada a un valor que elegiste tú de antemano, no el servidor.</li>
+      <li>La página se recarga sola tras el login: la identidad activa es <code>admin</code> y aparece la flag.</li>
+      <li>En un ataque real, el atacante enviaría ese enlace <code>?sid=...</code> a la víctima (phishing) y después usaría el mismo SID en su propio navegador para heredar la sesión ya autenticada de la víctima, sin necesitar sus credenciales.</li>
     </ol>
 
     <h3>Mitigación</h3>
     <pre># Regenerar SID tras autenticación
 session.regenerate()
-# Firmar/validar tokens de sesión
+# Firmar/validar tokens de sesión (HMAC)
+# Nunca aceptar el SID desde un parámetro de URL
 # Configurar cookies seguras
 Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax</pre>
 
@@ -140,34 +152,47 @@ Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax</pre>
   <div class="lang-content" data-lang="en" style="display:none">
     <h3>Easy — Predictable SID</h3>
     <ol>
-      <li>Server accepts a fixed pattern: <code>SID-&lt;username&gt;-2024</code>.</li>
-      <li>Without logging in, inject admin cookie:
-        <pre>hl_hijack_sid=SID-admin-2024</pre></li>
-      <li>Open/reload <code>/session-hijacking</code> and confirm active user is <code>admin</code>.</li>
-      <li>Once role is admin, the lab flag is revealed.</li>
+      <li>Log in above with any test account (e.g. <code>alice</code> / <code>Password1</code>) and look at the "Current Session" box: the SID the app assigns you follows the pattern <code>SID-&lt;username&gt;-2024</code>.</li>
+      <li>Click "Logout Session". Without logging in again, use the "Reuse / Inject Session ID" form to try the same pattern with the username swapped for <code>admin</code>:
+        <pre>SID-admin-2024</pre>
+        Command-line alternative:
+        <pre>curl -i http://{{ target_ip }}/session-hijacking -H "Cookie: hl_hijack_sid=SID-admin-2024"</pre>
+      </li>
+      <li>The server only checks the SID's format and looks that username up in the database — it never verifies it actually issued that cookie. Submitting the form reloads the page and the active identity becomes <code>admin</code>.</li>
+      <li>With the <code>admin</code> role active, the green "Flag" box appears on this same page. Copy it and validate it in the sidebar "Validar Flag" box.</li>
     </ol>
 
     <h3>Medium — Unsigned Base64 Token</h3>
     <ol>
-      <li>Backend only decodes base64 and trusts the first field as username.</li>
-      <li>Create token content like <code>admin|admin|timestamp|hacklabs-session-v1</code> and encode URL-safe base64.</li>
-      <li>Send it in <code>hl_hijack_sid</code> via form or Burp Repeater.</li>
-      <li>No signature/HMAC means server accepts forged admin identity.</li>
+      <li>Log in with any test account and copy the SID shown in "Current Session".</li>
+      <li>Decode it to see its real structure:
+        <pre>echo '&lt;COPIED_SID&gt;' | base64 -d</pre>
+        You'll see something like <code>alice|user|1735000000|hacklabs-session-v1</code>: the backend only base64-decodes it and trusts the first field as the username, with no signature or integrity check.
+      </li>
+      <li>Build your own token swapping username and role for <code>admin</code>:
+        <pre>python3 -c "import base64; print(base64.urlsafe_b64encode(b'admin|admin|1735000000|hacklabs-session-v1').decode().rstrip('='))"</pre>
+      </li>
+      <li>Paste the result into the "Reuse / Inject Session ID" form (or replay it with Burp Repeater) and submit it.</li>
+      <li>The app decodes your token, trusts the <code>admin</code> field with no signature check, and assigns you that identity — the flag appears.</li>
     </ol>
 
     <h3>Hard — Session Fixation</h3>
     <ol>
-      <li>Fix attacker-controlled SID using:
-        <pre>/session-hijacking?sid=attacker-fixed-session</pre></li>
-      <li>Get victim to log in while keeping that SID.</li>
-      <li>Application reuses fixed SID for authenticated session.</li>
-      <li>Replay same SID to hijack victim authenticated session.</li>
+      <li>Visit the URL with the fixation parameter, choosing the SID value yourself:
+        <pre>http://{{ target_ip }}/session-hijacking?sid=my-chosen-sid</pre>
+        A well-designed app shouldn't have this parameter — in a real pentest you'd find it by trying common names (<code>sid</code>, <code>session</code>, <code>token</code>...) after observing cookie behavior.
+      </li>
+      <li>Without touching that cookie, log in above with <code>admin</code> / <code>password1</code> (HackLabs' standard admin account).</li>
+      <li>The server reuses the SID you already had instead of generating a new one on login — the <code>admin</code> session ends up tied to a value you picked in advance, not the server.</li>
+      <li>The page reloads itself after login: the active identity is <code>admin</code> and the flag appears.</li>
+      <li>In a real attack, the attacker would send that <code>?sid=...</code> link to the victim (phishing) and then reuse the same SID in their own browser to inherit the victim's authenticated session, without ever needing their credentials.</li>
     </ol>
 
     <h3>Mitigation</h3>
     <pre># Regenerate SID after authentication
 session.regenerate()
-# Sign/validate session tokens
+# Sign/validate session tokens (HMAC)
+# Never accept the SID from a URL parameter
 # Set secure cookie attributes
 Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax</pre>
 
