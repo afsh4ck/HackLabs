@@ -63,6 +63,7 @@ _CERT_PREFIX = 'HL-CERT-'
 _CERT_TOKEN_RE = re.compile(r'^[A-Za-z0-9._-]{16,220}$')
 _CERT_USER_RE = re.compile(r'^[A-Za-z0-9_.-]{1,64}$')
 _LEGACY_CERT_CODE_RE = re.compile(r'^HL-CERT-[A-F0-9]{12}$')
+_DISPLAY_CERT_CODE_RE = re.compile(r'^[0-9A-HJKMNPQRSTVWXYZ]{4}-[0-9A-HJKMNPQRSTVWXYZ]{4}-[0-9A-HJKMNPQRSTVWXYZ]{4}-[0-9A-HJKMNPQRSTVWXYZ]{4}$')
 
 # Configuración intencionalmente insegura
 app.config['SESSION_COOKIE_HTTPONLY'] = False
@@ -277,6 +278,7 @@ def init_db():
             id               INTEGER PRIMARY KEY AUTOINCREMENT,
             account_username TEXT NOT NULL UNIQUE,
             cert_code        TEXT NOT NULL UNIQUE,
+            display_code     TEXT UNIQUE,
             issued_at        TEXT DEFAULT (datetime('now'))
         )
     ''')
@@ -361,6 +363,7 @@ def _migrate_reward_tables():
             id               INTEGER PRIMARY KEY AUTOINCREMENT,
             account_username TEXT NOT NULL UNIQUE,
             cert_code        TEXT NOT NULL UNIQUE,
+            display_code     TEXT UNIQUE,
             issued_at        TEXT DEFAULT (datetime('now'))
         )
     ''')
@@ -445,37 +448,99 @@ def _resolve_certificate_verification(db, raw_code):
 
     if _LEGACY_CERT_CODE_RE.fullmatch(code.upper()):
         legacy_row = db.execute(
-            'SELECT account_username, cert_code, issued_at FROM completion_certificates WHERE cert_code=?',
+            'SELECT account_username, cert_code, display_code, issued_at FROM completion_certificates WHERE cert_code=?',
             (code.upper(),)
         ).fetchone()
         if legacy_row:
             cert = {
                 'account_username': legacy_row['account_username'],
                 'cert_code': legacy_row['cert_code'],
+                'display_code': legacy_row['display_code'],
                 'issued_at': legacy_row['issued_at'],
                 'source': 'registry',
             }
             return 'valid', cert
         return 'not_found', None
 
+    if _DISPLAY_CERT_CODE_RE.fullmatch(code.upper()):
+        # Cryptographic check first: this works with zero DB access, on any
+        # HackLabs instance built from the same source (shared signing secret),
+        # so it holds even for a certificate issued on a different machine.
+        verified = _verify_display_cert_code(code.upper())
+        if not verified:
+            return 'invalid_signature', None
+        cert_id, issued_epoch = verified
+
+        display_row = db.execute(
+            'SELECT account_username, cert_code, display_code, issued_at FROM completion_certificates WHERE id=?',
+            (cert_id,)
+        ).fetchone()
+        if display_row and display_row['display_code'] == code.upper():
+            cert = {
+                'account_username': display_row['account_username'],
+                'cert_code': display_row['cert_code'],
+                'display_code': display_row['display_code'],
+                'issued_at': display_row['issued_at'],
+                'source': 'registry',
+            }
+            return 'valid', cert
+
+        # Signature checks out but this instance has no local record for that
+        # certificate id — genuinely valid, just issued elsewhere.
+        issued_at = datetime.datetime.utcfromtimestamp(issued_epoch).strftime('%Y-%m-%d %H:%M:%S')
+        cert = {
+            'account_username': '',
+            'cert_code': '',
+            'display_code': code.upper(),
+            'issued_at': issued_at,
+            'source': 'signed_offline',
+        }
+        return 'valid', cert
+
     signed_cert, signed_status = _verify_signed_cert_code(code)
     if signed_status == 'valid':
+        display_row = db.execute(
+            'SELECT display_code FROM completion_certificates WHERE account_username=?',
+            (signed_cert['account_username'],)
+        ).fetchone()
+        signed_cert['display_code'] = (display_row['display_code'] if display_row else '') or ''
         return 'valid', signed_cert
 
     row = db.execute(
-        'SELECT account_username, cert_code, issued_at FROM completion_certificates WHERE cert_code=?',
+        'SELECT account_username, cert_code, display_code, issued_at FROM completion_certificates WHERE cert_code=?',
         (code,)
     ).fetchone()
     if row:
         cert = {
             'account_username': row['account_username'],
             'cert_code': row['cert_code'],
+            'display_code': row['display_code'],
             'issued_at': row['issued_at'],
             'source': 'registry',
         }
         return 'valid', cert
 
     return ('invalid_signature', None) if signed_status == 'invalid_signature' else ('invalid_format', None)
+
+
+_ES_MONTH_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+
+def _format_cert_issued_date(issued_at):
+    raw = (issued_at or '').strip()
+    dt = None
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d'):
+        try:
+            dt = datetime.datetime.strptime(raw, fmt)
+            break
+        except ValueError:
+            continue
+    if dt is None:
+        try:
+            dt = datetime.datetime.fromisoformat(raw.replace('Z', ''))
+        except Exception:
+            return raw
+    return f'{dt.day} {_ES_MONTH_ABBR[dt.month - 1]} {dt.year}'
 
 
 def _get_certificate_render_data(db, cert, fallback_user=None):
@@ -486,12 +551,24 @@ def _get_certificate_render_data(db, cert, fallback_user=None):
     ).fetchone()
     learner_name = (account_user['certificate_name'] or '').strip() if account_user else ''
     issued_at = (cert or {}).get('issued_at') or datetime.datetime.utcnow().isoformat()
+
+    display_code = (cert or {}).get('display_code') or ''
+    if not display_code and account_username:
+        row = db.execute(
+            'SELECT display_code FROM completion_certificates WHERE account_username=?',
+            (account_username,)
+        ).fetchone()
+        display_code = (row['display_code'] if row else '') or ''
+
     return {
         'account_username': account_username,
         'learner': learner_name or account_username,
         'rank': _get_special_rank(account_username) or 'Master',
         'cert_code': (cert or {}).get('cert_code', ''),
+        'display_code': display_code,
         'issued_at': issued_at,
+        'issued_at_display': _format_cert_issued_date(issued_at),
+        'total_labs': len(get_lab_list()),
         'verify_url': url_for('verify_completion_certificate', _external=True),
     }
 
@@ -516,13 +593,26 @@ def _certificate_linkedin_compose_url(post_text):
 
 def _issue_completion_certificate(db, account_username):
     existing = db.execute(
-        'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
+        'SELECT id, cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
         (account_username,)
     ).fetchone()
     if existing:
+        if not existing['display_code']:
+            candidate = _build_display_cert_code(existing['id'], existing['issued_at'])
+            try:
+                db.execute(
+                    'UPDATE completion_certificates SET display_code=? WHERE id=?',
+                    (candidate, existing['id'])
+                )
+            except sqlite3.IntegrityError:
+                pass
+
         _, status = _verify_signed_cert_code(existing['cert_code'])
         if status == 'valid':
-            return existing
+            return db.execute(
+                'SELECT cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
+                (account_username,)
+            ).fetchone()
 
         upgraded_code = None
         for _ in range(5):
@@ -539,7 +629,7 @@ def _issue_completion_certificate(db, account_username):
 
         if upgraded_code:
             return db.execute(
-                'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
+                'SELECT cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
                 (account_username,)
             ).fetchone()
         return existing
@@ -548,18 +638,31 @@ def _issue_completion_certificate(db, account_username):
     for _ in range(5):
         candidate = _build_signed_cert_code(account_username)
         try:
-            db.execute(
+            cur = db.execute(
                 'INSERT INTO completion_certificates (account_username, cert_code) VALUES (?, ?)',
                 (account_username, candidate)
             )
             cert_code = candidate
+            new_id = cur.lastrowid
             break
         except sqlite3.IntegrityError:
             cert_code = None
     if not cert_code:
         raise RuntimeError('Unable to allocate unique certificate code after multiple retries')
+
+    new_row = db.execute(
+        'SELECT id, issued_at FROM completion_certificates WHERE id=?', (new_id,)
+    ).fetchone()
+    display_code = _build_display_cert_code(new_row['id'], new_row['issued_at'])
+    try:
+        db.execute(
+            'UPDATE completion_certificates SET display_code=? WHERE id=?',
+            (display_code, new_id)
+        )
+    except sqlite3.IntegrityError:
+        pass
     return db.execute(
-        'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
+        'SELECT cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
         (account_username,)
     ).fetchone()
 
@@ -594,6 +697,127 @@ def _migrate_certificate_codes_to_signed():
                 upgraded = None
         if upgraded:
             changed = True
+
+    if changed:
+        db.commit()
+    db.close()
+
+
+# ── Short, offline-verifiable certificate code ──────────────────────
+# Crockford Base32 (excludes I, L, O, U to avoid transcription ambiguity).
+_CROCKFORD_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+_DISPLAY_CODE_EPOCH = datetime.datetime(2024, 1, 1, tzinfo=datetime.timezone.utc)
+
+
+def _crockford_b32_encode(raw_bytes):
+    bits = ''.join(f'{b:08b}' for b in raw_bytes)
+    # pad to a multiple of 5 bits
+    pad = (-len(bits)) % 5
+    bits += '0' * pad
+    chars = []
+    for i in range(0, len(bits), 5):
+        chunk = bits[i:i + 5]
+        chars.append(_CROCKFORD_ALPHABET[int(chunk, 2)])
+    return ''.join(chars)
+
+
+def _crockford_b32_decode(text):
+    lookup = {c: i for i, c in enumerate(_CROCKFORD_ALPHABET)}
+    bits = ''
+    for ch in text:
+        if ch not in lookup:
+            return None
+        bits += f'{lookup[ch]:05b}'
+    # drop trailing pad bits (not a full byte)
+    usable_bits = len(bits) - (len(bits) % 8)
+    if usable_bits <= 0:
+        return None
+    byte_bits = bits[:usable_bits]
+    return bytes(int(byte_bits[i:i + 8], 2) for i in range(0, usable_bits, 8))
+
+
+def _display_code_payload(cert_id, issued_epoch):
+    days = int((issued_epoch - _DISPLAY_CODE_EPOCH.timestamp()) // 86400)
+    days = max(0, min(days, 0xFFFF))
+    cert_id = max(0, min(int(cert_id), 0xFFFFFF))
+    return cert_id.to_bytes(3, 'big') + days.to_bytes(2, 'big')
+
+
+def _build_display_cert_code(cert_id, issued_at=None):
+    """Deterministic, HMAC-signed short code: verifiable offline on any HackLabs
+    instance running the same source (shared secret), without a DB lookup."""
+    issued_epoch = _parse_cert_epoch(issued_at) or time.time()
+    payload = _display_code_payload(cert_id, issued_epoch)
+    mac = _hmac.new(_CERT_VERIFY_SHARED_SECRET.encode(), b'disp1:' + payload, hashlib.sha256).digest()[:5]
+    encoded = _crockford_b32_encode(payload + mac)  # 5+5=10 bytes -> 16 chars
+    return '-'.join(encoded[i:i + 4] for i in range(0, len(encoded), 4))
+
+
+def _verify_display_cert_code(code):
+    """Cryptographic check only — no DB access. Returns (cert_id, issued_epoch) or None."""
+    stripped = re.sub(r'[^0-9A-Z]', '', (code or '').upper())
+    if len(stripped) != 16:
+        return None
+    raw = _crockford_b32_decode(stripped)
+    if not raw or len(raw) != 10:
+        return None
+    payload, received_mac = raw[:5], raw[5:]
+    expected_mac = _hmac.new(_CERT_VERIFY_SHARED_SECRET.encode(), b'disp1:' + payload, hashlib.sha256).digest()[:5]
+    if not _hmac.compare_digest(received_mac, expected_mac):
+        return None
+    cert_id = int.from_bytes(payload[:3], 'big')
+    days = int.from_bytes(payload[3:], 'big')
+    issued_epoch = _DISPLAY_CODE_EPOCH.timestamp() + days * 86400
+    return cert_id, issued_epoch
+
+
+def _parse_cert_epoch(issued_at):
+    raw = (issued_at or '').strip()
+    if not raw:
+        return None
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d'):
+        try:
+            dt = datetime.datetime.strptime(raw, fmt).replace(tzinfo=datetime.timezone.utc)
+            return dt.timestamp()
+        except ValueError:
+            continue
+    try:
+        dt = datetime.datetime.fromisoformat(raw.replace('Z', ''))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt.timestamp()
+    except Exception:
+        return None
+
+
+def _migrate_certificate_display_codes():
+    """Backfill the short offline-verifiable display_code for every issued
+    certificate, including ones issued before this column existed."""
+    db = sqlite3.connect(DATABASE)
+    db.row_factory = sqlite3.Row
+    try:
+        cols = [r[1] for r in db.execute("PRAGMA table_info(completion_certificates)").fetchall()]
+        if 'display_code' not in cols:
+            db.execute('ALTER TABLE completion_certificates ADD COLUMN display_code TEXT')
+        rows = db.execute(
+            "SELECT id, account_username, issued_at, display_code FROM completion_certificates "
+            "WHERE display_code IS NULL OR display_code = ''"
+        ).fetchall()
+    except sqlite3.Error:
+        db.close()
+        return
+
+    changed = False
+    for row in rows:
+        candidate = _build_display_cert_code(row['id'], row['issued_at'])
+        try:
+            db.execute(
+                'UPDATE completion_certificates SET display_code=? WHERE id=?',
+                (candidate, row['id'])
+            )
+            changed = True
+        except sqlite3.IntegrityError:
+            pass
 
     if changed:
         db.commit()
@@ -664,6 +888,7 @@ if os.path.exists(DATABASE):
     _migrate_sqli_flag_seed()
     _migrate_reward_tables()
     _migrate_certificate_codes_to_signed()
+    _migrate_certificate_display_codes()
 
 # ─────────────────────────────────────────────
 # PROGRESO DE USUARIO
@@ -1345,7 +1570,7 @@ def progress_page():
         premium_unlocked=unlocks.get('premium_pack_unlocked', False)
     )
     cert = db.execute(
-        'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
+        'SELECT cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
         (app_user,)
     ).fetchone()
     return render_template('progress.html',
@@ -1411,7 +1636,7 @@ def download_completion_certificate():
     ensure_account_table()
     db = get_db()
     cert = db.execute(
-        'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
+        'SELECT cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
         (app_user,)
     ).fetchone()
     if not cert:
@@ -1422,6 +1647,7 @@ def download_completion_certificate():
         {
             'account_username': app_user,
             'cert_code': cert['cert_code'],
+            'display_code': cert['display_code'],
             'issued_at': cert['issued_at'],
         },
         fallback_user=app_user,
@@ -1433,7 +1659,10 @@ def download_completion_certificate():
         learner=render_data['learner'],
         rank=render_data['rank'],
         cert_code=render_data['cert_code'],
+        display_code=render_data['display_code'],
         issued_at=render_data['issued_at'],
+        issued_at_display=render_data['issued_at_display'],
+        total_labs=render_data['total_labs'],
         verify_url=render_data['verify_url'],
         show_toolbar=show_toolbar,
         auto_export_pdf=auto_export_pdf,
@@ -1465,7 +1694,7 @@ def certificate_page():
     ).fetchall()
     completed = {r['lab_id'] for r in rows}
     cert = db.execute(
-        'SELECT cert_code, issued_at FROM completion_certificates WHERE account_username=?',
+        'SELECT cert_code, display_code, issued_at FROM completion_certificates WHERE account_username=?',
         (app_user,)
     ).fetchone()
     verify_code = _normalize_cert_code(request.args.get('verify_code'))
@@ -1526,7 +1755,10 @@ def share_completion_certificate():
                 learner=render_data['learner'],
                 rank=render_data['rank'],
                 cert_code=render_data['cert_code'],
+                display_code=render_data['display_code'],
                 issued_at=render_data['issued_at'],
+                issued_at_display=render_data['issued_at_display'],
+                total_labs=render_data['total_labs'],
                 verify_url=render_data['verify_url'],
                 show_toolbar=False,
                 auto_export_pdf=False,
@@ -1549,8 +1781,8 @@ def share_completion_certificate_preview():
         render_data = _get_certificate_render_data(db, cert, fallback_user=cert.get('account_username'))
         learner = _html.escape(render_data['learner'])
         rank = _html.escape(render_data['rank'])
-        issued_at = _html.escape(render_data['issued_at'])
-        cert_code = _html.escape(render_data['cert_code'])
+        issued_at = _html.escape(render_data['issued_at_display'])
+        cert_code = _html.escape(render_data['display_code'] or render_data['cert_code'])
         svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="HackLabs certificate preview">
     <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -1609,6 +1841,12 @@ def verify_completion_certificate():
     if request.args.get('code') is not None:
         status, cert = _resolve_certificate_verification(get_db(), code)
     return render_template('certificate_verify.html', cert=cert, code=code, status=status)
+
+
+@app.route('/certificado/<code>')
+def verify_completion_certificate_short(code):
+    """Convenience path matching the short URL printed on the certificate face."""
+    return redirect(url_for('verify_completion_certificate', code=code))
 
 
 @app.route('/achievement/share/<token>')

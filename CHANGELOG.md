@@ -4,6 +4,12 @@ All notable changes to this repository are documented in this file.
 
 ## 2026-08-28
 
+- feat(certificate): Rediseño completo de `certificate.html` (SVG a medida aportado por el usuario) con sello circular, tipografías Space Grotesk/Inter/JetBrains Mono y firma vectorial. Corregido el arco de texto inferior del sello, que se renderizaba invertido (path + string revertidos a la vez para que "CERTIFICADO OFICIAL" lea correctamente sin quedar boca abajo).
+- feat(certificate): Nuevo código corto de certificado (`display_code`, 16 caracteres en Base32 de Crockford, formato `XXXX-XXXX-XXXX-XXXX`) derivado criptográficamente (HMAC-SHA256 truncado sobre id + fecha) en vez de aleatorio — verificable **offline y sin base de datos** en cualquier instancia que comparta el código fuente, igual que el token largo original pero mucho más corto de transcribir. Los certificados ya emitidos se migran automáticamente al arrancar (`_migrate_certificate_display_codes`).
+- feat(certificate): El nombre del alumno, la fecha de emisión (formato `15 mar 2026`), el número real de labs (`len(get_lab_list())`, no un valor fijo) y el código corto son ahora variables Jinja; al ser renderizado dinámicamente en cada visita, cualquier certificado ya emitido se ve automáticamente con el nuevo diseño.
+- feat(certificate): Nueva ruta `/certificado/<code>` que redirige a `/certificate/verify?code=...`, coincidiendo con la URL corta impresa en el propio certificado.
+- fix(certificate): `/certificate/verify`, `/certificate` y la página de gestión del certificado muestran el código corto en vez del token largo, y manejan el caso de una firma válida sin registro local (certificado emitido en otra instancia) mostrando un aviso claro en vez de datos vacíos.
+
 - feat(host-attacks): Reordenada la ruta H01–H13 como una cadena de pentesting real, desde enumeración y acceso inicial hasta post-explotación, pivoting, escape, C2 y acceso a base de datos.
 - feat(host-attacks): H05 y H07–H10 usan artefactos, permisos, SUID, cron, SSH y servicios loopback reales dentro del objetivo; se eliminan los antiguos endpoints `/host-lab/*/probe`.
 - feat(database-access): Nuevo H13 con configuración de producción, SQLite real, enumeración de tablas, hash MD5 de administrador y cracking offline mediante una wordlist recuperada del sistema.
