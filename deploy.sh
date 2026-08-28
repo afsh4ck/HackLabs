@@ -281,7 +281,7 @@ if [[ $DEPLOY_AD -eq 1 ]]; then
         # vez de acumular entradas obsoletas en cada redespliegue.
         sed -i -E "/[[:space:]](${AD_FQDN}|hacklabs\.local|dc01)([[:space:]]|\$)/Id" /etc/hosts 2>/dev/null || true
         printf '%s\t%s hacklabs.local dc01\n' "$DC_IP" "$AD_FQDN" >> /etc/hosts
-        log "Añadida la entrada ${BOLD}${DC_IP} ${AD_FQDN}${NC} a /etc/hosts (sobrescribiendo cualquier entrada previa)."
+        log "Añadida la entrada ${BOLD}${DC_IP} ${AD_FQDN}${NC} a /etc/hosts."
     else
         warn "No se pudo iniciar el Domain Controller — se continúa sin él."
         DEPLOY_AD=0
